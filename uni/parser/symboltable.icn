@@ -1,0 +1,1357 @@
+import ErrorSystem
+
+global  current_file,                   #GD: table of the current declarations found in the current file
+                                        #:   being processed, keyed by variable names,
+                                        #:   this is used to pass around all the global values
+                                        #:   that are needed by each of the different types of
+                                        #:   global structures as in procedures, classes, records,
+                                        #:   methods, imports and links. The use of a table to hold
+                                        #:   the current global values means that any future changes
+                                        #:   do not require an actual global variable to be defined,
+                                        #:   it is only necessary to create the new key value to
+                                        #:   represent the new current value variable
+                                        #:  ✓
+        current_declaration,            #GD: table of the current information that has been collected
+                                        #:   during the parsing of the current declaration. This information
+                                        #:   will be added to the table current_file when the declaration is
+                                        #:   being finalised.
+                                        #:
+        this_is_generator,              #GD: this is the flag to indicate that the current
+                                        #:   procedure or method is a generator, this is
+                                        #:   determined if "suspend" is found in the body
+                                        #:   of the procedure or method. This information
+                                        #:   will be used in determining if a "while" has
+                                        #:   an inappropriate expression as the test expression,
+                                        #:   this will be &null for all procedures and methods
+                                        #:   that are not found to be generators.
+                                        #:  ✓
+        symbol_table                    #GD: table of tables/lists/strings, keys
+                                        #:   being the classifications of the
+                                        #:   different types of things being
+                                        #:   stored in the symbol table, this will hold all of the
+                                        #:   relevant information for all files that are being
+                                        #:   processed in this particular run of the compiler
+                                        #:  ✓
+
+procedure initialise_symbol_table()
+
+    current_file                := ::table()    #GV: creating the table to hold the information collected
+                                                #:   during the parsing of the current file. The keys will
+                                                #:   be related to each of the global classifications for
+                                                #:   the possible declarations that can occur within any file
+                                                #:
+    current_declaration         := ::table()    #GV: creating the table to hold the specific information that
+                                                #:   will be collected for each kind of declaration. The keys
+                                                #:   will be specific to each of the diffferent declarations
+                                                #:   and are entered during the parsing processed.
+                                                #:   Declarations are "global", "record", "procedure" or "class".
+                                                #:   "method" belongs to a "class" declaration.
+                                                #:   "package", "link", "import" and "invocable" are treated and
+                                                #:   recorded in a different manner. Both "link" and "import"
+                                                #:   will add information to the symbol table but will get the
+                                                #:   relevant information from external sources. The "$include"
+                                                #:   directive simply loads additional source files to the parsing
+                                                #:   process.
+                                                #:
+    current_file["procedure_name"]   := &null   #GK: name of current procedure or method being defined
+                                                #:  ✓
+    current_file["class_name"]       := &null   #GK: name of the current class being defined, if it is
+                                                #:   null, then we are not in a class definition.
+                                                #:  ✓
+    current_file["record_name"]      := &null   #GK: name of the current record being defined
+                                                #:  ✓
+    current_file["class"]            := &null   #GK: table of tables/list/string for
+                                                #:   current class being defined. Keys are as defined below.
+                                                #:  ✓
+    current_file["methods"]          := &null   #GV: table of lists of method variables,
+                                                #:   keyed by method name and specifically
+                                                #:   for the current class being defined. Used to
+                                                #:   determine the uniqueness of the method names
+                                                #:  ✓
+    current_file["supers"]           := &null   #GK: list of superclass names used in the current class in
+                                                #:   order of declaration. a superclass will only appear once
+                                                #:   in the superclass list, eve though it is allowed to occur
+                                                #:   multiple times due to inheritance
+                                                #:  ✓
+    current_file["supers_set"]       := &null   #GK: set of superclass names used in the current class, used
+                                                #:   to ensure that a superclass only appears once in the
+                                                #:   superclass list
+                                                #:  ✓
+    current_file["class_locals"]     := &null   #GK: list of the current class local variables in order
+                                                #:   of declaration of locals. Includes all class parameters
+                                                #:   as well as any locally defined class local variables.
+                                                #:  ✓
+    current_file["class_locals_set"] := &null   #GK: set of the current class local variables used for
+                                                #:   determining the uniqueness of the class local
+                                                #:  ✓
+    current_file["package"]          := ""      #GK: holds name of the current package, until a "package"
+                                                #:   directive if found, it will contain the generic
+                                                #:   package name ""
+                                                #:  ✓
+    current_file["package_references"]:= ::table()
+                                                #GK: holds the package import details as obtained from the
+                                                #:   uniclass databases containing that package. The key is
+                                                #:   the package name.
+                                                #:  ✓
+    current_file["package_imports"]  := ::set([])
+                                                #GK: a set of the packages that have been imported into
+                                                #:   this file
+                                                #:  ✓
+    current_file["link_file"]        := &null
+    current_file["parameters"]       := &null   #GK: list of the current parameter variables in
+                                                #:   order of declaration
+                                                #:  ✓
+    current_file["parameters_set"]   := &null   #GK: this is a set of the current parameter variables so
+                                                #:   far found in the definition of a method, procedures and
+                                                #:   classes.
+                                                #:  ✓
+    current_file["variable_set"]     := &null   #GK: this is a set of the current variables so far found
+                                                #:   in the definition of a method or procedure. It is used
+                                                #:   to test uniqueness and covers the four areas that can
+                                                #:   contribute to the list of variables. These four areas
+                                                #:   are parameters, local variables, static variables and
+                                                #:   list comprehension variables. List comprehension variables
+                                                #:   are the only type of system generated variables at this point.
+                                                #:  ✓
+    current_file["locals"]           := &null   #GK: list of the current local variables in
+                                                #:   order of declaration. As each "local" declaration is processed,
+                                                #:   the associated variables are added to this list.
+                                                #:  ✓
+    current_file["statics"]          := &null   #GK: list of the current static variables in
+                                                #:   order of declaration. As each "static" declaration is processed,
+                                                #:   the associated variables are added to this list.
+                                                #:  ✓
+    current_file["listcomp"]         := &null   #GK: list of the current list comprehension variables in
+                                                #:   order of use. As each list comprehension is processed,
+                                                #:   the associated variables are added to this list.
+                                                #:  ✓
+    current_file["unknowns"]         := ::set([])
+                                                #GK: set of variable names used in the current procedure or method,
+                                                #:   these are variables that have not been declared as
+                                                #:   parameters nor locals nor statics. This will not include any
+                                                #:   of the system defined variable that arise from list comprehensions.
+                                                #:   As global variables, procedures and records are in essence variables,
+                                                #:   any such variables will be found in this set. The set will later
+                                                #:   be compared with the global variables, procedures and records.
+                                                #:  ✓
+    current_file["variable_list"]    := &null   #GK: list of currently processed variables found in the current
+                                                #:   "local" or "static" declaration being processed.
+                                                #:   this list will be amalgamated to the specific
+                                                #:   current_file["locals"], current_file["statics"] or
+                                                #:   current_file["class_locals"] as required
+                                                #:  ✓
+    current_file["identifiers"]      := []      #GK: list of current identifiers in order of declaration,
+                                                #:   these identifiers include global variables, record names,
+                                                #:   class names and procedure names, excluding in-built
+                                                #:   function names as these are allowed to be redefined. Only
+                                                #:   global variables are allowed to be declared multiple times.
+                                                #:   All other names must be unique.
+                                                #:  ✓
+    current_file["identifiers_set"] := ::set([])
+                                                #GK: set of current identifiers used for determining
+                                                #:   uniqueness of identifiers
+                                                #:  ✓
+    current_file["globals_set"]     := ::set([])
+                                                #GK: set of all globally defined names, this includes
+                                                #:   global variables, procedures, records, classes, this
+                                                #:   set is used to ensure that redefinition of (procedures,
+                                                #:   classes and variables) by other (procedures, classes
+                                                #:   and variables) does not happen
+                                                #:  ✓
+    this_is_generator               := &null    #    Initialising the global variable to the standard default
+                                                #:   value of &null. This will only change when a "suspend" is
+                                                #:   encountered during the parsing of a method or procedure.
+
+    symbol_table                    := ::table()
+    symbol_table["classes"]         := ::table()
+                                                #GK: table of tables of the class definitions,
+                                                #:   keyed by the class name. This is used for
+                                                #:   determining the uniqueness of the class name
+                                                #:  ✓
+    symbol_table["procedures"]      := ::table()
+                                                #GK: table of tables holding information collected about each
+                                                #:   procedure
+                                                #:  ✓
+    symbol_table["built_ins"]       := insert_builtins()
+                                                #GK: table of tables which holds all the information that
+                                                #:   we have about each of the built-in functions.
+                                                #:  ✓
+    symbol_table["unknowns"]        := ::table()
+                                                #GK: table of sets of names used in the procedures
+                                                #:   or methods being defined, which have not been
+                                                #:   defined as either local or static. These will need to be
+                                                #:   resolved against the globals defined within the linked program.
+                                                #:   The key is the name of the procedure or method (including class name)
+                                                #:   being defined
+    symbol_table["globals"]         := []       #GK: list of current global identifiers, declared as "global"
+                                                #:  ✓
+    symbol_table["records"]         := ::table()
+                                                #GK: table of lists of defined fields
+                                                #:   for records. The key is the name of
+                                                #:   the record being defined. This is used for testing
+                                                #:   the uniqueness of the record names
+                                                #:  ✓
+    symbol_table["package"]         := ""
+    symbol_table["links"]           := ::table()
+                                                #GK: table holding the information from the linked file,
+                                                #:   keyed by link file name. This will hold relevant information
+                                                #:   about the linked file, each of the declarations found in the
+                                                #:   linked file will be added to the various tables for procedures,
+                                                #:   records and global declarations. Should not link files that have
+                                                #:   class information as this will be brought in by the "import"
+                                                #:   declarations.
+                                                #:  ✓
+    symbol_table["imports"]         := ::table()
+                                                #GK: table holding all the import information, keyed by import name.
+                                                #:   there is some crossover with the package references and needs to
+                                                #:   tidied up.
+                                                #:  ✓
+    symbol_table["invocables"]      := []       #GK: list of invocable procedure found in the "invocable" declaration
+                                                #:  ✓
+    ErrorSystem()
+end
+
+$define Generator           1
+$define NormalProcedure     &null
+$define NoParam             &null
+
+#PD:
+#: insert_builtins(defined_procedures) - insert each of the standard functions
+#: provided by the iconx runtime. Some of these will not be applicable to the
+#: iconc compiler and will require checking if the iconc compiler is being used.
+#: Code will need to be inserted to ensure that the relevant functions are
+#: removed from the set of functions.
+#:
+#:@global current_file["globals_set"]
+#:
+#:@returns              the table into which we shall be placing the
+#:@                     details for the runtime functions. the parameter name
+#:@                     deliberately overides the global variable of the same
+#:@                     name
+#:
+procedure insert_builtins()
+    local   defined_procedures          #LV: local table which will have an entry
+                                        #:   for each standard Unicon function
+
+    defined_procedures := ::table()
+    #
+    #: the meaning for each of the strings is related to its type and this is used
+    #: instead of the parameter names.
+    #
+    #   Value           Meaning
+    #
+    #   "n"             number                  - or values convertible to real or integer
+    #   "r"             real                    - or values convertible to real
+    #   "i"             integer                 - or values convetible to integer
+    #   "c"             cset                    - or values convertible to cset
+    #   "l"             list                    - of any
+    #   "tb"            table
+    #   "st"            set
+    #   "s"             string                  - or values convertible to string
+    #   "flg"           flag
+    #   "x"             any
+    #   "th"            thread
+    #   "f"             file
+    #   "rec"           record
+    #   "cl"            class
+    #   "obj"           object
+    #   "v"             variable
+    #   "cv"            condition variable
+    #   "w"             window
+    #   "pr"            procedure or method
+    #   "p"             pattern
+    #   "ce"            co-expression
+    #   "..."           one or more strings     - or values convertable to strings
+    #   "D"             database
+    #   "M"             POP mailbox
+    #   "---"           zero or more values
+    #   ",,,"           zero or more integers   - or values convertible to integer
+    #   "n,,,"          one or more numeric     - or values convertible to real or integer
+    #
+    #: the first parameter of builtin_entry is explicitly set to &null when the
+    #: builtin function is not a generator, otherwise it is set to 1 when it is
+    #: an inherent generator. See the above definitions of NormalProcedure and Generator above.
+    #: if any additional functions are installed into the runtime, add them to the assignments
+    #: below.
+    #:
+    defined_procedures["abs"]           := builtin_entry(NormalProcedure, "n")
+    defined_procedures["acos"]          := builtin_entry(NormalProcedure, "r")
+    defined_procedures["any"]           := builtin_entry(NormalProcedure, "c", "s", "i", "i")
+    defined_procedures["args"]          := builtin_entry(NormalProcedure, "x", "i")
+    defined_procedures["asin"]          := builtin_entry(NormalProcedure, "r")
+    defined_procedures["atan"]          := builtin_entry(NormalProcedure, "r", "r")
+    defined_procedures["atanh"]         := builtin_entry(NormalProcedure, "r")
+    defined_procedures["bal"]           := builtin_entry(Generator,       "c", "c", "c", "s", "i", "i")
+    defined_procedures["center"]        := builtin_entry(NormalProcedure, "s", "i", "s")
+    defined_procedures["channel"]       := builtin_entry(NormalProcedure, "th")
+    defined_procedures["char"]          := builtin_entry(NormalProcedure, "i")
+    defined_procedures["chdir"]         := builtin_entry(NormalProcedure, "s")
+    defined_procedures["chmod"]         := builtin_entry(NormalProcedure, ["f", "s"], "s")
+    defined_procedures["classname"]     := builtin_entry(NormalProcedure, "rec")
+    defined_procedures["close"]         := builtin_entry(NormalProcedure, "f")
+    defined_procedures["cofail"]        := builtin_entry(NormalProcedure, "ce")
+    defined_procedures["collect"]       := builtin_entry(NormalProcedure, "i", "i")
+    defined_procedures["condvar"]       := builtin_entry(NormalProcedure, )
+    defined_procedures["constructor"]   := builtin_entry(NormalProcedure, "s", "...")
+    defined_procedures["copy"]          := builtin_entry(NormalProcedure, "x")
+    defined_procedures["cos"]           := builtin_entry(NormalProcedure, "r")
+    defined_procedures["cset"]          := builtin_entry(NormalProcedure, "x")
+    defined_procedures["ctime"]         := builtin_entry(NormalProcedure, "i")
+    defined_procedures["dbcolumns"]     := builtin_entry(NormalProcedure, "D", "s")
+    defined_procedures["dbdriver"]      := builtin_entry(NormalProcedure, "D")
+    defined_procedures["dblimits"]      := builtin_entry(NormalProcedure, "D")
+    defined_procedures["dbproduct"]     := builtin_entry(NormalProcedure, "D")
+    defined_procedures["dbtables"]      := builtin_entry(NormalProcedure, "D")
+    defined_procedures["delay"]         := builtin_entry(NormalProcedure, "i")
+    defined_procedures["delete"]        := builtin_entry(NormalProcedure, "x", "x", "---")
+    defined_procedures["detab"]         := builtin_entry(NormalProcedure, "s", "i", ",,,")
+    defined_procedures["display"]       := builtin_entry(NormalProcedure, "i", "f", "ce")
+    defined_procedures["dtor"]          := builtin_entry(NormalProcedure, "r")
+    defined_procedures["entabs"]        := builtin_entry(NormalProcedure, "s", "i", ",,,")
+    defined_procedures["errorclear"]    := builtin_entry(NormalProcedure, )
+    defined_procedures["eventmask"]     := builtin_entry(NormalProcedure, "ce", "c")
+    defined_procedures["EvGet"]         := builtin_entry(NormalProcedure, "c", "flg")       ### Need more details here
+    defined_procedures["EvSend"]        := builtin_entry(NormalProcedure, "i", "x", "ce")   ### Need more details here
+    defined_procedures["exit"]          := builtin_entry(NormalProcedure, "i")
+    defined_procedures["exp"]           := builtin_entry(NormalProcedure, ["r", "i"])
+    defined_procedures["fetch"]         := builtin_entry(NormalProcedure, "D", "s")
+    defined_procedures["fieldnames"]    := builtin_entry(Generator,       "rec")
+    defined_procedures["find"]          := builtin_entry(Generator,       "s", "s", "i", "i")
+    defined_procedures["flock"]         := builtin_entry(NormalProcedure, "f", "s")
+    defined_procedures["flush"]         := builtin_entry(NormalProcedure, "f")
+    defined_procedures["functiom"]      := builtin_entry(Generator,       )
+    defined_procedures["get"]           := builtin_entry(NormalProcedure, "l", "i")
+    defined_procedures["getch"]         := builtin_entry(NormalProcedure, )
+    defined_procedures["getche"]        := builtin_entry(NormalProcedure, )
+    defined_procedures["getenv"]        := builtin_entry(NormalProcedure, "s")
+    defined_procedures["gettimeofday"]  := builtin_entry(NormalProcedure, )
+    defined_procedures["globalnames"]   := builtin_entry(Generator,       "ce")
+    defined_procedures["gtime"]         := builtin_entry(NormalProcedure, "i")
+    defined_procedures["iand"]          := builtin_entry(NormalProcedure, "i", "i")
+    defined_procedures["icom"]          := builtin_entry(NormalProcedure, "i")
+    defined_procedures["image"]         := builtin_entry(NormalProcedure, "x")
+    defined_procedures["insert"]        := builtin_entry(NormalProcedure, ["st", "tb", "l", "D"], "x", "x")
+    defined_procedures["integer"]       := builtin_entry(NormalProcedure, "x")
+    defined_procedures["ior"]           := builtin_entry(NormalProcedure, "i", "i")
+    defined_procedures["ishift"]        := builtin_entry(NormalProcedure, "i", "i")
+    defined_procedures["istate"]        := builtin_entry(NormalProcedure, "ce", "s")
+    defined_procedures["ixor"]          := builtin_entry(NormalProcedure, "i", "i")
+    defined_procedures["kbhit"]         := builtin_entry(NormalProcedure, )
+    defined_procedures["key"]           := builtin_entry(Generator,       ["tb", "l", "rec"])
+    defined_procedures["keyword"]       := builtin_entry(Generator,       "s", "ce", "i")
+    defined_procedures["left"]          := builtin_entry(NormalProcedure, "s", "i", "s")
+    defined_procedures["list"]          := builtin_entry(NormalProcedure, "i", "x")
+    defined_procedures["load"]          := builtin_entry(NormalProcedure, "s", "l", "f", "f", "f", "i", "i", "i")
+    defined_procedures["loadfunc"]      := builtin_entry(NormalProcedure, "s", "s")
+    defined_procedures["localnames"]    := builtin_entry(Generator,       "ce", "i")
+    defined_procedures["lock"]          := builtin_entry(NormalProcedure, "x", "x")
+    defined_procedures["log"]           := builtin_entry(NormalProcedure, ["r", "i"], ["r", "i"])
+    defined_procedures["many"]          := builtin_entry(NormalProcedure, "c", "s", "i", "i")
+    defined_procedures["map"]           := builtin_entry(NormalProcedure, "s", "s", "s")
+    defined_procedures["match"]         := builtin_entry(NormalProcedure, "s", "s", "i", "i")
+    defined_procedures["max"]           := builtin_entry(NormalProcedure, "n,,,")
+    defined_procedures["member"]        := builtin_entry(NormalProcedure, ["st", "c", "tb", "l"], "x", "---")
+    defined_procedures["membernames"]   := builtin_entry(NormalProcedure, ["s", "obj", "cl"])
+    defined_procedures["methods"]       := builtin_entry(NormalProcedure, ["s", "obj", "cl"])
+    defined_procedures["min"]           := builtin_entry(NormalProcedure, "n,,,")
+    defined_procedures["mkdir"]         := builtin_entry(NormalProcedure, "s", ["s", "i"])      ### needs testing reals
+    defined_procedures["move"]          := builtin_entry(NormalProcedure, "i")
+    defined_procedures["mutex"]         := builtin_entry(NormalProcedure, "x", "x")
+    defined_procedures["name"]          := builtin_entry(NormalProcedure, "v", "ce")
+    defined_procedures["numeric"]       := builtin_entry(NormalProcedure, "x")
+    defined_procedures["open"]          := builtin_entry(NormalProcedure, "s", "s", "...")
+    defined_procedures["opmask"]        := builtin_entry(NormalProcedure, "ce", "c")
+    defined_procedures["oprec"]         := builtin_entry(NormalProcedure, "obj")
+    defined_procedures["ord"]           := builtin_entry(NormalProcedure, "s")
+    defined_procedures["paramnames"]    := builtin_entry(NormalProcedure, "ce", "i")
+    defined_procedures["parent"]        := builtin_entry(NormalProcedure, "ce")
+    defined_procedures["pipe"]          := builtin_entry(NormalProcedure, )
+    defined_procedures["pop"]           := builtin_entry(NormalProcedure, ["l", "M"])
+    defined_procedures["proc"]          := builtin_entry(NormalProcedure, ["s", "ce"], "i", "ce")
+    defined_procedures["pull"]          := builtin_entry(NormalProcedure, "l", "i")
+    defined_procedures["push"]          := builtin_entry(NormalProcedure, "l", "---")
+    defined_procedures["put"]           := builtin_entry(NormalProcedure, "l", "---")
+    defined_procedures["read"]          := builtin_entry(NormalProcedure, "f")
+    defined_procedures["reads"]         := builtin_entry(NormalProcedure, "f", "i")
+    defined_procedures["ready"]         := builtin_entry(NormalProcedure, "f", "i")
+    defined_procedures["real"]          := builtin_entry(NormalProcedure, "x")
+    defined_procedures["receive"]       := builtin_entry(NormalProcedure, "f")
+    defined_procedures["remove"]        := builtin_entry(NormalProcedure, "s")
+    defined_procedures["rename"]        := builtin_entry(NormalProcedure, "s", "s")
+    defined_procedures["repl"]          := builtin_entry(NormalProcedure, ["s", "l"], "i")
+    defined_procedures["reverse"]       := builtin_entry(NormalProcedure, ["s", "l"])
+    defined_procedures["right"]         := builtin_entry(NormalProcedure, "s", "i", "s")
+    defined_procedures["rmdir"]         := builtin_entry(NormalProcedure, "s")
+    defined_procedures["rtod"]          := builtin_entry(NormalProcedure, ["r", "i"])
+    defined_procedures["runerr"]        := builtin_entry(NormalProcedure, "i", "x")
+    defined_procedures["seek"]          := builtin_entry(NormalProcedure, ["f", "D"], ["i", "s"])
+    defined_procedures["select"]        := builtin_entry(NormalProcedure, "---", "i")
+    defined_procedures["send"]          := builtin_entry(NormalProcedure, "s", "s")
+    defined_procedures["seq"]           := builtin_entry(NormalProcedure, "i", "i")
+    defined_procedures["serial"]        := builtin_entry(NormalProcedure, "x")
+    defined_procedures["set"]           := builtin_entry(NormalProcedure, ["l", "---"])
+    defined_procedures["setenv"]        := builtin_entry(NormalProcedure, "s")
+    defined_procedures["signal"]        := builtin_entry(NormalProcedure, "cv", "i")
+    defined_procedures["sin"]           := builtin_entry(NormalProcedure, ["r", "i"])
+    defined_procedures["sort"]          := builtin_entry(NormalProcedure, ["tb", "st", "l", "rec"], "i")
+    defined_procedures["sortf"]         := builtin_entry(NormalProcedure, ["st", "rec", "l"], "i")
+    defined_procedures["spawn"]         := builtin_entry(NormalProcedure, "ce", "i", "i")
+    defined_procedures["sql"]           := builtin_entry(NormalProcedure, "D", "s")
+    defined_procedures["sqrt"]          := builtin_entry(NormalProcedure, ["r", "i"])
+    defined_procedures["stat"]          := builtin_entry(NormalProcedure, "f")
+    defined_procedures["staticnames"]   := builtin_entry(Generator,       "ce", "i")
+    defined_procedures["stop"]          := builtin_entry(NormalProcedure, ["s", "f"], "...")
+    defined_procedures["string"]        := builtin_entry(NormalProcedure, "x")
+    defined_procedures["system"]        := builtin_entry(NormalProcedure, ["s", "l"], "f", "f", "f", "s")
+    defined_procedures["tab"]           := builtin_entry(NormalProcedure, "i")
+    defined_procedures["table"]         := builtin_entry(NormalProcedure, "x", "x", "---", "x")
+    defined_procedures["tan"]           := builtin_entry(NormalProcedure, ["r", "i"])
+    defined_procedures["trap"]          := builtin_entry(NormalProcedure, "s", "pr")
+    defined_procedures["trim"]          := builtin_entry(NormalProcedure, "s", "c", "i")
+    defined_procedures["truncate"]      := builtin_entry(NormalProcedure, "f", "i")
+    defined_procedures["tryloack"]      := builtin_entry(NormalProcedure, "x")
+    defined_procedures["type"]          := builtin_entry(NormalProcedure, "x")
+    defined_procedures["unlock"]        := builtin_entry(NormalProcedure, "x")
+    defined_procedures["upto"]          := builtin_entry(Generator,       "c", "s", "i", "i")
+    defined_procedures["utime"]         := builtin_entry(NormalProcedure, "s", "i", "i")
+    defined_procedures["variable"]      := builtin_entry(NormalProcedure, "s", "ce", "i")
+    defined_procedures["wait"]          := builtin_entry(NormalProcedure, "x")
+    defined_procedures["where"]         := builtin_entry(NormalProcedure, "f")
+    defined_procedures["write"]         := builtin_entry(NormalProcedure, ["s", "f"], "...")
+    defined_procedures["writes"]        := builtin_entry(NormalProcedure, ["s", "f"], "...")
+    defined_procedures["Active"]        := builtin_entry(NormalProcedure, )
+    defined_procedures["Alert"]         := builtin_entry(NormalProcedure, )
+    defined_procedures["Bg"]            := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["Clip"]          := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i")
+    defined_procedures["Clone"]         := builtin_entry(NormalProcedure, "w", "s", "...")
+    defined_procedures["Color"]         := builtin_entry(NormalProcedure, "w", "i", "s", "...")
+    defined_procedures["ColorValue"]    := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["CopyArea"]      := builtin_entry(NormalProcedure, "w", "w", "i", "i", "i", "i", "i", "i")
+    defined_procedures["Couple"]        := builtin_entry(NormalProcedure, "w", "w")
+    defined_procedures["DrawArc"]       := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", "i", "i", ",,,")
+    defined_procedures["DrawCircle"]    := builtin_entry(NormalProcedure, "w", "i", "i",["r", "i"], ["r", "i"], ["r", "i"], "n,,,")
+    defined_procedures["DrawCube"]      := builtin_entry(NormalProcedure, "w", "i", "i", "i", ["r", "i"], "n,,,")
+    defined_procedures["DrawCurve"]     := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["DrawCylinder"]  := builtin_entry(NormalProcedure, "w", "i", "i", "i", ["r", "i"], ["r", "i"], ["r", "i"], "n,,,")
+    defined_procedures["DrawDisk"]      := builtin_entry(NormalProcedure, "w", "i", "i", "i", ["r", "i"], ["r", "i"], ["r", "i"], ["r", "i"], "n,,,")
+    defined_procedures["DrawImage"]     := builtin_entry(NormalProcedure, "w", "i", "i", "s")
+    defined_procedures["DrawLine"]      := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["DrawPoint"]     := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["DrawPolygon"]   := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["DrawRectangle"] := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", ",,,")
+    defined_procedures["DrawSegment"]   := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["DrawSphere"]    := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", ",,,")
+    defined_procedures["DrawString"]    := builtin_entry(NormalProcedure, "w", "i", "i", "s", "---")
+    defined_procedures["DrawTorus"]     := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", "i", ",,,")
+    defined_procedures["EraseArea"]     := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", ",,,")
+    defined_procedures["Event"]         := builtin_entry(NormalProcedure, "w", "i")
+    defined_procedures["Fg"]            := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["FillArc"]       := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", "i", "i", ",,,")
+    defined_procedures["FillCircle"]    := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", "i", ",,,")
+    defined_procedures["FillPolygon"]   := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["FillRectangle"] := builtin_entry(NormalProcedure, "w", "i", "i", "i", "i", ",,,")
+    defined_procedures["Font"]          := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["FreeColor"]     := builtin_entry(NormalProcedure, "w", "s", "...")
+    defined_procedures["GotoRC"]        := builtin_entry(NormalProcedure, "w", "i", "i")
+    defined_procedures["GotoXY"]        := builtin_entry(NormalProcedure, "w", "i", "i")
+    defined_procedures["IdentityMatrix"] := builtin_entry(NormalProcedure, "w")
+    defined_procedures["Lower"]         := builtin_entry(NormalProcedure, "w")
+    defined_procedures["MatrixMode"]    := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["MultMatrix"]    := builtin_entry(NormalProcedure, "w", "l")
+    defined_procedures["NewColor"]      := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["PaletteChars"]  := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["PaletteColor"]  := builtin_entry(NormalProcedure, "w", "s", "s")
+    defined_procedures["PaletteKey"]    := builtin_entry(NormalProcedure, "w", "s", "s")
+    defined_procedures["Pattern"]       := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["Pending"]       := builtin_entry(NormalProcedure, "w", "s", "...")
+    defined_procedures["Pixel"]         := builtin_entry(Generator,       "w", "i", "i", "i", "i")
+    defined_procedures["PopMatrix"]     := builtin_entry(NormalProcedure, "w")
+    defined_procedures["PushMatrix"]    := builtin_entry(NormalProcedure, "w")
+    defined_procedures["PushRotate"]    := builtin_entry(NormalProcedure, "w", ["r", "i"], "i", "i", "i")
+    defined_procedures["PushScale"]     := builtin_entry(NormalProcedure, "w", "i", "i", "i")
+    defined_procedures["PushTranslate"] := builtin_entry(NormalProcedure, "w", "i", "i", "i")
+    defined_procedures["QueryPointer"]  := builtin_entry(Generator, "w")
+    defined_procedures["Raise"]         := builtin_entry(NormalProcedure, "w")
+    defined_procedures["ReadImage"]     := builtin_entry(NormalProcedure, "w", "s", "i", "i")
+    defined_procedures["Refresh"]       := builtin_entry(NormalProcedure, "w")
+    defined_procedures["Rotate"]        := builtin_entry(NormalProcedure, "w", ["r", "i"], "i", "i", "i")
+    defined_procedures["Scale"]         := builtin_entry(NormalProcedure, "w", "i", "i", "i")
+    defined_procedures["Texcoord"]      := builtin_entry(NormalProcedure, "w", "i", "i", ",,,")
+    defined_procedures["TextWidth"]     := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["Texture"]       := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["Translate"]     := builtin_entry(NormalProcedure, "w", "i", "i", "i", ",,,")
+    defined_procedures["Uncouple"]      := builtin_entry(NormalProcedure, "w")
+    defined_procedures["WAttrib"]       := builtin_entry(NormalProcedure, "w", "s", "...")
+    defined_procedures["WDefault"]      := builtin_entry(NormalProcedure, "w", "s", "s")
+    defined_procedures["WFlush"]        := builtin_entry(NormalProcedure, "w")
+    defined_procedures["WindowContents"] := builtin_entry(NormalProcedure, "w")
+    defined_procedures["WriteImage"]    := builtin_entry(NormalProcedure, "w", "s", "i", "i", "i", "i")
+    defined_procedures["WSection"]      := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["WSync"]         := builtin_entry(NormalProcedure, "w", "s")
+    defined_procedures["Abort"]         := builtin_entry(NormalProcedure, )
+    defined_procedures["Any"]           := builtin_entry(NormalProcedure, "c")
+    defined_procedures["Arb"]           := builtin_entry(NormalProcedure, )
+    defined_procedures["Arbno"]         := builtin_entry(NormalProcedure, "p")
+    defined_procedures["Bal"]           := builtin_entry(NormalProcedure, )
+    defined_procedures["Break"]         := builtin_entry(NormalProcedure, "c")
+    defined_procedures["Breakx"]        := builtin_entry(NormalProcedure, "c")
+    defined_procedures["Fail"]          := builtin_entry(NormalProcedure, )
+    defined_procedures["Fence"]         := builtin_entry(NormalProcedure, )
+    defined_procedures["Len"]           := builtin_entry(NormalProcedure, "i")
+    defined_procedures["NotAny"]        := builtin_entry(NormalProcedure, "c")
+    defined_procedures["Nspan"]         := builtin_entry(NormalProcedure, "c")
+    defined_procedures["Pos"]           := builtin_entry(NormalProcedure, "i")
+    defined_procedures["Rem"]           := builtin_entry(NormalProcedure, )
+    defined_procedures["Span"]          := builtin_entry(NormalProcedure, "c")
+    defined_procedures["Succeed"]       := builtin_entry(NormalProcedure, )
+    defined_procedures["Tab"]           := builtin_entry(NormalProcedure, "i")
+    defined_procedures["Rpos"]          := builtin_entry(NormalProcedure, "i")
+    defined_procedures["Rtab"]          := builtin_entry(NormalProcedure, "i")
+    #
+    #: we place the all the built-in functions into the current_file["globals_set"] so that
+    #: we can test against any identifier found in the parsing of a class/procedure/method.
+    #:
+    every ::insert(current_file["globals_set"], key(defined_procedures))
+    return defined_procedures
+end
+
+#PD:
+#: builtin_entry(generator, params[]) - create a table that contains the symbol
+#: table information required for a builtin Unicon/Icon internal function
+#:
+#:@param generator      flag to indicate whether or not the specified function
+#:@                     is a generator, normal procedures are indicated by a
+#:@                     &null value, generators by value of 1
+#:@param params         this is a list of values that specify the types that
+#:@                     are associated with each of the parameters of the function
+#:@                     being specified. These different values are described in
+#:@                     the procedure above (insert_builtins)
+#:@returns              a table containing the relevant information for the function
+#:
+procedure builtin_entry(generator, params[])
+    local   symbol_table_entry          #LV: holds the reference to the currently
+                                        #:   referenced procedure symbol table
+
+    symbol_table_entry                  := ::table()
+    symbol_table_entry["params"]        := params
+    symbol_table_entry["generator"]     := generator
+    symbol_table_entry["filename"]      := "Unicon Builtin Function"
+    symbol_table_entry["line"]          := 0
+    return symbol_table_entry
+end
+
+#PD:
+#: enter_symbol_table(name_token, value_type) - places the information about the
+#: procedure/class/record into the relevant section of the symbol table which is
+#: referenced via the global variable "symbol_table["procedures" | "classes" | "records"]".
+#:
+#:@global symbol_table
+#:@global current_file["procedure_name"]
+#:@global current_file["parameters"]
+#:@global current_file["parameters_set"]
+#:@global current_file["globals_set"]
+#:@global current_file["locals"]
+#:@global current_file["statics"]
+#:@global current_file["unknowns"]
+#:@global yyfilename
+#:
+#:@param name_token     This is the token representing the name of the
+#:@                     procedure being entered into the symbol table.
+#:@param value_type     Has (at present) only 3 applicable values, "procedure"
+#:@                     "class" or "record" which will concatenated with the
+#:@                     value "_name" to select the correct key in the symbol_table.
+#:@fails                under normal conditions, this procedure always fails
+#:
+procedure enter_symbol_table(name_token, value_type[])
+    static  classifications             #SV: holds information about the various
+                                        #:   classification of declarations.
+    local   symbol_table_entry,         #LV: holds the reference to the currently
+                                        #:   referenced procedure symbol table entry
+            name                        #LV: the string value representing the
+                                        #:   the procedure/class/record name, obtained
+                                        #:   from the token
+
+    initial {
+        classifications := [["procedure", "procedures"],
+                            ["record", "records"],
+                            ["class", "classes"],
+                            ["method", "methods"]]
+    }
+    #
+    #: the name being entered must be an actual token value. The token value
+    #: contains additional lexical information that we store into the symbol table. This
+    #: information includes the string value associated with the token and the line number
+    #: within the source file where the token has been found.
+    #:
+    if ::type(name_token) == "token" then {
+        #
+        #: extract the string name value from the token
+        #:
+        name := name_token.s
+        #
+        #: we can have three situations in which we can enter a procedure/class/record name
+        #: into the symbol table.
+        #
+        #: The first is where there is no existing entry for this name.
+        #
+        #: The second is where we are overiding a builtin function from the runtime
+        #: (either interpreter or the iconc compiler). We are referencing the global variable
+        #: symbol_table["built_ins"] containing the table of all defined functions for these tests.
+        #: As this option is allowed for user-defined procedures, classes and records, we only
+        #: need to test this option when we want to provide a warning message.
+        #
+        #: The third needs careful consideration. It is where a global variable has been defined
+        #: and it is the same as the procedure/class/record name. The situation within Unicon/Icon is that a
+        #: procedure/class/record name is a global variable but has a definition attached.
+        #: So we need to check if there is an attached definition to the global variable name. All
+        #: global variables for this file (including any found in $included files) will be found
+        #: in the current_file["globals_set"]. To test for a redefinition, we need to look in the
+        #: symbol_table["procedures" | "classes" | "records"] tables.
+        #
+        #: Now, in terms of the second and third options, all built-in functions are already in the
+        #: current_file["globals_set"]. So that, if we find the name already in the current_file["globals_set"],
+        #: we can only add it if it is NOT in any of symbol_table["procedures" | "classes" | "records"]
+        #: OR it is a built-in we are over-riding (this test does not need to be done)
+        #:
+        if (not ::member(current_file["globals_set"], name)) |
+                (/symbol_table["procedures", name] & /symbol_table["records", name] & /symbol_table["classes", name]) then {
+            if ::type(value_type[1]) ~== "string" then {
+                yyerror("[" || ErrorSystem.ProcedureCalling() || "]: the type of the token is not specified as a string\n" ||
+                        "Value of parameter 'value_type[1]' is: " ||
+                        ::ximage(value_type[1]))
+            }
+            current_file[value_type[1] || "_name"]  := name
+            symbol_table[value_type[2]][name]       := symbol_table_entry   := ::table()
+            symbol_table_entry["parameters"]        := current_file["parameters"]
+            current_file["parameters"]              := []
+            current_file["parameters_set"]          := ::set([])
+            symbol_table_entry["builtin"]           := &null
+            ::insert(current_file["globals_set"], name)
+            #
+            #: due to the pointer semantics that is used by Unicon, when we assign the values of
+            #: the following global variables to each of the table entries, any future updates
+            #: to the values stored in these global variables will be reflected in the information
+            #: that is stored in the table entries, since these variables are holding list and set
+            #: values.
+            #
+            #: When we finalise the processing of a procedure definition, we update these
+            #: global variables to new values and at that point, the symbol table entries
+            #: will no longer be accessed through these global variables. In addition,
+            #: those values that do not have these attributes will only have &null values
+            #: associated with them. For example, classes have no static variables, so the
+            #: various entries here will be &null.
+            #:
+            symbol_table_entry["locals"]        := current_file["locals"]
+            symbol_table_entry["statics"]       := current_file["statics"]
+            symbol_table_entry["unknowns"]      := current_file["unknowns"]
+            #
+            #
+            symbol_table_entry["filename"]      := yyfilename
+            symbol_table_entry["line"]          := name_token.line
+            if \symbol_table[value_type[2]][name] & \symbol_table[value_type[2]][name, "builtin"] then {
+                warning("[" || ErrorSystem.ProcedureCalling() || "]: Warning: overriding builtin function '" ||
+                        name ||
+                        "' by current " || value_type[2] || ".")
+            }
+        #
+        #: the procedure name exists and we need to indicate an error if we are trying to override
+        #: an existing user defined procedure in this file or an included file, which is an error.
+        #:
+        } else if \symbol_table["procedures"][name] then {
+            warning("[" || ErrorSystem.ProcedureCalling() || "]: Warning: overriding existing defined procedure '" ||
+                    name ||
+                    "' by current " || value_type[1] || "." ||
+                    "The existing procedure is found in " ||
+                    symbol_table["procedures"][name, "filename"] ||
+                    " on line " ||
+                    symbol_table["procedures"][name, "line"] || ".")
+        #
+        #: and we need to indicate an error if we are trying to override
+        #: an existing user defined record in this file or an included file, which is an error.
+        #:
+        } else if \symbol_table["records"][name] then {
+            warning("[" || ErrorSystem.ProcedureCalling() || "]: Warning: overriding existing defined record '" ||
+                    name ||
+                    "' by current " || value_type[1] || ". The existing record is found in " ||
+                    symbol_table["records"][name, "filename"] ||
+                    " on line " ||
+                    symbol_table["records"][name, "line"] || ".")
+        #
+        #: and we need to indicate an error if we are trying to override
+        #: an existing user defined class in this file or an included file, which is an error.
+        #:
+        } else if \symbol_table["classes"][name] then {
+            warning("[" || ErrorSystem.ProcedureCalling() || "]: Warning: overriding existing defined class '" ||
+                    name ||
+                    "' by current " || value_type[1] || ". The existing class is found in " ||
+                    symbol_table["classes"][name, "filename"] ||
+                    " on line " ||
+                    symbol_table["classes"][name, "line"] || ".")
+        }
+    #
+    #: otherwise, we have an error in the parameter type and need to signal an appropriate error
+    #:
+    } else {
+        yyerror("[" || ErrorSystem.ProcedureCalling() || "]: incorrect parameter type has found. Expected a token. \n" ||
+                "Value of parameter is: " ||
+                ::ximage(procedure_name))
+    }
+end
+
+#PD:
+#: procedure_finalise() - this procedure is used to clean up and reinitialise
+#: the various data structures used during the analysis of processing
+#: a procedure declaration, in preparation for the next procedure declaration.
+#: In doing so, it accesses a number of global variables.
+#:
+#:@global symbol_table["procedures"]
+#:@global this_is_generator
+#:@global current_file["procedure_name"]
+#:@global current_file["locals"]
+#:@global current_file["locals_set"]
+#:@global current_file["statics"]
+#:@global current_file["statics_set"]
+#:@global current_file["unknowns"]
+#:@global current_file["variable_list"]
+#:@global current_file["variable_set"]
+#:
+#:@fails                always fails
+#:
+procedure procedure_finalise()
+
+    symbol_table["procedures"][current_file["procedure_name"], "generator"]   := \this_is_generator
+    this_is_generator                   := &null
+    current_file["procedure_name"]      := &null
+    current_file["locals"]              := []
+    current_file["locals_set"]          := ::set([])
+    current_file["statics"]             := []
+    current_file["statics_set"]         := ::set([])
+    current_file["unknowns"]            := ::set([])
+    current_file["variable_list"]       := []
+    current_file["variable_set"]        := ::set([])
+end
+
+#PD:
+#: new_class(class_name_token) - initialises the various symbol table entries and
+#: the data structures required for analysis of the class declaration. This procedure
+#: accesses a number of global variables
+#:
+#:@global symbol_table["classes"]
+#:@global current_file["class_name"]
+#:@global current_file["class"]
+#:@global current_file["supers"]
+#:@global current_file["supers_set"]
+#:@global current_file["parameters"]
+#:@global current_file["parameters_set"]
+#:@global current_file["class_locals"]
+#:@global current_file["methods"]
+#:@global yyfilename
+#:
+#:@param class_name_token
+#:@                     this is the name of the new class being defined
+#:@                     in this declaration
+#:@fails                in normal processing, always fails
+#:
+procedure new_class(class_name_token)
+    local   symbol_table_entry,         #LV: holds the reference to the currently
+                                        #:   referenced procedure symbol table entry
+            class_name                  #LV: the string value representing
+                                        #:   the procedure name, obtained from the token
+
+    #
+    #: the new class name should be supplied as a token and we test for this
+    #:
+    if ::type(class_name_token) == "token" then {
+        #
+        #: extract the string name value from the token
+        #:
+        class_name := class_name_token.s
+        #
+        #: we only add the new class if it does not already exist in the symbol table
+        #:
+        if /symbol_table["classes"][class_name] then {
+            current_file["class_name"]          := class_name
+            symbol_table["classes"][class_name] := current_file["class"]        := symbol_table_entry   := ::table()
+            symbol_table_entry["supers"]        := current_file["supers"]
+            current_file["supers"]              := []
+            current_file["supers_set"]          := ::set([])
+            symbol_table_entry["params"]        := current_file["parameters"]
+            current_file["parameters"]          := []
+            current_file["parameters_set"]      := ::set([])
+            #
+            #: NOTE: the following variable adds to the parameters and needs to be compared to
+            #: the current_file["parameters_set"] to ensure that no local variable matches any
+            #: class parameter, but for the purpose of the class is not treated as a parameter.
+            #
+            #: due to the pointer semantics that is used by Unicon, when we assign the values of
+            #: the following global variable to the table entry, any future updates
+            #: to the value stored in this global variables will be reflected in the information
+            #: that is stored in the table entry, since this variable is holding a list value.
+            #
+            #: When we finalise the processing of a procedure definition, we update this
+            #: global variable to a new value and at that point, the symbol table entry
+            #: will no longer be accessed through this global variable.
+            #:
+            symbol_table_entry["locals"]    := current_file["class_locals"]
+            #
+            #
+            symbol_table_entry["methods"]   := current_file["methods"]       := ::table()
+            symbol_table_entry["filename"]  := yyfilename
+            symbol_table_entry["line"]      := class_name_token.line
+        #
+        #: otherwise, we need to indicate an error because we are trying to override
+        #: an existing user defined class in this file or an included file, which is an error.
+        #:
+        } else {
+            yyerror("[" || ErrorSystem.ProcedureCalling() || "]: The class " || class_name ||
+                    " has already been defined. It has been previously declared in " ||
+                    symbol_table["classes"][class_name, "filename"] || " on line " ||
+                    symbol_table["classes"][class_name, "line"] || ".")
+        }
+    #
+    #: otherwise, we have an error in the parameter type and need to signal an appropriate error
+    #:
+    } else {
+        yyerror("[" || ErrorSystem.ProcedureCalling() || "]: incorrect parameter type has found. Expected a string. \n" ||
+                "Value of parameter is: " ||
+                ::ximage(class_name))
+    }
+end
+
+#PD:
+#: class_finalise() - this procedure is used to clean up and reinitialise
+#: the various data structures used during the analysis of processing
+#: a class declaration, in preparation for the next class declaration.
+#:
+#:@global current_file["class_name"]
+#:@global current_file["class"]
+#:@global current_file["supers"]
+#:@global current_file["supers_set"]
+#:@global current_file["parameters"]
+#:@global current_file["parameters_set"]
+#:@global current_file["class_locals"]
+#:@global current_file["methods"]
+#:
+#:@fails                always fails
+#:
+procedure class_finalise()
+
+    current_file["methods"]          := &null
+    current_file["class_name"]       := &null
+    current_file["class"]            := &null
+    current_file["supers"]           := []
+    current_file["supers_set"]       := ::set([])
+    current_file["parameters"]       := []
+    current_file["parameters_set"]   := ::set([])
+    current_file["class_locals"]     := []
+end
+
+#PD:
+#: method_to_symbol_table(procedure_name_token) - places the information about the
+#: method into the symbol table.
+#:
+#:@global symbol_table["procedures"]
+#:@global this_is_generator
+#:@global current_file["procedure_name"]
+#:@global current_file["locals"]
+#:@global current_file["locals_set"]
+#:@global current_file["statics"]
+#:@global current_file["statics_set"]
+#:@global current_file["unknowns"]
+#:@global current_file["variable_list"]
+#:@global current_file["variable_set"]
+#:
+#:@param procedure_name_token
+#:@                     This is the string name of the method being entered
+#:@                     into the symbol table.
+#:@fails                under normal conditions, this procedure always fails
+#:
+procedure method_to_symbol_table(method_name_token)
+    local   symbol_table_entry,         #LV: holds the reference to the currently
+                                        #:   referenced procedure symbol table entry
+            method_name                 #LV: the string value representing
+                                        #:   the procedure name, obtained from the token
+
+    #
+    #: the method name being entered must be a token
+    #:
+    if ::type(method_name_token) == "token" then {
+        #
+        #: extract the string name value from the token
+        #:
+        method_name := method_name_token.s
+        #
+        #: we only add the new method if it does not already exist in the
+        #: symbol table for this class definition
+        #:
+        if /current_file["methods"][method_name] then {
+            current_file["procedure_name"]          := method_name
+            current_file["methods"][method_name]    := symbol_table_entry   := ::table()
+            symbol_table_entry["params"]            := current_file["parameters"]
+            current_file["parameters"]              := []
+            current_file["parameters_set"]          := ::set([])
+            symbol_table_entry["locals"]            := current_file["locals"]
+            symbol_table_entry["statics"]           := current_file["statics"]
+            symbol_table_entry["unknowns"]          := current_file["unknowns"]
+            symbol_table_entry["filename"]          := yyfilename
+            symbol_table_entry["line"]              := method_name_token.line
+        #
+        #: otherwise, we need to indicate an error because we are trying to override
+        #: an existing user defined method in the current class, which is an error.
+        #:
+        } else {
+            yyerror("[" || ErrorSystem.ProcedureCalling() || "]: The method " || method_name ||
+                    " has already been defined. It has been previously declared in " ||
+                    symbol_table["procedures"][method_name, "filename"] || " on line " ||
+                    symbol_table["procedures"][method_name, "line"] || ".")
+        }
+    #
+    #: otherwise, we have an error in the parameter type and need to signal an appropriate error
+    #:
+    } else {
+        yyerror("[" || ErrorSystem.ProcedureCalling() || "]: incorrect parameter type has found. Expected a string. \n" ||
+                "Value of parameter is: " ||
+                ::ximage(method_name))
+    }
+end
+
+#PD:
+#: method_finalise() - this procedure is used to clean up and reinitialise
+#: the various data structures used during the analysis of processing
+#: a method declaration, in preparation for the next method declaration.
+#:
+#:@global symbol_table["procedures"]
+#:@global this_is_generator
+#:@global current_file["procedure_name"]
+#:@global current_file["locals"]
+#:@global current_file["locals_set"]
+#:@global current_file["statics"]
+#:@global current_file["statics_set"]
+#:@global current_file["unknowns"]
+#:@global current_file["variable_list"]
+#:@global current_file["variable_set"]
+#:
+#:@fails                always fails
+#:
+procedure method_finalise()
+
+    current_file["methods"][current_file["procedure_name"], "generator"]  := \this_is_generator
+    this_is_generator                   := &null
+    current_file["procedure_name"]      := &null
+    current_file["locals"]              := []
+    current_file["locals_set"]          := ::set([])
+    current_file["statics"]             := []
+    current_file["statics_set"]         := ::set([])
+    current_file["unknowns"]            := ::set([])
+    current_file["variable_list"]       := []
+    current_file["variable_set"]        := ::set([])
+end
+
+#PD:
+#: record_to_symbol_table(record_name_token) - places the information about the
+#: record into the symbol table.
+#:
+#:@param record_name_token
+#:@                     This is the string name of the record being entered
+#:@                     into the symbol table.
+#:@fails                under normal conditions, this procedure always fails
+#:
+procedure record_to_symbol_table(record_name_token)
+    local   symbol_table_entry,         #LV: holds the reference to the currently
+                                        #:   referenced procedure symbol table entry
+            record_name                 #LV: the string value representing
+                                        #:   the procedure name, obtained from the token
+
+    #
+    #: the record name being entered must be a token
+    #:
+    if ::type(record_name_token) == "token" then {
+        #
+        #: extract the string name value from the token
+        #:
+        record_name :=record_name_token.s
+        #
+        #: we only add the new record if it does not already exist in the
+        #: symbol table
+        #:
+        if /symbol_table["records"][record_name] then {
+            symbol_table["records"][record_name]    := symbol_table_entry   := ::table()
+            symbol_table_entry["fieldnames"]        := current_file["identifiers"]
+            symbol_table_entry["filename"]          := yyfilename
+            symbol_table_entry["line"]              := record_name_token.line
+            current_file["identifiers"]             := []
+        #
+        #: otherwise, we need to indicate an error because we are trying to override
+        #: an existing user defined record in this file or an included file, which is an error.
+        #:
+        } else {
+            yyerror("[" || ErrorSystem.ProcedureCalling() || "]: The record " || record_name ||
+                    " has already been defined. It has been previously declared in " ||
+                    symbol_table["records"][record_name, "filename"] || " on line " ||
+                    symbol_table["records"][record_name, "line"] || ".")
+        }
+    #
+    #: otherwise, we have an error in the parameter type and need to signal an appropriate error
+    #:
+    } else {
+        yyerror("[" || ErrorSystem.ProcedureCalling() || "]: incorrect parameter type has found. Expected a string. \n" ||
+                "Value of parameter is: " ||
+                ::ximage(recordname))
+    }
+end
+
+#PD:
+#: Keyword(x1) - procedure chacks the supplied ident token to see if it is in the list of
+#: valid unicon keywords. It will generate an error if the value of the token
+#: is not known. The return value is a parse tree element keywordPT
+#:
+#:@param x1             this should be a value of record type token
+#:@returns              a value of record type keywordPT for storing in the
+#:@                     parse tree
+#:
+procedure Keyword(x1)
+    static  keywords,                   #SV: holds a set that holds all the valid
+                                        #:   unicon keyword names
+            is_generator                #SV: holds a table whose keys are members
+                                        #:   of the keywords set and are themselves
+                                        #:   generators.
+
+    initial {
+        keywords := set(["allocated",       #   generator : accumulated number of
+                                            #:  in heap, static, string and block regions
+                         "clock",           #   current time of day as string
+                                            #:  format hh:mm:ss
+                         "collections",     #   generator : number of times memory
+                                            #:  has been reclaimed in heap, static,
+                                            #:  string and block regions
+                         "column",          #   source column number of current
+                                            #:  execution point
+                         "current",         #   the currently executing co-expression
+                         "date",            #   current date as string format
+                                            #:  yyyy/mm/dd
+                         "now",             #   current time as integer number
+                                            #:  of seconds since 00:00:00 GMT,
+                                            #:  January 1st, 1970
+                         "dateline",        #   timestamp as string format which
+                                            #:  includes weekday, date and current
+                                            #:  time to the minute
+                         "digits",          #   cset value of '0123456789'
+                         "e",               #   real value of natural logarithm
+                                            #:  base 2.7182818...
+                         "error",           #   assignable variable controlling
+                                            #:  when and how runtime errors are
+                                            #:  reported. The value -1 disables
+                                            #:  runtime errors indefinitely
+                         "errornumber",     #   runtime error number of last runtime
+                                            #:  error converted to failure
+                         "errortext",       #   error message of last runtime
+                                            #:  error converted to failure
+                         "errorvalue",      #   erroroneous value of the last
+                                            #:  runtime error converted to failure
+                         "errout",          #   standard error file
+                         "fail",            #   never produces a value, always fails
+                         "eventcode",       #
+                         "eventsource",     #
+                         "eventvalue",      #
+                         "features",        #   generator - strings that indicate
+                                            #:  the non-portable features supported
+                                            #:  on the current platform
+                         "file",            #   string value that indicates the
+                                            #:  source file name for the current
+                                            #:  execution point, if there is one
+                         "host",            #   string that identifies the current
+                                            #:  host computer that Unicon/Icon is
+                                            #:  running on
+                         "input",           #   standard input file, default source
+                                            #:  for file input functions
+                         "lcase",           #   cset value of the lowercase letters
+                                            #:  from a to z
+                         "letters",         #   cset value of the upper case and
+                                            #:  lower case letters A-Z and a-z
+                         "level",           #   integer value representing the
+                                            #:  current nesting level of the
+                                            #:  active procedure
+                         "line",            #   integer value indicating the
+                                            #:  source code line number of the
+                                            #:  currently executing code
+                         "main",            #   co-expression in which the program
+                                            #:  execution began
+                         "null",            #   produces the null value
+                         "output",          #   standard file output, default for
+                                            #:  file output functions
+                         "phi",             #   real value that represents the
+                                            #:  golden ratio
+                         "pi",              #   real value that represents pi
+                         "pick",            #   generator - strings that represent
+                                            #:  the object IDs selected at the point
+                                            #:  (&x, &y) at the most recent Event()
+                                            #:  function call, if that event was
+                                            #:  read from a 3D window with an
+                                            #:  attribute of "pick=on"
+                         "pos",             #   assignable integer variable that
+                                            #:  is the current cusor position in
+                                            #:  the current string scanning
+                                            #:  environment
+                         "progname",        #   assignable string variable that
+                                            #:  holds the name of the current
+                                            #:  executing program
+                         "random",          #   assignable integer variable that
+                                            #:  is the seed for the random number
+                                            #:  generator operator ?
+                         "regions",         #   generator - produces the sizes
+                                            #:  of the static, string and block
+                                            #:  regions, the first result is always
+                                            #:  0 and is included for compatibility
+                                            #:  reasons
+                         "source",          #   co-expression that activated the
+                                            #:  current co-expression
+                         "storage",         #   generator - integer taht signifies
+                                            #:  the current amount of memory used
+                                            #:  within the static, string and
+                                            #:  block regions, the first result is
+                                            #:  always 0 and is included for
+                                            #:  compatibility reasons
+                         "subject",         #   assignable string variable and
+                                            #:  holds the current string in the
+                                            #:  current string scanning environment
+                         "time",            #   integer value that is the number
+                                            #:  of millisecond of CPU time since
+                                            #:  the start of program execution
+                         "trace",           #   assignable integer variable --- description needs clarification by Clinton
+                         "dump",            #   assignable integer variable which
+                                            #:  controls whether or not the program
+                                            #:  produces a dump of the local and
+                                            #:  global variable on program
+                                            #:  termination
+                         "ucase",           #   cset value taht contains all the
+                                            #:  letters form A to Z
+                         "version",         #   string value identifying which
+                                            #:  version of Unicon or Icon is
+                                            #:  executing
+                         "errno",           #   integer value that indicates the
+                                            #:  error number of the last system
+                                            #:  call failure.
+                         "window",          #   assignable window variable that is
+                                            #:  the default window for all window
+                                            #:  functions
+                         "col",             #   assignable integer variable that
+                                            #:  is the mouse location in text
+                                            #:  columns
+                         "row",             #   assignable integer variable that
+                                            #:  is the mouse location in text
+                                            #:  rows
+                         "x",               #   assignable integer variable that
+                                            #:  is the horizontal pixel location
+                                            #:  of the mouse
+                         "y",               #   assignable integer variable that
+                                            #:  is the vertical pixel location
+                                            #:  of the mouse
+                         "interval",        #   integer value in milliseconds
+                                            #:  between the most recent event and
+                                            #:  the previous event.
+                         "control",         #   &null if control key was pressed
+                                            #:  during the most recent event,
+                                            #:  otherwise fails
+                         "shift",           #   &null if shift key was pressed
+                                            #:  during the most recent event,
+                                            #:  otherwise fails
+                         "meta",            #   &null if mate (Alt) key was pressed
+                                            #:  during the most recent event,
+                                            #:  otherwise fails
+                         "lpress",          #   integer value that indicates a
+                                            #:  left button press event
+                         "mpress",          #   integer value that indicates a
+                                            #:  middle button press event
+                         "rpress",          #   integer value that indicates a
+                                            #:  right button press event
+                         "lrelease",        #   integer value that indicates a
+                                            #:  left button release event
+                         "mrelease",        #   integer value that indicates a
+                                            #:  middle button release event
+                         "rrelease",        #   integer value that indicates a
+                                            #:  right button release event
+                         "ldrag",           #   integer value that indicates a
+                                            #:  left button drag event
+                         "mdrag",           #   integer value that indicates a
+                                            #:  middle button drag event
+                         "rdrag",           #   integer value that indicates a
+                                            #:  right button drag event
+                         "resize",          #   integer value that indicates a
+                                            #:  window resize event
+                         "ascii",           #   cset value holding all the ASCII
+                                            #:  characters
+                         "cset"])           #   cset value containing all available
+                                            #:  characters
+        is_generator                := ::table()
+        is_generator["allocated"]   := 1
+        is_generator["collections"] := 1
+        is_generator["features"]    := 1
+        is_generator["pick"]        := 1
+        is_generator["regions"]     := 1
+        is_generator["storage"]     := 1
+    }
+
+    if ::type(x1) == "token" then {
+        #
+        #: verify that x1 is a valid keyword
+        #:
+        if not ::member(keywords, x1.s) then {
+            yyerror("[" || ErrorSystem.ProcedureCalling() || "]: &" || x1.s ||" is not a valid keyword!")
+        }
+        #
+        #: create the parse tree item that represents a keyword with the associated
+        #: generator flag set for those keywords that are generators
+        #:
+        return keywordPT(x1, \is_generator[x1.s] | &null)
+    #
+    #: otherwise, we have an error in the parameter type and need to signal an appropriate error
+    #:
+    } else {
+        yyerror("[" || ErrorSystem.ProcedureCalling() || "]: incorrect parameter type has found. Expected a token. \n" ||
+                "Value of parameter is: " ||
+                ::ximage(x1))
+    }
+end
+
+
+#PD:
+#: Progend(x1) - takes a declarationsPT record which represents the parse tree
+#: that has been found in this file and will now generate the icon source code
+#: file for processing by icont or iconc.
+#:
+#:@param x1             declarationsPT() record
+procedure Progend(x1)
+    local   pe,                         #LV: temporary to hold each parsing error
+                                        #:   found during this parse process
+            num_parsing_errors          #LV: temporary to hold count of parsing
+                                        #:   errors that have been found in this
+                                        #:   parsing run
+
+    #
+    #: the first action to check for is to see if there are any parsing errors
+    #: that have been reported for this file. If there are, we will display each
+    #: of them and then stop by reporting the number of parsing errors found
+    #:
+    if (num_parsing_errors := *\parsingErrors) > 0 then {
+        every pe := !parsingErrors do {
+            ::write(&errout, pe.errorMessage)
+        }
+        istop("[" || ErrorSystem.ProcedureCalling() || "]: " || num_parsing_errors ||
+              " error" ||
+              (num_parsing_errors > 1 & "s" | "") ||
+              " found in the file " ||
+              yyfilename ||
+              ".")
+    }
+
+    #
+    #: We now check to see if there was any parsed input found. If there are no
+    #: declarations then there is no input in this file and we will report this
+    #: and stop.
+    #:
+    if *x1.listof_declaration = 0 then {
+        istop("[" || ErrorSystem.ProcedureCalling() || "]: error: empty file for " ||
+              yyfilename ||
+              ".")
+    }
+
+    #
+    #: The following is a temporary debugging line that displays the parse tree
+    #: and then stops the compilations process. Both lines are to be removed when
+    #: testing has been completed.
+    #:
+    ::write(::ximage(x1))
+    istop("[" || ErrorSystem.ProcedureCalling() || "]: parsing complete")
+
+    #####################################
+    #####################################
+    #
+    # The following code is not run yet
+    #
+    #####################################
+    #####################################
+
+    package_level_syms := ::set()
+    package_level_class_syms := ::set()
+    set_package_level_syms(x1)
+    scopecheck_superclass_decs(x1)
+
+    outline := 1
+    outcol := 1
+    #
+    # export specifications for each class
+    #
+    native := ::set()
+    every cl := classes.foreach_t() do {
+        cl.WriteSpec()
+        ::insert(native, cl)
+    }
+    #
+    # import class specifications, transitively
+    #
+    repeat {
+        added := 0
+        every super := ((classes.foreach_t()).foreachsuper() | !imports) do {
+            if /classes.lookup(super) then {
+                added := 1
+                readspec(super)
+                cl := classes.lookup(super)
+                if /cl then {
+                    halt("can't inherit class '",super,"'")
+                }
+                iwrite("  inherits ", super, " from ", cl.linkfile)
+                writelink(cl.dir, cl.linkfile)
+            }
+        }
+        if added = 0 then {
+            break
+        }
+    }
+    #
+    # Compute the transitive closure of the superclass graph. Then
+    # resolve inheritance for each class, and use it to apply scoping rules.
+    #
+    every (classes.foreach_t()).transitive_closure()
+    every (classes.foreach_t()).resolve()
+
+    scopecheck_bodies(x1)
+
+    if \thePackage then {
+        every thePackage.insertsym(!package_level_syms)
+    }
+
+    if \iconc then  {
+        iconc_prep_parse_tree(&null, x1)
+    }
+
+    #
+    # generate output
+    #
+    yyprint(x1)
+    ::write(yyout)
+
+$ifndef NoPatternIntegration
+    # generate invocable declarations for identifiers in unevaluated exprs
+    if (*\list_of_invocables)>0 then {
+        ::writes(yyout, "invocable ")
+        every temp := list_of_invocables[i := 1 to *list_of_invocables] do {
+            ::writes(yyout, image(temp))
+            if i < *list_of_invocables then {
+                ::writes(yyout, ",")
+            }
+        }
+        ::write(yyout)
+    }
+$endif                                  # NoPatternIntegration
+
+    if \iconc & (::type(set_of_all_fields) == "set") &
+            (*set_of_all_fields > 0) then {
+        arandomfield := !set_of_all_fields
+        writes(yyout, "record __dummyrecord",dummyrecno,"(",arandomfield)
+        delete(set_of_all_fields, arandomfield)
+        every ::writes(yyout, ",", !set_of_all_fields)
+        ::write(yyout, ")")
+        dummyrecno +:= 1
+        set_of_all_fields := ::set()
+    }
+end
