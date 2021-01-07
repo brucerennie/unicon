@@ -3,6 +3,9 @@
 # compiler can be linked in as a procedure within larger programs such
 # as IDEs.
 #
+
+$include "links.icn"
+
 procedure main(argv)
     exit(unicon(argv))
 end

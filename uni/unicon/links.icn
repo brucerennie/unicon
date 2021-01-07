@@ -1,0 +1,11 @@
+link unicon
+link unigram
+link "../lib/tree"
+link "../lib/unilex"
+link ca
+link cfy
+link idol
+link preproce
+link tokens
+link unix
+link yyerror

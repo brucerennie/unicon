@@ -1,0 +1,147 @@
+#
+# Unicon unigram.y code include file for prefix section
+#
+
+$include "ytab_h.icn"
+
+
+procedure Keyword(x1,x2)
+   static keywords
+   initial {
+      keywords := set(["allocated","clock","collections","column","current",
+                       "date","now","dateline","digits","e","error",
+                       "errornumber","errortext","errorvalue","errout","fail",
+                       "eventcode","eventsource","eventvalue","features",
+                       "file","host","input","lcase","letters","level",
+                       "line","main","null","output","phi","pi","pick","pos",
+                       "progname","random","regions","source","storage",
+                       "subject","time","trace","dump","ucase","version",
+                       "errno","window","col","row","x","y","interval",
+                       "control","shift","meta","lpress","mpress","rpress",
+                       "lrelease","mrelease","rrelease","ldrag","mdrag",
+                       "rdrag","resize","ascii","cset"])
+      }
+
+   # verify that x2 is a valid keyword
+   if not member(keywords, x2.s) then
+      yyerror("&" || x2.s ||" is not a valid keyword!")
+
+   return node("keyword",x1,x2)
+end
+
+global set_of_all_fields, dummyrecno
+procedure Field(x1,x2,x3)
+initial { set_of_all_fields := set(); dummyrecno := 1 }
+
+   if \iconc then {
+      if type(x3) == "token" then {
+         insert(set_of_all_fields, x3.s)
+#        write(&errout, "field ", image(x3.s))
+         }
+      }
+
+   return node("field",x1,x2,x3)
+end
+
+procedure Clone1stToken(n)
+   case type(n) of {
+      "token": return copy(n)
+      "treenode": {
+         return Clone1stToken(!n.children)
+         }
+      }
+end
+
+global outline, outcol, outfilename,package_level_syms,package_level_class_syms
+
+procedure Progend(x1)
+
+   if *\parsingErrors > 0 then {
+      every pe := !parsingErrors do {
+         write(&errout, pe.errorMessage)
+         }
+      istop(*\parsingErrors || " error" ||
+            (if *\parsingErrors > 1 then "s" else ""))
+      }
+
+   if /x1 then istop("error: empty file")
+
+   package_level_syms := set()
+   package_level_class_syms := set()
+   set_package_level_syms(x1)
+   scopecheck_superclass_decs(x1)
+
+   outline := 1
+   outcol := 1
+   #
+   # export specifications for each class
+   #
+   native := set()
+   every cl := classes.foreach_t() do {
+      cl.WriteSpec()
+      insert(native, cl)
+      }
+   #
+   # import class specifications, transitively
+   #
+   repeat {
+      added := 0
+      every super := ((classes.foreach_t()).foreachsuper() | !imports) do {
+         if /classes.lookup(super) then {
+            added := 1
+            readspec(super)
+            cl := classes.lookup(super)
+            if /cl then halt("can't inherit class '",super,"'")
+            iwrite("  inherits ", super, " from ", cl.linkfile)
+            writelink(cl.dir, cl.linkfile)
+            }
+       }
+    if added = 0 then break
+  }
+  #
+  # Compute the transitive closure of the superclass graph. Then
+  # resolve inheritance for each class, and use it to apply scoping rules.
+  #
+  every (classes.foreach_t()).transitive_closure()
+  every (classes.foreach_t()).resolve()
+
+  scopecheck_bodies(x1)
+
+   if \thePackage then {
+      every thePackage.insertsym(!package_level_syms)
+      }
+
+  if \iconc then  {
+     iconc_prep_parse_tree(&null, x1)
+     }
+
+  #
+  # generate output
+  #
+#  iwrite("Generating code:")
+   yyprint(x1)
+   write(yyout)
+
+$ifndef NoPatternIntegration
+   # generate invocable declarations for identifiers in unevaluated exprs
+   if (*\list_of_invocables)>0 then {
+      writes(yyout, "invocable ")
+      every temp := list_of_invocables[i := 1 to *list_of_invocables] do {
+         writes(yyout, image(temp))
+         if i < *list_of_invocables then writes(yyout, ",")
+         }
+      write(yyout)
+      }
+$endif                                  # NoPatternIntegration
+
+   if \iconc & (type(set_of_all_fields) == "set") &
+        (*set_of_all_fields > 0) then {
+        arandomfield := !set_of_all_fields
+      writes(yyout, "record __dummyrecord",dummyrecno,"(",arandomfield)
+      delete(set_of_all_fields, arandomfield)
+      every writes(yyout, ",", !set_of_all_fields)
+      write(yyout, ")")
+      dummyrecno +:= 1
+      set_of_all_fields := set()
+      }
+end

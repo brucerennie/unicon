@@ -1,0 +1,259 @@
+#
+# Unicon unigram.y code include file for suffix section
+#
+$include "ytab_h.icn"
+
+#
+# This procedure parenthesizes the right-hand side of an expression,
+# apparently to simplify or correct any precedence or semantic issues
+# when passing the code on to iconc.
+#
+procedure parenthesize_assign(nd)
+   local rhs
+
+   if /iconc then
+      return nd
+   if not (*nd.children = 3) then
+      return nd
+   rhs := nd.children[3]
+   if (not(type(rhs) == "treenode")) then
+      return nd
+   if (not(rhs.label == "invoke")) then
+      return nd
+   rhs := node("Paren", "(", rhs, ")")
+   nd.children[3] := rhs
+   return nd
+end
+
+procedure FieldRef(lhs, dot, rhs)
+   if /iconc | (type(lhs) ~== "treenode") then
+      return Field(lhs, dot, rhs)
+
+   if (lhs.label == "invoke") then {
+      tmpcount +:= 1;
+      return node("Paren", "(",
+         node("assign", "__" || tmpcount, " := ", lhs, ")", "& "),
+         node("invoke", Field("__" || tmpcount, ".", rhs))
+         )
+      }
+   return Field(lhs, dot, rhs)
+end
+
+procedure InvocationNode(args[])
+   tmpcount +:= 1
+   if type(args[1]) == "token" & (args[1].tok = IDENT) then {
+       n1 := args[1]
+       lparen := copy(args[1])
+       lparen.tok := LPAREN
+       lparen.s := "("
+   }
+   else {
+       n1 := node("Paren","(",node("assign","__"||tmpcount,":=",args[1]),")")
+       if lparen := Clone1stToken(args[1]) then {
+           lparen.tok := LPAREN
+           lparen.s := "("
+       }
+       else lparen := "("
+   }
+   if *args = 6 then {
+       return node("Paren",lparen,node("invoke",
+                    # iconc uses no __m business
+                   (if /iconc then Field(Field(n1, ".", "__m"), "." , args[3])
+                              else Field(n1, ".", args[3])),
+
+             args[4], node("exprlist",
+             if n1 === args[1] then args[1] else "__"||tmpcount,
+             if args[5] === &null then &null else ",",args[5]),args[6])
+             ,")")
+      }
+   else {
+      if /iconc then
+         return  node("Paren",lparen,node("invoke",Field(Field(
+                          Field(n1,".", "__m"),
+                         "." , args[3]),".",args[5]),
+                       args[6], node("exprlist",
+                                if n1 === args[1] then args[1] else "__"||tmpcount,
+                                if args[7] === &null then &null else ",",args[7]),args[8])
+                      ,")")
+      else return SuperMethodInvok ! args
+   }
+end
+
+procedure SimpleInvocation(expr11, lparen, args, rparen)
+   if /iconc then
+      return node("invoke", expr11, lparen, args, rparen)
+
+   if ((type(expr11) == "token") & (expr11.tok = IDENT)) then {
+      return node("invoke", expr11, lparen, args, rparen)
+      }
+
+   if (type(expr11) == "treenode") then {
+      case expr11.label of {
+         "field": {
+            #
+            # need to examine lhs of field-ref to determine
+            # whether we need to decompose the expr11 further...
+            #
+            if (type(expr11.children[1]) == "treenode") then {
+               tmpcount +:= 1;
+               n1 := node("Paren", "(", node("assign", "__"||tmpcount, ":=",
+                  expr11.children[1]), ")")
+               return node("exprlist", "(", n1, "&",
+                  node("invoke", Field("__"||tmpcount, ".", expr11.children[3]),
+                  lparen, args, rparen), ")")
+               }
+            else {
+               return node("invoke", expr11, lparen, args, rparen)
+               }
+            }
+         default: {
+            return node("invoke", expr11, lparen, args, rparen)
+            }
+         }
+      }
+   return node("invoke", expr11, lparen, args, rparen)
+end
+
+procedure SuperMethodInvok(args[])
+   tmpcount +:= 1
+   if (type(args[1]) == "token") & (args[1].tok = IDENT) then {
+      n1 := args[1]
+      lparen := copy(args[1])
+      lparen.tok := LPAREN
+      lparen.s := "("
+      }
+   else {
+      n1 := node("Paren","(",node("assign","__"||tmpcount,":=",args[1]),")")
+      if lparen := Clone1stToken(args[1]) then {
+         lparen.tok := LPAREN
+         lparen.s := "("
+         }
+      else
+         lparen := "("
+      }
+
+   args[3].s := mangle_class_sym(args[3].s)
+   args[3].s ||:= "__oprec"
+   return node("exprlist", "(", n1, ")", " & ",
+      node("Paren", lparen, node("invoke",
+      Field(args[3], ".", args[5]),
+      args[6], node("exprlist",
+      if n1 === args[1] then args[1] else "__" || tmpcount,
+      if args[7] === &null then &null else ",", args[7]), args[8]),
+      ")", ))
+end
+
+procedure isloco(node, s)
+case type(node) of {
+   "treenode": {
+      if *node.children > 0 then return isloco(!node.children, s)
+      }
+   "token" : {
+      if (node.tok = IDENT) & (node.s == s) then return
+      }
+   }
+end
+
+procedure buildtab_from_cclause(n, args)
+   if type(n) ~== "treenode" then stop("bad table literal")
+   comma := copy(n.children[2])
+   comma.tok := COMMA
+   comma.s := ","
+   case n.label of {
+     "cclause0": {
+        if *args.children > 0 then push(args.children, comma)
+        push(args.children, n.children[3])
+        }
+     "cclause1": {
+        if *args.children > 0 then push(args.children, comma)
+        push(args.children, n.children[3])
+        push(args.children, comma)
+        push(args.children, n.children[1])
+        }
+   }
+end
+
+# build a tree equivalent to
+# {__tmp :=[]; every put(__tmp, expr); if __tmp>0 then __tmp}
+# The enclosing procedure/method also needs to declare this temp var;
+# see AppendListCompTemps
+#
+procedure ListComp(expr)
+   local tmp
+   tmpcount +:= 1
+   tmp := "__" || tmpcount
+   return node("ListComp",
+                "{", string(tmp), " :=[]; every put(" || tmp || ", ",
+                expr,
+                "); if *" || tmp || ">0 then " || tmp || "}")
+end
+
+#
+# AppendListCompTemps(localdecls, procbody) - at the procedure/method
+# outermost level, we may need to add some declarations based on what's
+# in the procbody. If there are changes to the declared lcls section,
+# returns changed locals.
+#
+procedure AppendListCompTemps(lcls, body)
+   # if there is, in the procbody, a list of varnames to declare
+   if *\(ltmps := ListCompTemps(body)) > 0 then {
+      # make a varlist containing ltmps
+      if *ltmps > 1 then {
+         vl := token(IDENT, ltmps[1], 0, 0, "lambda.icn")
+         every i := 2 to *ltmps do
+            vl := node("varlist3", vl, ",",
+                        token(IDENT, ltmps[i], 0, 0, "lambda.icn"))
+         }
+      else {
+         # the varlist will just be an IDENT
+         vl := token(IDENT, ltmps[1], 0, 0, "lambda.icn")
+         }
+      if (lcls === &null) |
+          (type(lcls)==="treenode" & lcls.label==("locals2"|"locals3")) then {
+         return node("locals2", lcls, "local", vl, ";")
+         }
+      else
+         write(&errout, "don't know what to do with ", image(lcls))
+      }
+end
+
+#
+# ListCompTemps(n) - lower level temp. var extraction from proc body.
+# returns list of strings containing temp. variables from list comprehension
+# L
+procedure ListCompTemps(n)
+   local LCT
+   if type(n) == "treenode" then {
+      if n.label=="ListComp" then {
+         LCT := [n.children[2]]
+         LCT |||:= ListCompTemps(n.children[4])
+         return LCT
+         }
+      else if LCT := ListCompTemps(n.children[k := 1 to *(n.children)]) then {
+         every kk := k+1 to *(n.children) do {
+            LCT |||:= ListCompTemps(n.children[kk])
+            }
+         return LCT
+         }
+      }
+end
+
+procedure tablelit(lb, cl, rb)
+local tabid, lp, rp, args
+   args := node("elst1")
+   while type(cl)=="treenode" & cl.label == "Caselist" do {
+      buildtab_from_cclause(cl.children[3], args)
+      cl := cl.children[1]
+      }
+   buildtab_from_cclause(cl, args)
+   tabid := copy(lb); tabid.tok := IDENT; tabid.s := "table"
+   lp := copy(lb); lp.tok := LPAREN; lp.s := "("
+   rp := copy(rb); rp.tok := RPAREN; rp.s := ")"
+   return node("invoke", tabid, lp, args, rp)
+end
+
+#
+# A record type for recording errors for later reporting e.g. within an IDE,
+# or to stderr.
+#
+record ParseError ( lineNumber, errorMessage )

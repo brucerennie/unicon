@@ -4,23 +4,25 @@ include $(BASE)/Makedefs.uni
 export PATH:=$(BIN):$(PATH)
 
 U= unicon.u unigram.u unilex.u tree.u preproce.u idol.u unix.u tokens.u yyerror.u main.u cfy.u ca.u
+UG= unigram.action.u unigram.prefix.u unigram.suffix.u
 
 # Don't delete unigram.u and idol.u, needed for bootstrapping
-UDEL= unicon.u unilex.u tree.u preproce.u unix.u tokens.u yyerror.u main.u cfy.u ca.u
+UDEL= unicon.u unilex.u tree.u preproce.u unix.u tokens.u yyerror.u main.u cfy.u ca.u unigram.action.u unigram.prefix.u unigram.suffix.u
 
-UCFILES= unicon.icn unigram.icn unilex.icn tree.icn preproce.icn idol.u unix.icn tokens.icn yyerror.icn main.icn cfy.icn ca.icn
+UCFILES= unicon.icn unigram.icn unilex.icn tree.icn preproce.icn idol.u unix.icn tokens.icn yyerror.icn main.icn cfy.icn ca.icn unigram.action.icn unigram.prefix.icn unigram.suffix.icn
 
 # Files from this dir that (for now) we copy into lib/ for use by external
 # programs.  Long term, need to reconcile with or replace by stuff in parser/
 LIBFILES= ../lib/unilex.u ../lib/tree.u
 
 all: unicon $(WUNICONTARGET)
-unicon $(UNICONEXE): $(U) $(LIBFILES)
-	$(ICONT) $(U)
+unicon $(UNICONEXE): $(U) $(LIBFILES) $(UG)
+	$(ICONT) -o unicon main.icn
 	$(CP) unicon$(EXE) $(BIN)
 
 # A windows-specific build option
-wunicon $(WUNICONEXE): $(U)
+wunicon $(WUNICONEXE): $(U) $(UG)
+	$(ICONT) -c $(UG)
 	$(ICONT) -G -o wunicon$(EXE) $(U)
 	$(CP) wunicon$(EXE) $(BIN)
 
@@ -56,14 +58,27 @@ cfy.u : cfy.icn
 ca.u : ca.icn
 	$(ICONT) $(UFLAGS) -c ca
 
+unigram.action.u: unigram.action.icn
+	$(ICONT) -c unigram.action.icn
+
+unigram.prefix.u: unigram.prefix.icn
+	$(ICONT) -c unigram.prefix.icn
+
+unigram.suffix.u: unigram.suffix.icn
+	$(ICONT) -c unigram.suffix.icn
+
+
 # Commented out to avoid bootstrap problem.
 # Uncomment if you modify unigram.y/unigram.icn
-#unigram.u: unigram.icn
-#	$(ICONT) -c unigram
+unigram.u: unigram.icn unigram.action.icn unigram.prefix.icn unigram.suffix.icn
+	$(ICONT) -c unigram.action.icn
+	$(ICONT) -c unigram.prefix.icn
+	$(ICONT) -c unigram.suffix.icn
+	$(ICONT) -c unigram
 
 # build iyacc, and uncomment these lines, if you change the language grammar (or unigram.y)
-#unigram.icn : unigram.y ytab_h.icn
-#	$(IYACC) -i unigram.y
+unigram.icn : unigram.y ytab_h.icn
+	$(IYACC) -i unigram.y
 
 #ytab_h.icn: unigram.y
 #	$(IYACC) -i -d unigram.y
