@@ -22,9 +22,13 @@
 #                         used
 # Date:    2021-01-03
 #
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-11
+#
 package parser
 
-link unigram, preproce, unilex
+link links
 
 procedure parse_unicon(fname)
    yyin := ""

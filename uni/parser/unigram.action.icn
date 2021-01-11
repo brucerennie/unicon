@@ -5,12 +5,12 @@
 # Updated: Bruce Rennie - convert all standard Unicon functions to have "::" prefix
 # Date:    2020-12-28
 #
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-11
+#
 
-record treenode(label, children)
-
-procedure node(label, children[])
-   return treenode(label, children)
-end
+#link grammar
 
 $include "ytab_h.icn"
 

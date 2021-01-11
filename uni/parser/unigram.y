@@ -166,10 +166,12 @@
 # These differences are handled in the respective "unigram.action", "unigram.prefix"
 # and "unigram.suffix" files.
 #
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-11
+#
 
-link "unigram.prefix"
-
-link "unigram.action"
+link grammar
 
 %}
 
@@ -740,4 +742,3 @@ expr    : error                     { $$ := expr_action_3($1) }
 
 %%
 
-link "unigram.suffix"
