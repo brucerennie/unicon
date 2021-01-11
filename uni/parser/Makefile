@@ -71,3 +71,26 @@ parsedrecord.u : parsedrecord.icn parsedobject.u
 showdb.u : showdb.icn classinfo.u packageinfo.u
 
 showtree.u : showtree.icn parsedprogram.u parser.u
+
+test: clean all
+	showtree$(EXE) classinfo.icn &>examples/classinfo.output
+	showtree$(EXE) databaseinfo.icn &>examples/databaseinfo.output
+	showtree$(EXE) grammar.icn &>examples/grammar.output
+	showtree$(EXE) info.icn &>examples/info.output
+	showtree$(EXE) links.icn &>examples/links.output
+	showtree$(EXE) node.icn &>examples/node.output
+	showtree$(EXE) packageinfo.icn &>examples/packageinfo.output
+	showtree$(EXE) parsedclass.icn &>examples/parsedclass.output
+	showtree$(EXE) parsedinitiallymethod.icn &>examples/parsedinitiallymethod.output
+	showtree$(EXE) parsedmethod.icn &>examples/parsedmethod.output
+	showtree$(EXE) parsedprogram.icn &>examples/parsedprogram.output
+	showtree$(EXE) parsedrecord.icn &>examples/parsedrecord.output
+	showtree$(EXE) parsedmethod.icn &>examples/parsedmethod.output
+	showtree$(EXE) parsedprocedure.icn &>examples/parsedprocedure.output
+	showtree$(EXE) parsedobject.icn &>examples/parsedobject.output
+	showtree$(EXE) parsedfunction.icn &>examples/parsedfunction.output
+	showtree$(EXE) parser.icn &>examples/parser.output
+	showtree$(EXE) unigram.action.icn &>examples/unigram.action.output
+	showtree$(EXE) unigram.prefix.icn &>examples/unigram.prefix.output
+	showtree$(EXE) unigram.suffix.icn &>examples/unigram.suffix.output
+
