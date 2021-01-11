@@ -1,18 +1,10 @@
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-12
+#
 $include "ytab_h.icn"
 
-#
-# treenode is a record for historical reasons. This module probably
-# still compiles with icont, which simplifies bootstrapping. If not,
-# it might make sense to someday turn it into a class.
-#
-
-#record treenode(label, children)
-#procedure node(label, kids[])
-#   return treenode(label, kids)
-#end
-procedure leaf(label)
-   return treenode(label)
-end
+link node
 
 global thePackage
 

@@ -4,7 +4,7 @@
 # as IDEs.
 #
 
-$include "links.icn"
+link unicon
 
 procedure main(argv)
     exit(unicon(argv))

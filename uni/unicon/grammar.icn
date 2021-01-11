@@ -2,13 +2,7 @@
 #                         compiled files required for the parser.
 # Date:    2021-01-12
 #
-link unigram
-link "../lib/tree"
-link "../lib/unilex"
-link "../lib/preproce"
-link ca
-link cfy
-link idol
-link tokens
-link unix
-link yyerror
+link node
+link "unigram.action"
+link "unigram.prefix"
+link "unigram.suffix"

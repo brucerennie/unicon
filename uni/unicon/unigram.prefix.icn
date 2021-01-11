@@ -1,9 +1,14 @@
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-12
+#
 #
 # Unicon unigram.y code include file for prefix section
 #
 
 $include "ytab_h.icn"
 
+#link grammar
 
 procedure Keyword(x1,x2)
    static keywords
