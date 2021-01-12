@@ -86,8 +86,8 @@ unigram.u: unigram.icn $(UG) node.u
 	$(ICONT) -c unigram
 
 # build iyacc, and uncomment these lines, if you change the language grammar (or unigram.y)
-#unigram.icn : unigram.y ytab_h.icn
-#	$(IYACC) -i unigram.y
+unigram.icn : unigram.y ytab_h.icn
+	$(IYACC) -i unigram.y
 
 #ytab_h.icn: unigram.y
 #	$(IYACC) -i -d unigram.y
