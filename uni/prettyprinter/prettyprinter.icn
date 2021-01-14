@@ -1,0 +1,339 @@
+#PD:
+#: prettyprint(root, variation) - print the parse tree represented by "root" with
+#: the choice of how to display the tree by specifying a number between 0 and 6.
+#: Each of these variations will be shown in the comments assocated with each of
+#: the display procedures
+#:
+procedure prettyprint(root, variation)
+   /variation := 0
+   case variation of {
+      0 : prettyprint0(root)
+      1 : prettyprint1(root)
+      2 : prettyprint2(root)
+      3 : prettyprint3(root)
+      4 : prettyprint4(root)
+      5 : prettyprint5(root)
+      6 : prettyprint6(root)
+      default : prettyprint2(root)
+   }
+end
+
+#PD:
+#: prettyprint0(root, level, count)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |0:node("decls" : *children=2)
+#:    |   1:node("package" : *children=1)
+#:    |      1:node("lnkfile" : *children=1)
+#:    |         1:parser
+#:    |   2:node("class" : *children=8)
+#:    |      1:DatabaseInfo
+#:    |      2:node("supers" : *children=0)
+#:    |      3:node("cparmlist" : *children=2)
+#:    |         1:node("carg" : *children=2)
+#:    |            1:node("priv" : *children=0)
+#:    |            2:node("arg" : *children=1)
+#:    |               1:name
+#:    |         2:node("carg" : *children=2)
+#:    |            1:node("priv" : *children=0)
+#:    |            2:node("arg" : *children=1)
+#:    |               1:directory
+#:    |      4:node("semicolon" : *children=0)
+#:
+procedure prettyprint0(root, level, count)
+   local i, j, e
+
+   /level := 0
+   /count := 0
+   i := ::repl(" ", level * 3)
+   if /root then {
+      ::write("")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\" : *children=", *root.children, (\root.description & " : description exists : " || ximage(root.description)) | "", ")")
+      j := 1
+      every e := !root.children do  {
+         prettyprint0(e, level + 1, j)
+         j +:= 1
+      }
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end
+
+#PD:
+#: prettyprint1(root, level, count, prefix1l, prefixfl, branch)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |--1:node("decls" : *children=2)
+#:    |   +----1:node("package" : *children=1)
+#:    |   |     +----1:node("lnkfile" : *children=1)
+#:    |   |           +----1:parser
+#:    |   +----2:node("class" : *children=8)
+#:    |         +----1:DatabaseInfo
+#:    |         +----2:node("supers" : *children=0)
+#:    |         +----3:node("cparmlist" : *children=2)
+#:    |         |     +----1:node("carg" : *children=2)
+#:    |         |     |     +----1:node("priv" : *children=0)
+#:    |         |     |     +----2:node("arg" : *children=1)
+#:    |         |     |           +----1:name
+#:    |         |     +----2:node("carg" : *children=2)
+#:    |         |           +----1:node("priv" : *children=0)
+#:    |         |           +----2:node("arg" : *children=1)
+#:    |         |                 +----1:directory
+#:    |         +----4:node("semicolon" : *children=0)
+#:
+procedure prettyprint1(root, level, count, prefix1l, prefixfl, branch)
+   local i, j, e
+
+   /level := 0
+   /count := 1
+   /prefix1l := ""
+   /prefixfl := "   "
+   /branch := ""
+   i := prefix1l || branch || ::right(count, 3, "-") || ":"
+   if /root then {
+      ::write(i, "EmptyNode")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\" : *children=", *root.children, (\root.description & " : description exists : " || ximage(root.description)) | "", ")")
+      prefix1l := prefixfl
+      every e := root.children[j := 1 to *root.children - 1] do  {
+         prettyprint1(e, level + 1, j, prefix1l, prefixfl || "|     ", "+--")
+      }
+      prettyprint1(root.children[*root.children], level + 1, *root.children, prefix1l, prefixfl || "      ", "+--")
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end
+
+#PD:
+#: prettyprint2(root, level, count, prefix1l, prefixfl, branch)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |--1:node("decls" : *children=2)
+#:    |   +--1:node("package" : *children=1)
+#:    |   |   +--1:node("lnkfile" : *children=1)
+#:    |   |       +--1:parser
+#:    |   +--2:node("class" : *children=8)
+#:    |       +--1:DatabaseInfo
+#:    |       +--2:node("supers" : *children=0)
+#:    |       +--3:node("cparmlist" : *children=2)
+#:    |       |   +--1:node("carg" : *children=2)
+#:    |       |   |   +--1:node("priv" : *children=0)
+#:    |       |   |   +--2:node("arg" : *children=1)
+#:    |       |   |       +--1:name
+#:    |       |   +--2:node("carg" : *children=2)
+#:    |       |       +--1:node("priv" : *children=0)
+#:    |       |       +--2:node("arg" : *children=1)
+#:    |       |           +--1:directory
+#:    |       +--4:node("semicolon" : *children=0)
+#:
+procedure prettyprint2(root, level, count, prefix1l, prefixfl, branch)
+   local i, j, e
+
+   /level := 0
+   /count := 1
+   /prefix1l := ""
+   /prefixfl := "   "
+   /branch := ""
+   i := prefix1l || branch || ::right(count, 3, "-") || ":"
+   if /root then {
+      ::write(i, "EmptyNode")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\" : *children=", *root.children, (\root.description & " : description exists : " || ximage(root.description)) | "", ")")
+      prefix1l := prefixfl
+      every e := root.children[j := 1 to *root.children - 1] do  {
+         prettyprint2(e, level + 1, j, prefix1l, prefixfl || "|   ", "+")
+      }
+      prettyprint2(root.children[*root.children], level + 1, *root.children, prefix1l, prefixfl || "    ", "+")
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end
+
+#PD:
+#: prettyprint3(root, level, count, prefix1l, prefixfl, branch)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |--1:node("decls")
+#:    |   +--1:node("package")
+#:    |   |   +--1:node("lnkfile")
+#:    |   |       +--1:parser
+#:    |   +--2:node("class")
+#:    |       +--1:DatabaseInfo
+#:    |       +--2:node("supers")
+#:    |       +--3:node("cparmlist")
+#:    |       |   +--1:node("carg")
+#:    |       |   |   +--1:node("priv")
+#:    |       |   |   +--2:node("arg")
+#:    |       |   |       +--1:name
+#:    |       |   +--2:node("carg")
+#:    |       |       +--1:node("priv")
+#:    |       |       +--2:node("arg")
+#:    |       |           +--1:directory
+#:    |       +--4:node("semicolon")
+#:
+procedure prettyprint3(root, level, count, prefix1l, prefixfl, branch)
+   local i, j, e
+
+   /level := 0
+   /count := 1
+   /prefix1l := ""
+   /prefixfl := "   "
+   /branch := ""
+   i := prefix1l || branch || ::right(count, 3, "-") || ":"
+   if /root then {
+      ::write(i, "EmptyNode")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\"", (\root.description & " : description exists : " || ximage(root.description)) | "", ")")
+      prefix1l := prefixfl
+      every e := root.children[j := 1 to *root.children - 1] do  {
+         prettyprint3(e, level + 1, j, prefix1l, prefixfl || "|   ", "+")
+      }
+      prettyprint3(root.children[*root.children], level + 1, *root.children, prefix1l, prefixfl || "    ", "+")
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end
+
+#PD:
+#: prettyprint4(root, level, count)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |0:node("decls")
+#:    |   1:node("package")
+#:    |      1:node("lnkfile")
+#:    |         1:parser
+#:    |   2:node("class")
+#:    |      1:DatabaseInfo
+#:    |      2:node("supers")
+#:    |      3:node("cparmlist")
+#:    |         1:node("carg")
+#:    |            1:node("priv")
+#:    |            2:node("arg")
+#:    |               1:name
+#:    |         2:node("carg")
+#:    |            1:node("priv")
+#:    |            2:node("arg")
+#:    |               1:directory
+#:    |      4:node("semicolon")
+#:
+procedure prettyprint4(root, level, count)
+   local i, j, e
+
+   /level := 0
+   /count := 0
+   i := ::repl(" ", level * 3) || count || ":"
+   if /root then {
+      ::write(i, "EmptyNode")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\"", (\root.description & " : description exists : " || ximage(root.description)) | "", ")")
+      j := 1
+      every e := !root.children do  {
+         prettyprint4(e, level + 1, j)
+         j +:= 1
+      }
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end
+
+#PD:
+#: prettyprint5(root, level, count)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |0:node("decls"
+#:    |   1:node("package"
+#:    |      1:node("lnkfile"
+#:    |         1:parser
+#:    |   2:node("class"
+#:    |      1:DatabaseInfo
+#:    |      2:node("supers"
+#:    |      3:node("cparmlist"
+#:    |         1:node("carg"
+#:    |            1:node("priv"
+#:    |            2:node("arg"
+#:    |               1:name
+#:    |         2:node("carg"
+#:    |            1:node("priv"
+#:    |            2:node("arg"
+#:    |               1:directory
+#:    |      4:node("semicolon"
+#:
+procedure prettyprint5(root, level, count)
+   local i, j, e
+
+   /level := 0
+   /count := 0
+   i := ::repl(" ", level * 3) || count || ":"
+   if /root then {
+      ::write(i, "EmptyNode")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\"", (\root.description & " : description exists : " || ximage(root.description)) | "")
+      j := 1
+      every e := !root.children do  {
+         prettyprint5(e, level + 1, j)
+         j +:= 1
+      }
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end
+
+#PD:
+#: prettyprint6(root, level, count, prefix1l, prefixfl, branch)
+#:
+#:    |Start Column
+#:    |-----------------------------------------
+#:    |--1:node("decls"
+#:    |   +--1:node("package"
+#:    |   |   +--1:node("lnkfile"
+#:    |   |       +--1:parser
+#:    |   +--2:node("class"
+#:    |       +--1:DatabaseInfo
+#:    |       +--2:node("supers"
+#:    |       +--3:node("cparmlist"
+#:    |       |   +--1:node("carg"
+#:    |       |   |   +--1:node("priv"
+#:    |       |   |   +--2:node("arg"
+#:    |       |   |       +--1:name
+#:    |       |   +--2:node("carg"
+#:    |       |       +--1:node("priv"
+#:    |       |       +--2:node("arg"
+#:    |       |           +--1:directory
+#:    |       +--4:node("semicolon"
+#:
+procedure prettyprint6(root, level, count, prefix1l, prefixfl, branch)
+   local i, j, e
+
+   /level := 0
+   /count := 1
+   /prefix1l := ""
+   /prefixfl := "   "
+   /branch := ""
+   i := prefix1l || branch || ::right(count, 3, "-") || ":"
+   if /root then {
+      ::write(i, "EmptyNode")
+   } else if ::type(root) == "treenode" then {
+      ::write(i, "node(\"", root.label, "\"", (\root.description & " : description exists : " || ximage(root.description)) | "")
+      prefix1l := prefixfl
+      every e := root.children[j := 1 to *root.children - 1] do  {
+         prettyprint6(e, level + 1, j, prefix1l, prefixfl || "|   ", "+")
+      }
+      prettyprint6(root.children[*root.children], level + 1, *root.children, prefix1l, prefixfl || "    ", "+")
+   } else if ::type(root) == "token" then {
+      ::write(i, root.s)
+   } else
+      ::write(i, ::image(root))
+end

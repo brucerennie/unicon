@@ -1,0 +1,8 @@
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-11
+#
+link node
+link "unigram.action"
+link "unigram.prefix"
+link "unigram.suffix"

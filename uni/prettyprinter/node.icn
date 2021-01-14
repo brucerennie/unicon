@@ -1,0 +1,29 @@
+# Updated: Bruce Rennie - restructure the links required for loading the various
+#                         compiled files required for the parser.
+# Date:    2021-01-11
+#
+# Updated: Bruce Rennie - add field "description" to treenode record to allow
+#                         the storage of comments found in the source files to
+#                         an associated node in the parse tree. Add procedure to
+#                         place the description into the treenode record.
+# Date:    2021-01-12
+#
+# treenode is a record for historical reasons. This module probably
+# still compiles with icont, which simplifies bootstrapping. If not,
+# it might make sense to someday turn it into a class.
+#
+
+record treenode(label, children, description)
+
+procedure node(label, kids[])
+   return treenode(label, kids)
+end
+
+procedure leaf(label)
+   return treenode(label)
+end
+
+procedure add_description(node)
+    return node
+    node.description := pop(comment_list)
+end

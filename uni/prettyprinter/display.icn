@@ -1,0 +1,1080 @@
+# Updated: Bruce Rennie - create the various display procedures for each kind
+#                         parse tree node that is found in the unigram action
+#                         file.
+# Date:    2021-01-14
+#
+
+global  display_procs                   #GV: this table holds the node label to
+                                        #:   display procedure relationships.
+
+#PD:
+#:
+#:
+#:
+procedure display_initialisation()
+    local   temp
+
+    display_procs := table(no_display_defined)
+    display_procs["decls"] := display_decls
+    display_procs["initially"] := display_initially
+    display_procs["semicolon"] := display_semicolon
+    display_procs["class"] := display_class
+    display_procs["supers"] := display_supers
+    display_procs["packageref"] := display_packageref
+    display_procs["methods"] := display_methods
+    display_procs["invoclist"] := display_invoclist
+    display_procs["invocop1"] := display_invocop1
+    display_procs["invocop2"] := display_invocop2
+    display_procs["invocop3"] := display_invocop3
+    display_procs["package"] := display_package
+    display_procs["lnklist"] := display_lnklist
+    display_procs["implist"] := display_implist
+    display_procs["lnkfile"] := display_lnkfile
+    display_procs["record"] := display_record
+    display_procs["fldlist"] := display_fldlist
+    display_procs["abstract"] := display_abstract
+    display_procs["procedure"] := display_procedure
+    display_procs["method"] := display_method
+    display_procs["parmlist"] := display_parmlist
+    display_procs["rest([])"] := display_rest
+    display_procs["cparmlist"] := display_cparmlist
+    display_procs["idlist"] := display_idlist
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+    display_procs[""] := display_
+end
+
+#PD:
+#:
+#:
+#:
+procedure no_display_defined(parsetree)
+    return ["#", "# error:", "#",
+            "# " || image(parsetree) || " cannot be dispalyed",
+            "#"]
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+#PD:
+#:
+#:
+#:
+procedure display_(parsetree)
+    return []
+end
+
+
+
