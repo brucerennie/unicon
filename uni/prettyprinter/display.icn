@@ -134,7 +134,7 @@ end
 #:
 #:
 #:
-procedure no_display_defined(parsetree)
+procedure no_display_defined(parsetree, width)
     return ["#", "# error:", "#",
             "# " || image(parsetree) || " cannot be dispalyed",
             "#"]
@@ -144,7 +144,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -152,7 +152,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -160,7 +160,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -168,7 +168,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -176,7 +176,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -184,7 +184,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -192,7 +192,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -200,7 +200,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -208,7 +208,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -216,7 +216,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -224,7 +224,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -232,7 +232,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -240,7 +240,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -248,7 +248,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -256,7 +256,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -264,7 +264,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -272,7 +272,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -280,7 +280,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -288,7 +288,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -296,7 +296,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -304,7 +304,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -312,7 +312,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -320,7 +320,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -328,7 +328,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -336,7 +336,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -344,7 +344,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -352,7 +352,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -360,7 +360,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -368,7 +368,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -376,7 +376,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -384,7 +384,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -392,7 +392,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -400,7 +400,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -408,7 +408,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -416,7 +416,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -424,7 +424,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -432,7 +432,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -440,7 +440,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -448,7 +448,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -456,7 +456,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -464,7 +464,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -472,7 +472,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -480,7 +480,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -488,7 +488,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -496,7 +496,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -504,7 +504,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -512,7 +512,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -520,7 +520,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -528,7 +528,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -536,7 +536,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -544,7 +544,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -552,7 +552,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -560,7 +560,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -568,7 +568,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -576,7 +576,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -584,7 +584,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -592,7 +592,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -600,7 +600,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -608,7 +608,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -616,7 +616,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -624,7 +624,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -632,7 +632,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -640,7 +640,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -648,7 +648,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -656,7 +656,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -664,7 +664,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -672,7 +672,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -680,7 +680,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -688,7 +688,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -696,7 +696,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -704,7 +704,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -712,7 +712,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -720,7 +720,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -728,7 +728,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -736,7 +736,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -744,7 +744,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -752,7 +752,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -760,7 +760,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -768,7 +768,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -776,7 +776,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -784,7 +784,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -792,7 +792,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -800,7 +800,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -808,7 +808,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -816,7 +816,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -824,7 +824,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -832,7 +832,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -840,7 +840,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -848,7 +848,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -856,7 +856,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -864,7 +864,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -872,7 +872,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -880,7 +880,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -888,7 +888,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -896,7 +896,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -904,7 +904,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -912,7 +912,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -920,7 +920,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -928,7 +928,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -936,7 +936,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -944,7 +944,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -952,7 +952,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -960,7 +960,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -968,7 +968,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -976,7 +976,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -984,7 +984,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -992,7 +992,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1000,7 +1000,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1008,7 +1008,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1016,7 +1016,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1024,7 +1024,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1032,7 +1032,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1040,7 +1040,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1048,7 +1048,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1056,7 +1056,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1064,7 +1064,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
@@ -1072,7 +1072,7 @@ end
 #:
 #:
 #:
-procedure display_(parsetree)
+procedure display_(parsetree, width)
     return []
 end
 
