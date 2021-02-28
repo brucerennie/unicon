@@ -1,0 +1,123 @@
+################################################################################
+#
+#   File:     help.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 1, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler help message related procedures
+#
+#   unicon_usage(continue_flag)
+#   unicon_help()
+#
+################################################################################
+#
+#PD:
+#: unicon_usage(continue_flag) - this procedure gives a short form description of
+#: the command line arguments available for the unicon compiler. By giving a non-null
+#: value for the parameter continue_flag, the procedure will use the procedure "iwrite"
+#: instead of the default procedure "istop". The procedure "istop" will cause the unicon
+#: compiler to cease executing and returns to the operating system prompt.
+#:
+#:@param continue_flag  a non-null value will ensure that the procedure fails
+#:@                     and does not cause the unicon compiler to stop. The
+#:@                     default value of &null will cause the help message to be
+#:@                     printed and then the compiler to exit.
+#:
+procedure unicon_usage(continue_flag)
+    local   func                        #LV: holds the selected function to run
+
+    #
+    # continue_flag determines whether or not this procedure will fail or cause
+    # an exit to the operating system. We do not use istop to print the message
+    # as it relies on a global variable (flog) that can prevent any message being
+    # displayed. This global variable is used for logging of messages and specifies
+    # a specific logfile to which the messages are written.
+    #
+    # So we choose to set the required function to an integer value of 1 to allow
+    # failure to occur when requested. This is a change from the original code as
+    # the logging functionality was not considered. In these changes, we want the
+    # message to be seen irrespective of any logging that may be additionally done.
+    #
+    if \continue_flag then {
+        func := 1
+    } else {
+        func := istop
+    }
+    #
+    # this message is always sent to userout. Note that we are using the string
+    # continuation character "_" in this instance.
+    #
+    iwrite("Usage: unicon [-BcCeEGKMOrstuyZ] [-Dsym=val] [-f[adelns]...] [-nofs] [-o ofile] _
+          \n    [-I path] [-L path] [-quiet] [-yydbg] [-?] [-h] [-log] [-e efile] [-n[acest]...]_
+          \n    [-p arg] [--help] [-help] [-version] [-features] [-v i] file... [-x args]")
+    func()
+end
+
+#PD:
+#: unicon_help() - prints a detailed help message for the unicon compiler
+#: and then stops. We do not use istop to print the message as this internally
+#: relies on a global variable that can prevent any message being displayed.
+#:
+procedure unicon_help()
+    unicon_usage(1)
+    #
+    # See the notes in unicon procedure for -I and -L usage reasoning and history.
+    #
+    iwrite("options may be one of:_
+          \n   -B          : bundle VM (iconx) into executable_
+          \n   -c          : compile only, do not link_
+          \n   -Ci         : generate (optimized) C code executable with optimise level i (default 1)_
+          \n   -Dsym[=val] : define preprocessor symbol (can occur a number of times)_
+          \n   -e efile    : redirect icont's standard error output to efile_
+          \n   -E          : preprocess only, do not compile_
+          \n   -features   : report Unicon features supported in this build_
+          \n   -f[adelns]  : enable features where each of the following are allowed_
+          \n      a         - all, equivalent to delns (iconc)_
+          \n      d         - enable debugging features, including the effect of -f n(iconc) _
+          \n      e         - enable runtime error conversion to failure(iconc)_
+          \n      l         - enable large-integer arithmetic (iconc)_
+          \n      n         - produce code that keeps track of line numbers and filename in the source code(iconc)_
+          \n      s         - prevent removal of unreferenced declarations (allows string invocation) (both iconc and icont.iconx)_
+          \n   -G          : generate graphics (wiconx) executable_
+          \n   --help      : display this help_
+          \n   -help       : display this help_
+          \n   -h          : display this help_
+          \n   -?          : display this help_
+          \n   -I path     : add path to environment variable LPATH (can occur a number of times)_
+          \n   -L path     : add path to environment variable IPATH (can occur a number of times)_
+          \n   -K          : keep tmpfiles
+          \n   -log        : open a log file_
+          \n   -M          : report error message to the authorities_
+          \n   -n[acest]   : disable optimisations where each of the following are allowed_
+          \n      a         - all, equivalent to cest (iconc)_
+          \n      c         - control flow other than switch statement (iconc)_
+          \n      e         - expand operations in-line (iconc)_
+          \n      s         - switch statements associated with operation invocations (iconc)_
+          \n      t         - type inference (iconc)_
+          \n   -nofs       : turn off string invocation when used with -C_
+          \n   -o ofile    : generate executable named ofile_
+          \n   -O          : optimize (under construction)_
+          \n   -p arg      : pass arg to c compiler (iconc) (can occur a number of times)_
+          \n   -quiet      : work silently_
+          \n   -r          : return errors_
+          \n   -s          : work silently_
+          \n   -t          : turn on tracing and initialise &trace to -1_
+          \n   -u          : warn of undeclared variables_
+          \n   -v i        : set diagnostic verbosity level to i_
+          \n   -version    : report Unicon version_
+          \n   -x args     : execute immediately with specified args_
+          \n   -y          : parse (syntax check) only, do not compile_
+          \n   -yydbg      : parse only, debug parser_
+          \n   -Z          : compress icode")
+    #
+    # we want this message to be the last activity of the unicon compiler and
+    # then return to the operating system
+    #
+    istop()
+end
