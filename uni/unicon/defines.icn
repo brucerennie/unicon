@@ -1,0 +1,16 @@
+$define MERRADDRESS "jeffery@cs.nmt.edu"
+
+$ifdef _MS_WINDOWS_NT
+$define PATHCHAR "\\"
+$else
+$define PATHCHAR "/"
+$endif
+
+#$define debuglex 1
+$ifndef NoPatternIntegration
+$define PatternIntegration 1
+$endif
+
+$define Beginner 1
+$define Ender 2
+$define Newline 4

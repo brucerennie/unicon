@@ -1,0 +1,81 @@
+################################################################################
+#
+#   File:     writer.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 1, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler message write related procedures
+#
+#   writer(func, args[])
+#   iwrite(args[])
+#   iwrites(args[])
+#
+################################################################################
+#
+#PD:
+#: writer(func, args[]) - the common code in the two procedures iwrite()
+#: and iwrites() has been extracted and placed in the following code. the
+#: first parameter is used to specify the required function (either write or writes)
+#:
+#:@global loud
+#:@global silent
+#:@global flog
+#:@global parsingErrors
+#:
+#:@param func           the relevant display function to use to print the messages
+#:@                     supplied in the rest of the call
+#:@param args           the list of messages that are required to be displayed and/or
+#:@                     logged for later viewing
+#:@returns              the last applicable value to be printed.
+#:
+procedure writer(func, args[])
+    if \loud then {
+        if /silent | *parsingErrors > 0 then {
+            func ! args
+        }
+    }
+    if \flog then {
+        if args[1] === &errout then {
+            pop(args)
+        }
+        push(args, flog)
+        func ! args
+    }
+    return args[-1] | ""
+end
+
+#PD:
+#: iwrite(args[]) - calls the procedure writer with the inbuilt function write
+#: as the display function to use. The procedure writer will handle any logging
+#: of messages that have been specified on the command line. If the global variable
+#: "write" has been overwritten by a user defined procedure, this new procedure
+#: will be used instead.
+#:
+#:@param args           list of values to be displayed, the relevant display function
+#:@                     will be pushed onto the fron of this list
+#:@returns              the last specified value of the supplied list
+#:
+procedure iwrite(args[])
+    return writer ! push(args, write)
+end
+
+#PD:
+#: iwrites(args[]) - calls the procedure writer with the inbuilt function writes
+#: as the display function to use. The procedure writer will handle any logging
+#: of messages that have been specified on the command line.  If the global variable
+#: "writes" has been overwritten by a user defined procedure, this new procedure
+#: will be used instead.
+#:
+#:@param args           list of values to be displayed, the relevant display function
+#:@                     will be pushed onto the fron of this list
+#:@returns              the last specified value of the supplied list
+#:
+procedure iwrites(args[])
+    return writer ! push(args, writes)
+end
