@@ -1,0 +1,40 @@
+################################################################################
+#
+#   File:     istop.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 1, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler termination related procedures
+#
+#   istop(args[])
+#
+################################################################################
+#
+#PD:
+#: istop(args[]) - this procedure is used to print a message and then terminate
+#: the compiler activity
+#:
+#:@param args           this is a list of message strings that are to be printed.
+#:@aborts               this procedure will cause the program to abort using exit()
+#:
+procedure istop(args[])
+
+    if push(args, \flog) then {
+        write ! args
+        pop(args)
+        close( flog )                   # if close(flog) then @ &main
+        moveto(flogname, widollog)
+    }
+    if \loud then {
+        stop ! args
+    } else {
+        exit(1)
+    }
+end
+

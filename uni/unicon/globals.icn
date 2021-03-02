@@ -1,0 +1,101 @@
+### Global variables
+#
+# FILES  : fin = input (.iol) file, fout = output (.icn) file
+# CSETS  : alpha = identifier characters, nonalpha = everything else
+#          alphadot = identifiers + '.'
+#          white = whitespace, nonwhite = everything else
+# TAQUES : classes in this module
+# FLAGS  : comp if we should try to make an executable from args[1]
+#          strict if we should generate paranoic encapsulation protection
+#          loud if we should generate extra console messages
+#          xec if we should run the result after translation
+# LISTS  : links = names of external icon code to link to
+#          imports = names of external classes to import
+#
+global  parsingErrors,                  #GD: list that will contain ParseError records (if any parse errors are found)
+        returnErrorsFlag,               #GD: if set by the command line, will return the value of parsingErrors
+        fin,                            #GD: does not appear to be used
+        flog,                           #GD: contains the current log file refernce if log files are in use
+        flogname,                       #GD: holds the name of the temporary file that is used asa log file for this run
+        yyfilename,                     #GD: name of the current file being processed (can be source or ucode)
+        fLine,                          #GD: the current line in the current file being processed
+        alpha,                          #GD: cset containing all valid unicon identifier characters,
+                                        #:   it should be noted that this global is used in idol.icn It
+                                        #:   is also defined and initialised in ui.icn
+        alphadot,                       #GD: cset containing all of alpha (above) but '.',
+                                        #:   it should be noted that this global is used in idol.icn. It
+                                        #:   is also defined and initialised in ui.icn
+        white,                          #GD: cset containing space, tab. formfeed and carriage return,
+                                        #:   it should be noted that this global is used in the idol.icn
+                                        #:   and the procedure fethcspec has static versions of this
+                                        #:   variable with different values. It is also defined an
+                                        #:   initialised in the ui.icn file (which also links in this file)
+        nonwhite,                       #GD: cset not containing whitespace (as define in white),
+                                        #:   it should be noted that this global is used in the idol.icn
+                                        #:   and the procedure fethcspec has static versions of this
+                                        #:   variable with different values. It is also defined an
+                                        #:   initialised in the ui.icn file (which also links in this file)
+        nonalpha,                       #GD: #NU# cset containing all characters not in alpha. It
+                                        #:   is also defined and initialised in ui.icn. It is not used
+                                        #:   within the unicon compiler or ui.
+        classes,                        #GD:
+        comp,                           #GD:
+        xec,                            #GD: if set, run the resultant program after translation
+        strict,                         #GD:
+        links,                          #GD:
+        imports,                        #GD:
+        loud,                           #GD: unicon will display various messages as it progresses
+                                        #:   through the compilation process
+        ct,                             #GD:
+        reserved,                       #GD:
+        optimize,                       #GD:
+        icontopt,                       #GD:
+        ilinkopt,                       #GD:
+        tempenv,                        #GD:
+        tmpcount,                       #GD: used as a counter for the cretaion of temporary variables
+                                        #:   during code generation, typically the variable names are
+                                        #:   of the for __nnn where nnn is the value contained in the
+                                        #:   variable tmpcount. This value is reset whenever a procedure,
+                                        #:   class, method, record or package is encountered. It is also
+                                        #:   used for the creation of temporary variables when processing
+                                        #:   the code for the iconc compiler.
+        exename,                        #GD:
+        widollog,                       #GD:
+        tmpname,                        #GD:
+        silent,                         #GD: flag used to indicate that the compiler run in silent mode
+        yydbg,                          #GD:
+        yyout,                          #GD:
+        linkline,                       #GD:
+        translateducode,                #GD:
+        imported,                       #GD:
+        imported_classes,               #GD:
+        warnings,                       #GV
+        EmptyNode,                      #GD: in main repository, this has been removed and all
+                                        #:   references have been changed to &null. was local,
+                                        #:   but should be global, represents an empty node in
+                                        #:   the parse tree
+        env,                            #GD: this variable is set in unix.icn and has the default value of
+                                        #:   "uniclass". If the Environment variable "IDOLENV" is defined then
+                                        #:   use this value instead. Variable is only used in idol.icn
+        outfilename,                    #GD: initialised in this file, used in unigram(.y/.icn) and in tree.icn
+        dbg,                            #GD:
+        fset                            #GD:
+#
+# These globals for -C
+#
+global  iconc,                          #GD: set this variable to something other than &null to
+                                        #:   direct all the processing through the iconc compiler
+        iconc_links,                    #GD:
+        iconc_parsed,                   #GD:
+        iconc_imports,                  #GD:
+        iconc_posixloc,                 #GD:
+        iconc_parsed_posix,             #GD:
+        iconc_perifile_idx,             #GD:
+        iconc_fd,                       #GD: if iconc is used, add the -fd option (off by default)
+        no_iconc_fs                     #GD: don't add -fs by default, if iconc is used. This is now changed
+                                        #:   and -fs is on by default, to turn off now use -nofs
+
+global  merrflag,                       #GD:
+        merraddress,                    #GD:
+        uni_predefs                     #GD:
+
