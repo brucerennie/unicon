@@ -1,0 +1,87 @@
+################################################################################
+#
+#   File:     initialise.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 2, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler initialisation procedures
+#
+#   initialize()
+#
+################################################################################
+#
+
+#PD:
+#: initialize global variables
+#:
+procedure initialize()
+    #
+    # by default we want the unicon compiler to display progress message as it
+    # processes the source and ucode files
+    #
+    loud     := 1
+    comp     := 0
+    #
+    # initialise the various error counts to zero and the list of error messages
+    # to an empty list
+    #
+    yynerrs  := 0
+    errors   := 0
+
+    returnErrorsFlag := 0
+    parsingErrors := []
+
+    #
+    #
+    merraddress := MERRADDRESS
+    #
+    # initialise the working csets
+    #
+    alpha    := &ucase ++ &lcase ++ '_' ++ &digits
+    nonalpha := &cset -- alpha
+    alphadot := alpha ++ '.'
+    white    := ' \t\f\r'
+    nonwhite := &cset -- white
+    #
+    # this sets up the initial values for processing class, package, links and imports
+    #
+    reinitialize()
+    #
+    # initialise the linker and icont options to the blank string, as relevant
+    # command line options are found, these will be added appropriately
+    #
+    ilinkopt := ""
+    icontopt := ""
+    linkline := ""
+    #
+    # general initialisation of the temporary variable counter.
+    #
+    tmpcount := 0
+    #
+    # there is one use of this variable, but as yet am unable to determine, what and why
+    # need to determineif the procedure call is ever done, if not, then it needs to be removed.
+    #
+    reserved := " fi neht esle yreve elihw od ot yb "
+    #
+    # for this run, create a unique log file name
+    #
+    flogname := tempname("uni",,,5)
+    if widollog := getenv("WIDOLLOG") then {
+        flog := open(flogname,"w")
+    }
+    #
+    # create the default preprocessor definitions for this run
+    #
+    uni_predefs := predefs()
+    #
+    # run all other initialisations required
+    #
+    sysinitialize()
+end
+

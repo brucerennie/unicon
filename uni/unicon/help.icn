@@ -104,9 +104,9 @@ procedure unicon_help()
           \n   -o ofile    : generate executable named ofile_
           \n   -O          : optimize (under construction)_
           \n   -p arg      : pass arg to c compiler (iconc) (can occur a number of times)_
-          \n   -quiet      : work silently_
+          \n   -quiet      : work silently (applies to Unicon compiler only)_
           \n   -r          : return errors_
-          \n   -s          : work silently_
+          \n   -s          : work silently (particularly applied to icont/ilink)_
           \n   -t          : turn on tracing and initialise &trace to -1_
           \n   -u          : warn of undeclared variables_
           \n   -v i        : set diagnostic verbosity level to i_

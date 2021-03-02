@@ -360,6 +360,7 @@ procedure initialize()
    tmpcount := 0
    reserved := " fi neht esle yreve elihw od ot yb "
    flogname := tempname("uni",,,5)
+   fset:='s'                            # doing -fs by default now
    if widollog := getenv("WIDOLLOG") then flog := open(flogname,"w")
    uni_predefs := predefs()
    sysinitialize()
@@ -427,7 +428,7 @@ procedure handle_C(arg)
    if comp === -1 then {
       istop("conflicting requests for -c and -C")
       }
-   
+
    iconc := 1
    if *arg > 2 then
       tmpopt := "-U" || arg[3:0] || " "
@@ -489,7 +490,6 @@ procedure unicon(argv)
       cmd, wilog, flog2, locallinks, localimports, k,
       files, n, local_name, v, mw_tmpname, rv, pe
 
-   fset:='s'  # doing -fs by default now 
 # before initialize, set global option vars:
    comp := 0
    every !argv ?
@@ -525,14 +525,14 @@ procedure unicon(argv)
          skip := &null
          next
          }
-      
+
       if argv[i][1] == "-" & *argv[i]>1 then {
 	 if match("-D", argv[i]) then # symbols
             handle_D(argv[i])
          else if match ("-C", argv[i]) then{ # iconc
             handle_C(argv[i])
             parseonly := 1
-            }            
+            }
 	 else
             case argv[i] of {
                "-c"   : {
@@ -585,7 +585,7 @@ procedure unicon(argv)
                "-O": optimize := 1
                # -I and -L: add argv[i+1] to LPATH or IPATH, respectively
                "-I"|"-L": {
-                  if argv[i] == "-I" then thepath := "LPATH" else thepath := "IPATH" 
+                  if argv[i] == "-I" then thepath := "LPATH" else thepath := "IPATH"
                   if (i=1) | (argv[i-1] ~=== argv[i]) then {
                      tmp_s := argv[i+1]
                      argv[i+1] := argv[i]
@@ -606,7 +606,7 @@ procedure unicon(argv)
 
 		  icontopt ||:= argv[i] || varg
 		  ilinkopt ||:= argv[i] || varg
-                  
+
                   if integer(argv[i+1]) = 0 then
                      silent := 1
 
@@ -619,9 +619,9 @@ procedure unicon(argv)
                   }
                "-v1"|"-v2"|"-v3" : {
                   ilinkopt ||:= argv[i] || " "
-                  icontopt ||:= argv[i] || " "                  
+                  icontopt ||:= argv[i] || " "
                   }
-               
+
 	       "-nofs": no_iconc_fs := 1
                "-M" : merrflag := 1
                "-r" : returnErrorsFlag := 1
@@ -677,7 +677,7 @@ procedure unicon(argv)
 	    yyout := open(tmpname, "w") |
 	       stop("can't open temporary file ",tmpname," for writing")
             put(tmpfnames, tmpname)
-            ca_assoc(yyfilename, tmpname) 
+            ca_assoc(yyfilename, tmpname)
 	    }
 	 else yyout := &output
 
@@ -722,7 +722,7 @@ procedure unicon(argv)
       unicon_usage()
       }
 
-  
+
    #
    # If this output is intended for consumption by iconc, suck in
    # all files associated with link-refs and import-refs, and yyparse
@@ -977,7 +977,7 @@ end
 
 procedure writelink(dir, s)
    if \iconc then {
-      # do not generate linkrefs in 
+      # do not generate linkrefs in
       # code that will be sent to iconc...
       return
       }
@@ -1035,7 +1035,7 @@ local cmd, dash_s
       #
       # if we find binaries via path search, use them; otherwise
       # try for binaries directory via &progname.  Won't be very
-      # successful 
+      # successful
       #
       cmd := ((&features ? (="Binaries at " & tab(0))) |
               (&progname ? tab(find("unicon"))) | "")
