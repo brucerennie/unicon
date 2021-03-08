@@ -1,0 +1,138 @@
+################################################################################
+#
+#   File:     icont.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 8, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler icont related procedures
+#
+#   writelink(dir, s)
+#   trans(argstr, prefix)
+#   icont(argstr,prefix)
+#   mygetenv(s)
+#   selecticont()
+#
+################################################################################
+#
+#PD:
+#: writelink(dir, s) - icont/ilink only. Creates a link directive in the transformed
+#: source code for icont/ilink processing
+#:
+#:@global outline
+#:@global iconc
+#:
+#:@param dir
+#:@param s
+#:
+procedure writelink(dir, s)
+    #
+    # only generate a linkref in code that will be sent to icont/ilink
+    #
+    if /iconc then {
+        #
+        # we need to remove the unicon source code suffix so that the relevant
+        # ucode file can be found.
+        #
+        if map(s[-4:0]) == ".icn" then {
+            s[-4:0] := ""
+        }
+        #
+        # create the link directive in the output after canonising the directory
+        # supplied and replacing any microsoft windows path separators with the
+        # equivalent unix/linux path separators.
+        # we also encase the final pathname in "" for the link directive.
+        #
+        write(yyout,"link \"", canonize(dir), map(s,'\\','/'), "\"")
+        outline +:= 1
+   }
+
+end
+
+#PD:
+#:
+#:
+procedure trans(argstr, prefix)
+   if find("iconc", mygetenv("ICONT")) then return # iconc --> don't translate
+   return icont(" -c "||argstr, prefix)
+end
+
+procedure icont(argstr,prefix)
+   local myfile, rv
+   static trans, logger
+   initial {
+      trans := selecticont()
+      logger := mygetenv("WICONLOG") | (getenv("TEMP")||"\\winicon.log")
+      }
+   if \logger then
+      remove(logger) | write( logger, " - log not removed.")
+
+   rv := mysystem((\prefix|"") || trans || icontopt || argstr)
+   if \flog then {
+      if \logger then {
+         if myfile := open(logger) then {
+            while write(flog, read(myfile))
+            close(myfile)
+            }
+         }
+      }
+   return rv
+end
+
+procedure mygetenv(s)
+   return if &features == "environment variables" then getenv(s)
+end
+
+# find the icont to use. An ICONT variable overrides defaults.
+procedure selecticont()
+local cmd, dash_s
+   if not (cmd := mygetenv("ICONT")) then {
+
+      #
+      # if we find binaries via path search, use them; otherwise
+      # try for binaries directory via &progname.  Won't be very
+      # successful
+      #
+      cmd := ((&features ? (="Binaries at " & tab(0))) |
+              (&progname ? tab(find("unicon"))) | "")
+
+      if &features=="MS Windows NT" then {
+         if (cmd ~== "") & (not (cmd[-1] == "\\")) then cmd ||:= "\\"
+         if &features=="console window" then {
+            if stat(cmd || "wunicont.exe") then
+                cmd ||:= "wunicont.exe"
+            else
+                cmd ||:= "wicont.exe"
+
+            dash_s:=1
+            }
+         else
+            if stat(cmd || "unicont.exe") then
+                cmd ||:= "unicont.exe"
+            else
+                cmd ||:= "icont.exe"
+         }
+      else {
+          if (cmd ~== "") & (not (cmd[-1] == "/")) then cmd ||:= "/"
+          if stat(cmd || "unicont") then
+              cmd ||:= "unicont"
+          else
+              cmd ||:= "icont"
+         }
+      }
+
+   cmd := quotes(cmd)
+
+   if not stat(cmd) then
+      write("warning: no icont found thought it would be\n\t", cmd)
+
+   if \dash_s then cmd ||:= " -s"
+
+   return cmd
+end
+

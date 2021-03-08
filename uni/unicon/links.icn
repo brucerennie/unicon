@@ -16,20 +16,31 @@
 #
 
 link    basename,                       #LK: IPL file to produce base name of file
+        getpaths,                       #LK: IPL file to generate elements in path
         io,                             #LK: IPL file for input and output
         paths,                          #LK: IPL file for manipulating IPATH/LPATH
-        getpaths,                       #LK: IPL file to generate elements in path
         xoptions                        #LK: IPL file to get command-line options
 
 #
 # links to specific compiler related ucode files
-link    istop,                          #LK: The Unicon compiler termination
-                                        #:   related procedures
-        writer,                         #LK: The Unicon compiler message write
+link    commandline,                    #LK:
+        help,                           #LK: The Unicon compiler help message
                                         #:   related procedures
         iconc,                          #LK: The Unicon compiler iconc related
                                         #:   procedures
-        help,                           #LK: The Unicon compiler help message
+        icont,                          #LK:
+        initialise,                     #LK:
+        istop,                          #LK: The Unicon compiler termination
                                         #:   related procedures
-        globals                         #LK: definition of all required global
+        globals,                        #LK: definition of all required global
                                         #:   variables
+        preproce,                       #LK:
+        tokens,                         #LK:
+        tree,                           #LK:
+        unigram,                        #LK:
+        unilex,                         #LK:
+        unix,                           #LK:
+        warnings,                       #LK:
+        writer,                         #LK: The Unicon compiler message write
+                                        #:   related procedures
+        yyerror                         #LK:
