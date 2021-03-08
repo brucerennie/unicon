@@ -1,0 +1,73 @@
+################################################################################
+#
+#   File:     warnings.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 7, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler warning and error procedures
+#
+#   warn(args[])
+#   warning(s, lineno, filenam)
+#   halt(args[])
+#   errsrc()
+#
+################################################################################
+#
+#PD:
+#: warn(args[]) - writes each of the elements to &errout after the error source
+#: has been written.
+#:
+#:
+procedure warn(args[])
+    errsrc()
+    every iwrites(&errout, !args)
+    iwrite(&errout)
+end
+
+#PD:
+#: warning(s, lineno, filenam)
+#:
+#:@global warnings
+#:@global errors
+#:
+#:@param s
+#:@param lineno
+#:@param filenam
+#:@fails            always fails
+#:
+procedure warning(s, lineno, filenam)
+    /warnings := 0
+    /errors := 0
+    if warnings + errors = 0 then {
+        iwrite(&errout)
+    }
+    iwrites(&errout, \(filenam | yyfilename), ":")
+    iwrite(&errout, \lineno | yylineno, ": # \"", yytext, "\": ", s)
+    warnings +:= 1
+end
+
+#PD:
+#: halt(args[]) - writes each of the elements to &errout after the error source
+#: has been written and hlats the unicon compiler.
+#:
+procedure halt(args[])
+   errsrc()
+   every iwrites(&errout, !args)
+   istop()
+end
+
+#PD:
+#: errsrc() - writes the source where the error has been found
+#:
+#:@fails            always
+#:
+procedure errsrc()
+   iwrites(&errout, "File ", \yyfilename, "; Line ", \fLine, ": Unicon/")
+end
+

@@ -1,0 +1,317 @@
+################################################################################
+#
+#   File:     iconc.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 1, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler iconc related procedures
+#
+#   iconc_make_exename_opt(args)
+#   iconc_linkref_resolve(srcfname, ref)
+#   iconc_importref_resolve(ref)
+#   iconc_yyparse(fname, tmplist)
+#   calc_posix_loc()
+#
+################################################################################
+#
+#PD:
+#:
+#:
+procedure iconc_make_exename_opt(args)
+    local   rslt                        #LV: holds output file option and filename
+            i,                          #LV: used as a counter to scan the argument list
+            arg,                        #LV: holds the current argument being checked
+            cmpnts                      #LV: holds the filename components (filename and suffix)
+
+    rslt := "-o "
+    every i := 1 to *args do {
+        arg := args[i]
+        #
+        # if a commandline option or standard input is specified, then skip
+        #
+        if arg[1] == "-" then {
+            next
+        }
+        #
+        # the first filename found will supply the filename for the executable
+        # so stop processing arguments at this point
+        #
+        cmpnts := suffix(arg)
+        rslt ||:= cmpnts[1] || " "
+        break
+    }
+    return rslt
+end
+
+#PD:
+#:
+#:
+procedure iconc_linkref_resolve(srcfname, ref)
+    static  lpaths,                     #SV:
+            ipaths,                     #SV:
+            sep                         #SV:
+    local   i,                          #LV:
+            f,                          #LV:
+            path,                       #LV:
+            base,                       #LV:
+            comps,                      #LV: holds the list containing the path-specifier & filename
+                                        #:   of the link reference as specified in ref
+            rslt,                       #LV: list of values to be returned, no longer used
+                                        #:   as the result was a single element list
+                                        #:   and we return that directly now
+            fil                         #LV: full pathname of file found somehwere on the
+                                        #:   IPATH or LPATH
+
+    initial {
+        sep := PATHCHAR
+        lpaths := lpaths_get()
+        ipaths := ipaths_get()
+        if /iconc_posixloc then {
+            calc_posix_loc()
+        }
+    }
+
+    if ref[1] == '"' then {
+        # strip quotes
+        ref := ref[2:-1]
+    }
+
+    rslt := []
+    comps := tail(ref)
+    ca_add_link(srcfname, ref)
+    #
+    # try the raw ref first
+    #
+    if (map(ref[-4:0]) == ".icn") & (close(open(ref))) then {
+        return [ref]
+    #
+    # try the raw ref .icn next
+    #
+    } else if close(open(ref || ".icn")) then {
+        return [ref || ".icn"]
+    #
+    # This linkref has a path-spec.
+    #
+    } else if not (comps[1] == "") then {
+        if close(open((comps := suffix(ref)[1]) || ".icn")) then {
+            return [comps]
+        } else {
+            #
+            # Couldn't find the ref specified.
+            #
+            return &null
+        }
+    #
+    # mdw:
+    # This is a hack to circumvent the conventional
+    # link resolution facility and ensure that we parse
+    # the iconc-compatible posix.icn.  This will have
+    # to be revisited.
+    #
+    # begin hack
+    } else if ref == "posix" then {
+        return [iconc_posixloc]
+    }
+    # end hack
+
+    base := comps[2]
+    comps := tail(srcfname)
+    path := comps[1] || sep
+    if close(open(path || base || ".icn")) then {
+        return [path || base || ".icn"]
+    }
+
+    #
+    # Either the ref is an .icn file in the LPATH corresponding to
+    # some .u file on the IPATH, or it is invalid.
+    #
+    if f := open(fil := ((!lpaths | !ipaths) || sep || ref || ".icn")) then {
+        close(f)
+    } else {
+        #
+        # The ref is invalid.
+        #
+        return &null
+    }
+
+    #
+    # We found a .icn for the ref, so assume that
+    # a .u exists for it and the ref is valid.
+    #
+    return [fil]
+end
+
+#PD:
+#:
+#:
+procedure iconc_importref_resolve(ref)
+    static  sep,                        #SV: set to the PATHCHAR separator
+            ipaths                      #SV: set to the list of diectories on the IPATH
+    local   i,                          #LV: counter used for checking all directories
+                                        #:   found in ipaths, i will hold the
+                                        #:   index of the successful match
+            k,                          #LV:
+            f,                          #LV: hold the database file reference being tested
+            entry,                      #LV: hold the value in the database file
+                                        #:   matching the key refernce supplied
+            rslt                        #LV: will hold a list of the import file
+                                        #:   references as specified in the database
+
+    initial {
+        sep := PATHCHAR
+        ipaths := ipaths_get()
+    }
+
+    # write("iconc_importref_resolve(" || ref || ")...")
+    rslt := []
+
+    #
+    # Search for an ndbm entry containing this ref. The relevant ndm database
+    # files should be found somewhere in one of the IPATH directories. If this
+    # assumption changes, add the additional directories to the initial clause
+    # above.
+    #
+    f := &null
+    every i := 1 to *ipaths do {
+        if f := open(ipaths[i] || sep || "uniclass", "dr") then {
+            if entry := fetch(f, ref) then {
+                break close(f)
+            }
+            close(f)
+        }
+    }
+    #
+    # if no entry has been found the return after searching all directories on
+    # IPATH then return the empty list
+    #
+    if /entry then {
+        return []
+    }
+    #
+    # we have found a database entry matching the reference required so we
+    # parse the ndbm entry, adding its files into list rslt
+    #
+    entry ? {
+        tab(upto(':'))
+        tab(many(' :'))
+        while put(rslt, (ipaths[i] || sep || tab(upto(':')))) do {
+            tab(many(' :'))
+        }
+        #
+        # process the last import reference which will be indicated by
+        # finding "(" or by the end of the entry
+        #
+        put(rslt, (ipaths[i] || sep || tab(find("(") | 0)))
+    }
+
+    return rslt
+end
+
+#PD:
+#:
+#:
+procedure iconc_yyparse(fname, tmplist)
+    local   pe,                         #LV:
+            rv                          #LV:
+
+    # write("mdw: iconc_yyparse(" || fname || ")...")
+    #
+    # initialise the current parsed filename to file supplied
+    #
+    yyfilename := outfilename := fname
+    #
+    # run the unicon preprocessor over the selected source file and append each
+    # line processed onto the parser source string
+    #
+    yyin := ""
+    every yyin ||:= preprocessor(fname, uni_predefs) do {
+        yyin ||:= "\n"
+    }
+    #
+    # if any preprocessor errors have been enountered, show the relevant message
+    # and force a stop in the compiler.
+    #
+    if preproc_err_count > 0 then {
+        every pe := !parsingErrors do {
+            write(&errout, pe.errorMessage)
+        }
+        stop()      # force error exit (abruptly)
+    }
+    #
+    # before parsing any file, reinitialise the lexer
+    #
+    yylex_reinit()
+    #
+    # if we are not debugging the compiler (normal action), we want the output
+    # of the parser to go to a temporary file, before that file is handed over to
+    # the iconc compiler for translation to c source language
+    #
+    if /yydbg then {
+        tmpname := tempname("uni",,,5)
+        yyout := open(tmpname, "w") |
+            stop("can't open temporary file ",tmpname," for writing")
+        put(tmplist, tmpname)
+    } else {
+        yyout := &output
+    }
+
+    /iconc_perifile_idx := *tmplist
+    #
+    # initialise the line number of the generated icon code to 0. These #line
+    # directives will ensure that the error messages produced by the iconc will
+    # be pointing to the correct line in the unicon source file
+    #
+    write(yyout, "#line 0 \"", fname, "\"")
+    #
+    # notify the compiler user that we are parsing the specific file requested
+    #
+    iwrites(&errout, "Parsing ", fname ,": ")
+    #
+    # create the association between the unicon source file and temporary file
+    #
+    ca_assoc(fname, tmpname)
+
+    rv := yyparse()
+
+    if not (*\parsingErrors > 0) then {
+        iwrite(&errout)
+    } else {
+        # we got some errors. In the old days they wrote themselves out, but
+        # in order be IDE friendly, we now do this after yyparse finishes.
+        every pe := !parsingErrors do {
+            write(&errout, pe.errorMessage)
+        }
+    }
+    if /yydbg then {
+        close(yyout)
+    }
+    reinitialize()
+end
+
+#PD:
+#: calc_posix_loc() - iconc requires access to the posix.icn, so we need to provide
+#: the location of this file to the information provided to iconc.
+#:
+#:@global iconc_posixloc
+#:@                 the location of the posix.icn file is placed in this global
+#:@                 variable
+#:@fails            always
+#:
+procedure calc_posix_loc()
+    local   prefix                      #LV: temporary to hold the path to the
+                                        #:   the IPL directory
+
+    if \(prefix := ulibprefix()) then {
+        iconc_posixloc := (prefix || "ipl" || PATHCHAR ||  "procs" || PATHCHAR || "posix.icn")
+    } else {
+        istop("Unicon: cannot calculate location of posix.icn relative to iconx for use with iconc.")
+    }
+end
+
+

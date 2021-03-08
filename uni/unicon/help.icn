@@ -83,7 +83,7 @@ procedure unicon_help()
           \n      e         - enable runtime error conversion to failure(iconc)_
           \n      l         - enable large-integer arithmetic (iconc)_
           \n      n         - produce code that keeps track of line numbers and filename in the source code(iconc)_
-          \n      s         - prevent removal of unreferenced declarations (allows string invocation) (both iconc and icont.iconx)_
+          \n      s         - prevent removal of unreferenced declarations (allows string invocation) (both iconc and icont/iconx)_
           \n   -G          : generate graphics (wiconx) executable_
           \n   --help      : display this help_
           \n   -help       : display this help_
@@ -115,9 +115,4 @@ procedure unicon_help()
           \n   -y          : parse (syntax check) only, do not compile_
           \n   -yydbg      : parse only, debug parser_
           \n   -Z          : compress icode")
-    #
-    # we want this message to be the last activity of the unicon compiler and
-    # then return to the operating system
-    #
-    istop()
 end

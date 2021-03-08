@@ -1,0 +1,370 @@
+################################################################################
+#
+#   File:     commandline.icn
+#
+#   Subject:  Documenting the Unicon Compiler.
+#
+#   Date:     March 2, 2021
+#
+################################################################################
+#
+# Description:
+#
+#   The Unicon compiler command line processing procedures
+#
+#   process_command_line(argv)
+#   setsystempath(systemvariable, values)
+#
+################################################################################
+#
+
+#PD:
+#: process_command_line(argv) - obtain all appropriate command line options taht
+#: are available for the unicon compiler and then set each global variable to the
+#: specified values from the command line.
+#:
+#:@global optiontable
+#:
+#:@param argv       the command line argument list that was passed to the unicon
+#:@                 compiler.
+#:@returns argv     the updated argv with all options found removed from list
+#:@aborts           if the size of argv is 0
+#:
+procedure process_command_line(argv)
+    local   optiontable                 #LV: stores the table of options that were
+                                        #: defined on the command line
+
+    #
+    # if there are no command line arguments given, then print the simple help
+    # and then stop.
+    #
+    if *argv = 0 then {
+        unicon_usage()
+    }
+    #
+    # The original code processed each command line option in sequence. We change
+    # this to use the xoptions procedure to process all command line options. Any
+    # that are not part of the specification are left in the argv list to be
+    # returned to the calling program. The found options are placed in the global
+    # variable optiontable.
+    #
+    optiontable := xoptions(argv, "--help!-help!-?-B-c-C$-D:*-e:-E-features!_
+                                   -f$-G-h-I:*-L:*-K-log!-M-n$-nofs!-o:-O-quiet_
+                                   -p:*-r-s-t-u-v+-version!-y-yydbg!-Z",,"-x")
+
+    ############################################################################
+    ############################################################################
+    #
+    # The following section sets the various global varaibles based on the command
+    # line options that have been found.
+    #
+    ############################################################################
+    ############################################################################
+
+    #
+    # process each option found on the command line. In the original compiler this
+    # is a loop and processes each argument in turn. As we now use the procedure "option",
+    # we can now process each found option one after the other.
+    #
+    # There are a number of informational options which can occur on the command
+    # line together. These options are "-features", "-version", "--help", "-help",
+    # "-h" and "-?". The change in handling these specific options is that if any
+    # or all of these options occur on the command line, the associated messages
+    # will be printed before termination of the compiler with an o/s exit value
+    # of 0. These options will be processed before any other command line options
+    # are looked at.
+    #
+    # if more than one of these options is supplied on the commandline, we will
+    # print the information in the order of
+    #
+    #   compiler version
+    #   compiler features
+    #   available compiler command line options help
+    #
+    if \optiontable["version" | "features" | "-help" | "?" | "h"] then {
+        if \optiontable["version"] then {
+            iwrite(&version)
+        }
+        #
+        # option "features" found, print all features and exit program
+        #
+        if \optiontable["features"] then {
+            every iwrite(&features)
+        }
+        #
+        # option "help" found, print help and exit program
+        #
+        if \optiontable["-help" | "?" | "h"] then {
+            #
+            # The detailed help option has been found, so print the detailed command
+            # help. At some future time, we could extend this to allow extended
+            # help documentation to be printed. But that is a discussion for
+            # another day
+            #
+            unicon_help()
+        }
+        exit(0)
+    }
+    #
+    # test to see if both options "C" and "c" are found, if so an error must be reported
+    # as these two options are incompatible, one is for the iconc compiler and
+    # the other one is for the interpreter icont/iconx
+    #
+    if \optiontable["C"] & \optiontable["c"] then {
+        istop("conflicting requests for -c and -C")
+    }
+    #
+    # option "D" (preprocessor symbols) have been found, value is a list of symbols
+    #
+    if tmpopt := \optiontable["D"] then {
+        #
+        # The preprocessor definitions given on the command line have been collected
+        # into a list of definitions. Process each element of the list and insert
+        # into the global preprocessor definition table.
+        #
+        every currentoption := !tmpopt do {
+            handle_D(\currentoption)
+        }
+    }
+    #
+    # option "C" found, generate code suitable for consumption by iconc.
+    #
+    if currentoption := \optiontable["C"] then {
+        iconc := parseonly := 1
+        tmpopt := "-U" || ( ("1" ~== currentoption) | "1") || " "
+        icontopt ||:= tmpopt
+        calc_posix_loc()
+    }
+    #
+    # option "c" found, don't create interpreter executable
+    #
+    if \optiontable["c"] then {
+        sysok := &null
+        comp := -1        # don't make exe
+    }
+    #
+    # option "log" found, create a log file for this run
+    #
+    if currentoption := \optiontable["log"] then {
+        if widollog := (1 ~= currentoption) then {
+            #
+            # flogname is given a value during the initialisation stage above
+            # and is a global variable
+            #
+            /flog := open(flogname, "w") |
+                write(&errout, "couldn't write log to ",image(flogname))
+        }
+    }
+    #
+    # option "quiet" found, clear the global loud, by default, unicon operates in
+    # loud mode
+    #
+    loud := (\optiontable["quiet"] & &null)
+    #
+    # option "o" found, set the required executable name, applies to both compiler
+    # and interpreter
+    #
+    exename := " -o " || quotes(\optiontable["o"]) || " "
+    #
+    # option "e" found, Really, -e should redirect *our* stderr output, and then
+    # tell the icont/iconc invocation to append its stderr output.
+    #
+    exename := " -e " || quotes(\optiontable["e"]) || " "
+    #
+    # option "O" found, optimize is set but not currently used
+    #
+    optimize := \optiontable["O"]
+    #
+    # option "y" found, parse only and do not create exe's
+    #
+    parseonly := \optiontable["y"]
+    #
+    # option "yydbg" found, force parse only and set up for parser debugging
+    #
+    parseonly := yydbg := \optiontable["yydbg"]
+    #
+    # option "B" found, add to link options the "-B" (bundle vm) option
+    #
+    ilinkopt ||:= ( \optiontable["B"] & "-B " )
+    #
+    # option "G" found, add to link options the "-G" (MS Windows graphics) option
+    #
+    ilinkopt ||:= ( \optiontable["G"] & "-G " )
+    #
+    # option "Z" found, add to link options the "-Z" (compress icode file) option
+    #
+    ilinkopt ||:= ( \optiontable["Z"] & "-Z " )
+    #
+    # option "v" found, add to the options the "-v" (diagnostic verbosity) option
+    #
+    if \optiontable["v"] then {
+        ilinkopt ||:= "-v" || \optiontable["v"] || " "
+        icontopt ||:= "-v" || \optiontable["v"] || " "
+        silent := (0 = \optiontable["v"] & 1)
+    }
+    #
+    # option "M" found, report the errors found to Unicon head developer
+    #
+    merrflag := \optiontable["M"]
+    #
+    # option "r" found,
+    #
+    returnErrorsFlag := \optiontable["r"]
+    #
+    # option "E" found, add to the options, preprocess only, no compilation
+    #
+    icontopt ||:= ( \optiontable["E"] & "-E " )
+    #
+    # option "f[adelns]" found, add to the options
+    #
+    if \optiontable["f"] then {
+        fset := cset(\optiontable["f"])
+        icontopt ||:= "-f " || fset || " "
+    }
+    #
+    # option "n[acest]" found, add to the options
+    #
+    if \optiontable["n"] then {
+        icontopt ||:= "-n " || cset(\optiontable["n"]) || " "
+    }
+    #
+    # option "p" arguments to be passed to iconc C compiler
+    #
+    if tmpopt := \optiontable["p"] then {
+        every currentoption := !tmpopt do {
+            icontopt ||:= "-p " || currentoption || " "
+        }
+    }
+    #
+    # option "s" found, add to the options, operate in silent mode
+    #
+    if \optiontable["s"] then {
+        icontopt ||:= ( \optiontable["s"] & "-s " )
+        ilinkopt ||:= ( \optiontable["s"] & "-s " )
+        silent := -1
+    }
+    #
+    # option "t" found, add to the options, turn on tracing
+    #
+    icontopt ||:= ( \optiontable["t"] & "-t " )
+    #
+    # option "u" found, add to the options, show all undeclared variables
+    #
+    icontopt ||:= ( \optiontable["u"] & "-u " )
+    #
+    # option "nofs" found, no string invocation for iconc
+    #
+    no_iconc_fs := \optiontable["nofs"]
+    #
+    # option "K" found, keep the temporary work files
+    #
+    keeptmp := \optiontable["K"]
+
+###############################################################################
+#
+# THE NOTES BELOW EXPLAIN THE "WHY" OF THE USE OF THE -I AND -L OPTIONS FROM
+# THE HISTORICAL PERSPECTIVE.
+#
+#
+#   There is a terrible irony to acknowledge here. Originally Icon had no
+#   include mechanism and IPATH meant Icon PATH, and was for link file
+#   searches. Ralph Griswold being the stalwart backward compatibility guru
+#   that he was, would not rename IPATH to LPATH (for "link path") when
+#   $include was added, and for whatever reason, chose to use LPATH for the
+#   $include searches. So Icon is committed to these names despite their
+#   backwardness, and Unicon is about as obsessed with backward compatibility
+#   as Icon, so we use the same environment variable definitions.  But
+#   whichever genius added the -I and -L command line options, probably me or
+#   at my direction, adhered to the "C-compiler command line option style",
+#   in which -I specifies include directories and -L specifies link
+#   directories, so this reversal is known and intentional. (The "me" referred
+#   in the above is "Clinton Jeffery".)
+#
+#   We can debate whether the *PATH environment variables' semantics should be
+#   swapped (breaking Icon compatibility), or whether the -I and -L semantics
+#   should be swapped (breaking C command-line style), or whether a higher
+#   level of documentation would alleviate matters for users.
+#
+###############################################################################
+
+#
+    setsystempath("LPATH", \optiontable["I"])
+    setsystempath("IPATH", \optiontable["L"])
+
+    #
+    # we have completed the processing of the available options and we can return
+    # the rest of the command line options to the main program. These should just
+    # be the list of files to process and any options that follow "-x" which will
+    # be passed to the compiled program as we execute it .
+    #
+    return argv
+end
+
+#PD:
+#: setsystempath(systemvariable, values) - add the supplied values (a list) to the
+#: specified system variable in the external environment. Used to add to IPATH and
+#: LPATH form the additional command line options.
+#:
+#:@param systemvariable
+#:@                 the specified system variable to be updated, will be either
+#:@                 IPATH or LPATH. Future use could be additional variables
+#:@param values     the list of additional paths to be added to the system variable
+#:@                 specified
+#:@fails            always
+#:
+procedure setsystempath(systemvariable, values)
+    local   currentoption,              #LV: the current option being added
+            tmp_s                       #LV: temporary string variable
+
+    tmp_s := ""
+    every currentoption := !values do {
+        tmp_s ||:= currentoption || " "
+    }
+    tmp_s ||:= " " || getenv(systemvariable)
+    setenv(systemvariable, tmp_s) | write(&errout, "setenv failed")
+
+end
+
+#PD:
+#: handle_D(arg) - we have found a preprocessor symbol definition on the command
+#: line and we will add this to the global defined preprocessor symbols.
+#:
+#:@param arg        the value found on the command line
+#:@fails            always fails, adds symbol and value to the global defined symbols
+#:@                 table
+#:
+procedure handle_D(arg)
+    local   def,                        #LV: the value that the symbol will be
+                                        #:   replaced with in the source code
+            sym                         #LV: the symbol that we expect to see in
+                                        #:   the source code
+
+    arg ? {
+        if sym := tab(find("=")) then {
+            move(1)
+            def := tab(0)
+        } else {
+            sym := tab(0)
+            def := "1"
+        }
+        uni_predefs[sym] := def
+    }
+end
+
+#PD:
+#: handle_C(arg)
+procedure handle_C(arg)
+   local tmpopt
+
+   iconc := 1
+   if *arg > 2 then
+      tmpopt := "-U" || arg[3:0] || " "
+   else
+      tmpopt := "-U1 "
+   if /icontopt then
+      icontopt := tmpopt
+   else
+      icontopt ||:= tmpopt
+   calc_posix_loc()
+end
+

@@ -13,17 +13,23 @@
 #   The Unicon compiler initialisation procedures
 #
 #   initialize()
+#   sysinitialize()
+#   iconc_initialise()
+#   icont_initialise()
 #
 ################################################################################
 #
 
+$include "includes.icn"
+
 #PD:
-#: initialize global variables
+#: initialize() - initialize global variables
 #:
 procedure initialize()
     #
     # by default we want the unicon compiler to display progress message as it
-    # processes the source and ucode files
+    # processes the source and ucode files. This is affected by the command line
+    # option "-quiet" as well as the "-s" command line option.
     #
     loud     := 1
     comp     := 0
@@ -38,6 +44,21 @@ procedure initialize()
     parsingErrors := []
 
     #
+    # We normally do not want to debug the parser code, so we set the global
+    # variable here. If we want ot debug the parser, set the value to 1
+    #
+    /yydebug := 0
+
+    #
+    # normal operation is to not keep temporary files, This can be overridden by
+    # a command line option
+    #
+    keeptmp := &null
+
+
+    #
+    # The address to which certain parser errors are sent. This depends on being
+    # able to access the "mail" system on the specific computer.
     #
     merraddress := MERRADDRESS
     #
@@ -49,7 +70,8 @@ procedure initialize()
     white    := ' \t\f\r'
     nonwhite := &cset -- white
     #
-    # this sets up the initial values for processing class, package, links and imports
+    # this sets up the initial values for processing class, package, links and imports.
+    # This procedure is found in the idol.icn file.
     #
     reinitialize()
     #
@@ -64,8 +86,8 @@ procedure initialize()
     #
     tmpcount := 0
     #
-    # there is one use of this variable, but as yet am unable to determine, what and why
-    # need to determineif the procedure call is ever done, if not, then it needs to be removed.
+    # there is one use of this variable, but as yet I am unable to determine what and why
+    # this variable is to be used for.
     #
     reserved := " fi neht esle yreve elihw od ot yb "
     #
@@ -76,12 +98,58 @@ procedure initialize()
         flog := open(flogname,"w")
     }
     #
-    # create the default preprocessor definitions for this run
+    # default for this is now set to 's'; enable feature to prevent the removal
+    # of unreferenced decalrations, allow string invocation in both iconc and iconx
+    #
+    fset := 's'
+    #
+    # create the default preprocessor definitions for this run. This procedure is
+    # found in the preprocessor source file preproce.icn
     #
     uni_predefs := predefs()
     #
     # run all other initialisations required
     #
     sysinitialize()
+end
+
+#PD:
+#: sysinitialize() - this was originally in the unix.icn file. It should affect all
+#: all operating system types.
+#:
+procedure sysinitialize()
+  env := getenv("IDOLENV") | "uniclass"
+  sysok := 0
+end
+
+#PD:
+#: iconc_initialise() - initailise the iconc specific variables, not used with icont/iconx
+#:
+#:
+procedure iconc_initialise()
+    #
+    # table of files that are referenced in link directives
+    #
+    iconc_links := table()
+    #
+    # table of files that are parsed ready to be passed to iconc
+    #
+    iconc_parsed := table()
+    #
+    # table of files that are referenced in import directives
+    #
+    iconc_imports := table()
+    #
+    # for use by the iconc process only - has no meaning for interpreter icont/iconx
+    #
+    ca_init()
+end
+
+#PD:
+#: icont_initialise()
+#:
+#:
+procedure icont_initialise()
+
 end
 
