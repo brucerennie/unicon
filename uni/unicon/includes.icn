@@ -16,5 +16,6 @@
 #
 
 $include "defines.icn"
+$include "ytab_h.icn"
 
 link    links

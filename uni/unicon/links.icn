@@ -29,6 +29,7 @@ link    commandline,                    #LK:
         iconc,                          #LK: The Unicon compiler iconc related
                                         #:   procedures
         icont,                          #LK:
+        idol,                           #LK:
         initialise,                     #LK:
         istop,                          #LK: The Unicon compiler termination
                                         #:   related procedures
