@@ -24,7 +24,9 @@ global  alpha,                          #GD: cset containing all valid unicon id
         classes,                        #GD:
         comp,                           #GD:
         ct,                             #GD:
-        dbg,                            #GD:
+        dbg,                            #GD: used to control debugging within certain iconc related
+                                        #:   output procedures. Set when deugging of the parsing actions
+                                        #:   is required.
         EmptyNode,                      #GD: in main repository, this has been removed and all
                                         #:   references have been changed to &null. was local,
                                         #:   but should be global, represents an empty node in
@@ -38,7 +40,8 @@ global  alpha,                          #GD: cset containing all valid unicon id
         fLine,                          #GD: the current line in the current file being processed
         flog,                           #GD: contains the current log file refernce if log files are in use
         flogname,                       #GD: holds the name of the temporary file that is used asa log file for this run
-        fset,                           #GD:
+        fset,                           #GD: controls what set of features have been set by the command
+                                        #:   line options. Default value is 's'
         icontopt,                       #GD:
         ilinkopt,                       #GD:
         imported,                       #GD:
@@ -60,12 +63,14 @@ global  alpha,                          #GD: cset containing all valid unicon id
         optimize,                       #GD:
         optiontable,                    #GD: table that holds all command line options found
         outfilename,                    #GD: initialised in this file, used in unigram(.y/.icn) and in tree.icn
-        parsingErrors,                  #GD: list that will contain ParseError records (if any parse errors are found)
+        parsingErrors,                  #GD: list that will contain ParseError records (if any parse errors are found).
+                                        #:   This is added to in the preprocessor and the grammar files
         reserved,                       #GD:
         returnErrorsFlag,               #GD: if set by the command line, will return the value of parsingErrors
         silent,                         #GD: flag used to indicate that the compiler run in silent mode
         strict,                         #GD:
         tempenv,                        #GD:
+        thePackage,                     #GD:
         tmpcount,                       #GD: used as a counter for the cretaion of temporary variables
                                         #:   during code generation, typically the variable names are
                                         #:   of the for __nnn where nnn is the value contained in the
