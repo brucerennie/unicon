@@ -1,0 +1,40 @@
+procedure main(arg)
+    local   basedir := ".",             #LV: the base directory in which to search
+                                        #:   defaults to the current working directory
+            f,                          #LV: temporary file descriptor
+            k,                          #LV: temporary database key descriptor
+            val                         #LV: temporary database value
+
+    #
+    # if name has a path specification included then we need to adjust the basedir
+    # to point to the related path.
+    #
+    \arg[1] ? {
+        while basedir ||:= tab(upto('\\/')) do {
+            basedir ||:= move(1)
+        }
+        arg := tab(0)
+        *arg & arg := &null
+        #
+        # throw away initial "." and trailing "/"
+        #
+        if basedir[-1] == ("\\"|"/") then basedir := basedir[2:-1]
+    }
+    write(basedir)
+    write(arg)
+    #
+    # given the specific basedir that either arises from the default or that is
+    # found in the given name, we want to search the specified database for the
+    # requested name, and if found we will return a database entry record.
+    #
+    if f := open(basedir || "/" || (\arg | "uniclass"),"dr") then {
+        every k := key(f) do {
+            val := fetch(f, k)
+            write("key:", image(k), "\nvalue:", val)
+        }
+        close(f)
+    } else {
+        write("nothing found")
+    }
+
+end

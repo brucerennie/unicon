@@ -55,7 +55,7 @@ record db_entry(dir, entry)
 class declaration(name,fields,tag,lptoken,rptoken)
 
     #MD:
-    #: name() - returns the name asscoiated with this specific declaration
+    #: name() - returns the name associated with this specific declaration
     #:
     #:@returns      value stored in name field
     method name()
@@ -63,7 +63,7 @@ class declaration(name,fields,tag,lptoken,rptoken)
     end
 
     #MD:
-    #: setname(s) - sets the na,e associated with this object to the value supplied.
+    #: setname(s) - sets the name associated with this object to the value supplied.
     #: This method is NOT USED in the current Unicon compiler and appears to be a
     #: legacy method. Potentially could be removed in the future.
     #:
@@ -86,12 +86,13 @@ class declaration(name,fields,tag,lptoken,rptoken)
     #:       source file being compiled.
     #:
     #: Essentially the construct is like
-    #:  tag name ( name1 , name2 , ... , namen )
+    #:  tag name [???] ( name1 , name2 , ... , namen )
     #:
     #: where tag is one of "procedure", "class", "method", "record" or "package".
+    #: where [???] is optional superclass information in the case of a tag "class"
     #:
     #:@param decl   string value to be parsed as declaration
-    #:@fails        always, after updating various object fields
+    #:@fails        normal exit, after updating various object fields
     #:@aborts       if decl cannot be parsed
     #:
     method Read(decl)
@@ -103,7 +104,7 @@ class declaration(name,fields,tag,lptoken,rptoken)
             #
             # get my tag
             #
-            (self.tag := =("procedure"|"class"|"method"|"record"|"package")) ,
+            (self.tag := =("procedure" | "class" | "method" | "record" | "package")) ,
             #
             # skip any whitespace found in the string
             #
@@ -138,32 +139,60 @@ class declaration(name,fields,tag,lptoken,rptoken)
         ) | halt("declaration/read can't parse decl ",decl)
     end
 
-  #
-  # write a declaration
-  #
-  method Write(f)
-      yyprint(tag)
-      yyprint(name)
-      yyprint(lptoken)
-      yyprint(fields)
-      yyprint(rptoken)
-  end
-  #
-  # convert self to a string
-  #
-  method String()
-    flds := (\(self.fields))$String() | ""
-if / (self.tag) then {
-   write("null tag in ", image(self.name), " object ", image(self))
-}
-    return self.tag || " " || self.name || "(" || flds || ")"
-  end
+    #PD:
+    #: Write(f) - write a declaration - f is the output file which is not used
+    #: internally in the method. The procedure yyprint uses a global variable yyout
+    #: which for this case is not directly associated with the file f specified.
+    #:
+    method Write(f)
+        yyprint(tag)
+        yyprint(name)
+        yyprint(lptoken)
+        yyprint(fields)
+        yyprint(rptoken)
+    end
+
+    #PD:
+    #: String() - convert self to a string
+    #:
+    #:@returns      the string representation for this object
+    #:
+    method String()
+        local   flds                    #LV:
+
+        #
+        # fields is an object and we require the string representation of that object
+        # for use in creating a string representation for this object.
+        #
+        flds := (\(self.fields))$String() | ""
+        #
+        # if this code is ever executed then we have a very significant problem,
+        # in the source code
+        #
+        if /(self.tag) then {
+            write("***** the following error should never happen *****")
+            write("null tag in ", image(self.name), " object ", image(self))
+        }
+        return self.tag || " " || self.name || "(" || flds || ")"
+    end
+
+#PD:
+#: initially - as each declaration is created, the global variable tmpcount is
+#: reset to 0
+#:
 initially
    tmpcount := 0
 end
-
+
+
 global imported
 
+#PD:
+#: import_class(node) - this procedure does not appear to used in any part of the
+#: Unicon compiler. This may be a candidate for removal.
+#:
+#: At this point, I am not documenting this specific procedure.
+#:
 procedure import_class(node)
    local s, pack
    /imported := table()
@@ -198,106 +227,219 @@ procedure import_class(node)
       }
 end
 
-#
-# a package is a virtual syntax construct; it does not appear in source
-# code, but is stored in the database.  The "fields" in a package are
-# the list of global symbols defined within that package.  The filelist
-# is the list of source files that are linked in when that package is
-# imported.
-#
+#PD:
+#: Package : declaration(files, dir, classes) - a package is stored in the database.
+#: The "fields" in a package are the list of global symbols defined within that
+#: package. The filelist is the list of source files that are linked in when that
+#: package is imported.
+#:
+#:
 class Package : declaration(files, dir, classes)
-   #
-   # Add to the two global tables of imported symbols from this package's
-   # set of symbols.  If sym is non-null, we are importing an individual
-   # symbol (import "pack.symbol").
-   #
-   method add_imported(sym)
-      local s, f
 
-      if /dir then return
+    #MD:
+    #: add_imported(sym) - Add to the two global tables of imported symbols from
+    #: this package's set of symbols.  If sym is non-null, we are importing an
+    #: individual symbol (import "pack.symbol").
+    #:
+    #:@global imported
+    #:@global imported_classes
+    #:
+    #:@param sym    if specified, this is the symbol we want to specifically
+    #:@             import. If it is &null then we want to import all symbols
+    #:@             that have been specified in fields
+    #:@fails        always fails
+    #:
+    method add_imported(sym)
+        local   s,                      #LV: temporary to hold selected string
+                f                       #LV: file to class database
 
-      f := open(dir || "/uniclass", "dr") |
-         stop("Couldn't re-open uniclass db in " || dir)
-      every s := (if \sym then sym else fields.foreach()) do {
-         if member(imported, s) then
-             put(imported[s], self.name)
-          else {
-             imported[s] := [self.name]
-          }
-
-         if fetch(f, self.name || "__" || s) then {
-            if member(imported_classes, s) then
-               put(imported_classes[s], self.name)
-            else {
-               imported_classes[s] := [self.name]
+        #
+        # if no dir has been specified then there is nothing to import and to be
+        # consistent with the semantics of the rest of the procedure, we must fail.
+        #
+        /dir & fail
+        #
+        # we want to access the class database in the specified dir for this package
+        #
+        f := open(dir || "/uniclass", "dr") |
+            stop("Couldn't re-open uniclass db in " || dir)
+        #
+        #
+        every s := (if \sym then sym else fields.foreach()) do {
+            if member(imported, s) then {
+                put(imported[s], self.name)
+            } else {
+                imported[s] := [self.name]
             }
-         }
-      }
-      close(f)
+
+            if fetch(f, self.name || "__" || s) then {
+                if member(imported_classes, s) then {
+                    put(imported_classes[s], self.name)
+                } else {
+                    imported_classes[s] := [self.name]
+                }
+            }
+        }
+        close(f)
+    end
+
+    #: Read(decl) -  parse a declaration string into its components. This method
+    #: will analyse procedures, classes, methods, records and packages. Expects
+    #: that the decl value contains no \n characters, i.e. the declaration is
+    #: contained on a single line. In addition, it parses "class" declarations
+    #: for any superclass information.
+    #:
+    #: Note: This is more "generous" in that there is no requirement for a space
+    #:       to exist between the tag and the name associated with the tag. This
+    #:       affects only reading the records from the database and not from the
+    #:       source file being compiled.
+    #:
+    #: Essentially the construct is like
+    #:  tag name [???] ( name1 , name2 , ... , namen )
+    #:
+    #: where tag is one of "procedure", "class", "method", "record" or "package".
+    #: where [???] is optional superclass information in the case of a tag "class"
+    #:
+    method Read(line)
+        #
+        # analyse the line by first using the declaration parsing method
+        #
+        self$declaration.Read(line)
+        #
+        # for class declarations, there is a posibility of superclass information.
+        # so, as a default action for each declaration found, we create an idTague
+        # that can be used to store this inofrmation. Only in the case of a class
+        # declaration, will anything be put in this new object.
+        #
+        self.files := idTaque(":")
+        #
+        # only in the case of finding a ":", will there be any superclass information
+        # to be found.
+        #
+        self.files$parse(line[find(":",line)+1:find("(",line)] | "")
+    end
+
+    #MD:
+    #: size() - return the number of global symbols defined in the package. These
+    #: global symbols include global variables, procedures, classes and records.
+    #:
+    #:@returns      the number of global symbols thus far found in the various
+    #:@             files associated with the package.
+    #:
+    method size()
+        return fields$size()
+    end
+
+    #MD:
+    #: insertfname(filename) - insert the current filename into the list of files
+    #: for this package.
+    #:
+    #:@param filename
+    #:@             source file that contains additional code for this package
+    #:@fails        always
+    #:
+    method insertfname(filename)
+        #
+        # if this is the first file being processed for this package, we need to
+        # initialise this field to an idTaque so as to be able store each file
+        # that contributes code to the package.
+        #
+        /files := idTaque(":")
+        #
+        # write a message to indicate whether this file is being stored or has already
+        # been stored previously
+        #
+        if files.insert(filename) then {
+            iwrite(filename, " is added to package ", name)
+            writespec()
+        } else {
+            iwrite(filename, " is already in Package ", name)
+        }
+    end
+
+    #MD:
+    #: insertsym(sym, filename) - insert the current symbol sym into the list of
+    #: global symbols applicable to this package.
+    #:
+    #:@param sym    this is the symbol to be added to the package symbols
+    #:@param filename
+    #:@             this parameter is not used in this method
+    #:@fails        always
+    #:
+    method insertsym(sym, filename)
+        #
+        # write a message to indicate whether this sym is being stored or has already
+        # been stored previously
+        #
+        if fields.insert(sym) then {
+            iwrite(sym, " added to package ", name)
+            writespec()
+        } else {
+            iwrite(sym, " is already in Package ", name)
+        }
+    end
+
+
+    #MD:
+    #: containssym(sym) - this method does not appear to used in any part of the
+    #: Unicon compiler. This may be a candidate for removal.
+    #:
+    #: At this point, I am not documenting this specific method.
+    #:
+    method containssym(sym)
+        return \fields.lookup(sym)
+    end
+
+
+    #MD:
+    #: String() -
+    #:
+    method String()
+        s := self$declaration.String()
+        fs := files.String()
+        if *fs > 0 then fs := " : " || fs
+        s := s[1: (*tag + *name + 2)] || fs || s[*tag+*name+2:0]
+        return s
+    end
+
+
+    #MD:
+    #:
+    #:
+    method writespec()
+        if \name & (f := open(env,"d")) then {
+            insert(f, name, String())
+            close(f)
+            return
+        }
+        stop("can't write package spec for ", image(name))
    end
-   method Read(line)
-      self$declaration.Read(line)
-      self.files := idTaque(":")
-      self.files$parse(line[find(":",line)+1:find("(",line)] | "")
-   end
-   method size()
-      return fields$size()
-   end
-   method insertfname(filename)
-      /files := idTaque(":")
-      if files.insert(filename) then {
-         iwrite(filename, " is added to package ", name)
-         writespec()
-         }
-      else iwrite(filename, " is already in Package ", name)
-   end
-   method insertsym(sym, filename)
-      if fields.insert(sym) then {
-         iwrite(sym, " added to package ", name)
-         writespec()
-         }
-      else iwrite(sym, " is already in Package ", name)
-   end
-   method containssym(sym)
-       return \fields.lookup(sym)
-   end
-   method String()
-      s := self$declaration.String()
-      fs := files.String()
-      if *fs > 0 then fs := " : " || fs
-      s := s[1: (*tag + *name + 2)] || fs || s[*tag+*name+2:0]
-      return s
-   end
-   method writespec()
-   if \name & (f := open(env,"d")) then {
-      insert(f, name, String())
-      close(f)
-      return
-      }
-   stop("can't write package spec for ", image(name))
-   end
+
+
+#MD:
+#:
+#:
 initially(name)
-   if name[1] == name[-1] == "\"" then {
-      name := name[2:-1]
-      self.name := ""
-      name ? {
-         if upto('/\\') then {
-            while self.name ||:= tab(upto('/\\')) do self.name ||:= move(1)
+    if name[1] == name[-1] == "\"" then {
+        name := name[2:-1]
+        self.name := ""
+        name ? {
+            if upto('/\\') then {
+                while self.name ||:= tab(upto('/\\')) do self.name ||:= move(1)
             }
-         self.name ||:= tab(find(".")|0)
-         }
-      }
-   else {
-      self.name := name
-      }
-   if dbe := fetchspec(self.name) then {
-      Read(dbe.entry)
-      self.dir := dbe.dir
-      }
-   /tag := "package"
-   /fields := classFields()
+            self.name ||:= tab(find(".")|0)
+        }
+    } else {
+        self.name := name
+    }
+    if dbe := fetchspec(self.name) then {
+        Read(dbe.entry)
+        self.dir := dbe.dir
+    }
+    /tag := "package"
+    /fields := classFields()
 end
-
+
 # imethods and ifields are all lists of these:
 record classident(Class,ident)
 
@@ -831,7 +973,7 @@ class Table(t)
     end
 
     #MD:
-    #: lookup(key) - find the value assocaited with the supplied key or &null if
+    #: lookup(key) - find the value associated with the supplied key or &null if
     #: no such key has been entered. This is like the standard actions of an Unicon
     #: table that has no default value supplied on creation.
     #:
