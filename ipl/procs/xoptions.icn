@@ -307,10 +307,10 @@
 #:@                         the supplied arg list
 #:@finishoption[]           list of applicable values that can terminate the
 #:@                         processing of options and values
-#:@returns                  table containing option/values found in the arg list
-#:@updates arg              the value of arg is updated by the removal the found
-#:@                         options/values and by pointer semantics, the value in
-#:@                         calling procedure
+#:@return                   table containing option/values found in the arg list
+#:@update arg               the value of arg is updated by the removal of the found
+#:@                         options/values and is passed back to the calling
+#:@                         procedure by the use of pointer semantics
 #:
 procedure xoptions(arg, optstring, errproc, finishoption[])
     local   opttable,                   #LV: table whose keys are the various options

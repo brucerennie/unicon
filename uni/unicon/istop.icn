@@ -21,7 +21,7 @@
 #: the compiler activity
 #:
 #:@param args           this is a list of message strings that are to be printed.
-#:@aborts               this procedure will cause the program to abort using exit()
+#:@abort                this procedure will cause the program to abort using exit()
 #:
 procedure istop(args[])
 

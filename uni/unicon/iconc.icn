@@ -301,7 +301,7 @@ end
 #:@global iconc_posixloc
 #:@                 the location of the posix.icn file is placed in this global
 #:@                 variable
-#:@fails            always
+#:@fail             always
 #:
 procedure calc_posix_loc()
     local   prefix                      #LV: temporary to hold the path to the

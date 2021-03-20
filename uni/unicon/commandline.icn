@@ -27,8 +27,8 @@
 #:
 #:@param argv       the command line argument list that was passed to the unicon
 #:@                 compiler.
-#:@returns argv     the updated argv with all options found removed from list
-#:@aborts           if the size of argv is 0
+#:@return           the updated argv with all options found removed from list
+#:@abort            if the size of argv is 0
 #:
 procedure process_command_line(argv)
     local   optiontable                 #LV: stores the table of options that were
@@ -310,7 +310,7 @@ end
 #:@                 IPATH or LPATH. Future use could be additional variables
 #:@param values     the list of additional paths to be added to the system variable
 #:@                 specified
-#:@fails            always
+#:@fail             always
 #:
 procedure setsystempath(systemvariable, values)
     local   currentoption,              #LV: the current option being added
@@ -330,7 +330,7 @@ end
 #: line and we will add this to the global defined preprocessor symbols.
 #:
 #:@param arg        the value found on the command line
-#:@fails            always fails, adds symbol and value to the global defined symbols
+#:@fail             always fails, adds symbol and value to the global defined symbols
 #:@                 table
 #:
 procedure handle_D(arg)

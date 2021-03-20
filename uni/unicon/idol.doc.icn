@@ -50,14 +50,21 @@ record db_entry(dir, entry)
 #CD:
 #: declaration(name,fields,tag,lptoken,rptoken) - Abstract class for objects
 #: resulting from parsing lines of the form
-#:   tag name ( field1 , field2, ... )
+#:
+#:   tag name [???] ( field1 , field2, ... )
+#:
+#: where tag is one of "procedure", "class", "method", "record" or "package".
+#: where [???] is optional superclass information in the case of a tag "class"
+#:
+#: It should be noted that at this point, there are only "class" and "package"
+#: records within the class database
 #:
 class declaration(name,fields,tag,lptoken,rptoken)
 
     #MD:
     #: name() - returns the name associated with this specific declaration
     #:
-    #:@returns      value stored in name field
+    #:@return       value stored in name field
     method name()
         return self.name
     end
@@ -68,7 +75,7 @@ class declaration(name,fields,tag,lptoken,rptoken)
     #: legacy method. Potentially could be removed in the future.
     #:
     #:@param s      string value to assign to the name associated with this object
-    #:@fails        always
+    #:@fail         always
     #:
     method setname(s)
         self.name := s
@@ -92,8 +99,8 @@ class declaration(name,fields,tag,lptoken,rptoken)
     #: where [???] is optional superclass information in the case of a tag "class"
     #:
     #:@param decl   string value to be parsed as declaration
-    #:@fails        normal exit, after updating various object fields
-    #:@aborts       if decl cannot be parsed
+    #:@fail         normal exit, after updating various object fields
+    #:@abort        if decl cannot be parsed
     #:
     method Read(decl)
         decl ? (
@@ -155,7 +162,7 @@ class declaration(name,fields,tag,lptoken,rptoken)
     #PD:
     #: String() - convert self to a string
     #:
-    #:@returns      the string representation for this object
+    #:@return       the string representation for this object
     #:
     method String()
         local   flds                    #LV:
@@ -247,7 +254,7 @@ class Package : declaration(files, dir, classes)
     #:@param sym    if specified, this is the symbol we want to specifically
     #:@             import. If it is &null then we want to import all symbols
     #:@             that have been specified in fields
-    #:@fails        always fails
+    #:@fail         always fails
     #:
     method add_imported(sym)
         local   s,                      #LV: temporary to hold selected string
@@ -323,7 +330,7 @@ class Package : declaration(files, dir, classes)
     #: size() - return the number of global symbols defined in the package. These
     #: global symbols include global variables, procedures, classes and records.
     #:
-    #:@returns      the number of global symbols thus far found in the various
+    #:@return       the number of global symbols thus far found in the various
     #:@             files associated with the package.
     #:
     method size()
@@ -336,7 +343,7 @@ class Package : declaration(files, dir, classes)
     #:
     #:@param filename
     #:@             source file that contains additional code for this package
-    #:@fails        always
+    #:@fail         always
     #:
     method insertfname(filename)
         #
@@ -364,7 +371,7 @@ class Package : declaration(files, dir, classes)
     #:@param sym    this is the symbol to be added to the package symbols
     #:@param filename
     #:@             this parameter is not used in this method
-    #:@fails        always
+    #:@fail         always
     #:
     method insertsym(sym, filename)
         #
@@ -947,7 +954,7 @@ class Table(t)
     #: size() - return the number of elements of the underlying Unicon table or
     #: if there is no underlying Unicon table, the value of 0
     #:
-    #:@returns      size of table or 0
+    #:@return       size of table or 0
     #:
     method size()
         return (*\self.t) | 0
@@ -963,8 +970,8 @@ class Table(t)
     #:@param x      the value to be inserted into the underlying Unicon table
     #:@param key    the key to be used to store the value against, if no key given
     #:@             then use the value as the key
-    #:@returns      &null is successfully entered
-    #:@fails        if key already exists in Table
+    #:@return       &null is successfully entered
+    #:@fail         if key already exists in Table
     #:
     method insert(x, key)
         /self.t := table()
@@ -978,7 +985,7 @@ class Table(t)
     #: table that has no default value supplied on creation.
     #:
     #:@param key    the key for which we want the stored values
-    #:@returns      the associated stored value or &null is no key found
+    #:@return       the associated stored value or &null is no key found
     #:
     method lookup(key)
         local   tee                     #L: temporary
@@ -1001,7 +1008,7 @@ class Table(t)
     #: the Table object.
     #:
     #:@suspends     each key that is in the underlying Unicon table
-    #:@fails        when no more keys are available, including when no keys have
+    #:@fail         when no more keys are available, including when no keys have
     #:@             ever been stored in Table object
     #:
     method foreach()
@@ -1075,8 +1082,8 @@ class taque : Table (l)
     #:@param x      the value to be inserted into the Table and the list representations
     #:@param key    the key to be used to store the value against, if no key given
     #:@             then use the value as the key
-    #:@returns      &null is successfully entered
-    #:@fails        if key already exists in Table
+    #:@return       &null is successfully entered
+    #:@fail         if key already exists in Table
     #:
     method insert(x, key)
         #
@@ -1105,8 +1112,8 @@ class taque : Table (l)
     #:@param x      the value to be inserted into the Table and the list representations
     #:@param key    the key to be used to store the value against, if no key given
     #:@             then use the value as the key
-    #:@returns      &null is successfully entered
-    #:@fails        if key already exists in Table
+    #:@return       &null is successfully entered
+    #:@fail         if key already exists in Table
     #:
     method Push(x, key)
         #
@@ -1131,8 +1138,8 @@ class taque : Table (l)
     #:@param x      the value to be inserted into the Table and the list representations
     #:@param key    the key to be used to store the value against, if no key given
     #:@             then use the value as the key
-    #:@returns      &null is successfully entered
-    #:@fails        if key already exists in Table
+    #:@return       &null is successfully entered
+    #:@fail         if key already exists in Table
     #:
     method Put(x, key)
         return self.insert(x, key)
@@ -1143,7 +1150,7 @@ class taque : Table (l)
     #: the list representation.
     #:
     #:@suspends     each value that is in the list representation
-    #:@fails        when no more values are available, including when no values have
+    #:@fail         when no more values are available, including when no values have
     #:@             ever been stored in tague object
     #:
     method foreach()
@@ -1160,8 +1167,8 @@ class taque : Table (l)
     #:@param x      the value to be inserted into the underlying Unicon table
     #:@param key    the key to be used to store the value against, if no key given
     #:@             then use the value as the key
-    #:@returns      &null is successfully entered
-    #:@fails        if key already exists in Table
+    #:@return       &null is successfully entered
+    #:@fail         if key already exists in Table
     #:
     method insert_t(x, key)
         return self$Table.insert(x, key)
@@ -1172,7 +1179,7 @@ class taque : Table (l)
     #: the Table object.
     #:
     #:@suspends     each key that is in the underlying Unicon table
-    #:@fails        when no more keys are available, including when no keys have
+    #:@fail         when no more keys are available, including when no keys have
     #:@             ever been stored in Table object
     #:
     method foreach_t()
@@ -1412,15 +1419,17 @@ class classFields : argList(publics)
 end
 
 #PD:
-#: fetchspec(name) - find a class specification (name) along the IPATH if necessary.
-#: name can contain a path specification. This does assume that the path separator
-#: is either "/" or "\".
+#: fetchspec(name) - find a class or package specification (name) along the IPATH
+#: if necessary. name can contain a path specification. The path specification does
+#: assume that the path separator is either "/" or "\".
 #:
 #:@global env       holds the name of the DBM file that we are looking for. This
 #:@                 defaults to "uniclass" unless overridden by the environment
-#:@                 variable "IDOLENV"
+#:@                 variable "IDOLENV".
 #:
-#:@param name       name of the class that we are looking for
+#:@param name       name of the class that we are looking for. It can include a
+#:@                 path specification for the location of the class database.
+@:@return
 procedure fetchspec(name)
     static   ipath                      #SV: list of paths contained in the environment
                                         #:   variable "IPATH"

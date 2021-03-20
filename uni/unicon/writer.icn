@@ -32,7 +32,7 @@
 #:@                     supplied in the rest of the call
 #:@param args           the list of messages that are required to be displayed and/or
 #:@                     logged for later viewing
-#:@returns              the last applicable value to be printed.
+#:@return               the last applicable value to be printed.
 #:
 procedure writer(func, args[])
     if \loud then {
@@ -59,7 +59,7 @@ end
 #:
 #:@param args           list of values to be displayed, the relevant display function
 #:@                     will be pushed onto the fron of this list
-#:@returns              the last specified value of the supplied list
+#:@return               the last specified value of the supplied list
 #:
 procedure iwrite(args[])
     return writer ! push(args, write)
@@ -74,7 +74,7 @@ end
 #:
 #:@param args           list of values to be displayed, the relevant display function
 #:@                     will be pushed onto the fron of this list
-#:@returns              the last specified value of the supplied list
+#:@return               the last specified value of the supplied list
 #:
 procedure iwrites(args[])
     return writer ! push(args, writes)

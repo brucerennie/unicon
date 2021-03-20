@@ -39,7 +39,7 @@ end
 #:@param s
 #:@param lineno
 #:@param filenam
-#:@fails            always fails
+#:@fail             always fails
 #:
 procedure warning(s, lineno, filenam)
     /warnings := 0
@@ -65,7 +65,7 @@ end
 #PD:
 #: errsrc() - writes the source where the error has been found
 #:
-#:@fails            always
+#:@fail             always
 #:
 procedure errsrc()
    iwrites(&errout, "File ", \yyfilename, "; Line ", \fLine, ": Unicon/")
