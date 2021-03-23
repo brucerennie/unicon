@@ -55,6 +55,7 @@ record db_entry(dir, entry)
 #:
 #: where tag is one of "procedure", "class", "method", "record" or "package".
 #: where [???] is optional superclass information in the case of a tag "class"
+#: and [???] is optional file list information in the case of a tag "package"
 #:
 #: It should be noted that at this point, there are only "class" and "package"
 #: records within the class database
