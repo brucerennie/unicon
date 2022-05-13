@@ -404,7 +404,8 @@ initial :                           { $$ := initial_action_1() }
         ;
 
 procbody:                           { $$ := procbody_action_1() }
-        | nexpr SEMICOL procbody    { $$ := procbody_action_2($1, $2, $3) }
+/*        | nexpr SEMICOL procbody    { $$ := procbody_action_2($1, $2, $3) }
+ */
         ;
 
 nexpr   :                           { $$ := nexpr_action_1() }
