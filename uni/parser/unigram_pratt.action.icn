@@ -8,6 +8,139 @@
 
 record treenode(label, children)
 
+global __NUD,                          #GV: This holds a table which relates the
+                                       #:   various operator/reserved word tokens
+                                       #:   and the null binding power values
+       __LED                           #GV: This holds a table which relates the 
+                                       #:   various operator/reserved word takens
+                                       #:   and the left binding power values
+
+#
+# Procedure to initialise the NUD table
+#
+procedure NUD(operator, binding_power)
+
+end
+#
+# Procedure to initialise the LED table
+#
+procedure LED(operator, binding_power)
+
+end
+
+#
+# Procedure to do the initailaisation required for the Pratt algorithm
+#
+procedure Pratt()
+   # 
+   # Within the Unicon language, there are various operators with associated
+   # precedences and assocaitivity relationships. There are alos reserved words 
+   # which can be treated as operators for the purposes of expression parsing.
+   #
+   # Fort documentation purposes, They are described below with their precedence
+   # and associativity from lowest to higest. To allow for future extensions, the 
+   # binding power values will be given in increments of 100 with 0 being the lowest 
+   # specified for operators and all identifiers will have a default value of -1.
+   #
+   # Left associativity is specified as the same as the precedence.
+   # Right associativity is specified by (Precedence - 1).
+   # 
+   # LED Table:
+   #
+   # We will be able to treat expressions that have reserved words using this technique.
+   #
+   #  Operator                Precedence              Associativity 
+   #
+   #     &                       100                        100
+   #
+   #     ?                       200                        200
+   #
+   #     :=:                     300                        299
+   #     :=                      300                        299
+   #     <->                     300                        299
+   #     <-                      300                        299
+   #     ||:=                    300                        299
+   #     |||:=                   300                        299
+   #     --:=                    300                        299
+   #     ++:=                    300                        299
+   #     +:=                     300                        299
+   #     -:=                     300                        299
+   #     *:=                     300                        299
+   #     **:=                    300                        299
+   #     /:=                     300                        299
+   #     %:=                     300                        299
+   #     ^:=                     300                        299
+   #     =:=                     300                        299
+   #     ===:=                   300                        299
+   #     >=:=                    300                        299
+   #     >:=                     300                        299
+   #     <=:=                    300                        299
+   #     <:=                     300                        299
+   #     ~=:=                    300                        299
+   #     ~===:=                  300                        299
+   #     ==:=                    300                        299
+   #     >>=:=                   300                        299
+   #     >>=:=                   300                        299
+   #     <<=:=                   300                        299
+   #     <<:=                    300                        299
+   #     ~==:=                   300                        299
+   #     ?:=                     300                        299
+   #     &:=                     300                        299
+   #     @:=                     300                        299
+   #
+   #     ??                      400                        400
+   #     
+   #     to                      500                        500
+   #     to/by                   500                        500
+   #     .|                      500                        500
+   #     
+   #     &&                      600                        600
+   #     |                       600                        600
+   #
+   #     ==                      700                        700
+   #     >>=                     700                        700
+   #     >>                      700                        700
+   #     <<=                     700                        700
+   #     <<                      700                        700
+   #     ~==                     700                        700
+   #     =                       700                        700
+   #     >=                      700                        700
+   #     >                       700                        700
+   #     <=                      700                        700
+   #     <                       700                        700
+   #     ~=                      700                        700
+   #     ===                     700                        700
+   #     ~===                    700                        700
+   #
+   #     ||                      800                        800
+   #     |||                     800                        800
+   #
+   #     $$                      900                        900
+   #     ->                      900                        900
+   #     +                       900                        900
+   #     --                      900                        900
+   #     ++                      900                        900
+   #     -                       900                        900
+   #
+   #     *                      1000                       1000
+   #     **                     1000                       1000
+   #     /                      1000                       1000
+   #     %                      1000                       1000
+   #
+   #     ^                      1100                       1099
+   #
+   #     \                      1200                       1200
+   #     @                      1200                       1200
+   #     @>                     1200                       1200
+   #     @>>                    1200                       1200
+   #     @<                     1200                       1200
+   #     @<<                    1200                       1200
+   #     !                      1200                       1200
+   #
+   #     
+   
+end
+
 procedure node(label, children[])
    return treenode(label, children)
 end
