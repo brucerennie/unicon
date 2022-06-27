@@ -34,10 +34,10 @@ end
 procedure Pratt()
    # 
    # Within the Unicon language, there are various operators with associated
-   # precedences and assocaitivity relationships. There are alos reserved words 
+   # precedences and associativity relationships. There are also reserved words 
    # which can be treated as operators for the purposes of expression parsing.
    #
-   # Fort documentation purposes, They are described below with their precedence
+   # For documentation purposes, they are described below with their precedence
    # and associativity from lowest to higest. To allow for future extensions, the 
    # binding power values will be given in increments of 100 with 0 being the lowest 
    # specified for operators and all identifiers will have a default value of -1.
@@ -91,7 +91,11 @@ procedure Pratt()
    #     ??                      400                        400
    #     
    #     to                      500                        500
+   # For the combined to/by to work, the "by" needs to have a precedence 
+   # at the lowest level. This ensures that "by" stops the expression being
+   # analysed by "to".
    #     to/by                   500                        500
+   #     by                        0                        500  # check if this is correct.
    #     .|                      500                        500
    #     
    #     &&                      600                        600
@@ -137,7 +141,8 @@ procedure Pratt()
    #     @<<                    1200                       1200
    #     !                      1200                       1200
    #
-   #     
+   #  Need to add the various expression reserved words such as if/then/else
+   #
    
 end
 
