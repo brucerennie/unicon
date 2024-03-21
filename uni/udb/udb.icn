@@ -7,18 +7,26 @@
 #
 
 $include "defaults.icn"
+import json
 
 procedure main(argv)
-   local udb
+   local udb, res := "reset",port, progPort
 
    if not (&features == "multiple programs") then
       stop("udb requires multiple programs feature to be enabled.")
 
-   udb := Console()
+   #&error := -1
    trap("SIGINT",  sig_ignore)
    trap("SIGPIPE", sig_ignore)
 
-   udb.startConsole(argv)
+   while res == "reset" do {
+      res := ""
+      &eventsource := &null
+      tempargv := copy(argv)
+
+      udb := Console()
+      res := udb.startConsole(tempargv)
+   }
 
    write("\n   Thank you for using UDB.\n   Goodbye !!!")
 end
