@@ -19,13 +19,13 @@ SRC       = udb.icn icode.icn srcfile.icn state.icn \
             breakpoint.icn watchpoint.icn stepping.icn stack.icn data.icn \
             trace.icn \
             evaluator.icn session.icn adapter.icn console.icn defaults.icn help.icn \
-	    coexp.icn symtab.icn system.icn
+	    coexp.icn symtab.icn system.icn exparser.icn
 
 UFILES    = udb.u icode.u srcfile.u state.u \
             agent.u internals.u externals.u \
             breakpoint.u watchpoint.u stepping.u stack.u data.u \
             trace.u  \
-            evaluator.u session.u adapter.u console.u help.u coexp.u symtab.u system.u
+            evaluator.u session.u adapter.u console.u help.u coexp.u symtab.u system.u exparser.u
 
 LIB       = lib
 LIBRARY   = $(LIB)/listener.u      $(LIB)/memory.u     $(LIB)/structaliases.u \
@@ -40,7 +40,7 @@ DTA        = dta
 DTA_UFILES = $(DTA)/atomic_agent.u $(DTA)/temporals.u
 
 
-all: Libfiles Assertions dapcom $(EXEs)
+all: Libfiles Assertions $(EXEs)
 
 
 Libfiles:
@@ -52,13 +52,9 @@ Assertions:
 tools:
 	cd $(LIB); $(MAKE) tools
 
-dapcom: dapcom.icn
-	$(UC) $(DASHG) -o dapcom dapcom.icn
-	$(CP) dapcom$(EXE) ../../bin
-
 udb: $(UFILES) $(LIBRARY) $(DTA_UFILES)
 	$(UC) $(ldflags) $(LIBRARY) $(DTA_UFILES) $(UFILES) -o udb
-	cp udb$(EXE) ../../bin
+	$(CP) udb$(EXE) ../../bin
 
 udb.u: udb.icn console.u
 	$(UC) $(cflags) udb
@@ -102,6 +98,9 @@ stack.u: stack.icn defaults.icn state.u
 data.u: data.icn defaults.icn state.u
 	$(UC) $(cflags) data
 
+exparser.u: exparser.icn
+	$(UC) $(cflags) exparser
+
 trace.u: trace.icn defaults.icn state.u $(EVD)
 	$(UC) $(cflags) trace
 
@@ -134,7 +133,6 @@ Clean: clean
 clean:
 	$(DEL) *.u
 	$(DEL) $(EXEs) 
-	$(DEL) dapcom
 	$(DEL) *.exe
 	$(DEL) *.dir
 	$(DEL) *.pag

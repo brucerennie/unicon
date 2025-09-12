@@ -2,6 +2,8 @@
 UNIOS=@unicon_os@
 UNIOSDIST=@unicon_osdist@
 UNIOSREL=@unicon_osrel@
+UNICONCPU=@unicon_cpu@
+UNICONHOST=@unicon_host@
 
 EXE=@EXE@
 GRAPHICS=@GRAPHICS@
@@ -24,7 +26,7 @@ BIN=$(BASE)/bin
 RM=rm -f
 RMDIR=rm -rf
 MKDIR=mkdir
-CP=cp
+CP=cp -f
 TOUCH=touch
 ARC=zip
 ARCEXT=zip

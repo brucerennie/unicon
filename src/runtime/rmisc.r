@@ -2400,6 +2400,7 @@ static int construct_funcimage(union block *pe, int aicode,
  * most common element
  */
 
+
 int find_cindex(union block *l, union block *r)
 {
    int pat_size = -1;
@@ -2408,14 +2409,14 @@ int find_cindex(union block *l, union block *r)
    union block * tmp;
 
    tmp = r;
-   while(Blk(tmp, Pelem) != NULL){
+   while(tmp != NULL){
       if(pat_size < Blk(tmp, Pelem)->index)
          pat_size = Blk(tmp, Pelem)->index;
       tmp = Blk(tmp, Pelem)->pthen;
       }
 
    tmp = l;
-   while(Blk(tmp, Pelem) != NULL){
+   while(tmp != NULL){
       if(pat_size < Blk(tmp, Pelem)->index)
          pat_size = Blk(tmp, Pelem)->index;
       tmp = Blk(tmp, Pelem)->pthen;
@@ -2954,19 +2955,9 @@ Deliberate Syntax Error
  */
    }
 
-#ifndef AsmOver
 /*
  * add, sub, mul, neg with overflow check
  * all return 1 if ok, 0 if would overflow
- */
-
-/*
- *  Note: on some systems an improvement in performance can be obtained by
- *  replacing the C functions that follow by checks written in assembly
- *  language.  To do so, add #define AsmOver to ../h/define.h.  If your
- *  C compiler supports the asm directive, put the new code at the end
- *  of this section under control of #else.  Otherwise put it a separate
- *  file.
  */
 
 word add(word a, word b, int *over_flowp)
@@ -3067,7 +3058,6 @@ word neg(word a, int *over_flowp)
    *over_flowp = 0;
    return -a;
 }
-#endif                                  /* AsmOver */
 
 #if COMPILER
 /*

@@ -1745,6 +1745,9 @@ function{0,1} name(t)
    inline {
       int l;
       char *p;
+#if HAVE_CTIME_R || HAVE_GMTIME_R
+      char buf[32];
+#endif                                  /* HAVE_CTIME_R || HAVE_GMTIME_R */
 #if i
 #if HAVE_CTIME_R
       if ((p = ctime_r((time_t *)&t, buf)) == NULL) runerr(0);
@@ -1755,7 +1758,6 @@ function{0,1} name(t)
 #else
 #if HAVE_GMTIME_R && HAVE_ASCTIME_R
     {
-      char buf[32];
       struct tm gmt;
       if (gmtime_r((time_t *)&t, &gmt) == NULL) runerr(0);
       if ((p = asctime_r(&gmt, buf)) == NULL) runerr(0);
@@ -2508,8 +2510,6 @@ function{0,1} select(files[nargs])
          BlkLoc(d) = (union block *) lp;
          tv.tv_sec = tv.tv_usec = 0;
          }
-#endif                                  /* Graphics */
-
 #if defined(PseudoPty) && defined(MSWindows)
       else if ((lps->size > 0) && ((lp = findactivepty(lps)) != NULL)) {
          d.dword = D_List;
@@ -2517,6 +2517,7 @@ function{0,1} select(files[nargs])
          tv.tv_sec = tv.tv_usec = 0;
          }
 #endif                                  /* PseudoPty && MSWindows */
+#endif                                  /* Graphics */
 
       if (n) {
         DEC_NARTHREADS;
@@ -2543,7 +2544,6 @@ function{0,1} select(files[nargs])
             d.dword = D_List;
             BlkLoc(d) = (union block *) lp;
             }
-#endif                                  /* Graphics */
 #if defined(PseudoPty) && defined(MSWindows)
          /*
           * if our select() could have taken any time, try ptys again
@@ -2553,6 +2553,7 @@ function{0,1} select(files[nargs])
             BlkLoc(d) = (union block *) lp;
             }
 #endif                                  /* PseudoPty */
+#endif                                  /* Graphics */
          }
       else if (ptv && (ptv->tv_sec || ptv->tv_usec)) {
          idelay(ptv->tv_sec * 1000 + ptv->tv_usec / 1000);
@@ -3097,7 +3098,7 @@ function{0, 1} ready(f, i)
       return string
       }
    body {
-      int status, fd;
+      int status;
       tended struct descrip desc;
       status = BlkD(f,File)->status;
 
@@ -3129,7 +3130,7 @@ function{0, 1} ready(f, i)
          if (select(pt->master_fd+1, &readset, NULL, NULL, &tv) > 0) {
             /* performance bug: how many bytes are really available? */
             tb = 1;
-#endif
+#endif                                  /* NT */
             if (i == 0) i = tb;
             else if (tb < i) i = tb;
             Protect(sbuf = alcstr(NULL, i), runerr(0));
@@ -3138,7 +3139,7 @@ function{0, 1} ready(f, i)
 #else
             tb = read(pt->master_fd, sbuf, i);
             status = (tb != -1);
-#endif
+#endif                                  /* NT */
             if (!status) fail;
             StrLoc(desc) = sbuf;
             StrLen(desc) = tb;

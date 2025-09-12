@@ -1259,7 +1259,7 @@ int sock_listen(char *addr, int is_udp_or_listener, int af_fam)
 
 
    if ((s = sock_get(addr)) < 0) {
-     char *p;
+     char *p, fname[BUFSIZ];
 
      /*
       * If the first argument is just a name, it's a unix domain socket.
@@ -1267,9 +1267,11 @@ int sock_listen(char *addr, int is_udp_or_listener, int af_fam)
       * empty, it means on any interface.
       */
 
-      if ((p=strrchr(addr, ':')) != NULL) {
+      SAFE_strncpy(fname,addr, sizeof(fname));
+
+      if ((p=strrchr(fname, ':')) != NULL) {
          *p = 0;
-         res0 = uni_getaddrinfo(addr, p+1, is_udp_or_listener == 1, af_fam);
+         res0 = uni_getaddrinfo(fname, p+1, is_udp_or_listener == 1, af_fam);
          *p = ':';
 
          if (!res0)
@@ -1586,9 +1588,8 @@ SSL_CTX * create_ssl_context(dptr attr, int n, int type ) {
    tended char *certFile=NULL, *keyFile=NULL, *ciphers=NULL, *ciphers13=NULL, *password=NULL;
    tended char *ca_file=NULL, *ca_dir=NULL, *ca_store=NULL;
    tended char *min_proto=NULL, *max_proto=NULL, *verifyPeer=NULL;
-   int old_ssl_flags=0;
    static int SSL_is_initialized = 0;
-   C_integer timeout = 0, timeout_set = 0;
+   C_integer timeout = 0;
    int count;
    int a;
 
@@ -1600,7 +1601,7 @@ SSL_CTX * create_ssl_context(dptr attr, int n, int type ) {
        attr[a] = emptystr;
      }
      else if (a==0 && cnv:C_integer(attr[a], timeout)) {
-       timeout_set = 1;
+       //timeout_set = 1;
      }
      else if (cnv:C_string(attr[a], tmps)) {
        /*
@@ -1725,7 +1726,6 @@ SSL_CTX * create_ssl_context(dptr attr, int n, int type ) {
 #endif
 
    count = 2;
-   old_ssl_flags = 0;
    do {
       char *proto;
       if (count == 2)
@@ -1777,6 +1777,7 @@ SSL_CTX * create_ssl_context(dptr attr, int n, int type ) {
 
         if (count == 2) {
 #if !defined(MacOS) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
+          int old_ssl_flags=0;
           switch (ver) {
           case TLS1_2_VERSION: old_ssl_flags |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
               SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3; break;
@@ -1799,6 +1800,7 @@ SSL_CTX * create_ssl_context(dptr attr, int n, int type ) {
         }
         else {
 #if !defined(MacOS) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
+         int old_ssl_flags=0;
           switch (ver) {
           case TLS1_2_VERSION: break;
           case TLS1_1_VERSION: old_ssl_flags |= SSL_OP_NO_TLSv1_2; break;
@@ -2445,9 +2447,21 @@ dptr u_read(dptr f, int n, int fstatus, dptr d)
          /* Something is available: allocate another chunk */
          if (i == 0)
             StrLoc(*d) = alcstr(NULL, bufsize);
-         else
+         else {
             /* Extend the string */
+           /* We must guard against running over the end of the current string region.
+            * In that case, allocate a whole new buffer (which will result in a GC)
+            * and copy the existing buffer into it. Don't use alcstr() to do the copy
+            * because that might involve accessing potentially non-existent memory after
+            * the end of the (old) string region.
+            */
+           if (DiffPtrs(strend,strfree) < bufsize) {
+             char *newb = alcstr(NULL, StrLen(*d) + bufsize); /* a GC will occur */
+             memcpy(newb, StrLoc(*d), StrLen(*d));
+             StrLoc(*d) = newb;
+           } else
             (void) alcstr(NULL, bufsize);
+         }
 tryagain:
 
          if (fstatus & Fs_Socket) {

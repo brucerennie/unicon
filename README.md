@@ -83,7 +83,7 @@ Most of these libraries are listed below for common Linux distibutions.
 
 Debian/Ubuntu:
 ```
-apt install libgl1-mesa-glx libssl-dev libx11-dev libjpeg-dev libpng-dev libglu1-mesa-dev
+apt install libgl1-mesa-dev libssl-dev libx11-dev libjpeg-dev libpng-dev libglu1-mesa-dev
             libxft-dev libopenal-dev libalut-dev libogg-dev libvorbis-dev unixodbc-dev
 	    libfreetype6-dev
 ```
@@ -97,7 +97,7 @@ dnf install libjpeg-turbo-devel libpng-devel libX11-devel mesa-libGL-devel mesa-
 Go into the Unicon directory and run:
 ```
 ./configure
-make
+make -j
 ```
 After that you can add `unicon/bin` to the $PATH environment variable or install Unicon instead:
 ```
@@ -115,15 +115,29 @@ explicitly set the compiler as follows:
 If you want access to the graphics facilities of Unicon, you also need to download
 and install the XQuartz package from https://www.xquartz.org/.
 
+### *BSD
+
+installl build dependencies. Make sure to use GNU `gmake` when building.
+```
+pkg install -y -f autoconf gmake lang/gcc git
+```
+
+Configure, make, and optionally install unicon:
+```
+./configure
+gmake -j
+gmake install
+```
 
 ### Windows
 There are two possibilities depending on the choice of the C runtime library.  You can choose
 the legacy Microsoft Visual C++ Runtime (MSVCRT), which runs on all versions of Windows, or the
 newer Universal C Runtime (UCRT64), which is used by Visual Studio but is only available by default
 on Windows 10 and newer. Starting from version 13.3, binary distributions of Unicon for Windows
-will be built with UCRT64.
+will be built with UCRT64. See msys2 [environemts](https://www.msys2.org/docs/environments/)
+for more details about available environemnts and their C Library options.
 
-UCRT64:
+#### 1. UCRT64:
 
 - Download and run the installer from https://www.msys2.org/. At the time of writing it is called
   `msys2-x86_64-20230127.exe` but it may be updated from that version.
@@ -131,8 +145,7 @@ UCRT64:
 -  Go through the installation process to get a UCRT64 environment.
 -  Using the UCRT64 shell, Install tools required for the build:
 ```
-pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-diffutils
-pacman -S make git
+pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-diffutils git
 ```
 - Install the optional libraries for a full build (Unicon will build without them but some features
 will be absent).
@@ -158,7 +171,7 @@ make
 Note that, although the build environment is UCRT64, the resulting Unicon binaries may also be
 run from the standard Windows command line `cmd` terminal.
 
-MSVCRT:
+#### 2. MSVCRT (Legacy):
 
 - Download and run [mingw-get-setup.exe](https://sourceforge.net/projects/mingw/files/Installer/)
 
@@ -172,7 +185,7 @@ Note that you maybe missing the tool "make". TDM MinGW comes with a "make" that 
 That file can be found under the insallation directory of MinGW64 inside the bin directory.
 create a copy of that file and name it "make.exe" before continuing.
 
-- Clone the Unicon repository (same options as UCRT64).
+- Clone the Unicon repository (same steps as UCRT64 above).
 
 After that you can use the standard Windows command line `cmd` terminal to build Unicon.
 ```

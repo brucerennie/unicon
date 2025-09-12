@@ -140,11 +140,6 @@ function{0,1} close(f)
          if (BlkLoc(f)->File.status != Fs_Window) { /* not already closed? */
             BlkLoc(f)->File.status = Fs_Window;
             SETCLOSED((wbp) fp);
-#ifdef GraphicsGL
-            if (((wbp)fp)->window->is_gl)
-               gl_wclose((wbp) fp);
-            else
-#endif                                  /* GraphicsGL */
             wclose((wbp) fp);
             }
          return f;
@@ -274,7 +269,7 @@ function{0,1} open(fname, spec, attr[n])
 #else                                           /* Graphics */
 "open(fname, spec) - open file fname with specification spec."
 function{0,1} open(fname, spec)
-#endif                                          /* Graphics */
+#endif                                  /* Graphics */
    declare {
       tended struct descrip filename;
       }
@@ -474,32 +469,12 @@ Deliberate Syntax Error
 #ifdef XWindows
                XInitThreads();
 #endif                                  /* XWindows */
-#ifdef GraphicsGL
-               /*
-                * For now, having FreeType is a requirement for the OpenGL
-                * 2D and 2D/3D implementation
-                */
-#if HAVE_LIBFREETYPE
-               /* for enabling OpenGL 2D implementation in a convenient way */
-               if (!getenv("UNICONGL2D"))
-#endif                                  /* HAVE_LIBFREETYPE */
-#endif                                  /* GraphicsGL */
                continue;
 #else                                   /* Graphics */
                set_errortext(148);
                fail;
 #endif                                  /* Graphics */
-#ifdef GraphicsGL
-               /* OpenGL 2D implementation */
-               if (status & Fs_Window) {
-                  status |= Fs_WinGL2D;
-                  continue;
-                  }
-#else
-               /* Does it need a specific code? */
-               set_errortext(1045);
-               fail;
-#endif                                  /* GraphicsGL */
+
             case 'l':
             case 'L':
 #ifdef PosixFns
@@ -682,15 +657,11 @@ Deliberate Syntax Error
             }
 #ifdef Graphics3D
          if (status & Fs_Window3D)
-            f = gl_wopen(fnamestr, hp, attr, n, &err_index, 1);
+            f = wopengl(fnamestr, hp, attr, n, &err_index);
          else
 #endif                                  /* Graphics3D */
-#ifdef GraphicsGL
-         if (status & Fs_WinGL2D)
-            f = gl_wopen(fnamestr, hp, attr, n, &err_index, 0);
-         else
-#endif                                  /* GraphicsGL */
-            f = wopen(fnamestr, hp, attr, n, &err_index, 0, 0);
+            f = wopen(fnamestr, hp, attr, n, &err_index,0);
+
          if (f == NULL) {
             if (err_index >= 0) runerr(145, attr[err_index]);
             else if (err_index == -1) {
@@ -1101,21 +1072,31 @@ Deliberate Syntax Error
          else if (stat(fnamestr, &st) < 0) {
             /* stat reported an error; file does not exist */
 
-            if (strchr(fnamestr, '*') || strchr(fnamestr, '?')) {
-               char tempbuf[1024];
+            if ((strlen(fnamestr) < MaxPath) && (strchr(fnamestr, '*') || strchr(fnamestr, '?'))) {
+               /* account for (2 * strlen(fnamestr)) + 128 for the shell script */
+               char tempbuf[MaxPath*2 + 128];
 #if UNIX
                /*
-                * attempted to open a wildcard. used to use ls(1) output.
+                * attempt to open a wildcard. used to use ls(1) output.
                 * Now using shell for-loop and echo in order to avoid bad
                 * answers when no match is found.
                 */
-               sprintf(tempbuf, "for i in %s; do if [ \"$i\" != \"%s\" ]; then echo \"$i\"; fi; done", fnamestr, fnamestr);
+               int rt;
+               rt = snprintf(tempbuf, sizeof(tempbuf),
+                 "for i in %s; do if [ \"$i\" != \"%s\" ]; then echo \"$i\"; fi; done",
+                 fnamestr, fnamestr);
+
+               if (rt < 0 || rt > sizeof(tempbuf)) {
+                  set_errortext(218);
+                  fail;
+                 }
+
                status |= Fs_Pipe;
                f = popen(tempbuf, "r");
 #endif                                  /* UNIX */
 #if NT
                 /*
-                 * attempted to open a wildcard, do file completion
+                 * attempt to open a wildcard, do file completion
                  */
                 strcpy(tempbuf, fnamestr);
                 if (*tempbuf) {
@@ -1432,7 +1413,7 @@ function{0,1} read(f)
          */
         if (status & Fs_Compress) {
 
-            if (gzeof(fp)) fail;
+            if (gzeof((gzFile)fp)) fail;
             DEC_NARTHREADS;
             if (gzgets((gzFile)fp,sbuf,MaxReadStr+1) == Z_NULL) {
                INC_NARTHREADS_CONTROLLED;
@@ -1784,14 +1765,14 @@ function{0,1} reads(f,i)
        * Read characters from a compressed file
        */
       if (status & Fs_Compress) {
-         if (gzeof(fp)) {
+         if (gzeof((gzFile)fp)) {
             fail;
             }
          DEC_NARTHREADS;
          slen = gzread((gzFile) fp, StrLoc(s), i);
          INC_NARTHREADS_CONTROLLED;
          if (slen == 0) {
-            if (gzeof(fp)) fail;
+            if (gzeof((gzFile)fp)) fail;
             /* an underlying read error, but gzread() returned 0? */
             set_gzerrortext((gzFile) fp);
             fail;
@@ -1998,8 +1979,8 @@ function{0,1} seek(f,o)
          if (o<0) {
             set_errortext(214);
             }
-         if (gzseek(fd, o - 1, SEEK_SET) == -1) {
-            if (gzeof(fd)) fail;
+         if (gzseek((gzFile)fd, o - 1, SEEK_SET) == -1) {
+            if (gzeof((gzFile)fd)) fail;
             set_gzerrortext((gzFile) fd);
             fail;
             }
@@ -2054,6 +2035,7 @@ function{0,1} seek(f,o)
 end
 
 #ifdef PosixFns
+
 "system() - create a new process, optionally mapping its stdin/stdout/stderr."
 
 function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
@@ -2624,14 +2606,8 @@ end
 #ifdef Graphics
    pollctr >>= 1;
    pollctr++;
-   if (status & Fs_Window) {
-#ifdef GraphicsGL
-      if (f.wb->window->is_gl)
-         gl_wputc('\n', f.wb);
-      else
-#endif                                  /* GraphicsGL */
+   if (status & Fs_Window)
       wputc('\n', f.wb);
-      }
    else
 #endif                                  /* Graphics */
 
@@ -2857,13 +2833,6 @@ function {1} name(x[nargs])
                      pollctr >>= 1;
                      pollctr++;
                      if (status & Fs_Window) {
-#ifdef GraphicsGL
-                        if ((f.wb)->window->is_gl) {
-                           gl_wputc('\n', f.wb);
-                           gl_wflush(f.wb);
-                           }
-                        else
-#endif                                  /* GraphicsGL */
                         wputc('\n', f.wb);
                         wflush(f.wb);
                         }
@@ -2879,14 +2848,14 @@ function {1} name(x[nargs])
 
 #if HAVE_LIBZ
                      if (status & Fs_Compress) {
-                        if (gzputc(f.fp,'\n')==-1){
+                        if (gzputc((gzFile)f.fp,'\n')==-1){
 #ifdef Concurrent
                            if (fblk)
                            MUTEX_UNLOCKID(fblk->mutexid);
 #endif                                  /* Concurrent */
                            runerr(214);
                            }
-/*                      gzflush(f.fp,4); */
+/*                      gzflush((gzFile)f.fp,4); */
                           }
                      else {
                           }
@@ -3018,7 +2987,7 @@ function {1} name(x[nargs])
 
 #if HAVE_LIBZ
                   if (status & Fs_Compress){
-                     if (gzputs(f.fp, StrLoc(t))==-1){
+                     if (gzputs((gzFile)f.fp, StrLoc(t))==-1){
                         MUTEX_UNLOCKID(fblk->mutexid);
                         runerr(214);
                         }
@@ -3307,14 +3276,8 @@ function{1} flush(f)
       pollctr >>= 1;
       pollctr++;
 
-      if (status & Fs_Window) {
-#ifdef GraphicsGL
-         if (((wbp)fp)->window->is_gl)
-            gl_wflush((wbp)fp);
-         else
-#endif                                  /* GraphicsGL */
+      if (status & Fs_Window)
          wflush((wbp)fp);
-         }
       else
 #endif                                  /* Graphics */
          fflush(fp);

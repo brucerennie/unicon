@@ -6,6 +6,7 @@ default: default_target
 include $(TOPDIR)/Makedefs
 
 LIBD=$(TOPDIR)/plugins/lib
+ICALLDIR=$(TOPDIR)/uni/icall
 
 UC=$(TOPDIR)/bin/unicon
 WUC=$(TOPDIR)/bin/unicon -G
@@ -33,8 +34,8 @@ default_target:   icall.$(O) $(LIBD)/uso.u $(PCMN)
 
 all: uso.u icall.$(O)
 
-icall.$(O): icall.h icall.c
-	$(CC) $(CFDYN2) -c icall.c
+icall.$(O): $(ICALLDIR)/icall.h $(ICALLDIR)/icall.c
+	$(CC) $(CFDYN2) -c $(ICALLDIR)/icall.c
 	$(CP) icall.$(O) ../lib/
 
 windows: $(PCMN) $(PWIN)
@@ -45,23 +46,23 @@ macos: $(PCMN) $(PMOS)
 
 # Build cross platforms plugins
 $(PCMN): $(LIBD)/uso.u
-	make -C $@
+	$(MAKE) -C $@
 
 # Build Windows plugins
 $(PWIN): $(LIBD)/uso.u
-	make -C $@
+	$(MAKE) -C $@
 
 # Build *nix plugins
 $(PNIX): $(LIBD)/uso.u
-	make -C $@
+	$(MAKE) -C $@
 
 # Build Mac OS plugins
 $(PMOS): $(LIBD)/uso.u
-	make -C $@
+	$(MAKE) -C $@
 
 # Unicon interface
 $(LIBD)/%.u:	%.icn $(CSRC)
-	cp $< $(LIBD)/
+	$(CP) $< $(LIBD)/
 	cd $(LIBD); $(UC) $(UFLAGS) $<
 	rm $(LIBD)/$<
 

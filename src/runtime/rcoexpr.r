@@ -381,15 +381,28 @@ int co_chng(struct b_coexpr *ncp,
     * Enter the program state of the co-expression being activated
     */
    ENTERPSTATE(ncp->program);
-#ifdef Concurrent
+
+#ifdef PthreadCoswitch
    /*
-    * Enter the threadstate of the co-expression being activated
+    * Enter the threadstate of the co-expression being activated.
+    * With native coswitch, the same posix thread is used for both
+    * old and new co-expressions, we only need to switch state if
+    * we are switching programs.
+    * With Non native coswitch, we fallback to Pthread coswitch.
+    * Each co-expression has its own posix thread. So always switch
+    * to the new thread state when changing co-expressions.
     */
+#ifdef NativeCoswitch
    if (ccp->program != ncp->program) {
       curtstate = ncp->tstate;
       global_curtstate = ncp->tstate;
       }
-#endif                                  /* Concurrent */
+#else                                   /* NativeCoswitch */
+   curtstate = ncp->tstate;
+   global_curtstate = ncp->tstate;
+#endif                                  /* NativeCoswitch */
+
+#endif                                  /* PthreadCoswitch */
 #endif                                  /* !COMPILER */
 
 
@@ -431,15 +444,13 @@ int co_chng(struct b_coexpr *ncp,
    /*
     * Time to switch context to the new co-expression.
     * the type of switch depends on whether the new co-expression
-    * has its own attached thread or not or if it is of type
-    * posix and being activated for the first time
+    * has its own attached thread or not.
     */
 
     MUTEX_LOCKBLK(ncp, "lock co-expression");
 
 #ifdef PthreadCoswitch
    if (IS_TS_ATTACHED(ncp->status)) {
-      SET_FLAG(ncp->status, Ts_Attached);
       MUTEX_UNLOCKBLK(ncp, "lock co-expression");
       pthreadcoswitch(ccp, ncp, ccp->status, ncp->status );
       }
@@ -472,10 +483,10 @@ int co_chng(struct b_coexpr *ncp,
     * like ccp might not be correct after the coswitch.  We used to dodge
     * this by using the global, k_current, but that's not global anymore.
     */
-#ifdef Concurrent
+#ifdef PthreadCoswitch
    curtstate =  global_curtstate ? global_curtstate :
       pthread_getspecific(tstate_key);
-#endif                                  /* Concurrent */
+#endif                                  /* PthreadCoswitch */
 
    return BlkD(k_current,Coexpr)->coexp_act;
 

@@ -53,20 +53,17 @@ method Write(Msg)
    if /Msg then
       Msg := Message
 
-   if \mode == "-adapter" then {
+   if \mode == "--adapter" then {
       if type(Msg) == "table" then {
          if member(Msg, "code") then
             Msg["code"] := replacem(\Msg["code"], "\"", "\\\"")
          if member(Msg, "consoleMsg") then
             Msg["consoleMsg"] := replacem(\Msg["consoleMsg"], "\"", "\\\"")
          Msg["state"] := State
-         # write(sock, utoj(Msg))
          udap.processResult(Msg)
       }
       else {
          output := ["consoleMsg": replacem(Msg, "\"", "\\\""); "state": State]
-         # write(sock, utoj(output))
-         write("\nprocess result called\n")
          udap.processResult(output)
       }
    }
@@ -83,8 +80,7 @@ end
 
 method stateRead()
 local msg := ""
-   if \mode == "-adapter" then {
-      write("udb reading...")
+   if \mode == "--adapter" then {
       return udap.getNextCommand()
    }
    else {
@@ -99,19 +95,17 @@ method Writes(Msg)
    if /Msg then
       Msg := Message
 
-   if \mode == "-adapter" then {
+   if \mode == "--adapter" then {
       if type(Msg) == "table" then {
          if member(Msg, "code") then
             Msg["code"] := replacem(\Msg["code"], "\"", "\\\"")
          if member(Msg, "consoleMsg") then
             Msg["consoleMsg"] := replacem(\Msg["consoleMsg"], "\"", "\\\"")
          Msg["state"] := State
-         #writes(sock, utoj(Msg))
          udap.processResult(Msg)
       }
       else {
          output := ["consoleMsg": replacem(Msg, "\"", "\\\""); "state": State]
-         #writes(sock, utoj(output))
          udap.processResult(output)
       }
    }

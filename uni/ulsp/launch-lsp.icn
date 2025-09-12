@@ -12,6 +12,8 @@ link options
 link basename
 link ximage
 
+global ulsp_server
+
 procedure usage()
    local prog
    prog := basename(&progname)
@@ -21,34 +23,69 @@ procedure usage()
    write("Check your IDE for the correct LSP server invocation.")
    write("\nOptions:")
    write("\t --socket <PORT> : set the lsp server port")
+   write("\t -s : run as a server (default)")
+   write("\t -c : run as a client")
+   write("\t --logfile <filename> : log file")
+   write("\t --loglevel <level> : log level from 0-17. log levels 8-17 are used for debugging")
+   write("\t --debug-kind  <kind>: debug kind to log")
+   write("\t --build-lsif <directory> : directory to parse for LSIF information or \"all\" for all directories")
    write("\t -h : show this help\n")
    exit(-1)
 end
 
 procedure validate_args(args)
-   local opts, port
-   opts := options(args, "--socket:")
+   local opts
+   opts := options(args, "--socket+ --logfile: --loglevel+  --debug-kind: -h! -c! -s! --build-lsif:", usage)
    if *opts = 0 then usage()
-   port := \opts["-socket"] | usage()
-   port := opts["-socket"]
-   return port
+   member(opts, "-socket") | member(opts, "-build-lsif") | usage()
+   return opts
 end
 
+procedure ulsp_sig_handler(siganl)
+   Logger.notice("\nshutdown signal received! Server Shutting down...")
+   if \ulsp_server then
+      ulsp_server.shutdown()
+
+   Logger.finalize()
+   exit(0)
+end
 
 procedure main(args)
-   local port
-   #write("args: ", ximage(args))
-   port := validate_args(args) | stop("Error: invalid args/port number.")
+   local opts, sock, mode, lsp_database, indexer
 
-   if &features == "MacOS" then
-      #port := "localhost:" || port
-      port := "127.0.0.1:" || port
-   else
-      port := ":" || port
+   trap("SIGINT", ulsp_sig_handler)
 
-   Server(port).run()
+   # If validate_args() fails, it will display usage() and never return.
+   opts := validate_args(args)
+
+   Logger((opts["-loglevel"]), opts["-logfile"]) #  # default to informational, stdout
+
+   if \opts["-debug-kind"] then
+      Logger.add_debug_kind(opts["-debug-kind"])
+
+   if member(opts, "-build-lsif") then {
+      lsp_database := LSPDB()
+      if (opts["-build-lsif"] == "all") then {
+         lsp_database.build();
+      } else {
+         lsp_database.build(opts["-build-lsif"])
+      }
+      indexer := LSIFIndexer(lsp_database)
+      indexer.build_index()
+      exit(0)
+   }
+   # Allow passing full host:port as an arg
+   sock := opts["-socket"]
+   if &features == ("MacOS" | "MS Windows NT") then {
+      sock := "127.0.0.1:" || sock
+   }
+   else {
+      sock := ":" || sock
+   }
+
+   # Set mode for server to run in, based on opts.
+   member(opts, mode := "c") | (mode := "s")
+
+   ulsp_server := Server(sock, mode)
+   ulsp_server.run()
 end
-
-
-
-

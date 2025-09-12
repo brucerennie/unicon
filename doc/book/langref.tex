@@ -317,11 +317,11 @@ the ASCII characters.
 
 \bigskip\hrule\vspace{0.1cm}
 \noindent
-{\bf \&clock : string } \hfill {\bf time of day}
+{\bf \&clock : string* } \hfill {\bf time of day}
 
 \noindent
-\texttt{\&clock} produces a string consisting of the current
-\index{time of day \&clock}time of day in hh:mm:ss format.
+\texttt{\&clock} generates two strings, consisting of the current
+\index{time of day \&clock}time of day (in hh:mm:ss format) and the time zone.
 See also keyword \texttt{\&now}.
 
 \bigskip\hrule\vspace{0.1cm}
@@ -368,11 +368,11 @@ co-expression that is currently executing.
 
 \bigskip\hrule\vspace{0.1cm}
 \noindent
-{\bf \&dateline : string } \hfill {\bf time stamp}
+{\bf \&dateline : string* } \hfill {\bf time stamp}
 
 \noindent
-\index{time stamp}\texttt{\&dateline} produces a human-readable time
-stamp that includes the day of the week, the date, and the current
+\index{time stamp}\texttt{\&dateline} generates two strings, consisting of a human-readable time
+stamp and the time zone. The time stamp includes the day of the week, the date, and the current
 time, down to the minute.
 
 \bigskip\hrule\vspace{0.1cm}
@@ -3091,10 +3091,10 @@ very large files.
 
 \noindent
 \index{ready(f,i)}\texttt{ready(f,i)} reads up to \texttt{i} characters
-from file \texttt{f}. It returns immediately with available data and
+from file \texttt{f}. If \texttt{i} is positive it returns immediately with available data or
 fails if no data is available. If \texttt{i} is 0, \texttt{ready()}
-returns all available input. It is not currently implemented for window
-values.
+returns all available input or an empty string if no data is available.
+It is not currently implemented for window values.
 
 \bigskip\hrule\vspace{0.1cm}
 \index{real}
@@ -3332,14 +3332,14 @@ come before those that do have an \texttt{i}'th field.
 \bigskip\hrule\vspace{0.1cm}
 \index{spawn}
 \noindent
-{\bf spawn(CE, i, i) : thread } \hfill {\bf launch asynchronous thread}
+{\bf spawn(CE, i, i, i) : thread } \hfill {\bf launch asynchronous thread}
 
 \noindent
 \index{spawn()}\texttt{spawn(ce)} launches co-expression \texttt{ce} as an
 asynchronous thread that will execute concurrently with the current
-co-expression. The two optional integers specify the memory in bytes
-allocated for the thread's block and string regions. The defaults are 10\%
-of the main thread heap size.
+co-expression. The three optional integers specify the memory in bytes
+allocated for the thread's block and string regions and stack size.
+The defaults are 10\% of the corresponding sizes for the main thread.
 
 \bigskip\hrule\vspace{0.1cm}
 \index{sql}
@@ -5580,8 +5580,8 @@ column an operator is placed in, is not significant).
                            & \e1\$\etxt{id1}.\etxt{id2}(\e2 \etc)\\
 {}[:~\e{}~:]    &\\
 \mcc{< \etxt{regexp} >}{(regular expressions have different precedence rules)}
-@<              & @>\\
-@<{}<           & @>{}>\\
+<@              & @>\\
+<{}<@           & @>{}>\\
 \separator
 not \e{}        &     {\textbar} \e{}\\
 ! \e{}          &     * \e{}\\
@@ -5590,8 +5590,8 @@ not \e{}        &     {\textbar} \e{}\\
 . \e{}          &     ++ \e{}\\
 ? \e{}          &     \verb/~/ \e{}\\
 \verb/^/ \e{}   &     {\tt @} \e{}\\
-@> \e()         &     @>{}> \e{}\\
-@< \e{}         &     @<{}< \e{}\\
+@> \e{}         &     @>{}> \e{}\\
+<@ \e{}         &     <{}<@ \e{}\\
 || \e{}         &     ||| \e{}\\
 -{}- \e{}       &     ** \e{}\\
 = \e{}          &     \verb/~/= \e{}\\
@@ -5602,10 +5602,10 @@ not \e{}        &     {\textbar} \e{}\\
 \e1 {\textbackslash} \e2 &\\
 \e1 {\tt @} \e2 &     \e1 ! \e2\\
 \e1  @> \e2     &    \e1 @>{}> \e2\\
-\e1  @< \e2     &    \e1 @<{}< \e2\\
+\e1  <@ \e2     &    \e1 <{}<@ \e2\\
 \separator
 \e{} @>         &     \e{} @>{}>\\
-\e{} @<         &     \e{} @<{}<\\
+\e{} <@         &     \e{} <{}<@\\
 \separator
 % [DonW] /verb cannot be used in the arg of another command, at least,
 % not without a lot of jiggery-pokery, so this is the best we can do

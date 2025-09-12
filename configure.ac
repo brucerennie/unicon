@@ -47,52 +47,61 @@ unicon_osrel=$OSREL
 case $host_os in
      *linux*)
         unicon_os="linux"
+        # if dist/version are not set, try to guess them
+        if test x$unicon_osdist = x ; then
+            if test -f /etc/os-release ; then
+               . /etc/os-release
+               unicon_osdist=$NAME
+               unicon_osrel=$VERSION_ID
+            elif type lsb_release >/dev/null 2>&1; then
+               unicon_osdist=$(lsb_release -si)
+               unicon_osrel=$(lsb_release -sr)
+            elif test -f /etc/lsb-release ; then
+               . /etc/lsb-release
+               unicon_osdist=$DISTRIB_ID
+               unicon_osrel=$DISTRIB_RELEASE
+            elif test -f /etc/debian_version ; then
+               unicon_osdist=Debian
+               unicon_osrel=$(cat /etc/debian_version)
+            fi
+        fi
 
-	# if dist/version are not set, try to guess them
-	if test x$unicon_osdist = x ; then
-	   if test -f /etc/os-release ; then
-	      . /etc/os-release
-	      unicon_osdist=$NAME
-	      unicon_osrel=$VERSION_ID
-	   elif type lsb_release >/dev/null 2>&1; then
-	      unicon_osdist=$(lsb_release -si)
-	      unicon_osrel=$(lsb_release -sr)
-	   elif test -f /etc/lsb-release ; then
-	      . /etc/lsb-release
-	      unicon_osdist=$DISTRIB_ID
-	      unicon_osrel=$DISTRIB_RELEASE
-	   elif test -f /etc/debian_version ; then
-	      unicon_osdist=Debian
-	      unicon_osrel=$(cat /etc/debian_version)
-	   fi
-	fi
+        AC_DEFINE([UNIX], [1], [Unix platform])
 
-	AC_DEFINE([UNIX], [1], [Unix platform])
+        case $host_os in
+           *musl*)
+            AC_DEFINE([__MUSL__], [1], [MUSL C Library])
+            MUSLFLG="-D__MUSL__"
+            CFLAGS="-fno-pie $CFLAGS"
+            LDFLAGS=" -no-pie $LDFLAGS"
+            ;;
+         esac
+
         ;;
      *solaris*)
         unicon_os="solaris"
-	AC_DEFINE([UNIX], [1], [Unix platform])
-	AC_DEFINE([SOLARIS], [1], [Solaris OS])
-	AC_DEFINE([SUN], [1], [Sun platform])
+        AC_DEFINE([UNIX], [1], [Unix platform])
+        AC_DEFINE([SOLARIS], [1], [Solaris OS])
+        AC_DEFINE([SUN], [1], [Sun platform])
         ;;
      *aix*)
         unicon_os="aix"
-	AC_DEFINE([UNIX], [1], [Unix platform])
+        AC_DEFINE([UNIX], [1], [Unix platform])
         ;;
      *bsd*)
-       # freebsd for now
+        # freebsd for now
         unicon_os="freebsd"
-	AC_DEFINE([UNIX], [1], [Unix platform])
-	AC_DEFINE([FreeBSD], [1], [FreeBSD OS])
+        AC_DEFINE([UNIX], [1], [Unix platform])
+        AC_DEFINE([FreeBSD], [1], [FreeBSD OS])
         ;;
      *darwin*)
         unicon_os="macos"
-	AC_DEFINE([UNIX], [1], [Unix platform])
-	AC_DEFINE([MacOS], [1], [Mac OS])
+        AC_DEFINE([UNIX], [1], [Unix platform])
+        AC_DEFINE([MacOS], [1], [Mac OS])
         ;;
      *cygwin* | *mingw* | *msys*)
         unicon_os="windows"
-	AC_DEFINE([Windows], [1], [Windows platform])
+        AC_DEFINE([Windows], [1], [Windows platform])
         ;;
 esac
 
@@ -170,6 +179,7 @@ AC_ARG_ENABLE([htmldoc],
 AC_ARG_ENABLE([thin],
 	[AS_HELP_STRING([--enable-thin], [Do a minimalist build disabling non critical features])],
 			[thin=yes], [thin=no])
+
 AC_ARG_ENABLE([debug],
 	[AS_HELP_STRING([--enable-debug], [Add debugging symbols])],
 			[debug=yes], [debug=no])
@@ -181,13 +191,15 @@ AC_ARG_ENABLE([verifyheap],
 			[verifyheap=yes], [verifyheap=no])
 AC_ARG_ENABLE([devmode],
 	[AS_HELP_STRING([--enable-devmode], [Developer mode: turn on warnings and debugging options])],
-			[devmode=yes], [devmode=no])
+			[devmode=$enableval], [devmode=no])
+
 AC_ARG_ENABLE([werror],
 	[AS_HELP_STRING([--enable-werror], [Change compiler warnings to errors])],
 			[werror=yes], [werror=no])
 AC_ARG_ENABLE([warnings],
 	[AS_HELP_STRING([--enable-warnings], [Turn on most types of compiler warnings])],
 			[warn=yes], [warn=no])
+
 AC_ARG_ENABLE([uniconx],
 	[AS_HELP_STRING([--enable-uniconx], [Change executable names to co-exist with Icon])],
 			[uniconx=yes], [uniconx=no])
@@ -248,18 +260,24 @@ else
   UNICONWT=wicont
 fi
 
-if test x"$devmode" = x"yes" ; then
+if test x"$devmode" = x"yes" || test x"$devmode" = x"all"; then
   debug=yes
   warn=yes
   AC_DEFINE([DEVELOPMODE], [1], [Developer Mode])
+  if test x"$devmode" = x"all"; then
+   debugheap=yes
+   verifyheap=yes
+  fi
 fi
 
 if test x"$debugheap" = x"yes" ; then
   AC_DEFINE([DebugHeap], [1], [Debug Heap])
+  debugheapreport="DebugHeap"
 fi
 
 if test x"$verifyheap" = x"yes" ; then
   AC_DEFINE([VerifyHeap], [1], [Verify Heap])
+    verifyheapreport="VerifyHeap"
 fi
 
 if test x"$udbtools" = x"yes" ; then
@@ -298,7 +316,7 @@ AC_CFLAG([-fno-omit-frame-pointer])
 
 AC_CFLAG([-fno-strict-aliasing])
 
-if test x"$CC" = x"clang" || test x"$unicon_os" = x"macos" ; then
+if test x"$CC" = x"clang" || test x"$unicon_os" = x"macos" || test x"$unicon_os" = x"freebsd" ; then
    AC_CFLAG([-Werror -Wno-parentheses-equality], [], [CFLAGS="$CFLAGS -Wno-parentheses-equality"])
 fi
 
@@ -315,7 +333,7 @@ AC_PROG_CPP
 AC_PROG_RANLIB
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(nsl, gethostbyname)
-#AC_HEADER_STDC
+
 AC_CHECK_HEADERS(errno.h netdb.h unistd.h strings.h arpa/inet.h net/errno.h \
 		 stdlib.h string.h fcntl.h memory.h sys/file.h sys/resource.h \
                  netinet/in.h sys/errno.h sys/socket.h sys/types.h)
@@ -330,7 +348,7 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_FUNC_ALLOCA
 AC_TYPE_OFF_T
-AC_ST_BLKSIZE
+
 AC_CHECK_TYPE(ssize_t, signed)
 
 case $ac_cv_sizeof_int_p in
@@ -354,9 +372,10 @@ esac
 
 OBJ=o
 CFUNCTARGET="cfun"
-CFDYN="-fPIC "
+CFDYN="-fPIC $MUSLFLG "
 LDDYN="-shared "
 SO=so
+DASHX=
 # OS specific flags go here
 case $unicon_host in
      *linux*)
@@ -374,8 +393,8 @@ case $unicon_host in
         ;;
      *macos*)
        LDDYN="-Xlinker -undefined -Xlinker dynamic_lookup -shared "
-       DASHX=-x
        RLIBS="-ldl "
+       DASHX="-x"
 	;;
      *windows*)
        EXE=".exe"
@@ -412,9 +431,14 @@ if test "x$iconc" = "xyes" || test "x$iconc" = "xon" ; then
        ICONCTARGET=Iconc
 fi
 
-
 if test "x$orig_cflags" != "x" ; then
   CFLAGS="$CFLAGS $orig_cflags"
+fi
+
+if test x"$debug" = x"yes" ; then
+  STRIP="@\#strip"
+else
+  STRIP="strip $DASHX"
 fi
 
 AC_SUBST(UNICONX)
@@ -450,6 +474,8 @@ AC_SUBST(BITS)
 AC_SUBST(unicon_os)
 AC_SUBST(unicon_osdist)
 AC_SUBST(unicon_osrel)
+AC_SUBST(unicon_cpu)
+AC_SUBST(unicon_host)
 
 AC_SUBST(CC)
 AC_SUBST(RLINK)
@@ -539,7 +565,8 @@ fi
 AC_CHECK_FUNCS([socket bcopy bzero memcpy memset inet_aton inet_pton \
 	       snprintf vsprintf rename ftruncate flock fsync \
 	       getrlimit setrlimit strerror vfork \
-	       getrusage sysconf profil getenv_r])
+	       getrusage sysconf profil getenv_r clock_gettime \
+          ctime_r asctime_r gmtime_r localtime_r])
 
 AC_FUNC_STRERROR_R()
 
@@ -563,8 +590,7 @@ AC_SUBST(SQLITE)
 
 AC_SEARCH_LIBS([getaddrinfo],[socket],
 	[AC_DEFINE([HAVE_GETADDRINFO], [1], [getaddinfo])])
-AC_SEARCH_LIBS([clock_gettime],[rt],
-	[AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [gettime])])
+
 AC_SEARCH_LIBS([crypt],[crypt],
 	[AC_DEFINE([HAVE_CRYPT], [1], [crypt])])
 
@@ -673,8 +699,8 @@ fi
   AC_SUBST(CMNT)
   AC_SUBST(SLNT)
   AC_SUBST(DASHS)
-  AC_SUBST(DASHX)
   AC_SUBST(DASHG)
+  AC_SUBST(STRIP)
 
 if test -f src/asm/$unicon_host-rswitch.s; then
     echo "Native coswitch detected"
@@ -1050,9 +1076,11 @@ LDFLAGS  :$LDFLAGS
 LIBS     : $LIBS
 CXX      :  $CXX  (Required only with FTGL and VOIP)
 CXXFLAGS : $CXXFLAGS
-prefix	 :  $prefix
+CFDYN    : $CFDYN
+LDDYN    : $LDDYN
+prefix   :  $prefix
 Verbose  :  $verbosebuild
-Debug    :  $debug
+Debug    :  $debug $debugheapreport $verifyheapreport
 Warnings :  $warn
 Werror   :  $werror
 Devmode  :  $devmode

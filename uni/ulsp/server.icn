@@ -1,20 +1,10 @@
 # Date of creation:
 #    12/8/22
 #
-# Date last updated:
-#    12/9/22
-#
 # Author(s):
 #    Mark Stowell,
 #    Jonah Schnettler
 #
-# Description:
-#
-#
-#
-#
-#
-
 
 package ulsp
 
@@ -23,88 +13,105 @@ link strings
 import json
 #import UniDoc
 
+
 class Server(
    port,                         # Port number acquired from args on start up of server
+   mode,                         # Mode to run in (client | server)
    sock,                         # Socket connection for communication with client
    openFiles,                    # File container for open files
    completionHandler,            # Instance of CompletionHandler class for handling completion requests
    signatureHandler,
    hoverHandler,
-   lsp_database                  # table containing database of packages (i.e. main, graphics3d, etc.) and their files.
+   definitionHandler,
+   symbolHandler,
+   foldingRangeHandler,
+   formattingHandler,
+   lsp_database,                  # table containing database of packages (i.e. main, graphics3d, etc.) and their files.
+   jrpc_handler,
+   stoploop,
+   renewSymbols,
+   cacheSymbols
    )
 
+   method handle_request(msg)
+      local meth, params, id
+      meth := msg.get_method()
+      params := msg.get_params()
+      id := msg.get_id()
+
+      Logger.info("jrpc:request: ", meth, " id=", id)
+      Logger.debug5_kind("jrpc:request:params ", ximage(params))
+
+      meth ?
+         if ="$/" then {
+            # per LSP spec, this is a protocol implementation dependent request.
+            # We can ignore it. However, we need to still send back a response
+            handle_unsupported(msg)
+            fail
+         }
+
+      case meth of {
+         "initialize" : initialize(msg)
+         "textDocument/completion" : completion(msg)
+         "textDocument/signatureHelp" : signatureHelp(msg)
+         "textDocument/hover" : hoverHelp(msg)
+         "textDocument/definition" : definitionHelp(msg)
+         "textDocument/documentSymbol" : symbolHelp(msg)
+         "textDocument/foldingRange" : foldingRangeHelp(msg)
+         "textDocument/formatting" : formattingHelp(msg)
+         "shutdown" : shutdown(msg)
+         default: {
+            handle_unsupported(msg)
+         }
+      }
+   end
+
+   method handle_unsupported(msg)
+      Logger.debug1_kind("jrpc", "Unsupported request: ", image(msg.get_method()))
+      Logger.debug5_kind("jrpc", "Unsupported request: ", image(msg.get_content()))
+      msg.make_error_response(-32601, "Method not found")
+      jrpc_handler.send_msg(msg)
+   end
+
+   # notifications has only  "method" and "params"
+   method handle_notification(msg)
+      local params
+      Logger.info("jrpc:notification ", msg.get_method())
+      params := msg.get_params()
+      case msg.get_method() of {
+         "textDocument/didOpen" : didOpen(params)
+         "textDocument/didClose" : didClose(params)
+         "textDocument/didChange" : didChange(params)
+         "textDocument/didSave" : renewSymbols := 1
+         "ulsp/changeLogLevel" : Logger.set_log_level(params["logLevel"])
+         "exit" : stoploop := 1
+
+         default:
+            Logger.debug1_kind("jrpc:notification:unsupported", msg.get_method())
+      }
+   end
+
    method run()
-      local request_body, jsontable, request_method, request_params, request_id
-
+      local msg
+      jrpc_handler := JRPC_HTTPSocket(sock)
       repeat {
-         every request_body := get_request(sock) do {
-            jsontable := jtou(request_body)
-
-            request_method := jsontable["method"]
-            request_params := jsontable["params"]
-            request_id := jsontable["id"]
-
-            write("-----------------------------------------")
-            write(request_method)
-            write("-----------------------------------------")
-
-            case request_method of {
-               "initialize" : initialize(request_id)
-               "textDocument/didOpen" : didOpen(request_params)
-               "textDocument/didClose" : didClose(request_params)
-               "textDocument/didChange" : didChange(request_params)
-               "textDocument/completion" : completion(request_id, request_params)
-               "textDocument/signatureHelp" : signatureHelp(request_id, request_params)
-               "textDocument/hover" : hoverHelp(request_id, request_params)
-               "textDocument/declaration" : write("Don't know what to do with go to declaration request.")
-               "$/cancelRequest" : cancelRequest(request_id)
-               default: { write("Don't know what to do with: ", request_method) }
-               }
+         if msg := jrpc_handler.get_msg() then {
+            #Logger.info("msg= ", image(msg.get_content()))
+            case msg.get_kind() of {
+               "request" : handle_request(msg)
+               "notification" : handle_notification(msg)
+               default:
+                  # we shouldn't get anything else, maybe?
+                   Logger.debug2_kind("lsp:jrpc:msg:" || msg.get_kind(), image(msg.get_content()))
             }
          }
-   end
-
-#################################################################################
-#                               Get Request                                     #
-#################################################################################
-
-   method get_request(sock)
-      local request_body, msg, len
-
-      while /request_body | request_body == "" do {
-
-         # Block and get message on socket
-         select(sock)
-         msg := ready(sock)
-
-         # Handling socket reading anomoly: header alone or header + request_body
-         while msg ~== "" do {
-            msg ? {
-               tab(find("Content-Length:") + 16)
-               len := integer(tab(many(&digits)))
-               tab(upto("\r\n\r\n") + 4)
-               if pos(0) then {
-                  request_body := ready(sock, len)
-                  }
-               else
-                  request_body := move(len)
-                  msg := tab(0)
-               }
-               suspend request_body
-            }
+         if \stoploop then {
+            Logger.info("Shutting down ULSP.")
+            break
          }
+      }
    end
 
-#################################################################################
-#                               Build Response                                  #
-#################################################################################
-
-   method build_response(id, results)
-      local responseBody, responseHeader
-      responseBody := "{\"jsonrpc\":\"2.0\",\"id\":"||id||",\"result\":"||results||"}"
-      responseHeader := "Content-Length:" || *responseBody || "\r\n\r\n"
-      return responseHeader || responseBody
-   end
 
 
 #################################################################################
@@ -123,24 +130,30 @@ class Server(
 # As you add more capabilities to the language server (i.e. hover, go to declaration, etc.) add these to the results string below.
 # Follow the LSP specifications on how to add a particular capability to your initialize string.
 
-   method initialize(request_id)
-      local capabilitiesTable, result
+   method initialize(msg)
+      local capabilitiesTable
 
-      capabilitiesTable := ["capabilities": [
-         "completionProvider": [
-            "triggerCharacters": [".", ":"]
+      capabilitiesTable := [
+         "capabilities": [
+            "completionProvider": [
+               "triggerCharacters": [".", ":"]
+            ];
+            "textDocumentSync": 1;
+            "signatureHelpProvider": [
+               "contextSupport": "__true__";
+               "triggerCharacters": ["("]
+            ];
+            "hoverProvider": "__true__";
+            "definitionProvider": "__true__";
+            "documentSymbolProvider": "__true__";
+            "foldingRangeProvider": "__true__";
+            "documentFormattingProvider": "__true__"
          ];
-         "textDocumentSync": 1;
-         "signatureHelpProvider": [
-            "contextSupport": "__true__";
-            "triggerCharacters": ["("]
-         ];
-         "hoverProvider": "__true__"
-      ]]
+         "processId": getpid()
+      ]
 
-      result := build_response(request_id, tojson(capabilitiesTable))
-      write(result)
-      writes(sock, result)
+      msg.make_result_response(capabilitiesTable)
+      jrpc_handler.send_msg(msg)
    end
 
 ########################################################
@@ -148,24 +161,27 @@ class Server(
 ########################################################
 
    method didOpen(request_params)
-      local fname, uri, f, initial_file_contents, workspace_object
+      local fname, uri, f, initial_file_contents, filehandler_object
       if \(uri := request_params["textDocument"]["uri"]) then {
-      # uri: file://<PATH>
-      uri ? {
-         ="file://" | write(&errout, "unexpected uri:", uri)
-         fname := tab(0)
+         # uri: file://<PATH>
+         uri ? {
+            ="file://" | write(&errout, "unexpected uri:", uri)
+            fname := tab(0)
          }
 
-      if f := open(fname) then {
-         initial_file_contents := reads(f, -1)
-         close(f)
+         if f := open(fname) then {
+            initial_file_contents := reads(f, -1)
+            close(f)
          }
       }
-
-      openFiles[\uri] := Workspace(fname, lsp_database)
-      workspace_object := openFiles[\uri]
-      workspace_object.setFile()
-      workspace_object.updateWorkspace()
+      # Get rid of root / and change unicode encoded "%3A" back to ":" on Windows machines
+      if &features == ("MS Windows NT") then {
+         fname := replace(fname[2:0], "%3A", ":")
+      }
+      openFiles[\uri] := FileHandler(fname, lsp_database)
+      filehandler_object := openFiles[\uri]
+      filehandler_object.setFile()
+      filehandler_object.updateFileHandler()
 
    end
 
@@ -184,104 +200,191 @@ class Server(
 ########################################################
 
    method didChange(request_params)
-      local fname, uri, f, file_contents, workspace_object, initial_file_contents
-         if \(uri := request_params["textDocument"]["uri"]) then {
+      local fname, uri, f, file_contents, filehandler_object, initial_file_contents
+      if \(uri := request_params["textDocument"]["uri"]) then {
          # uri: file://<PATH>
          uri ? {
             ="file://" | write(&errout, "unexpected uri:", uri)
             fname := tab(0)
-            }
+         }
 
          if f := open(fname) then {
             initial_file_contents := reads(f, -1)
             close(f)
-            }
          }
+      }
+      # Get rid of root / and change unicode encoded "%3A" back to ":" on Windows machines
+      if &features == ("MS Windows NT") then {
+         fname := replace(fname[2:0], "%3A", ":")
+      }
       uri := request_params["textDocument"]["uri"]
       file_contents := request_params["contentChanges"][1]["text"]
-      workspace_object := openFiles[\uri]
-      workspace_object.updateUniDoc(fname, file_contents)
-      workspace_object.updateWorkspace()
+      filehandler_object := openFiles[\uri]
+      filehandler_object.updateUniDoc(fname, file_contents)
+      filehandler_object.updateFileHandler()
    end
 
 ########################################################
 #                textDocument/completion               #
 ########################################################
 
-   method completion(request_id, request_params)
-      local uri, workspace_object, result, res
-      uri := request_params["textDocument"]["uri"]
-      workspace_object := openFiles[\uri]
-      completionHandler.setVariables(workspace_object, request_params)
-      result := completionHandler.run()
-      res := build_response(request_id, result)
-      writes(sock, res)
+   method completion(msg)
+      local filehandler_object, result
+      filehandler_object := openFiles[\msg.get_param_uri()]
+      completionHandler.setVariables(filehandler_object, msg.get_params())
+      result := completionHandler.getResult()
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
    end
 
 ########################################################
 #              textDocument/signatureHelp              #
 ########################################################
 
-   method signatureHelp(request_id, request_params)
-      local uri, workspace_object, result, res
-      uri := request_params["textDocument"]["uri"]
-      workspace_object := openFiles[\uri]
-      signatureHandler.setVariables(workspace_object, request_params)
-      result := signatureHandler.run()
-      res := build_response(request_id, result)
-      writes(sock, res)
+   method signatureHelp(msg)
+      local filehandler_object, result
+      filehandler_object := openFiles[\msg.get_param_uri()]
+      signatureHandler.setVariables(filehandler_object, msg.get_params())
+      result := signatureHandler.getResult()
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
    end
 
 ########################################################
 #              textDocument/hover                      #
 ########################################################
 
-   method hoverHelp(request_id, request_params)
-      local uri, workspace_object, result, res
-      uri := request_params["textDocument"]["uri"]
-      workspace_object := openFiles[\uri]
-      hoverHandler.setVariables(workspace_object, request_params)
-      result := hoverHandler.run()
-      res := build_response(request_id, result)
-      writes(sock, res)
+   method hoverHelp(msg)
+      local filehandler_object, result
+      filehandler_object := openFiles[\msg.get_param_uri()]
+      hoverHandler.setVariables(filehandler_object, msg.get_params())
+      result := hoverHandler.getResult()
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
    end
 
 ########################################################
-#                textDocument/declaration              #
+#                textDocument/definition               #
 ########################################################
 
-
-########################################################
-#                  $/cancelRequest                     #
-########################################################
-# TODO:
-#       One thread for communication
-#       Spin up thread(s) for processing requests and tie request_id to thread
-# Handling cancel requests:
-#       kill thread associated with request_id
-
-   method cancelRequest(request_id)
-      write("We received a cancel request. We need to implement this still...")
+   method definitionHelp(msg)
+      local filehandler_object, result
+      filehandler_object := openFiles[\msg.get_param_uri()]
+      definitionHandler.setVariables(filehandler_object, msg.get_params())
+      if result := definitionHandler.getResult() then
+         \result["uri"] := replace(result["uri"], "c:/", "/c%3A/")
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
    end
+
+########################################################
+#                textDocument/documentSymbol           #
+########################################################
+
+   method symbolHelp(msg)
+      local filehandler_object, uri, result
+
+      if \(uri := msg.get_param_uri()) then {
+         filehandler_object := openFiles[uri]
+         symbolHandler.setVariables(filehandler_object)
+         if renewSymbols = 1 then {
+            Logger.debug2_kind("Getting new symbols for " || uri)
+            result := symbolHandler.getResult()
+            cacheSymbols[uri] := result
+         } else {
+            if \cacheSymbols[uri] then {
+               Logger.debug2_kind("Getting cached symbols for " || uri)
+               result := cacheSymbols[uri]
+            } else {
+               Logger.debug2_kind("Getting new symbols for " || uri)
+               result := symbolHandler.getResult()
+               cacheSymbols[uri] := result
+            }
+         }
+      }
+      renewSymbols := 0
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
+   end
+
+
+########################################################
+#                textDocument/foldingRange             #
+########################################################
+
+   method foldingRangeHelp(msg)
+      local filehandler_object, result
+      filehandler_object := openFiles[\msg.get_param_uri()]
+      foldingRangeHandler.setVariables(filehandler_object)
+      result := foldingRangeHandler.getResult()
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
+   end
+
+########################################################
+#                textDocument/formatting               #
+########################################################
+
+   method formattingHelp(msg)
+      local filehandler_object, result
+      filehandler_object := openFiles[\msg.get_param_uri()]
+      formattingHandler.setVariables(filehandler_object, msg.get_params())
+      result := formattingHandler.getResult()
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
+   end
+
+########################################################
+#                shutdown                              #
+########################################################
+
+   method shutdown(msg)
+      local result
+      msg.make_result_response(result)
+      jrpc_handler.send_msg(msg)
+   end
+
+   method loadDB()
+      openFiles := table()
+      lsp_database := LSPDB()
+      lsp_database.build()
+      completionHandler := CompletionHandler()
+      signatureHandler := SignatureHandler()
+      hoverHandler := HoverHandler()
+      definitionHandler := DefinitionHandler()
+      symbolHandler := SymbolHandler()
+      foldingRangeHandler := FoldingRangeHandler()
+      formattingHandler := FormattingHandler()
+   end
+
 
    initially
+      local openopt := "n", mstring := "server"
 
-       every 1 to 5 do
-          if sock := open(port, "n") then
-             break
-          else {
-             write("open(",port,") ERROR: ", &errortext)
-             delay(1000)
-             }
+      renewSymbols := 1
+      cacheSymbols := table()
+      case mode of {
+         "s" : { openopt ||:= "a" }
+         "c" : { mstring := "client" }
+         default: { write("Unknown mode: " || mode) }
+      }
 
-       if /sock then stop("failed to connect to ",port)
+      \Logger | Logger(7) # default to informational
 
-       openFiles := table()
-       lsp_database := LSPDB()
-       lsp_database.build()
+      Logger.info("Loading Database...")
+      loadDB()
+      Logger.info("Starting Unicon LSP in ", mstring, " mode at ", port)
+      every 1 to 5 do {
+         if sock := open(port, openopt) then
+            break
+         else {
+            Logger.error("open(",port,") ERROR: ", \&errortext | "Unknown")
+            delay(1000)
+         }
+      }
 
-       completionHandler := CompletionHandler()
-       signatureHandler := SignatureHandler()
-       hoverHandler := HoverHandler()
+      if /sock then {
+         Logger.crit("Failed to establish connection on: ", port)
+         exit(1)
+      }
 end
-

@@ -98,9 +98,6 @@
    #define Fs_Pty       040000000            /* pty */
 #endif
 
-#ifdef GraphicsGL
-   #define Fs_WinGL2D   0100000000      /* for OpenGL 2D window */
-#endif                                  /* GraphicsGL */
 
 /*
  * Thread status flags in status field of coexpr blocks.
@@ -109,14 +106,8 @@
 #define Ts_Main         01              /* This is the main co-expression */
 #define Ts_Thread       02              /* This is a thread */
 #define Ts_Attached     04              /* OS-level thread attached to this ce */
-
 #define Ts_Async       010              /* asynchronous (concurrent) thread */
-#define Ts_Actived     020              /* activated at least once */
-#define Ts_Active      040              /* someone activated me */
-
-#define Ts_WTinbox    0100              /* waiting on inbox Q */
-#define Ts_WToutbox   0200              /* waiting on outbox Q */
-#define Ts_Posix      0400              /* POSIX (pthread-based) coexpression */
+#define Ts_Posix       020              /* POSIX (pthread-based) coexpression */
 
 #define Ts_SoftThread   01000           /* soft thread */
 
@@ -125,11 +116,11 @@
 #define CHECK_FLAG(X,F)      ((X) & (F))
 #define NOT_CHECK_FLAG(X,F)  (!CHECK_FLAG(X,F))
 
-#define IS_TS_MAIN(X) CHECK_FLAG(X, Ts_Main)
-#define IS_TS_THREAD(X) CHECK_FLAG(X, Ts_Thread)
+#define IS_TS_MAIN(X)     CHECK_FLAG(X, Ts_Main)
+#define IS_TS_THREAD(X)   CHECK_FLAG(X, Ts_Thread)
 #define IS_TS_ATTACHED(X) CHECK_FLAG(X, Ts_Attached)
-#define IS_TS_POSIX(X) CHECK_FLAG(X, Ts_Posix)
-#define IS_TS_ASYNC(X) CHECK_FLAG(X, Ts_Async)
+#define IS_TS_POSIX(X)    CHECK_FLAG(X, Ts_Posix)
+#define IS_TS_ASYNC(X)    CHECK_FLAG(X, Ts_Async)
 #define IS_TS_SYNC(X) (!IS_TS_ASYNC(X))
 #define IS_TS_SOFTTHREAD(X) CHECK_FLAG(X, Ts_SoftThread)
 
@@ -225,8 +216,18 @@
 /*
  * Block references that do not use (the address of) a particular field.
  */
-#define Blk(p,u) ((((!ValidPtr(p)) || ((p)->u.title != T_ ## u)) ? \
+#ifdef __clang__
+#define Blk(p,u) \
+  _Pragma("clang diagnostic push")                                  \
+  _Pragma("clang diagnostic ignored \"-Wunused-value\"")            \
+  ((((!ValidPtr(p)) || ((p)->u.title != T_ ## u)) ?                 \
+      (heaperr("invalid block",p, T_ ## u) , 1) : 1), &((p)->u))    \
+  _Pragma("clang diagnostic pop")
+#else
+#define Blk(p,u) \
+  ((((!ValidPtr(p)) || ((p)->u.title != T_ ## u)) ?                 \
       (heaperr("invalid block",p, T_ ## u) , 1) : 1), &((p)->u))
+#endif
 
 /*
  * Block references for generic (set|table) code.
@@ -2036,3 +2037,9 @@
  * Macro definition used by pollevent() to avoid magic numbers
  */
 #define POLL_INTERVAL 400
+
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
+#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 120000
+#define vfork fork
+#endif
+#endif

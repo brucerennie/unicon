@@ -1,0 +1,63 @@
+package ulsp
+
+import json
+link regexp
+link ximage
+
+class DefinitionHandler(
+   filehandler,
+   params
+   )
+
+   method setVariables(new_filehandler, new_params)
+      filehandler := new_filehandler
+      params := new_params
+   end
+
+   method getResult()
+      local line, character, results_table := table(), context,
+      signatureHandler, possibleItems, source, selectedLine := 0,
+      i := 0, startPos := 0, endPos := 0, item
+      static wchar
+      initial {
+         wchar := &letters ++ &digits ++ '_'
+      }
+
+      line := params["position"]["line"] + 1
+      character := params["position"]["character"] + 1
+
+      context := filehandler.getContext(line, character) | fail
+
+      signatureHandler := SignatureHandler()
+      signatureHandler.setVariables(filehandler)
+      signatureHandler.handleNewSignature(context)
+
+      possibleItems := signatureHandler.getCurrentSigItems()
+      \possibleItems | return results_table
+      member(item := possibleItems[1], "source") | return results_table
+
+      if source := open(item["source"]) then {
+         every line := !source do {
+            if ReMatch("^[\ \t]*" || item["type"] || "[\ \t]+" || item["name"], line) then {
+               selectedLine := line
+               break
+            }
+            i := i + 1
+         }
+         close(source)
+         \selectedLine ? {
+            tab(many('\ \t'))
+            tab(many(wchar))
+            tab(many('\ \t'))
+            startPos := &pos - 1
+            tab(many(wchar))
+            endPos := &pos - 1
+         }
+      }
+
+      results_table["uri"] := item["source"]
+      results_table["range"] := ["start":["line":i;"character":startPos];"end":["line":i;"character":endPos]]
+
+      return results_table
+   end
+end

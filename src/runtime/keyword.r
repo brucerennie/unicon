@@ -51,6 +51,12 @@ keyword{4} allocated
       }
 end
 
+#if NT
+/* redefine deprected functions to fix warnings on Windows*/
+#define timezone _timezone
+#define tzname _tzname
+#endif
+
 "&clock - a string consisting of the current time of day"
 keyword{2} clock
    abstract {
@@ -225,6 +231,8 @@ keyword{2} dateline
 
 #ifdef _UCRT
       _get_timezone(&tz_sec);
+#elif defined(FreeBSD)
+       tz_sec = ct->tm_gmtoff;
 #elif defined(SUN) || NT || defined(HAVE_TIMEZONE)
       tz_sec = timezone;
 #else
