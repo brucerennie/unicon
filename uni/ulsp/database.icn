@@ -10,10 +10,11 @@
 
 package ulsp
 
+
 import UniDoc
 link paths
+import logger
 
-global Logger
 
 class LSPDB(
    package_db,

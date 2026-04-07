@@ -15,29 +15,39 @@ AH_BOTTOM([#endif          /* __AUTO_CONFIG_H  */])
 #AC_CANONICAL_TARGET
 
 case $host_cpu in
-     *armv7* | *armv6* | *aarch32*)
+    *armv7* | *armv6* | *aarch32*)
         unicon_cpu="arm_32"
-	ARCHBITS="32"
-	AC_DEFINE([ARM], [1], [ARM platform])
+        ARCHBITS="32"
+        AC_DEFINE([ARM], [1], [ARM platform])
         ;;
-     *armv8* | *aarch64*)
+    *armv8* | *aarch64*)
         unicon_cpu="arm_64"
-	ARCHBITS="64"
-	AC_DEFINE([ARM], [1], [ARM platform])
+        ARCHBITS="64"
+        AC_DEFINE([ARM], [1], [ARM platform])
         ;;
-     *riscv64*)
+    *riscv64*)
         unicon_cpu="riscv_64"
-	ARCHBITS="64"
-	AC_DEFINE([RISCV], [1], [RISC-V platform])
+        ARCHBITS="64"
+        AC_DEFINE([RISCV], [1], [RISC-V platform])
         ;;
-     *i386* | *i686*)
+    *i386* | *i686*)
         unicon_cpu="x86_32"
-	ARCHBITS="32"
-	AC_DEFINE([X86], [1], [X86 platform])
-	;;
-     *)
+        ARCHBITS="32"
+        AC_DEFINE([X86], [1], [X86 platform])
+        ;;
+    *powerpc64* | *ppc64*)
+        unicon_cpu="ppc64"
+        ARCHBITS="64"
+        AC_DEFINE([PPC64], [1], [PowerPC 64 platform])
+        ;;
+    *powerpc* | *ppc*)
+        unicon_cpu="ppc"
+        ARCHBITS="32"
+        AC_DEFINE([PPC], [1], [PowerPC platform])
+        ;;
+    *)
         unicon_cpu="$host_cpu"
-	ARCHBITS="64"
+        ARCHBITS="64"
         ;;
 esac
 
@@ -199,6 +209,21 @@ AC_ARG_ENABLE([werror],
 AC_ARG_ENABLE([warnings],
 	[AS_HELP_STRING([--enable-warnings], [Turn on most types of compiler warnings])],
 			[warn=yes], [warn=no])
+AC_ARG_ENABLE([asan],
+	[AS_HELP_STRING([--enable-asan], [Enable AddressSanitizer (-fsanitize=address); use with --enable-debug for symbols; uses -O1 when CFLAGS is unset and debug is off])],
+			[asan=$enableval], [asan=no])
+AC_ARG_ENABLE([tsan],
+	[AS_HELP_STRING([--enable-tsan], [Enable ThreadSanitizer (-fsanitize=thread); incompatible with --enable-asan; use with --enable-debug for symbols; uses -O1 when CFLAGS is unset and debug is off])],
+			[tsan=$enableval], [tsan=no])
+AC_ARG_ENABLE([ubsan],
+	[AS_HELP_STRING([--enable-ubsan], [Enable UndefinedBehaviorSanitizer (-fsanitize=undefined); may be combined with --enable-asan or --enable-tsan])],
+			[ubsan=$enableval], [ubsan=no])
+AC_ARG_ENABLE([msan],
+	[AS_HELP_STRING([--enable-msan], [Enable MemorySanitizer (-fsanitize=memory); incompatible with ASan/TSan/HWASan; typically needs an MSan-instrumented libc; uses -O1 when CFLAGS is unset and debug is off])],
+			[msan=$enableval], [msan=no])
+AC_ARG_ENABLE([hwasan],
+	[AS_HELP_STRING([--enable-hwasan], [Enable HardwareAssisted AddressSanitizer (-fsanitize=hwaddress); AArch64-oriented alternative to ASan; incompatible with ASan/TSan/MSan])],
+			[hwasan=$enableval], [hwasan=no])
 
 AC_ARG_ENABLE([uniconx],
 	[AS_HELP_STRING([--enable-uniconx], [Change executable names to co-exist with Icon])],
@@ -280,6 +305,16 @@ if test x"$verifyheap" = x"yes" ; then
     verifyheapreport="VerifyHeap"
 fi
 
+dnl At most one of address / thread / memory / hardware address sanitizers.
+sancount=0
+test x"$asan" = x"yes" && sancount=`expr $sancount + 1`
+test x"$tsan" = x"yes" && sancount=`expr $sancount + 1`
+test x"$msan" = x"yes" && sancount=`expr $sancount + 1`
+test x"$hwasan" = x"yes" && sancount=`expr $sancount + 1`
+if test "$sancount" -gt 1 ; then
+  AC_MSG_ERROR([Only one of --enable-asan, --enable-tsan, --enable-msan, or --enable-hwasan may be enabled. --enable-ubsan may be combined with one of them.])
+fi
+
 if test x"$udbtools" = x"yes" ; then
   UDBTOOLS=udbtools
 fi
@@ -289,15 +324,49 @@ if test x"$progs" = x"yes" ; then
 fi
 
 # honor custom flags
+dnl -O1 recommended when using heavyweight sanitizers (asan/tsan/msan/hwasan) and CFLAGS was not preset.
 if test "z$orig_cflags" = "z"; then
   if test x"$debug" = x"yes" ; then
      AC_CFLAG([-g])
-     AC_CFLAG([-O0])
+     if test x"$asan" = x"yes" || test x"$tsan" = x"yes" || \
+        test x"$msan" = x"yes" || test x"$hwasan" = x"yes" ; then
+       AC_CFLAG([-O1])
+     else
+       AC_CFLAG([-O0])
+     fi
+  elif test x"$asan" = x"yes" || test x"$tsan" = x"yes" || \
+       test x"$msan" = x"yes" || test x"$hwasan" = x"yes" ; then
+     AC_CFLAG([-O1])
   else
     AC_CFLAG([-O2], [
     AC_CFLAG([-Os])
     ])
   fi
+fi
+
+if test x"$asan" = x"yes" ; then
+  AC_CFLAG([-fsanitize=address], [AC_MSG_ERROR([AddressSanitizer (-fsanitize=address) is not supported by $CC])])
+  LDFLAGS="$LDFLAGS -fsanitize=address"
+fi
+
+if test x"$tsan" = x"yes" ; then
+  AC_CFLAG([-fsanitize=thread], [AC_MSG_ERROR([ThreadSanitizer (-fsanitize=thread) is not supported by $CC])])
+  LDFLAGS="$LDFLAGS -fsanitize=thread"
+fi
+
+if test x"$msan" = x"yes" ; then
+  AC_CFLAG([-fsanitize=memory], [AC_MSG_ERROR([MemorySanitizer (-fsanitize=memory) is not supported by $CC])])
+  LDFLAGS="$LDFLAGS -fsanitize=memory"
+fi
+
+if test x"$hwasan" = x"yes" ; then
+  AC_CFLAG([-fsanitize=hwaddress], [AC_MSG_ERROR([HardwareAssisted AddressSanitizer (-fsanitize=hwaddress) is not supported by $CC])])
+  LDFLAGS="$LDFLAGS -fsanitize=hwaddress"
+fi
+
+if test x"$ubsan" = x"yes" ; then
+  AC_CFLAG([-fsanitize=undefined], [AC_MSG_ERROR([UndefinedBehaviorSanitizer (-fsanitize=undefined) is not supported by $CC])])
+  LDFLAGS="$LDFLAGS -fsanitize=undefined"
 fi
 
 if test x"$warn" = x"yes" ; then
@@ -311,7 +380,7 @@ fi
 #  AC_CFLAG([-Wmissing-declarations])
 #fi
 
-# We always want these CFLAGS if available, the second one is neseccary for a stable runtime
+# We always want these CFLAGS if available; the second one is necessary for a stable runtime
 AC_CFLAG([-fno-omit-frame-pointer])
 
 AC_CFLAG([-fno-strict-aliasing])
@@ -329,6 +398,21 @@ fi
 AC_CONFIG_SRCDIR([src/runtime/imain.r])
 AC_PROG_CC
 AC_PROG_CXX
+if test x"$asan" = x"yes" ; then
+  CXXFLAGS="$CXXFLAGS -fsanitize=address"
+fi
+if test x"$tsan" = x"yes" ; then
+  CXXFLAGS="$CXXFLAGS -fsanitize=thread"
+fi
+if test x"$msan" = x"yes" ; then
+  CXXFLAGS="$CXXFLAGS -fsanitize=memory"
+fi
+if test x"$hwasan" = x"yes" ; then
+  CXXFLAGS="$CXXFLAGS -fsanitize=hwaddress"
+fi
+if test x"$ubsan" = x"yes" ; then
+  CXXFLAGS="$CXXFLAGS -fsanitize=undefined"
+fi
 AC_PROG_CPP
 AC_PROG_RANLIB
 AC_CHECK_LIB(socket, socket)
@@ -426,6 +510,27 @@ case $unicon_host in
        ICONCEXE=$UNICONC.exe
         ;;
 esac
+
+if test x"$asan" = x"yes" ; then
+  CFDYN="$CFDYN -fsanitize=address"
+  LDDYN="$LDDYN -fsanitize=address"
+fi
+if test x"$tsan" = x"yes" ; then
+  CFDYN="$CFDYN -fsanitize=thread"
+  LDDYN="$LDDYN -fsanitize=thread"
+fi
+if test x"$msan" = x"yes" ; then
+  CFDYN="$CFDYN -fsanitize=memory"
+  LDDYN="$LDDYN -fsanitize=memory"
+fi
+if test x"$hwasan" = x"yes" ; then
+  CFDYN="$CFDYN -fsanitize=hwaddress"
+  LDDYN="$LDDYN -fsanitize=hwaddress"
+fi
+if test x"$ubsan" = x"yes" ; then
+  CFDYN="$CFDYN -fsanitize=undefined"
+  LDDYN="$LDDYN -fsanitize=undefined"
+fi
 
 if test "x$iconc" = "xyes" || test "x$iconc" = "xon" ; then
        ICONCTARGET=Iconc
@@ -548,11 +653,7 @@ if test "x$thin" = "xyes"; then
       plugins=no
    fi
 
-   if test "x$database" = "xon"; then
-      database=no
-   fi
-
-   if test "x$databse" = "xon"; then
+   if test "x$ssl" = "xon"; then
       ssl=no
    fi
 
@@ -667,7 +768,8 @@ if ! test "x$graphics" = "xno"; then
      *linux*)
         ;;
      *solaris*)
-        XLIBS = -L/usr/X11R6/lib/64 -R/usr/X11R6/lib/64 -lXpm -lX11       ;;
+        XLIBS="-L/usr/X11R6/lib/64 -R/usr/X11R6/lib/64 -lXpm -lX11"
+        ;;
      *aix*)
         ;;
      *bsd*)
@@ -860,7 +962,7 @@ if test "x$graphics" = "xyes" || test "x$graphics" = "xon" ; then
   if test "x$cv_libfreetype"   = "xyes" ; then
     gtmp="$gtmp+Freetype " ; else gtmp="$gtmp-FreeType " ; fi
 else
-#disbaled graphics
+#disabled graphics
   gtmp=" ! Graphics"
 fi
 
@@ -893,12 +995,12 @@ if test "x$graphics3d" = "xyes" || test "x$graphics3d" = "xon" ; then
     gdtmp=" + Graphics3D         : $gdtmp"
   else
     if test "x$graphics3d" = "xyes" ; then
-        AC_MSG_ERROR("3D graphics requires opengl librarry")
+        AC_MSG_ERROR("3D graphics requires opengl library")
      fi
     gdtmp=" - Graphics3D         : $gdtmp"
   fi
 else
-#disbaled graphics3D
+#disabled graphics3D
   gdtmp=" ! Graphics3D"
 fi
 
@@ -980,7 +1082,7 @@ if test "x$audio" = "xyes" || test "x$audio" = "xon" ; then
   fi
 
 else
-#disbaled Audio
+#disabled Audio
   atmp=" ! Audio"
 fi
 
@@ -1023,7 +1125,7 @@ if test "x$voip" = "xyes" || test "x$voip" = "xon" ; then
   fi
 
 else
-#disbaled Voip
+#disabled Voip
   vtmp=" ! VOIP"
 fi
 
@@ -1042,8 +1144,8 @@ if test "x$database" = "xyes" || test "x$database" = "xon" ; then
   fi
   fi
 else
-#disbaled databse
-  dtmp=" ! Databse"
+#disabled database
+  dtmp=" ! Database"
 fi
 
 # want ssl
@@ -1052,16 +1154,24 @@ if test "x$ssl" = "xyes" || test "x$ssl" = "xon" ; then
      stmp=" + SSL                : +ssl"
   else
      if test "x$ssl" = "xyes" ; then
-        AC_MSG_ERROR("ssl requirels libssl-dev or equivalent")
+        AC_MSG_ERROR("ssl requires libssl-dev or equivalent")
      fi
      stmp=" - SSL                : -ssl"
   fi
 else
-#disbaled ssl
+#disabled ssl
   stmp=" ! SSL"
 fi
 
 revision=`./config/scripts/version.sh "revision"`
+
+san_summary=""
+test x"$asan" = x"yes" && san_summary="$san_summary${san_summary:+ }ASan"
+test x"$tsan" = x"yes" && san_summary="$san_summary${san_summary:+ }TSan"
+test x"$ubsan" = x"yes" && san_summary="$san_summary${san_summary:+ }UBSan"
+test x"$msan" = x"yes" && san_summary="$san_summary${san_summary:+ }MSan"
+test x"$hwasan" = x"yes" && san_summary="$san_summary${san_summary:+ }HWASan"
+test -z "$san_summary" && san_summary=no
 
 cat << EOF  > unicon-config.log
 --------------------------------------------------
@@ -1081,6 +1191,7 @@ LDDYN    : $LDDYN
 prefix   :  $prefix
 Verbose  :  $verbosebuild
 Debug    :  $debug $debugheapreport $verifyheapreport
+San      :  $san_summary
 Warnings :  $warn
 Werror   :  $werror
 Devmode  :  $devmode
@@ -1110,7 +1221,7 @@ fi
 
 if test "x$iconc"  = "xyes" || test "x$iconc" = "xon" ; then
   if test "x$coniconc"      = "xyes" ; then
-     echo " + Compiler: with concurrency >> unicon-config.log"
+     echo " + Compiler: with concurrency" >> unicon-config.log
   else
      echo " + Compiler: no concurrency" >> unicon-config.log
   fi

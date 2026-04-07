@@ -6,14 +6,19 @@ on:
     paths-ignore:
     - 'docs/**'
 
+concurrency:
+  group: packages-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   Windows:
     runs-on: ${{ matrix.cfg.os }}
     name: ${{ matrix.cfg.name }}
+    timeout-minutes: 60
     strategy:
       matrix:
         cfg:
-        -  { os: windows-latest,  name: 'Windows_64-bit',  opt: '--disable-iconc' }
+        -  { os: windows-2022,  name: 'Windows_64-bit',  opt: '--disable-iconc' }
         #-  { os: windows-latest,  name: 'Windows_32-bit', opt: '--build=i686-w64-mingw32 --host=i686-w64-mingw32' }
 
     defaults:
@@ -38,7 +43,7 @@ jobs:
       shell: bash
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Configure
       run: sh configure  ${{ matrix.cfg.opt }}
@@ -51,15 +56,16 @@ jobs:
         make WinInstaller
 
     - name: Publish
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
-        name: unicon-${{ matrix.cfg.name}}
+        name: unicon-${{ matrix.cfg.name }}
         path: Output/setup-unicon*.exe
-
+        if-no-files-found: warn
 
   Ubuntu:
     runs-on: ${{ matrix.cfg.os }}
     name: ${{ matrix.cfg.name }}
+    timeout-minutes: 60
     strategy:
       matrix:
         cfg:
@@ -69,7 +75,14 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
+
+    - name: Cache apt packages
+      uses: actions/cache@v5
+      with:
+        path: /var/cache/apt/archives/*.deb
+        key: apt-packages-${{ matrix.cfg.os }}-${{ hashFiles('debian/control') }}
+        restore-keys: apt-packages-${{ matrix.cfg.os }}-
 
     - name: Install dependencies
       run: |
@@ -92,13 +105,21 @@ jobs:
         cp ../unicondist/unicon_*.orig.tar.gz debian-pkg/
 
     - name: Publish
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
-        name: unicon-${{ matrix.cfg.name}}
+        name: unicon-${{ matrix.cfg.name }}
         path: debian-pkg/unicon_*
+        if-no-files-found: warn
 
     - name: Install
-      run: sudo apt install ./debian-pkg/*.deb
+      run: |
+        shopt -s nullglob
+        debs=(./debian-pkg/*.deb)
+        if [ "${#debs[@]}" -eq 0 ]; then
+          echo "No .deb packages under debian-pkg/; did the Deb step succeed?"
+          exit 1
+        fi
+        sudo apt install -y "${debs[@]}"
 
     - name: Test
       run: make Test

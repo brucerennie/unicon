@@ -51,7 +51,7 @@
 # TODO: Make the class thread-safe
 #
 
-package ulsp
+package logger
 
 link strings
 

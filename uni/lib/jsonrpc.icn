@@ -31,87 +31,124 @@
 #  In case of an error, and error objet should bre returned.
 #
 
-package ulsp
-import json
+package json
 link ximage
 
 $define CONTENT_LENGTH "Content-Length: "
 
+# JRPC_Message is a class that represents a JSON-RPC message
+# It is used to parse the JSON-RPC message and to create the JSON-RPC message
 class JRPC_Message(msg, kind, json_table)
 
+   # Parse the JSON-RPC message and set the kind of the message
    method parse_json(s)
       msg := s
-      if json_table := jtou(s) then {
+      json_table := &null
+
+      if json_table := jtous(s) then {
          guess_kind()
          return self
       } else
          kind := "unknown"
    end
 
+   # Guess the kind of the message based on the JSON-RPC message
    method guess_kind()
-      #if we have a method, the msg is a request
-      if \json_table["method"] then
-         kind := if \json_table["id"] then "request" else "notification"
-      else if \json_table["error"] then
+      if \json_table["error"] then
          kind := "error"
+      else if \json_table["method"] then
+         kind := if \json_table["id"] then "request" else "notification"
       else if \json_table["result"] then
          kind := "response"
       else
          kind := "unknown"
+
+      return kind
    end
 
+   # Get the JSON RPC kind of the message
    method get_kind()
       return kind
    end
+   # Get the JSON RPC id of the message
    method get_id()
       return json_table["id"]
    end
+   # Get the JSON RPC method of the message
    method get_method()
       return json_table["method"]
    end
+   # Get the JSON RPC params of the message
    method get_params()
       return json_table["params"]
    end
    # many requests operate on a file, stored in uri param
+   # used by ulsp server to get the file path
    method get_param_uri()
       return json_table["params"]["textDocument"]["uri"]
    end
 
+   # Get the result of returned by a json rpc request
    method get_result()
       return json_table["result"]
    end
+   # Get the error of returned by a json rpc request
    method get_error()
       return json_table["error"]
    end
+   # Get the raw message content
    method get_content()
       return msg
    end
 
+   method to_json()
+      if msg := tojson(json_table) then
+         return msg
+   end
+
+   # Initialize the JSON RPC message
    method init_msg()
       /json_table := ["jsonrpc" : "2.0"]
    end
 
+   # Set the result of the JSON RPC message
    method set_result(result)
+      init_msg()
       json_table["result"] := result
    end
+   # Set the id of the JSON RPC message
    method set_id(id)
+      init_msg()
       return json_table["id"] := id
    end
+   # Set the method of the JSON RPC message
    method set_method(meth)
-      return json_table["method"] := meth
+      init_msg()
+      json_table["method"] := meth
+      guess_kind()
+      return meth
    end
+   # Set the params of the JSON RPC message
    method set_params(params)
-      return json_table["params"] := params
+      init_msg()
+      json_table["params"] := params
+      return params
    end
 
+   # Make a result response JSON RPC message
    method make_result_response(result)
+      init_msg()
       delete(json_table, "method", "params", "error")
-      json_table["result"] := \result | ""
+      # JSON-RPC 2.0: result can be null, so preserve null
+      json_table["result"] := result
+      guess_kind()
       if msg := tojson(json_table) then
          return self
    end
 
+   # Make a request JSON RPC message
    method make_request(id, meth, params)
+      init_msg()
       if /json_table then
          json_table := [
             "id" : id;
@@ -124,6 +161,24 @@ class JRPC_Message(msg, kind, json_table)
          json_table["method"] := meth
          json_table["params"] := params
       }
+      guess_kind()
+      if msg := tojson(json_table) then
+         return self
+   end
+
+   method make_notification(meth, params)
+      init_msg()
+      if /json_table then
+         json_table := [
+            "method" : meth;
+            "params" : params
+            ]
+      else {
+         delete(json_table, "id", "result", "error")
+         json_table["method"] := meth
+         json_table["params"] := params
+      }
+      guess_kind()
       if msg := tojson(json_table) then
          return self
    end
@@ -176,40 +231,58 @@ class JRPC_Message(msg, kind, json_table)
    #
    # RequestCancelled: -32800;
 
+   # Make an error response JSON RPC message
    method make_error_response(err_code, err_msg, err_data)
-      delete(json_table, "method", "params", "result")
-      json_table["error"] := [
-         "code" : err_code;
-         "message" : err_msg;
-         "data" : \err_data | ""
-      ]
+      init_msg()
+      if /json_table then
+         json_table := [
+            "error" : [
+               "code" : err_code;
+               "message" : err_msg;
+               "data" : \err_data | ""
+            ]
+         ]
+      else {
+         delete(json_table, "method", "params", "result")
+         json_table["error"] := [
+            "code" : err_code;
+            "message" : err_msg;
+            "data" : \err_data | ""
+         ]
+      }
+      guess_kind()
       if msg := tojson(json_table) then
          return self
    end
 
+   # Initialize the JSON RPC message
    initially
       kind := "unknown"
 end
 
 
-class JRPC_HTTPSocket(sock)
+class JSON_HTTPSocket(sock)
    #
    # parse the http header in the form of
    #   ...
    #   Content-Length: <SIZE>
    #   ...
    #   \r\n\r\n
-   # and return the length of the rpc message
+   # and return the length of the message
    method get_http_header(timeout)
-      local len, data := "", size := 22
+      local len, data := "", size := 22, chunk
       /timeout := -1
       repeat {
          # Wait for a message to arrive, read the header
-         # assume the min header size is 22, because the shortest jrpc
+         # assume the min header size is 22, because the shortest
          # msgs will be at least 2 digits, I.e header size >=22
-         *select(sock, timeout) > 0  | fail
-         data ||:= ready(sock, size-*data)
-         data ~== "" | fail
+         *select(\sock, timeout) > 0  | fail
+         
+         chunk := ready(sock, size-*data)
+         \chunk | fail
+         chunk ~== "" | fail
+         data ||:= chunk
+
          if *data < size then next
 
          data ? {
@@ -227,17 +300,48 @@ class JRPC_HTTPSocket(sock)
       }
    end
 
+   # Get the data from the socket
    method get_data(size, timeout)
-      local data := ""
+      local data := "", chunk
       /timeout := -1
       while *data < size do {
          *select(sock, timeout) > 0 | fail
-         data ||:= ready(sock, size-*data)
-         data ~== "" | fail
-         }
-         return data
+         
+         chunk := ready(sock, size - *data)
+         \chunk | fail
+         chunk ~== "" | fail
+         data ||:= chunk
+      }
+      return data
    end
 
+   method get_msg(timeout)
+      local len, body, t
+      len := get_http_header(timeout) | fail
+      body := get_data(len, timeout) | fail
+      t := jtous(body) | fail
+      return t
+   end
+
+   method send_msg(t)
+      local body
+      body := tojson(t) | fail
+      writes(sock, CONTENT_LENGTH, *body, "\r\n\r\n", body)
+   end
+
+   # Initialize the JSON HTTPSocket
+   initially(addr, opt)
+      if string(addr) then
+         sock := open(addr,opt)
+      else
+         sock := addr
+
+end
+
+
+class JRPC_HTTPSocket : JSON_HTTPSocket()
+
+   # Get the JSON RPC message from the socket
    method get_msg(timeout)
       local msg_body, len
       len := get_http_header(timeout) | fail
@@ -247,6 +351,7 @@ class JRPC_HTTPSocket(sock)
       }
    end
 
+   # Send the JSON RPC message to the socket
    method send_msg(msg)
       local data
       data := msg.get_content()
@@ -254,9 +359,6 @@ class JRPC_HTTPSocket(sock)
    end
 
    initially(addr, opt)
-      if string(addr) then
-         sock := open(addr,opt)
-      else
-         sock := addr
-
+      return self.JSON_HTTPSocket.initially(addr, opt)
+      
 end

@@ -13,10 +13,18 @@ class CompletionHandler(
    end
 
    method getResult()
-      local _context, line, character, results_table, results, desired_line, objectName, context
+      local _context, line, character, results_table, results, desired_line, objectName, context, position
 
-      line := params["position"]["line"] + 1
-      character := params["position"]["character"] + 1
+      # Check that params and position exist and are valid
+      if /params then fail
+      if not member(params, "position") then fail
+      # Get position and verify it's not null before accessing its members
+      if /(position := params["position"]) then fail
+      if not member(position, "line") then fail
+      if not member(position, "character") then fail
+
+      line := position["line"] + 1
+      character := position["character"] + 1
 
       context := filehandler.getContext(line, character) | fail
       desired_line := context.line

@@ -8,7 +8,7 @@ most modern CPU architectures such as i386, amd64, armhf, arm64, and ppc64el.
 
 Installation
 ------------
-The latest sources are available from Unicon's git repositories on Sourceforge and GitHub.
+The latest sources are available from Unicon's git repositories on SourceForge and GitHub.
 To get the sources from either repo do:
 
 ```
@@ -21,12 +21,12 @@ or
 git clone git://git.code.sf.net/p/unicon/unicon
 ```
 On Windows systems it is advised to add the `--config core.autocrlf=input` option to the `git` command.
-`git` is available on linux via the standard package managers, for example on a Debian system
+`git` is available on Linux via the standard package managers, for example on a Debian system:
 
 ```
 sudo apt install git
 ```
-On macOS git is available with xcode. On windows you can install and setup git using the instructions:
+On macOS git is available with Xcode. On Windows you can install and set up git using the instructions:
 [here](http://unicon.org/git.html)
 
 For source tarballs and binary distributions, see unicon.org
@@ -50,7 +50,7 @@ sh configure --help
 ```
 
 The configuration script allows you to enable or disable features in the Unicon build at compile time.
-Some of the features are turned on by default as long as the dependecies are satisfied. Those features
+Some of the features are turned on by default as long as the dependencies are satisfied. Those features
 can be turned off by doing `--disable-FEATURE`, for example:
 ```
 ./configure --disable-graphics
@@ -67,19 +67,19 @@ dependencies are missing, just enable that feature explicitly. For example, if y
 ```
 ./configure --enable-ssl
 ```
-If openssl development library is not present on the system, the configre script will stop with an error message:
+If openssl development library is not present on the system, the configure script will stop with an error message:
 ```
 configure: error: "ssl requires libssl-dev or equivalent"
 ```
 
 ### Linux
-Use the package manager in your Linux distribution to get a build utilities and C compiler.
+Use the package manager in your Linux distribution to get the build utilities and C compiler.
 For example, on a Debian system
 ```
 sudo apt install build-essential
 ```
 Optionally, you can install development library dependencies to enable more Unicon features.
-Most of these libraries are listed below for common Linux distibutions.
+Most of these libraries are listed below for common Linux distributions.
 
 Debian/Ubuntu:
 ```
@@ -116,8 +116,7 @@ If you want access to the graphics facilities of Unicon, you also need to downlo
 and install the XQuartz package from https://www.xquartz.org/.
 
 ### *BSD
-
-installl build dependencies. Make sure to use GNU `gmake` when building.
+Install build dependencies. Make sure to use GNU `gmake` when building.
 ```
 pkg install -y -f autoconf gmake lang/gcc git
 ```
@@ -134,8 +133,8 @@ There are two possibilities depending on the choice of the C runtime library.  Y
 the legacy Microsoft Visual C++ Runtime (MSVCRT), which runs on all versions of Windows, or the
 newer Universal C Runtime (UCRT64), which is used by Visual Studio but is only available by default
 on Windows 10 and newer. Starting from version 13.3, binary distributions of Unicon for Windows
-will be built with UCRT64. See msys2 [environemts](https://www.msys2.org/docs/environments/)
-for more details about available environemnts and their C Library options.
+will be built with UCRT64. See msys2 [environments](https://www.msys2.org/docs/environments/)
+for more details about available environments and their C Library options.
 
 #### 1. UCRT64:
 
@@ -175,15 +174,15 @@ run from the standard Windows command line `cmd` terminal.
 
 - Download and run [mingw-get-setup.exe](https://sourceforge.net/projects/mingw/files/Installer/)
 
-   Go through the install process and  use it to install only msys-base. This will give you an MSYS (not MSYS2)
+   Go through the install process and use it to install only msys-base. This will give you an MSYS (not MSYS2)
    environment with all the needed Linux/gnu utils.
 
 - Get MinGW64 compiler suite, [TDM package](https://jmeubank.github.io/tdm-gcc/) is known to work with Unicon.
 Most recent package is [9.2.0](https://jmeubank.github.io/tdm-gcc/articles/2020-03/9.2.0-release)
 
-Note that you maybe missing the tool "make". TDM MinGW comes with a "make" that is named mingw32-make.exe.
-That file can be found under the insallation directory of MinGW64 inside the bin directory.
-create a copy of that file and name it "make.exe" before continuing.
+Note that you may be missing the tool "make". TDM MinGW comes with a "make" that is named mingw32-make.exe.
+That file can be found under the installation directory of MinGW64 inside the bin directory.
+Create a copy of that file and name it "make.exe" before continuing.
 
 - Clone the Unicon repository (same steps as UCRT64 above).
 
@@ -203,9 +202,67 @@ The option `x86_64-w64-mingw32` ensures the build is 64-bit. After the script fi
 ```
 make
 ```
-  
 
-  
+
+Compiler sanitizers
+-------------------
+
+[AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer) helps find
+out-of-bounds accesses, use-after-free, and related memory bugs in the Unicon runtime and
+in native code. It is supported when building with GCC or Clang on typical Unix-like hosts.
+
+**Configure and build** with ASan enabled. Adding `--enable-debug` gives debug symbols so
+stack traces and debuggers are usable:
+
+```
+./configure --enable-asan --enable-debug
+make -j
+```
+
+Other configure switches select additional LLVM/GCC sanitizers (flags are applied to compile
+and link steps, including shared libraries):
+
+| Option | Effect |
+|--------|--------|
+| `--enable-asan` | AddressSanitizer (`-fsanitize=address`) |
+| `--enable-tsan` | ThreadSanitizer (`-fsanitize=thread`) |
+| `--enable-ubsan` | UndefinedBehaviorSanitizer (`-fsanitize=undefined`) |
+| `--enable-msan` | MemorySanitizer (`-fsanitize=memory`) |
+| `--enable-hwasan` | HardwareAssisted AddressSanitizer (`-fsanitize=hwaddress`; common on AArch64) |
+
+Use **at most one** of `--enable-asan`, `--enable-tsan`, `--enable-msan`, and `--enable-hwasan`.
+**`--enable-ubsan`** may be combined with `--enable-asan` or `--enable-tsan`. MSan usually needs
+a toolchain (and often libc) built for MemorySanitizer. After `./configure`, `unicon-config.log`
+shows a single summary line such as `San: ASan UBSan`, or `San: no` when none of these are enabled.
+
+**Optional runtime tuning** via `ASAN_OPTIONS`, for example:
+
+```
+export ASAN_OPTIONS=abort_on_error=1:verbosity=1
+./bin/iconx prog.icn
+```
+
+**LeakSanitizer** runs with ASan on typical Linux setups and treats any allocation
+still live at exit as a leak, which can cause `make` to fail while building.
+If remaining leak reports are only a distraction while you care about
+**memory safety errors** (not leaks),
+you can disable leak detection for the whole build:
+
+```
+export ASAN_OPTIONS=detect_leaks=0
+make -j
+```
+
+**Debug under GDB** as usual; the process is already instrumented:
+
+```
+gdb --args ./bin/iconx prog.icn
+```
+
+Use the same `ASAN_OPTIONS` in the environment GDB passes to the program if you need
+specific sanitizer behavior while stepping.
+
+
 Help
 ----
 

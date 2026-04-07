@@ -8,6 +8,7 @@
 #   -Instantiates Server class and calls run() to start server on validated port number.
 #
 import ulsp
+import logger
 link options
 link basename
 link ximage
@@ -87,5 +88,6 @@ procedure main(args)
    member(opts, mode := "c") | (mode := "s")
 
    ulsp_server := Server(sock, mode)
+   ulsp_server.connect()
    ulsp_server.run()
 end

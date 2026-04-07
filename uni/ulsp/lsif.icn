@@ -1,6 +1,7 @@
 import UniDoc
 import ulsp
 import json
+import logger
 link ximage
 
 #<p>
