@@ -1,5 +1,6 @@
 
-include $(TOPDIR)/Makedefs
+UNICON_TOP_BUILDDIR ?= $(TOPDIR)
+include $(UNICON_TOP_BUILDDIR)/Makedefs
 
 UNI=$(TOPDIR)/uni
 IPL=$(TOPDIR)/ipl
@@ -27,7 +28,7 @@ $(LNAME): $(TLIB) $(LIBD)/$(LNAME).u
 	cp  $(TLIB) $(LIBD)/
 
 $(TLIB): $(COBJ)
-	$(CC) $(LDDYN2) -o $(TLIB) $(CFDYN2) $(COBJ) ../../lib/icall.$(O) $(MYLIBS) $(XLIBS)
+	$(CC) $(LDDYN2) -o $(TLIB) $(CFDYN2) $(COBJ) ../../lib/icall.$(O) $(PLUGIN_LDFLAGS) $(MYLIBS) $(XLIBS)
 	cp $(TLIB) $(LIBD)
 	
 # Unicon interface
