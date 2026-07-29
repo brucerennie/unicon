@@ -1,18 +1,20 @@
 #
-# Pluggable look-and-feel for package gui.
-#
-# Flat (default) uses 1px borders, solid fills for pressed state, and an
-# accent-colored focus ring.  Classic keeps the historical bevelled
-# Motif/Win95 drawing.
-#
-# Usage:
-#   SetGuiTheme("flat")     # default; optional
-#   SetGuiTheme("classic")  # old bevelled look
-#   SetGuiThemeFont("default")  # Unicon sans,12 (default)
-#   SetGuiThemeFont("modern")   # Arial/13 when available
-#   SetGuiTheme("flat", ThemePalette(...))  # optional palette override
-#
 # This file is in the public domain.
+#
+# Author: Jafar Al-Gharaibeh (to.jafar@gmail.com)
+#
+# Pluggable look-and-feel for package {gui}.
+#
+# Flat (the default) uses 1px borders, solid fills for pressed state,
+# and an accent-colored focus ring.  Classic keeps the historical
+# bevelled Motif/Win95 drawing.
+#
+# @example
+# @ SetGuiTheme("flat")                    # default; optional
+# @ SetGuiTheme("classic")                 # old bevelled look
+# @ SetGuiThemeFont("default")             # Unicon sans,12
+# @ SetGuiThemeFont("modern")              # Arial/13 when available
+# @ SetGuiTheme("flat", ThemePalette(...)) # optional palette override
 #
 
 package gui
@@ -22,36 +24,56 @@ $include "guih.icn"
 
 global gui_theme_name
 global gui_theme_palette
-global gui_theme_font_style   # "modern" | "default"
+global gui_theme_font_style
 
 #
-# Named colors used by the flat theme.  Override via SetGuiTheme.
+# Named colors used by the flat theme.  Override via {SetGuiTheme}.
+#
+# Fields are Unicon color strings (typically from {Rgb8}).
+# @param bg             Dialog / panel background
+# @param fg             Primary text
+# @param surface        Button / control face
+# @param surface_press  Button face while pressed
+# @param surface_check  Toggled / checked face
+# @param border         Raised control border (buttons)
+# @param border_input   Sunken / input border (fields)
+# @param border_focus   Focus ring / accent
+# @param input_bg       Text fields, lists
+# @param muted          Secondary labels / disabled hint
+# @param font           Default UI typeface,size
 #
 record ThemePalette(
-   bg,           # dialog / panel background
-   fg,           # primary text
-   surface,      # button / control face
-   surface_press,# button face while pressed
-   surface_check,# toggled / checked face
-   border,       # raised control border (buttons)
-   border_input, # sunken / input border (fields)
-   border_focus, # focus ring / accent
-   input_bg,     # text fields, lists
-   muted,        # secondary labels / disabled hint
-   font          # default UI typeface,size
+   bg,
+   fg,
+   surface,
+   surface_press,
+   surface_check,
+   border,
+   border_input,
+   border_focus,
+   input_bg,
+   muted,
+   font
    )
 
 #
-# Unicon colors are 16-bit RGB (0..65535).  Convert 8-bit components.
+# Convert 8-bit RGB components to a Unicon 16-bit color string
+# (0..65535 per channel).
+# @param r   Red 0..255
+# @param g   Green 0..255
+# @param b   Blue 0..255
+# @return    Color string "R,G,B"
 #
 procedure Rgb8(r, g, b)
    return (r * 257) || "," || (g * 257) || "," || (b * 257)
 end
 
 #
-# Font style for the flat theme:
-#   "default" — Unicon's traditional portable "sans,12" (default)
-#   "modern"  — Arial (or helvetica/lucida), size 13, when available
+# Select the flat-theme font style.
+# ``default'' is Unicon's portable ``sans,12''.
+# ``modern'' prefers Arial (or helvetica/lucida) at size 13 when available.
+# @param style   ``default'', ``modern'', or a synonym (``sans'', ``arial'', ...)
+# @return        The normalized style name (``default'' or ``modern'')
 #
 procedure SetGuiThemeFont(style)
    /style := "default"
@@ -69,13 +91,19 @@ procedure SetGuiThemeFont(style)
    return gui_theme_font_style
 end
 
+#
+# Return the current flat-theme font style.
+# @return   ``default'' or ``modern''
+#
 procedure GetGuiThemeFont()
    /gui_theme_font_style := "default"
    return gui_theme_font_style
 end
 
 #
-# Resolve a concrete font= value for the active font style.
+# Resolve a concrete ``font='' attribute for the active font style.
+# Caches the result until {SetGuiThemeFont} changes the style.
+# @return   A font attribute value such as ``sans,12'' or ``arial,13''
 #
 procedure GuiThemePickFont()
    local w, f, pick
@@ -94,7 +122,7 @@ procedure GuiThemePickFont()
       }
 
    #
-   # Prefer Arial (scalable / Xft) over generic "sans".
+   # Prefer Arial (scalable / Xft) over generic ``sans''.
    #
    pick := "sans,13"
    w := open("gui-theme-font", "g", "size=8,8", "canvas=hidden")
@@ -111,6 +139,10 @@ procedure GuiThemePickFont()
    return resolved_font := pick
 end
 
+#
+# Build the default {ThemePalette} for the flat look-and-feel.
+# @return   A {ThemePalette} record
+#
 procedure DefaultFlatPalette()
    return ThemePalette(
       Rgb8(236, 240, 244),   # cool light dialog bg
@@ -128,8 +160,10 @@ procedure DefaultFlatPalette()
 end
 
 #
-# Select the active look-and-feel.  Name is "flat" (default) or "classic".
-# Optional second argument is a ThemePalette record.
+# Select the active look-and-feel.
+# @param name      ``flat'' (default) or ``classic'' (synonyms: modern/default, bevel/motif)
+# @param palette   Optional {ThemePalette}; used only for flat
+# @return          The normalized theme name
 #
 procedure SetGuiTheme(name, palette)
    /name := "flat"
@@ -148,15 +182,27 @@ procedure SetGuiTheme(name, palette)
    return gui_theme_name
 end
 
+#
+# Return the name of the active look-and-feel.
+# @return   ``flat'' or ``classic''
+#
 procedure GetGuiTheme()
    /gui_theme_name := "flat"
    return gui_theme_name
 end
 
+#
+# Succeed if the flat look-and-feel is active.
+# @return   non-null when flat; fails when classic
+#
 procedure GuiThemeIsFlat()
    return GetGuiTheme() == "flat"
 end
 
+#
+# Return the active {ThemePalette}, creating the default flat palette if needed.
+# @return   A {ThemePalette} record
+#
 procedure GuiThemePalette()
    /gui_theme_palette := DefaultFlatPalette()
    return gui_theme_palette
@@ -164,8 +210,9 @@ end
 
 #
 # Default window attributes suggested by the active theme.
-# Dialog.open_win merges these ahead of any user attribs so explicit
+# {Dialog}.open_win merges these ahead of any user attribs so explicit
 # app settings still win.
+# @return   A list of ``bg='', ``fg='', and ``font='' strings; fails if classic
 #
 procedure GuiThemeDialogAttribs()
    local p
@@ -180,7 +227,11 @@ procedure GuiThemeDialogAttribs()
 end
 
 #
-# Flat 1px border.
+# Draw a flat 1px rectangle border in the given color.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @param color   Unicon color string
+# @return        W
 #
 procedure FlatBorder(W, x, y, w, h, color)
    local cw
@@ -190,13 +241,23 @@ procedure FlatBorder(W, x, y, w, h, color)
    return W
 end
 
+#
+# Draw the flat-theme focus ring (accent border).
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @return        W
+#
 procedure FlatFocusRing(W, x, y, w, h)
    FlatBorder(W, x, y, w, h, GuiThemePalette().border_focus)
    return W
 end
 
 #
-# White (or palette) fill for text fields / other inset controls.
+# Fill an inset control (text field, list) with the theme input background.
+# Does nothing useful under classic (fails).
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @return        W when flat; fails when classic
 #
 procedure ThemeFillInput(W, x, y, w, h)
    local cw
@@ -211,7 +272,10 @@ end
 
 #
 # Fill a control face for the given visual state.
-# state: "up" | "down" | "checked"
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @param state   ``up'', ``down'', or ``checked''
+# @return        W when flat; fails when classic
 #
 procedure ThemeFillFace(W, x, y, w, h, state)
    local p, color, cw
@@ -230,7 +294,10 @@ procedure ThemeFillFace(W, x, y, w, h, state)
 end
 
 #
-# Accent fill (progress bar, highlights).
+# Fill with the accent (focus) color; used for progress bars and highlights.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @return        W when flat; fails when classic
 #
 procedure ThemeFillAccent(W, x, y, w, h)
    local cw
@@ -246,7 +313,11 @@ procedure ThemeFillAccent(W, x, y, w, h)
 end
 
 #
-# Horizontal hairline (menu separators).
+# Draw a horizontal hairline (for example menu separators).
+# @param W     Window
+# @param x,y   Start point
+# @param w     Width in pixels
+# @return      W when flat; fails when classic
 #
 procedure ThemeHairline(W, x, y, w)
    local cw
@@ -259,22 +330,39 @@ procedure ThemeHairline(W, x, y, w)
 end
 
 #
-# Sunken panel: optional input fill + sunken/flat border.
+# Draw a sunken panel: input fill plus border when flat, else a bevel.
+# Uses {FlatBorder}/{BevelRectangle} directly so this file does not
+# depend on {guiprocs}.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @return        W
 #
 procedure ThemeSunkenPanel(W, x, y, w, h)
-   if GuiThemeIsFlat() then
+   if GuiThemeIsFlat() then {
       ThemeFillInput(W, x, y, w, h)
-   DrawSunkenRectangle(W, x, y, w, h)
+      FlatBorder(W, x, y, w, h, GuiThemePalette().border_input)
+      }
+   else
+      BevelRectangle(W, x, y, w, h, -BORDER_WIDTH)
    return W
 end
 
 #
-# Raised face: optional surface fill + raised/flat border.
+# Draw a raised control face: optional surface fill plus border when flat,
+# else a bevel.  Uses {FlatBorder}/{BevelRectangle} directly so this file
+# does not depend on {guiprocs}.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @param state   Face state for flat fill (``up'', ``down'', or ``checked'')
+# @return        W
 #
 procedure ThemeRaisedFace(W, x, y, w, h, state)
    /state := "up"
-   if GuiThemeIsFlat() then
+   if GuiThemeIsFlat() then {
       ThemeFillFace(W, x, y, w, h, state)
-   DrawRaisedRectangle(W, x, y, w, h)
+      FlatBorder(W, x, y, w, h, GuiThemePalette().border)
+      }
+   else
+      BevelRectangle(W, x, y, w, h, BORDER_WIDTH)
    return W
 end

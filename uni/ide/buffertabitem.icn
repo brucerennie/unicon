@@ -12,7 +12,6 @@
 
 $include "guih.icn"
 import gui
-link theme
 
 #
 #  class BufferTabItem:  Overide Display method and add an extra attribute.

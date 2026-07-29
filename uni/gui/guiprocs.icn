@@ -8,7 +8,6 @@
 
 package gui
 link graphics
-link theme
 
 $include "guih.icn"     
 
@@ -148,7 +147,11 @@ end
 
 #
 # Draw a raised rectangle.
-# Flat theme: 1px border.  Classic: bevelled raised edge.
+# Under the flat theme this is a 1px border; under classic it is a bevel.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @param i       Bevel width when classic (default {BORDER_WIDTH})
+# @return        W
 #
 procedure DrawRaisedRectangle(W, x, y, w, h, i)
    /i := BORDER_WIDTH
@@ -160,8 +163,12 @@ end
 
 #
 # Draw a sunken rectangle.
-# Flat theme: darker input border (no fill — callers use ThemeFillInput).
-# Classic: bevelled sunken edge.
+# Under the flat theme this is a darker input border (no fill; callers
+# may use {ThemeFillInput}).  Under classic it is a bevel.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @param i       Bevel depth when classic (default -{BORDER_WIDTH})
+# @return        W
 #
 procedure DrawSunkenRectangle(W, x, y, w, h, i)
    /i := -BORDER_WIDTH
@@ -172,8 +179,12 @@ procedure DrawSunkenRectangle(W, x, y, w, h, i)
 end
 
 #
-# Focus rectangle.
-# Flat theme: accent ring.  Classic: dashed shadow outline.
+# Draw a focus rectangle.
+# Under the flat theme this is an accent ring; under classic it is a
+# dashed shadow outline.
+# @param W       Window
+# @param x,y,w,h Rectangle
+# @return        W when flat; otherwise draws and returns
 #
 procedure DashedRectangle(W, x, y, w, h)
    local cw

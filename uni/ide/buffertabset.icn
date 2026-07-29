@@ -1,6 +1,5 @@
 import gui
 link guiprocs
-link theme
 $include "guih.icn"
 
 class BufferTabSet : TabSet()
