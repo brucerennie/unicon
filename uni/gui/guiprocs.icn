@@ -435,6 +435,26 @@ b~~~~bbb~~~~b_
 ~~~~000~~~~_
 ~~~~~0~~~~~_
 "
+      "arrow_up_flat" :
+"(b=black;~=trans)11,c6,_
+~~~~~~~~~~~_
+~~~~~b~~~~~_
+~~~~bbb~~~~_
+~~~bbbbb~~~_
+~~bbbbbbb~~_
+~bbbbbbbbb~_
+~~~~~~~~~~~_
+"
+      "arrow_down_flat" :
+"(b=black;~=trans)11,c6,_
+~~~~~~~~~~~_
+~bbbbbbbbb~_
+~~bbbbbbb~~_
+~~~bbbbb~~~_
+~~~~bbb~~~~_
+~~~~~b~~~~~_
+~~~~~~~~~~~_
+"
       "arrow_left" :
 "9,c1,_
 ~~~~~~~~0_
@@ -457,6 +477,30 @@ b~~~~bbb~~~~b_
 00000~~~~_
 000~~~~~~_
 0~~~~~~~~_
+"
+      "arrow_left_flat" :
+"(b=black;~=trans)9,c6,_
+~~~~~~~~~_
+~~~~~~b~~_
+~~~~bbb~~_
+~~bbbbb~~_
+bbbbbbbbb_
+~~bbbbb~~_
+~~~~bbb~~_
+~~~~~~b~~_
+~~~~~~~~~_
+"
+      "arrow_right_flat" :
+"(b=black;~=trans)9,c6,_
+~~~~~~~~~_
+~~b~~~~~~_
+~~bbb~~~~_
+~~bbbbb~~_
+bbbbbbbbb_
+~~bbbbb~~_
+~~bbb~~~~_
+~~b~~~~~~_
+~~~~~~~~~_
 "
       "closed_folder" : "16,c1,_
 ~~~~~~~~~~~~~~~~_
@@ -545,6 +589,22 @@ b~~~~bbb~~~~b_
 ~00000~_
 ~~000~~_
 ~~~0~~~_
+"
+      "tiny_arrow_up_flat" :
+"(b=black;~=trans)7,c6,_
+~~~~~~~_
+~~~b~~~_
+~~bbb~~_
+~bbbbb~_
+~~~~~~~_
+"
+      "tiny_arrow_down_flat" :
+"(b=black;~=trans)7,c6,_
+~~~~~~~_
+~bbbbb~_
+~~bbb~~_
+~~~b~~~_
+~~~~~~~_
 "
       default : stop("unknown image style")
    }
