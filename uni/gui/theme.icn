@@ -1,0 +1,230 @@
+#
+# Pluggable look-and-feel for package gui.
+#
+# Flat (default) uses 1px borders, solid fills for pressed state, and an
+# accent-colored focus ring.  Classic keeps the historical bevelled
+# Motif/Win95 drawing.
+#
+# Usage:
+#   SetGuiTheme("flat")     # default; optional
+#   SetGuiTheme("classic")  # old bevelled look
+#   SetGuiThemeFont("default")  # Unicon sans,12 (default)
+#   SetGuiThemeFont("modern")   # Arial/13 when available
+#   SetGuiTheme("flat", ThemePalette(...))  # optional palette override
+#
+# This file is in the public domain.
+#
+
+package gui
+link graphics
+
+$include "guih.icn"
+
+global gui_theme_name
+global gui_theme_palette
+global gui_theme_font_style   # "modern" | "default"
+
+#
+# Named colors used by the flat theme.  Override via SetGuiTheme.
+#
+record ThemePalette(
+   bg,           # dialog / panel background
+   fg,           # primary text
+   surface,      # button / control face
+   surface_press,# button face while pressed
+   surface_check,# toggled / checked face
+   border,       # raised control border (buttons)
+   border_input, # sunken / input border (fields)
+   border_focus, # focus ring / accent
+   input_bg,     # text fields, lists
+   muted,        # secondary labels / disabled hint
+   font          # default UI typeface,size
+   )
+
+#
+# Unicon colors are 16-bit RGB (0..65535).  Convert 8-bit components.
+#
+procedure Rgb8(r, g, b)
+   return (r * 257) || "," || (g * 257) || "," || (b * 257)
+end
+
+#
+# Font style for the flat theme:
+#   "default" — Unicon's traditional portable "sans,12" (default)
+#   "modern"  — Arial (or helvetica/lucida), size 13, when available
+#
+procedure SetGuiThemeFont(style)
+   /style := "default"
+   case map(style) of {
+      "modern" | "arial" | "new" : gui_theme_font_style := "modern"
+      "default" | "unicon" | "sans" | "classic" : gui_theme_font_style := "default"
+      default:
+         stop("SetGuiThemeFont: unknown style ", image(style))
+      }
+   #
+   # Drop any cached palette so the next dialog picks up the new font.
+   #
+   if GuiThemeIsFlat() then
+      gui_theme_palette := DefaultFlatPalette()
+   return gui_theme_font_style
+end
+
+procedure GetGuiThemeFont()
+   /gui_theme_font_style := "default"
+   return gui_theme_font_style
+end
+
+#
+# Resolve a concrete font= value for the active font style.
+#
+procedure GuiThemePickFont()
+   local w, f, pick
+   static resolved_style, resolved_font
+   initial {
+      resolved_style := &null
+      resolved_font := &null
+      }
+
+   if \resolved_font & resolved_style === GetGuiThemeFont() then
+      return resolved_font
+
+   if GetGuiThemeFont() == "default" then {
+      resolved_style := "default"
+      return resolved_font := "sans,12"
+      }
+
+   #
+   # Prefer Arial (scalable / Xft) over generic "sans".
+   #
+   pick := "sans,13"
+   w := open("gui-theme-font", "g", "size=8,8", "canvas=hidden")
+   if \w then {
+      every f := !["arial,13", "helvetica,13", "lucida,13", "sans,13"] do {
+         if WAttrib(w, "font=" || f) then {
+            pick := f
+            break
+            }
+         }
+      close(w)
+      }
+   resolved_style := "modern"
+   return resolved_font := pick
+end
+
+procedure DefaultFlatPalette()
+   return ThemePalette(
+      Rgb8(236, 240, 244),   # cool light dialog bg
+      Rgb8(28, 32, 36),      # near-black text
+      Rgb8(255, 255, 255),   # white button face
+      Rgb8(226, 232, 240),   # pressed (cool grey)
+      Rgb8(219, 234, 254),   # checked (light blue tint)
+      Rgb8(148, 163, 184),   # button border — clear on cool bg
+      Rgb8(100, 116, 139),   # input border — darker inset cue
+      Rgb8(37, 99, 235),     # accent blue focus
+      Rgb8(255, 255, 255),   # white input fill
+      Rgb8(100, 116, 139),   # muted (= input border)
+      GuiThemePickFont()
+      )
+end
+
+#
+# Select the active look-and-feel.  Name is "flat" (default) or "classic".
+# Optional second argument is a ThemePalette record.
+#
+procedure SetGuiTheme(name, palette)
+   /name := "flat"
+   case map(name) of {
+      "classic" | "bevel" | "motif" : {
+         gui_theme_name := "classic"
+         gui_theme_palette := &null
+         }
+      "flat" | "modern" | "default" : {
+         gui_theme_name := "flat"
+         gui_theme_palette := \palette | DefaultFlatPalette()
+         }
+      default:
+         stop("SetGuiTheme: unknown theme ", image(name))
+      }
+   return gui_theme_name
+end
+
+procedure GetGuiTheme()
+   /gui_theme_name := "flat"
+   return gui_theme_name
+end
+
+procedure GuiThemeIsFlat()
+   return GetGuiTheme() == "flat"
+end
+
+procedure GuiThemePalette()
+   /gui_theme_palette := DefaultFlatPalette()
+   return gui_theme_palette
+end
+
+#
+# Default window attributes suggested by the active theme.
+# Dialog.open_win merges these ahead of any user attribs so explicit
+# app settings still win.
+#
+procedure GuiThemeDialogAttribs()
+   local p
+   if not GuiThemeIsFlat() then
+      fail
+   p := GuiThemePalette()
+   return [
+      "bg=" || p.bg,
+      "fg=" || p.fg,
+      "font=" || (p.font | GuiThemePickFont())
+      ]
+end
+
+#
+# Flat 1px border.
+#
+procedure FlatBorder(W, x, y, w, h, color)
+   local cw
+   cw := Clone(W, "fg=" || color, "linewidth=1", "linestyle=solid")
+   DrawRectangle(cw, x, y, w - 1, h - 1)
+   Uncouple(cw)
+   return W
+end
+
+procedure FlatFocusRing(W, x, y, w, h)
+   FlatBorder(W, x, y, w, h, GuiThemePalette().border_focus)
+   return W
+end
+
+#
+# White (or palette) fill for text fields / other inset controls.
+#
+procedure ThemeFillInput(W, x, y, w, h)
+   local cw
+   if not GuiThemeIsFlat() then
+      fail
+   cw := Clone(W, "fg=" || GuiThemePalette().input_bg,
+      "fillstyle=solid", "drawop=copy")
+   FillRectangle(cw, x, y, w, h)
+   Uncouple(cw)
+   return W
+end
+
+#
+# Fill a control face for the given visual state.
+# state: "up" | "down" | "checked"
+#
+procedure ThemeFillFace(W, x, y, w, h, state)
+   local p, color, cw
+   if not GuiThemeIsFlat() then
+      fail
+   p := GuiThemePalette()
+   color := case state of {
+      "down" : p.surface_press
+      "checked" : p.surface_check
+      default : p.surface
+      }
+   cw := Clone(W, "fg=" || color, "fillstyle=solid", "drawop=copy")
+   FillRectangle(cw, x, y, w, h)
+   Uncouple(cw)
+   return W
+end

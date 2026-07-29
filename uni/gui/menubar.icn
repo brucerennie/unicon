@@ -8,6 +8,7 @@
 
 package gui
 link graphics
+link theme
 
 $include "guih.icn"
 
@@ -52,7 +53,10 @@ class MenuBar : Component(
    method display(buffer_flag)
       local m
       EraseRectangle(cbwin, x, y, w, h)
-      DrawRaisedRectangle(cbwin, x, y, w, h)
+      if GuiThemeIsFlat() then
+         FlatBorder(cbwin, x, y + h - 1, w, 1, GuiThemePalette().border)
+      else
+         DrawRaisedRectangle(cbwin, x, y, w, h)
 
       #
       # Draw the menu options with a raised rectangle around the open menu.
@@ -62,9 +66,16 @@ class MenuBar : Component(
       # string in the centre of its area.
       #
       every m := !menus do {
-         if m === \which_highlight then
-            DrawRaisedRectangle(cbwin, m.label_x, y + BORDER_WIDTH,
-                                m.label_mid_w, h - 2 * BORDER_WIDTH)
+         if m === \which_highlight then {
+            if GuiThemeIsFlat() then {
+               ThemeFillFace(cbwin, m.label_x, y + 1, m.label_mid_w, h - 2, "down")
+               FlatBorder(cbwin, m.label_x, y + 1, m.label_mid_w, h - 2,
+                  GuiThemePalette().border)
+               }
+            else
+               DrawRaisedRectangle(cbwin, m.label_x, y + BORDER_WIDTH,
+                                   m.label_mid_w, h - 2 * BORDER_WIDTH)
+            }
          left_string(cbwin, m.label_x + DEFAULT_TEXT_X_SURROUND, y + h / 2,
                      m.get_label(), m.get_accel())
          if \m.is_shaded_flag then
