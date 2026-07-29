@@ -195,12 +195,19 @@ $endif
    method setup()
       local files_tab, names_lbl1, names_lbl2, names_lbl3, names_lbl4,
             names_lbl5, names_lbl6, names_tab, ok_btn, sourcefiles_lbl
-      self.set_attribs("size=414,308", "font=serif,bold,14",
-                       "label=New Unicon Project ", "bg=light gray")
+      if GuiThemeIsFlat() then
+         self.set_attribs("size=414,308",
+            "label=New Unicon Project ", "font=" || GuiThemePickFont())
+      else
+         self.set_attribs("size=414,308", "font=serif,bold,14",
+            "label=New Unicon Project ", "bg=light gray")
       uproj_TabSet := TabSet()
       uproj_TabSet.set_pos("5", "5")
       uproj_TabSet.set_size("100%-10", "100%-35")
-      uproj_TabSet.set_attribs("font=serif,14,bold")
+      if GuiThemeIsFlat() then
+         uproj_TabSet.set_attribs("font=" || GuiThemePickFont())
+      else
+         uproj_TabSet.set_attribs("font=serif,14,bold")
       names_tab := TabItem()
       names_tab.set_label("Names")
       names_lbl1 := Label()
