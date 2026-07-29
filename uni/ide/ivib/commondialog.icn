@@ -25,7 +25,7 @@ class CommonDialog : Dialog(global_attribs)
       self.Dialog.initially()
       #
       # Flat theme supplies bg/fg/font via Dialog.open_win; only keep
-      # resize here so we do not override the modern palette.  Classic
+      # resize here so we do not override the flat palette.  Classic
       # keeps the historical Motif-ish defaults.
       #
       if GuiThemeIsFlat() then

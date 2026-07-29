@@ -1642,8 +1642,11 @@ class UpdatedTextDialog : Dialog(caption,message)
 
       add(bn1)
       add(bn2)
-      attrib("label="||caption, "size=460,150", "bg=light gray",
-             "font=serif", "resize=on")
+      if GuiThemeIsFlat() then
+         attrib("label="||caption, "size=460,150", "resize=on")
+      else
+         attrib("label="||caption, "size=460,150", "bg=light gray",
+                "font=serif", "resize=on")
    end
    method on_ok()
       overwrite := "OK"
