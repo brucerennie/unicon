@@ -91,7 +91,7 @@ class UIDE : Dialog(
       pnlToolbar.set_pos("0", "4.5%")
       pnlToolbar.set_size("100%", "4.5%")
       pnlToolbar.set_draw_border()
-      pnlToolbar.set_attribs("bg=light whitish gray", "resize=on", "font=mono,16")
+      pnlToolbar.set_attribs("resize=on", "font=mono,16")
       self.add(pnlToolbar)
       menubar.Menubar()
       ide.Toolbar(pnlToolbar) #This call to add a toolbar
@@ -347,7 +347,6 @@ class UIDE : Dialog(
       self.min_width := 645
       self.min_height := 485
       self.set_attribs("size="||width||","||height, "pos="||win_position,
-                       "bg=pale gray",
                        "label=Unicon IDE", "font=mono,16", "resize=on")
 
       DevTabSet := TabSet()
@@ -416,7 +415,7 @@ class UIDE : Dialog(
       pnlToolbar := Panel()
       pnlToolbar.set_pos("0", "4.5%")
       pnlToolbar.set_size("100%", "4.5%")
-      pnlToolbar.set_attribs("bg=light whitish gray", "resize=on", "font=mono,16")
+      pnlToolbar.set_attribs("resize=on", "font=mono,16")
       self.add(pnlToolbar)
       self.connect(self, "on_close", CLOSE_BUTTON_EVENT)
    end
@@ -454,6 +453,10 @@ procedure main(argv)
    local d := argv[1]
    UIDE_VERS := "0.95"
    if not match("graphics", &features) then stop("Graphics not enabled")
+   #
+   # Flat is package gui's default; set explicitly for the IDE shell.
+   #
+   SetGuiTheme("flat")
    reinitialize()
    trap("SIGINT", ui_trapint)
    Progend := ui_Progend
