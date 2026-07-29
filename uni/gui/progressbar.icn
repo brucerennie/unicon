@@ -3,7 +3,6 @@
 #
 
 package gui
-link theme
 
 $include "guih.icn"
 
