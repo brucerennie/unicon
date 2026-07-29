@@ -6,6 +6,8 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
+import gui
+
 # Treat a Control-C pressed in the console as a request to quit,
 # offer to save work if needed.
 procedure ivib_trapint(x)
@@ -18,6 +20,11 @@ global ivib_maindialog
 #
 procedure main(args)
    trap("SIGINT", ivib_trapint)
+   #
+   # Package gui defaults to flat; set explicitly so Ivib always
+   # picks up the modern palette even if prefs change later.
+   #
+   SetGuiTheme("flat")
    #
    # Create the dialog window, give it the command line args, and display it.
    #
