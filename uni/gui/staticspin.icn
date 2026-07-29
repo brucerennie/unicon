@@ -58,7 +58,7 @@ class StaticSpin : Spin(lab)
       # Draw text element 
       #
       EraseRectangle(self.cbwin, self.x, self.y, self.w, self.h)
-      DrawSunkenRectangle(self.cbwin, self.x, self.y, self.w, self.h)
+      ThemeSunkenPanel(self.cbwin, self.x, self.y, self.w, self.h)
       #
       # Draw button and list
       #
