@@ -89,7 +89,7 @@ class Circulate : Component(selection, selection_list, b, l)
    # @p
    method display(buffer_flag)
       EraseRectangle(self.cbwin, self.x, self.y, self.w, self.h)
-      DrawSunkenRectangle(self.cbwin, self.x, self.y, self.w, self.h)
+      ThemeSunkenPanel(self.cbwin, self.x, self.y, self.w, self.h)
       l.display(1)
       b.display(1)
       self.do_shading(self.cbwin)
