@@ -157,7 +157,7 @@ class Menu : SubMenu(
          if c === \self.which_highlight then {
             if GuiThemeIsFlat() then
                ThemeFillFace(cw, c.label_x, c.label_y,
-                  self.w - 2 * BORDER_WIDTH, c.label_h, "checked")
+                  self.w - 2, c.label_h, "checked")
             else
                DrawRaisedRectangle(cw, c.label_x, c.label_y, self.w - 2 * BORDER_WIDTH, c.label_h)
             }
