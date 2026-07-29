@@ -228,3 +228,53 @@ procedure ThemeFillFace(W, x, y, w, h, state)
    Uncouple(cw)
    return W
 end
+
+#
+# Accent fill (progress bar, highlights).
+#
+procedure ThemeFillAccent(W, x, y, w, h)
+   local cw
+   if not GuiThemeIsFlat() then
+      fail
+   if w <= 0 | h <= 0 then
+      return W
+   cw := Clone(W, "fg=" || GuiThemePalette().border_focus,
+      "fillstyle=solid", "drawop=copy")
+   FillRectangle(cw, x, y, w, h)
+   Uncouple(cw)
+   return W
+end
+
+#
+# Horizontal hairline (menu separators).
+#
+procedure ThemeHairline(W, x, y, w)
+   local cw
+   if not GuiThemeIsFlat() then
+      fail
+   cw := Clone(W, "fg=" || GuiThemePalette().border, "linewidth=1")
+   DrawLine(cw, x, y, x + w - 1, y)
+   Uncouple(cw)
+   return W
+end
+
+#
+# Sunken panel: optional input fill + sunken/flat border.
+#
+procedure ThemeSunkenPanel(W, x, y, w, h)
+   if GuiThemeIsFlat() then
+      ThemeFillInput(W, x, y, w, h)
+   DrawSunkenRectangle(W, x, y, w, h)
+   return W
+end
+
+#
+# Raised face: optional surface fill + raised/flat border.
+#
+procedure ThemeRaisedFace(W, x, y, w, h, state)
+   /state := "up"
+   if GuiThemeIsFlat() then
+      ThemeFillFace(W, x, y, w, h, state)
+   DrawRaisedRectangle(W, x, y, w, h)
+   return W
+end
