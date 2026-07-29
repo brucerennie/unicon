@@ -150,7 +150,10 @@ class dialog : _Dialog(class_browser)
    method setup()
       local nodes, names, i, j
 
-      self.set_attribs("size=500,600", "bg=pale gray")
+      if GuiThemeIsFlat() then
+         self.set_attribs("size=500,600")
+      else
+         self.set_attribs("size=500,600", "bg=pale gray")
       self.min_width  := 200
       self.min_height := 200
 
