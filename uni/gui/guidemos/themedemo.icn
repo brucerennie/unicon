@@ -1,0 +1,127 @@
+#
+# Classic vs flat theme smoke demo.
+#
+# Build/run from uni/gui/guidemos (after building package gui):
+#   unicon themedemo
+#   ./themedemo              # flat (default) + sans font
+#   ./themedemo classic      # classic theme
+#   ./themedemo flat modern  # flat + Arial when available
+#
+
+import gui
+$include "guih.icn"
+
+global theme_demo_again
+
+class ThemeDemo : Dialog(
+   classic_btn, flat_btn, modern_font_btn, default_font_btn,
+   sample_btn, toggle_btn,
+   sample_field, sample_label, status_label, quit_btn
+   )
+
+   method status_text()
+      return "Theme: " || GetGuiTheme() ||
+         "   Font: " || GetGuiThemeFont() ||
+         " (" || GuiThemePickFont() || ")"
+   end
+
+   method handle_classic(ev)
+      SetGuiTheme("classic")
+      theme_demo_again := 1
+      dispose()
+   end
+
+   method handle_flat(ev)
+      SetGuiTheme("flat")
+      theme_demo_again := 1
+      dispose()
+   end
+
+   method handle_modern_font(ev)
+      SetGuiTheme("flat")
+      SetGuiThemeFont("modern")
+      theme_demo_again := 1
+      dispose()
+   end
+
+   method handle_default_font(ev)
+      SetGuiTheme("flat")
+      SetGuiThemeFont("default")
+      theme_demo_again := 1
+      dispose()
+   end
+
+   method handle_sample(ev)
+      sample_label.set_label("Clicked at " || &clock)
+      sample_label.invalidate()
+   end
+
+   method handle_toggle(ev)
+      sample_label.set_label("Toggle checked=" ||
+         if toggle_btn.is_checked() then "yes" else "no")
+      sample_label.invalidate()
+   end
+
+   method handle_quit(ev)
+      theme_demo_again := &null
+      dispose()
+   end
+
+   method component_setup()
+      self.set_attribs("size=520,300", "resize=on", "label=Unicon UI Theme Demo")
+
+      sample_label := Label("pos=20,16",
+         "label=Theme / font buttons rebuild the dialog")
+      self.add(sample_label)
+
+      classic_btn := TextButton("pos=20,50", "label=Classic")
+      classic_btn.connect(self, "handle_classic", ACTION_EVENT)
+      self.add(classic_btn)
+
+      flat_btn := TextButton("pos=110,50", "label=Flat")
+      flat_btn.connect(self, "handle_flat", ACTION_EVENT)
+      self.add(flat_btn)
+
+      modern_font_btn := TextButton("pos=200,50", "label=Modern Font")
+      modern_font_btn.connect(self, "handle_modern_font", ACTION_EVENT)
+      self.add(modern_font_btn)
+
+      default_font_btn := TextButton("pos=330,50", "label=Default Font")
+      default_font_btn.connect(self, "handle_default_font", ACTION_EVENT)
+      self.add(default_font_btn)
+
+      sample_btn := TextButton("pos=20,95", "label=Action")
+      sample_btn.connect(self, "handle_sample", ACTION_EVENT)
+      self.add(sample_btn)
+
+      toggle_btn := TextButton("pos=120,95", "label=Toggle", "toggles=t")
+      toggle_btn.connect(self, "handle_toggle", ACTION_EVENT)
+      self.add(toggle_btn)
+
+      sample_field := TextField("pos=20,145", "size=360,28",
+         "draw_border=t", "contents=Text field (sunken border)")
+      self.add(sample_field)
+
+      status_label := Label("pos=20,195", "label=" || status_text())
+      self.add(status_label)
+
+      quit_btn := TextButton("pos=20,240", "label=Quit")
+      quit_btn.connect(self, "handle_quit", ACTION_EVENT)
+      self.add(quit_btn)
+   end
+end
+
+procedure main(argv)
+   #
+   # Flat is package default; argv still overrides for A/B testing.
+   #
+   if \argv[1] then
+      SetGuiTheme(argv[1])
+   if \argv[2] then
+      SetGuiThemeFont(argv[2])
+   theme_demo_again := 1
+   while \theme_demo_again do {
+      theme_demo_again := &null
+      ThemeDemo().show_modal()
+   }
+end

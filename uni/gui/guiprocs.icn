@@ -8,6 +8,7 @@
 
 package gui
 link graphics
+link theme
 
 $include "guih.icn"     
 
@@ -147,27 +148,38 @@ end
 
 #
 # Draw a raised rectangle.
+# Flat theme: 1px border.  Classic: bevelled raised edge.
 #
 procedure DrawRaisedRectangle(W, x, y, w, h, i)
    /i := BORDER_WIDTH
-   BevelRectangle(W, x, y, w, h, i)
+   if GuiThemeIsFlat() then
+      return FlatBorder(W, x, y, w, h, GuiThemePalette().border)
+   else
+      return BevelRectangle(W, x, y, w, h, i)
 end
 
 #
 # Draw a sunken rectangle.
+# Flat theme: darker input border (no fill — callers use ThemeFillInput).
+# Classic: bevelled sunken edge.
 #
 procedure DrawSunkenRectangle(W, x, y, w, h, i)
    /i := -BORDER_WIDTH
-   BevelRectangle(W, x, y, w, h, i)
+   if GuiThemeIsFlat() then
+      return FlatBorder(W, x, y, w, h, GuiThemePalette().border_input)
+   else
+      return BevelRectangle(W, x, y, w, h, i)
 end
 
 #
-# Draw a dashed rectangle using the shadow color.
+# Focus rectangle.
+# Flat theme: accent ring.  Classic: dashed shadow outline.
 #
 procedure DashedRectangle(W, x, y, w, h)
    local cw
+   if GuiThemeIsFlat() then
+      return FlatFocusRing(W, x, y, w, h)
    cw := Clone(get_shadow_win(W), "pattern=gray", "fillstyle=masked")
-   #cw := Clone(W, "fg=black", "pattern=gray", "fillstyle=masked")
    Rectangle(cw, x, y, w, h)
    Uncouple(cw)
 end
