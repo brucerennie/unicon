@@ -1,6 +1,9 @@
 #
 # Classic vs flat theme smoke demo.
 #
+# See uni/gui/theme.icn and the Unicon book chapter
+# "Object-oriented User Interfaces" (Themes and Look-and-Feel).
+#
 # Build/run from uni/gui/guidemos (after building package gui):
 #   unicon themedemo
 #   ./themedemo              # flat (default) + sans font
