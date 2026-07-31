@@ -57,7 +57,8 @@ class IconButton : Button()
             state := "checked"
          else
             state := "up"
-         ThemeFillFace(self.cbwin, self.x, self.y, self.w, self.h, state)
+         ThemeFillFace(self.cbwin, self.x, self.y, self.w, self.h, state,
+            ThemeComponentBg(self.attribs))
          DrawImageEx(self.cbwin, self.x + (self.w - self.img_w) / 2,
             self.y + (self.h - self.img_h) / 2, i)
          if \self.draw_border_flag | \self.is_down | \self.is_checked_flag then {

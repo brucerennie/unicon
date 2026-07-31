@@ -227,6 +227,61 @@ procedure GuiThemeDialogAttribs()
 end
 
 #
+# Return the last ``name='' value from a component attribs list, if any.
+# @param attribs   Component attribute list (may be null)
+# @param name      Attribute name without ``='' (e.g. ``bg'', ``fg'')
+# @return          Attribute value string; fails if absent
+#
+procedure ThemeComponentAttrib(attribs, name)
+   local a, v, prefix
+   prefix := name || "="
+   every a := !\attribs do
+      a ? {
+         if =prefix then
+            v := tab(0)
+         }
+   return \v
+end
+
+#
+# Return the last ``bg='' value from a component attribs list, if any.
+# @param attribs   Component attribute list (may be null)
+# @return          Color string; fails if no bg= entry
+#
+procedure ThemeComponentBg(attribs)
+   return ThemeComponentAttrib(attribs, "bg")
+end
+
+#
+# Return the last ``fg='' value from a component attribs list, if any.
+# @param attribs   Component attribute list (may be null)
+# @return          Color string; fails if no fg= entry
+#
+procedure ThemeComponentFg(attribs)
+   return ThemeComponentAttrib(attribs, "fg")
+end
+
+#
+# Resolve a fill color that respects widget settings.
+# Prefer an explicit override, then a window bg that is not the flat
+# dialog chrome color (so bg=green and similar win), else {fallback}.
+# @param W          Window whose bg may carry a widget color
+# @param override   Optional explicit color (e.g. from {ThemeComponentBg})
+# @param fallback   Palette color when the widget did not customize bg
+# @return           Color string to paint with
+#
+procedure ThemeResolveFill(W, override, fallback)
+   local p, wbg
+   if \override then
+      return override
+   p := GuiThemePalette()
+   wbg := WAttrib(W, "bg")
+   if \wbg & wbg ~== p.bg then
+      return wbg
+   return fallback
+end
+
+#
 # Draw a flat 1px rectangle border in the given color.
 # @param W       Window
 # @param x,y,w,h Rectangle
@@ -253,18 +308,19 @@ procedure FlatFocusRing(W, x, y, w, h)
 end
 
 #
-# Fill an inset control (text field, list) with the theme input background.
-# Does nothing useful under classic (fails).
+# Fill an inset control (text field, list) with the theme input background,
+# or with an explicit/widget bg when the control customized it.
 # @param W       Window
 # @param x,y,w,h Rectangle
+# @param fill    Optional Unicon color string (e.g. from {ThemeComponentBg})
 # @return        W when flat; fails when classic
 #
-procedure ThemeFillInput(W, x, y, w, h)
-   local cw
+procedure ThemeFillInput(W, x, y, w, h, fill)
+   local cw, color
    if not GuiThemeIsFlat() then
       fail
-   cw := Clone(W, "fg=" || GuiThemePalette().input_bg,
-      "fillstyle=solid", "drawop=copy")
+   color := ThemeResolveFill(W, fill, GuiThemePalette().input_bg)
+   cw := Clone(W, "fg=" || color, "fillstyle=solid", "drawop=copy")
    FillRectangle(cw, x, y, w, h)
    Uncouple(cw)
    return W
@@ -272,21 +328,26 @@ end
 
 #
 # Fill a control face for the given visual state.
+# Honours an optional {face} override, or the window's own bg when that
+# bg is not the flat dialog chrome color (so bg=green is not painted over).
+# Pressed/checked borders still convey state when a custom face is used.
 # @param W       Window
 # @param x,y,w,h Rectangle
 # @param state   ``up'', ``down'', or ``checked''
+# @param face    Optional Unicon color string (e.g. from {ThemeComponentBg})
 # @return        W when flat; fails when classic
 #
-procedure ThemeFillFace(W, x, y, w, h, state)
-   local p, color, cw
+procedure ThemeFillFace(W, x, y, w, h, state, face)
+   local p, color, cw, fallback
    if not GuiThemeIsFlat() then
       fail
    p := GuiThemePalette()
-   color := case state of {
+   fallback := case state of {
       "down" : p.surface_press
       "checked" : p.surface_check
       default : p.surface
       }
+   color := ThemeResolveFill(W, face, fallback)
    cw := Clone(W, "fg=" || color, "fillstyle=solid", "drawop=copy")
    FillRectangle(cw, x, y, w, h)
    Uncouple(cw)
@@ -335,11 +396,12 @@ end
 # depend on {guiprocs}.
 # @param W       Window
 # @param x,y,w,h Rectangle
+# @param fill    Optional fill color passed to {ThemeFillInput}
 # @return        W
 #
-procedure ThemeSunkenPanel(W, x, y, w, h)
+procedure ThemeSunkenPanel(W, x, y, w, h, fill)
    if GuiThemeIsFlat() then {
-      ThemeFillInput(W, x, y, w, h)
+      ThemeFillInput(W, x, y, w, h, fill)
       FlatBorder(W, x, y, w, h, GuiThemePalette().border_input)
       }
    else
@@ -354,12 +416,13 @@ end
 # @param W       Window
 # @param x,y,w,h Rectangle
 # @param state   Face state for flat fill (``up'', ``down'', or ``checked'')
+# @param face    Optional face color passed to {ThemeFillFace}
 # @return        W
 #
-procedure ThemeRaisedFace(W, x, y, w, h, state)
+procedure ThemeRaisedFace(W, x, y, w, h, state, face)
    /state := "up"
    if GuiThemeIsFlat() then {
-      ThemeFillFace(W, x, y, w, h, state)
+      ThemeFillFace(W, x, y, w, h, state, face)
       FlatBorder(W, x, y, w, h, GuiThemePalette().border)
       }
    else
