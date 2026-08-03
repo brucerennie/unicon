@@ -13,6 +13,7 @@
 # @ ./themedemo              # flat (default) + sans font
 # @ ./themedemo classic      # classic theme
 # @ ./themedemo flat modern  # flat + Arial when available
+# @ UGUI_THEME=classic ./themedemo   # same via environment
 #
 
 import gui

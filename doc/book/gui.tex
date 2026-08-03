@@ -2380,6 +2380,15 @@ Recognized names include \texttt{flat} (aliases \texttt{modern},
 \texttt{GetGuiTheme()} and \texttt{GuiThemeIsFlat()} report the
 active choice.
 
+Alternatively, set the environment variable \texttt{UGUI\_THEME} to the
+same name (for example \texttt{classic}) before running a program.
+The toolkit applies it on the first theme query, so shipped apps such
+as \texttt{ui} and \texttt{ivib} can be checked without editing
+\texttt{main()}. An explicit \texttt{SetGuiTheme()} in the program
+still wins if it sets the theme before any theme query; avoid
+hard-coding \texttt{SetGuiTheme("flat")} when the package default
+already is flat, or \texttt{UGUI\_THEME} cannot take effect.
+
 \paragraph{Fonts and colors}
 
 Flat theme dialogs pick default window attributes (background,
@@ -2395,6 +2404,10 @@ drawing labels.
 SetGuiThemeFont("default")\ \ \# portable Unicon sans,12 \\
 SetGuiThemeFont("modern")\ \ \ \# Arial/helvetica size 13 when available
 }
+
+\noindent
+The environment variable \texttt{UGUI\_THEME\_FONT} accepts the same
+style names and is applied like \texttt{UGUI\_THEME}.
 
 \noindent
 \texttt{GuiThemePickFont()} returns the concrete \texttt{font=}

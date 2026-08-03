@@ -16,6 +16,14 @@
 # @ SetGuiThemeFont("modern")              # Arial/13 when available
 # @ SetGuiTheme("flat", ThemePalette(...)) # optional palette override
 #
+# Environment (applied once on first theme query, before defaults):
+# @ UGUI_THEME=classic|flat|...            # same names as SetGuiTheme
+# @ UGUI_THEME_FONT=default|modern|...     # same names as SetGuiThemeFont
+# Explicit SetGuiTheme / SetGuiThemeFont in the program still win if
+# they set the corresponding value before any theme query.  Prefer not
+# to hard-code SetGuiTheme("flat") in apps: flat is already the default,
+# and a hard-coded call blocks UGUI_THEME.
+#
 
 package gui
 link graphics
@@ -25,6 +33,7 @@ $include "guih.icn"
 global gui_theme_name
 global gui_theme_palette
 global gui_theme_font_style
+global gui_theme_env_done
 
 #
 # Named colors used by the flat theme.  Override via {SetGuiTheme}.
@@ -96,6 +105,7 @@ end
 # @return   ``default'' or ``modern''
 #
 procedure GetGuiThemeFont()
+   GuiThemeApplyEnv()
    /gui_theme_font_style := "default"
    return gui_theme_font_style
 end
@@ -160,6 +170,21 @@ procedure DefaultFlatPalette()
 end
 
 #
+# Apply UGUI_THEME / UGUI_THEME_FONT once, only for values not already
+# set by an explicit SetGuiTheme / SetGuiThemeFont call.
+#
+procedure GuiThemeApplyEnv()
+   local t, f
+   if \gui_theme_env_done then
+      return
+   gui_theme_env_done := 1
+   if /gui_theme_name & (t := getenv("UGUI_THEME")) then
+      SetGuiTheme(t)
+   if /gui_theme_font_style & (f := getenv("UGUI_THEME_FONT")) then
+      SetGuiThemeFont(f)
+end
+
+#
 # Select the active look-and-feel.
 # @param name      ``flat'' (default) or ``classic'' (synonyms: modern/default, bevel/motif)
 # @param palette   Optional {ThemePalette}; used only for flat
@@ -187,6 +212,7 @@ end
 # @return   ``flat'' or ``classic''
 #
 procedure GetGuiTheme()
+   GuiThemeApplyEnv()
    /gui_theme_name := "flat"
    return gui_theme_name
 end
