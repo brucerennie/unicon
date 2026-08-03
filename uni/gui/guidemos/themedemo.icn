@@ -4,6 +4,8 @@
 # Author: Jafar Al-Gharaibeh (to.jafar@gmail.com)
 #
 # Classic vs flat theme smoke demo for package {gui}.
+# See {theme.icn} and the Unicon book chapter
+# ``Object-oriented User Interfaces'' (Themes and Look-and-Feel).
 #
 # Build and run from uni/gui/guidemos (after building package gui):
 # @example
