@@ -21,10 +21,8 @@ global ivib_maindialog
 procedure main(args)
    trap("SIGINT", ivib_trapint)
    #
-   # Package gui defaults to flat; set explicitly so Ivib always
-   # picks up the modern palette even if prefs change later.
-   #
-   SetGuiTheme("flat")
+   # Theme comes from package gui (flat by default) or UGUI_THEME.
+   # Do not call SetGuiTheme("flat") here; that would block the env var.
    #
    # Create the dialog window, give it the command line args, and display it.
    #

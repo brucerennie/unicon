@@ -12,9 +12,21 @@
 # @example
 # @ SetGuiTheme("flat")                    # default; optional
 # @ SetGuiTheme("classic")                 # old bevelled look
-# @ SetGuiThemeFont("default")             # Unicon sans,12
-# @ SetGuiThemeFont("modern")              # Arial/13 when available
+# @ SetGuiThemeFont("default")             # opt-in: Unicon sans,12
+# @ SetGuiThemeFont("arial")               # opt-in: Arial/13 when available
 # @ SetGuiTheme("flat", ThemePalette(...)) # optional palette override
+#
+# By default the flat theme does not change the window font; Unicon's
+# usual runtime default (``fixed'') remains.  Call {SetGuiThemeFont} or
+# set UGUI_THEME_FONT to opt in to a theme typeface.
+#
+# Environment (applied once on first theme query, before defaults):
+# @ UGUI_THEME=classic|flat|...            # same names as SetGuiTheme
+# @ UGUI_THEME_FONT=default|arial|...      # same names as SetGuiThemeFont
+# Explicit SetGuiTheme / SetGuiThemeFont in the program still win if
+# they set the corresponding value before any theme query.  Prefer not
+# to hard-code SetGuiTheme("flat") in apps: flat is already the default,
+# and a hard-coded call blocks UGUI_THEME.
 #
 
 package gui
@@ -25,6 +37,7 @@ $include "guih.icn"
 global gui_theme_name
 global gui_theme_palette
 global gui_theme_font_style
+global gui_theme_env_done
 
 #
 # Named colors used by the flat theme.  Override via {SetGuiTheme}.
@@ -69,17 +82,19 @@ procedure Rgb8(r, g, b)
 end
 
 #
-# Select the flat-theme font style.
+# Opt in to a flat-theme typeface for new dialogs.
+# Until this is called (or UGUI_THEME_FONT is set), flat keeps the
+# runtime default font unchanged.
 # ``default'' is Unicon's portable ``sans,12''.
-# ``modern'' prefers Arial (or helvetica/lucida) at size 13 when available.
-# @param style   ``default'', ``modern'', or a synonym (``sans'', ``arial'', ...)
-# @return        The normalized style name (``default'' or ``modern'')
+# ``arial'' prefers Arial (or helvetica/lucida) at size 13 when available.
+# @param style   ``default'', ``arial'', or a synonym (``sans'', ``unicon'', ...)
+# @return        The normalized style name (``default'' or ``arial'')
 #
 procedure SetGuiThemeFont(style)
    /style := "default"
    case map(style) of {
-      "modern" | "arial" | "new" : gui_theme_font_style := "modern"
-      "default" | "unicon" | "sans" | "classic" : gui_theme_font_style := "default"
+      "arial" : gui_theme_font_style := "arial"
+      "default" | "unicon" | "sans" : gui_theme_font_style := "default"
       default:
          stop("SetGuiThemeFont: unknown style ", image(style))
       }
@@ -92,31 +107,35 @@ procedure SetGuiThemeFont(style)
 end
 
 #
-# Return the current flat-theme font style.
-# @return   ``default'' or ``modern''
+# Return the opted-in flat-theme font style.
+# @return   ``default'' or ``arial''; fails if no theme font was requested
 #
 procedure GetGuiThemeFont()
-   /gui_theme_font_style := "default"
-   return gui_theme_font_style
+   GuiThemeApplyEnv()
+   return \gui_theme_font_style
 end
 
 #
-# Resolve a concrete ``font='' attribute for the active font style.
+# Resolve a concrete ``font='' attribute for the opted-in font style.
 # Caches the result until {SetGuiThemeFont} changes the style.
-# @return   A font attribute value such as ``sans,12'' or ``arial,13''
+# @return   A font attribute value such as ``sans,12'' or ``arial,13'';
+#           fails if {SetGuiThemeFont} was never called
 #
 procedure GuiThemePickFont()
-   local w, f, pick
+   local w, f, pick, style
    static resolved_style, resolved_font
    initial {
       resolved_style := &null
       resolved_font := &null
       }
 
-   if \resolved_font & resolved_style === GetGuiThemeFont() then
+   if not (style := GetGuiThemeFont()) then
+      fail
+
+   if \resolved_font & resolved_style === style then
       return resolved_font
 
-   if GetGuiThemeFont() == "default" then {
+   if style == "default" then {
       resolved_style := "default"
       return resolved_font := "sans,12"
       }
@@ -135,12 +154,13 @@ procedure GuiThemePickFont()
          }
       close(w)
       }
-   resolved_style := "modern"
+   resolved_style := "arial"
    return resolved_font := pick
 end
 
 #
 # Build the default {ThemePalette} for the flat look-and-feel.
+# {font} is set only when a theme font style has been opted in.
 # @return   A {ThemePalette} record
 #
 procedure DefaultFlatPalette()
@@ -155,13 +175,28 @@ procedure DefaultFlatPalette()
       Rgb8(37, 99, 235),     # accent blue focus
       Rgb8(255, 255, 255),   # white input fill
       Rgb8(100, 116, 139),   # muted (= input border)
-      GuiThemePickFont()
+      GuiThemePickFont() | &null
       )
 end
 
 #
+# Apply UGUI_THEME / UGUI_THEME_FONT once, only for values not already
+# set by an explicit SetGuiTheme / SetGuiThemeFont call.
+#
+procedure GuiThemeApplyEnv()
+   local t, f
+   if \gui_theme_env_done then
+      return
+   gui_theme_env_done := 1
+   if /gui_theme_name & (t := getenv("UGUI_THEME")) then
+      SetGuiTheme(t)
+   if /gui_theme_font_style & (f := getenv("UGUI_THEME_FONT")) then
+      SetGuiThemeFont(f)
+end
+
+#
 # Select the active look-and-feel.
-# @param name      ``flat'' (default) or ``classic'' (synonyms: modern/default, bevel/motif)
+# @param name      ``flat'' (default) or ``classic'' (synonyms: bevel/motif)
 # @param palette   Optional {ThemePalette}; used only for flat
 # @return          The normalized theme name
 #
@@ -172,7 +207,7 @@ procedure SetGuiTheme(name, palette)
          gui_theme_name := "classic"
          gui_theme_palette := &null
          }
-      "flat" | "modern" | "default" : {
+      "flat" : {
          gui_theme_name := "flat"
          gui_theme_palette := \palette | DefaultFlatPalette()
          }
@@ -187,6 +222,7 @@ end
 # @return   ``flat'' or ``classic''
 #
 procedure GetGuiTheme()
+   GuiThemeApplyEnv()
    /gui_theme_name := "flat"
    return gui_theme_name
 end
@@ -211,19 +247,25 @@ end
 #
 # Default window attributes suggested by the active theme.
 # {Dialog}.open_win merges these ahead of any user attribs so explicit
-# app settings still win.
-# @return   A list of ``bg='', ``fg='', and ``font='' strings; fails if classic
+# app settings still win.  Font is included only after {SetGuiThemeFont}
+# (or UGUI_THEME_FONT) opts in; otherwise the runtime default remains.
+# @return   A list of ``bg='', ``fg='', and optional ``font='' strings;
+#           fails if classic
 #
 procedure GuiThemeDialogAttribs()
-   local p
+   local p, attrs, f
    if not GuiThemeIsFlat() then
       fail
    p := GuiThemePalette()
-   return [
+   attrs := [
       "bg=" || p.bg,
-      "fg=" || p.fg,
-      "font=" || (p.font | GuiThemePickFont())
+      "fg=" || p.fg
       ]
+   if \p.font then
+      put(attrs, "font=" || p.font)
+   else if f := GuiThemePickFont() then
+      put(attrs, "font=" || f)
+   return attrs
 end
 
 #

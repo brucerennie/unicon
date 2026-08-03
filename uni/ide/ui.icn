@@ -454,9 +454,9 @@ procedure main(argv)
    UIDE_VERS := "0.95"
    if not match("graphics", &features) then stop("Graphics not enabled")
    #
-   # Flat is package gui's default; set explicitly for the IDE shell.
+   # Theme comes from package gui (flat by default) or UGUI_THEME.
+   # Do not call SetGuiTheme("flat") here; that would block the env var.
    #
-   SetGuiTheme("flat")
    reinitialize()
    trap("SIGINT", ui_trapint)
    Progend := ui_Progend

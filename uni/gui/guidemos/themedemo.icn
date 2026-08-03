@@ -10,9 +10,10 @@
 # Build and run from uni/gui/guidemos (after building package gui):
 # @example
 # @ unicon themedemo
-# @ ./themedemo              # flat (default) + sans font
+# @ ./themedemo              # flat (default) + runtime font
 # @ ./themedemo classic      # classic theme
-# @ ./themedemo flat modern  # flat + Arial when available
+# @ ./themedemo flat arial    # flat + Arial when available
+# @ UGUI_THEME=classic ./themedemo   # same via environment
 #
 
 import gui
@@ -21,15 +22,15 @@ $include "guih.icn"
 global theme_demo_again
 
 class ThemeDemo : Dialog(
-   classic_btn, flat_btn, modern_font_btn, default_font_btn,
+   classic_btn, flat_btn, arial_font_btn, default_font_btn,
    sample_btn, toggle_btn,
    sample_field, sample_label, status_label, quit_btn
    )
 
    method status_text()
       return "Theme: " || GetGuiTheme() ||
-         "   Font: " || GetGuiThemeFont() ||
-         " (" || GuiThemePickFont() || ")"
+         "   Font: " || (GetGuiThemeFont() | "runtime-default") ||
+         " (" || (GuiThemePickFont() | "-") || ")"
    end
 
    method handle_classic(ev)
@@ -44,9 +45,9 @@ class ThemeDemo : Dialog(
       dispose()
    end
 
-   method handle_modern_font(ev)
+   method handle_arial_font(ev)
       SetGuiTheme("flat")
-      SetGuiThemeFont("modern")
+      SetGuiThemeFont("arial")
       theme_demo_again := 1
       dispose()
    end
@@ -89,11 +90,11 @@ class ThemeDemo : Dialog(
       flat_btn.connect(self, "handle_flat", ACTION_EVENT)
       self.add(flat_btn)
 
-      modern_font_btn := TextButton("pos=200,50", "label=Modern Font")
-      modern_font_btn.connect(self, "handle_modern_font", ACTION_EVENT)
-      self.add(modern_font_btn)
+      arial_font_btn := TextButton("pos=200,50", "label=Arial Font")
+      arial_font_btn.connect(self, "handle_arial_font", ACTION_EVENT)
+      self.add(arial_font_btn)
 
-      default_font_btn := TextButton("pos=330,50", "label=Default Font")
+      default_font_btn := TextButton("pos=330,50", "label=Sans Font")
       default_font_btn.connect(self, "handle_default_font", ACTION_EVENT)
       self.add(default_font_btn)
 
