@@ -55,7 +55,7 @@ class MenuButton : Component(
       if GuiThemeIsFlat() then {
          ThemeFillFace(self.cbwin, self.x, self.y, self.w, self.h,
             if \self.is_open then "down" else "up",
-            ThemeComponentBg(self.attribs))
+            ThemeComponentBg(self.attribs) | &null)
          DrawRaisedRectangle(self.cbwin, self.x, self.y, self.w, self.h)
          }
       else

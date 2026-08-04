@@ -130,7 +130,7 @@ class Menu : SubMenu(
    end
 
    method display()
-      local cw, c
+      local cw, c, saved_fg
       if /self.temp_win then {
          #
          # Open a temporary area for the menu and copy.
@@ -154,10 +154,18 @@ class Menu : SubMenu(
       # label; classic is a raised border drawn after the text.
       #
       every c := !self.children do {
-         if c === \self.which_highlight & GuiThemeIsFlat() then
-            ThemeFillFace(cw, c.label_x, c.label_y,
-               self.w - 2, c.label_h, "checked")
-         c.display_label(self.max_label_left_w, self.max_label_mid_w, self.max_label_right_w)
+         if c === \self.which_highlight & GuiThemeIsFlat() then {
+            #
+            # Solid accent selection; light text for contrast on blue.
+            #
+            ThemeFillAccent(cw, c.label_x, c.label_y, self.w - 2, c.label_h)
+            saved_fg := WAttrib(cw, "fg")
+            WAttrib(cw, "fg=" || GuiThemePalette().surface)
+            c.display_label(self.max_label_left_w, self.max_label_mid_w, self.max_label_right_w)
+            WAttrib(cw, "fg=" || saved_fg)
+            }
+         else
+            c.display_label(self.max_label_left_w, self.max_label_mid_w, self.max_label_right_w)
          if c === \self.which_highlight & not GuiThemeIsFlat() then
             DrawRaisedRectangle(cw, c.label_x, c.label_y, self.w - 2 * BORDER_WIDTH, c.label_h)
          }

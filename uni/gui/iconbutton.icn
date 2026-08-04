@@ -58,7 +58,7 @@ class IconButton : Button()
          else
             state := "up"
          ThemeFillFace(self.cbwin, self.x, self.y, self.w, self.h, state,
-            ThemeComponentBg(self.attribs))
+            ThemeComponentBg(self.attribs) | &null)
          DrawImageEx(self.cbwin, self.x + (self.w - self.img_w) / 2,
             self.y + (self.h - self.img_h) / 2, i)
          if \self.draw_border_flag | \self.is_down | \self.is_checked_flag then {
@@ -67,7 +67,7 @@ class IconButton : Button()
             else
                DrawRaisedRectangle(self.cbwin, self.x, self.y, self.w, self.h)
          }
-         if /self.no_keyboard_flag & \self.has_focus then
+         if /self.no_keyboard_flag & \self.has_focus & /self.is_down then
             DashedRectangle(self.cbwin, self.x + 2, self.y + 2, self.w - 4, self.h - 4)
       } else {
          DrawImageEx(self.cbwin, self.x + (self.w - self.img_w) / 2, self.y + (self.h - self.img_h) / 2, i)

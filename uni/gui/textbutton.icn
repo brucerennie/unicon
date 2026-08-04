@@ -47,8 +47,9 @@ class TextButton : Button(
 
       if GuiThemeIsFlat() then {
          #
-         # Flat: fill face first (up / pressed / checked), then label,
-         # then 1px border and accent focus ring.  No reverse-video press.
+         # Flat: fill face first (up / pressed / checked), then label
+         # in the normal fg.  Press/check tints stay light enough that
+         # dark text remains readable (menus use accent fill separately).
          #
          if \self.is_down then
             state := "down"
@@ -57,7 +58,7 @@ class TextButton : Button(
          else
             state := "up"
          ThemeFillFace(dwin, self.x, self.y, self.w, self.h, state,
-            ThemeComponentBg(self.attribs))
+            ThemeComponentBg(self.attribs) | &null)
 
          case self.internal_alignment of {
             "c" : center_string(dwin, self.tx + self.tw / 2, yoff, self.label, self.accel)
@@ -71,7 +72,11 @@ class TextButton : Button(
          else
             DrawRaisedRectangle(dwin, self.x, self.y, self.w, self.h)
 
-         if /self.no_keyboard_flag & \self.has_focus then
+         #
+         # Focus ring is accent blue; omit it while pressed so the
+         # darkened face is the click cue (not the blue border).
+         #
+         if /self.no_keyboard_flag & \self.has_focus & /self.is_down then
             DashedRectangle(dwin, self.x + 2, self.y + 2, self.w - 4, self.h - 4)
       } else {
          case self.internal_alignment of {

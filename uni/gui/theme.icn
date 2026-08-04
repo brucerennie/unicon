@@ -46,8 +46,8 @@ global gui_theme_env_done
 # @param bg             Dialog / panel background
 # @param fg             Primary text
 # @param surface        Button / control face
-# @param surface_press  Button face while pressed
-# @param surface_check  Toggled / checked face
+# @param surface_press  Button face while pressed (darker than surface)
+# @param surface_check  Toggled / checked face (tint; keep dark text)
 # @param border         Raised control border (buttons)
 # @param border_input   Sunken / input border (fields)
 # @param border_focus   Focus ring / accent
@@ -168,11 +168,11 @@ procedure DefaultFlatPalette()
       Rgb8(236, 240, 244),   # cool light dialog bg
       Rgb8(28, 32, 36),      # near-black text
       Rgb8(255, 255, 255),   # white button face
-      Rgb8(226, 232, 240),   # pressed (cool grey)
-      Rgb8(219, 234, 254),   # checked (light blue tint)
+      Rgb8(100, 116, 139),   # pressed — clearly darker than white face
+      Rgb8(96, 165, 250),    # checked — strong blue tint, dark text ok
       Rgb8(148, 163, 184),   # button border — clear on cool bg
       Rgb8(100, 116, 139),   # input border — darker inset cue
-      Rgb8(37, 99, 235),     # accent blue focus
+      Rgb8(37, 99, 235),     # accent blue focus / menu select
       Rgb8(255, 255, 255),   # white input fill
       Rgb8(100, 116, 139),   # muted (= input border)
       GuiThemePickFont() | &null
@@ -305,21 +305,18 @@ end
 
 #
 # Resolve a fill color that respects widget settings.
-# Prefer an explicit override, then a window bg that is not the flat
-# dialog chrome color (so bg=green and similar win), else {fallback}.
-# @param W          Window whose bg may carry a widget color
+# Prefer an explicit override (e.g. from {ThemeComponentBg}); otherwise
+# use {fallback}.  Do not compare against {WAttrib} ``bg'': Unicon often
+# returns a different spelling than the palette string for the same color,
+# which made every control look like the dialog chrome and hid press/check.
+# @param W          Window (unused; kept for call-site compatibility)
 # @param override   Optional explicit color (e.g. from {ThemeComponentBg})
 # @param fallback   Palette color when the widget did not customize bg
 # @return           Color string to paint with
 #
 procedure ThemeResolveFill(W, override, fallback)
-   local p, wbg
    if \override then
       return override
-   p := GuiThemePalette()
-   wbg := WAttrib(W, "bg")
-   if \wbg & wbg ~== p.bg then
-      return wbg
    return fallback
 end
 
@@ -384,12 +381,20 @@ procedure ThemeFillFace(W, x, y, w, h, state, face)
    if not GuiThemeIsFlat() then
       fail
    p := GuiThemePalette()
-   fallback := case state of {
-      "down" : p.surface_press
-      "checked" : p.surface_check
-      default : p.surface
+   #
+   # Pressed and selected always use palette fills so feedback stays
+   # visible even when the window or widget has a custom bg (e.g. ui
+   # dialogs with bg=light gray — otherwise hover painted that bg and
+   # light label text vanished).
+   #
+   if state === "down" then
+      color := p.surface_press
+   else if state === "checked" then
+      color := p.surface_check
+   else {
+      fallback := p.surface
+      color := ThemeResolveFill(W, face, fallback)
       }
-   color := ThemeResolveFill(W, face, fallback)
    cw := Clone(W, "fg=" || color, "fillstyle=solid", "drawop=copy")
    FillRectangle(cw, x, y, w, h)
    Uncouple(cw)

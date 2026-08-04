@@ -557,7 +557,7 @@ class TextField : Component(
       if \self.draw_border_flag then {
          if GuiThemeIsFlat() then
             ThemeFillInput(dwin, self.x, self.y, self.w, self.h,
-               ThemeComponentBg(self.attribs))
+               ThemeComponentBg(self.attribs) | &null)
          DrawSunkenRectangle(dwin, self.x, self.y, self.w, self.h)
          }
 

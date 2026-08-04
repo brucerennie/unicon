@@ -66,8 +66,12 @@ class TabItem : Component(
             ThemeFillFace(self.parent.cbwin, self.label_x, ypos,
                self.label_w, self.parent.line_h, "up")
          else
+            #
+            # Inactive tabs use dialog bg, not the press shade.
+            #
             ThemeFillFace(self.parent.cbwin, self.label_x, ypos,
-               self.label_w, self.parent.line_h, "down")
+               self.label_w, self.parent.line_h, "up",
+               GuiThemePalette().bg)
          FlatBorder(self.parent.cbwin, self.label_x, ypos,
             self.label_w, self.parent.line_h, GuiThemePalette().border)
          }
