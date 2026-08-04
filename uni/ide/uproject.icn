@@ -197,12 +197,8 @@ $endif
             names_lbl5, names_lbl6, names_tab, ok_btn, sourcefiles_lbl,
             theme_font
       theme_font := GuiThemePickFont() | "serif,bold,14"
-      if GuiThemeIsFlat() then
-         self.set_attribs("size=414,308",
-            "label=New Unicon Project ", "font=" || theme_font)
-      else
-         self.set_attribs("size=414,308", "font=" || theme_font,
-            "label=New Unicon Project ", "bg=light gray")
+      self.set_attribs("size=414,308",
+         "label=New Unicon Project ", "font=" || theme_font)
       uproj_TabSet := TabSet()
       uproj_TabSet.set_pos("5", "5")
       uproj_TabSet.set_size("100%-10", "100%-35")
@@ -294,7 +290,6 @@ $endif
       sourcefiles_list.set_pos("10", "45")
       sourcefiles_list.set_size("255", "170")
       sourcefiles_list.set_draw_border()
-      sourcefiles_list.set_attribs("bg=white")
       sourcefiles_list.set_contents([""])
       files_tab.add(sourcefiles_list)
       filesAdd_btn := TextButton()
