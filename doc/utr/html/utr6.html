@@ -1,0 +1,2819 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An IVIB Primer</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li class="current">UTR 6c: An IVIB Primer</li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr5b.html">&larr; UTR 5b: The Implementation of Graphics in Unicon Version 12</a>
+<a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">An IVIB Primer</h1>
+<p class="report-authors">Susie Jeffery and Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 6c</p>
+<p class="report-date">2019-02-28</p>
+<p class="report-pdf"><a href="utr6.pdf">pdf</a> · <a href="_sources/utr6.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon's improved visual interface builder program IVIB offers many more types of widgets than its precursor, VIB. IVIB also supports colors and fonts, allowing the programmer a wider variety of appearances. This primer explains the rudiments of using IVIB Version 2.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+Most applications these days provide easy to use, graphical interfaces. For the Unicon programmer, several options are available to create such an interface. One option is to use the graphics facilities described in the book &quot;Graphics Programming in Icon&quot; [Gris98]. The Icon Graphics book includes chapters on writing user interfaces using the vidgets library and its interface builder, VIB. Unfortunately, these facilities are hard to customize, either with new widgets or with attributes such as colors or fonts. Another option for MS Windows programmers is to write an interface using MS Windows native facilities available from Icon; they are documented in Icon Project Document 271, but are very limited.
+</p>
+<p>
+This report describes how to use Unicon's new GUI toolkit and its interface builder program, IVIB. This package was written by Robert Parlett, with minor improvements by the authors and other contributors. Compared with the Icon-based tools, Mr. Parlett's toolkit is elegant, feature-rich, extensible, and deep. Unless you are familiar with similar class libraries, IVIB and its GUI toolkit may seem daunting in its complexity. This report demystifies some typical uses of IVIB Version 2. We hope you come to enjoy it as much as we have. A great deal of additional documentation on these tools can be found in the book &quot;Programming with Unicon&quot; [Jeff01].
+</p>
+<h3 id="part-i-a-simple-ivib-application">
+<em>
+Part I     A Simple IVIB Application
+</em>
+</h3>
+<h4 id="hello-ivib">
+Hello, Ivib
+</h4>
+<p>
+Before we delve into a real application, let us create a rhetorical program with a single button that executes a procedure when we click on it. For the sake of tradition, let's suppose our procedure 
+<code>p()</code>
+ is as follows. Go ahead and type this procedure in using the ui program or your favorite text editor, and save it to a file named 
+<code>p.icn</code>
+.
+</p>
+<pre><code class="language-unicon">
+
+procedure p()
+   write(&quot;hello, world&quot;)
+end
+</code></pre>
+<p>
+To start building our GUI, execute the Ivib program. Below its title bar it has a menu bar with File, Canvas, Selection, and Objects menus, and below that it has a tool bar that allows you to easily create many kinds of widget in the GUI library. Below the toolbar is the main Ivib drawing area, called the canvas.
+</p>
+<p>
+The Button widget is the top leftmost widget in the toolbar. Go ahead and click on it; a button labeled &quot;Button&quot; appears in the upper left area of the canvas. You can drag it approximately to the center of your canvas area. To modify aspects of the widget's functionality or appearance, right click on it and select Dialog from the popup menu. The widget's setup dialog allows you to change all aspects of the widget. The top half of the dialog controls properties relevant to all widgets, such as position on screen, graphical attributes, and what variable name will hold the widget. The bottom half of the dialog controls properties specific to the particular type of widget being modified (in this case, a TextButton). TextButtons have a Label attribute that contains the text on the face of the button. Click in that text area and change &quot;Button&quot; to &quot;Go!&quot;. Then click on the Okay button at the bottom of the dialog. Your resulting screen might look something like this:
+</p>
+<p>
+Figure 1: go.icn
+</p>
+<p>
+At this point, you have created a graphical interface with a button on it. When you save this as 
+<code>go.icn</code>
+, Ivib will generate the Unicon source code for the graphical interface, with the Ivib representation of that graphical interface encoded as a strange looking comment at the end of the file. If you compile it, you can produce a working program, but it won't do anything when the Go! button is pressed.
+</p>
+<h4 id="ivib-and-event-driven-programming">
+Ivib and Event-driven Programming
+</h4>
+<p>
+Event-driven programming is writing code in terms of responses to events. You don't own the control flow, the GUI library does. The GUI library calls certain methods in response to each event; your options are to either stick your application code directly in those method bodies, or stick calls to your code in those method bodies.
+</p>
+<p>
+Suppose our procedure 
+<code>p()</code>
+ given above is located in a file 
+<code>p.icn</code>
+, which will hopefully be true by now. What we want to do is make the interface call 
+<code>p()</code>
+ whenever the button is pressed. An object (whose class is a subclass of Dialog in package gui) owns the control flow and processes user input. Each user activity (key press, mouse click) in the dialog is turned into an Event object and sent to the interface object being manipulated (the button, scrollbar, or other widget that was &quot;clicked&quot;). In Ivib, the object's dialog has an Events... tab that allows the programmer to associate a different handler method with code to handle each kind of event. To sum up: an interface has a corresponding Dialog class. For each widget 
+<em>
+foo
+</em>
+ you can optionally ask for a class variable 
+<code>foo</code>
+ that holds the actual widget object reference, and can write methods that are called when an event occurs on that widget.
+</p>
+<p>
+In order for our button to call our procedure 
+<code>p()</code>
+, we need to find out (or assign) the button's variable name. To do this, select the button, right click on it, and open its Dialog. The Name tab contains a 
+<code>Name</code>
+ field that determines the variable name for this widget. Change the name from 
+<code>text_button_1</code>
+ to 
+<code>go</code>
+. Your dialog should look something like this:
+</p>
+<p>
+| | Figure 2: TextButton Setup Name Tab
+</p>
+<p>
+Click Okay to exit the dialog. Save the ivib session (File...SaveAs) in file go.icn.
+</p>
+<p>
+At this point, you can compile go.icn as a standalone program that does nothing (unicon go). But it might be more interesting to tell the dialog what code to execute (namely, a call to the procedure 
+<code>p()</code>
+ mentioned earlier) when the &quot;go&quot; button is clicked. Go over to the Events tab, click on Add, and associate a method 
+<code>on_go()</code>
+ with 
+<code>ACTION_EVENT</code>
+ by clicking the Apply button.
+</p>
+<p>
+| | Figure 3: TextButton Setup Event Tab
+</p>
+<p>
+Click OK, and then save your file. At this point if you go into file 
+<code>go.icn</code>
+ and look at the code, the dialog has an empty method
+</p>
+<pre><code class="language-unicon">
+
+method on_go(ev)
+end
+</code></pre>
+<p>
+into which we can insert a call to 
+<code>p()</code>
+ using the ui IDE, or emacs or another text editor:
+</p>
+<pre><code class="language-unicon">
+
+method on_go(ev)
+   p()
+end
+</code></pre>
+<p>
+Save 
+<code>go.icn</code>
+ with this call to 
+<code>p()</code>
+ added, and then compile 
+<code>go.icn</code>
+ and 
+<code>p.icn</code>
+ together (
+<code>unicon go p</code>
+), and run it (
+<code>./go</code>
+). If successful, this application will run as described and write 
+<code>&quot;Hello, world&quot;</code>
+ to standard output when you click the button.
+</p>
+<p>
+Warning! Editing your file with Ivib and a text editor at the same time makes it easy for you to overwrite work done in one tool when you save in another tool. The safest thing is to Quit Ivib when you are editing code, and quit your editor when you do an Ivib session. In the future we will make Ivib smarter about trying not to lose your work, and probably integrate it into an IDE so the text editor and Ivib sessions always know when to switch back and forth.
+</p>
+<h4 id="a-simple-ivib-application">
+A Simple IVIB Application
+</h4>
+<p>
+For a more realistic example, we are going to create a simple application that will demonstrate the use of Buttons, Text List boxes, Menu Bars, Labels, multiple screens, File Input/Output, and error handling. Our application will contain a main screen with a Menu Bar and a Button. A File Selection Dialog box listing all the files in a directory will be displayed when the button is pressed. The Menu Bar will have options to Exit, display the About Box, and display a Help File.
+</p>
+<p>
+This dazzling example is given in glorious click-by-click detail in order to familiarize you with IVIB and to teach you many of its capabilities by osmosis. All you should have to do is follow the instructions. Hopefully you will feel recklessly capable of writing similar applications on your own afterwards.
+</p>
+<h4 id="the-main-screen">
+The Main Screen
+</h4>
+<p>
+First, create a directory where you can save all the files created for this application. Change into this directory, and launch Ivib (if Ivib is already running, you can click on the File menu's New item). You will see a blank canvas. We are now going to create a Menu Bar. In particular, we will have a File menu that pulls down to an Exit command and a Help menu that pulls down to an About box and a Help command.
+</p>
+<h4 id="menu-bar">
+Menu Bar
+</h4>
+<p>
+<strong>
+Add a Menu Bar
+</strong>
+ by clicking on the Menu component from the Ivib Menu. A Menu Bar with an Edit me item will be added to the canvas. (Although Menu Bars have an associated variable name just like you saw in the Button example, you generally won't have to edit or use the name of a Menu Bar, since event handling code is not attached to Menu Bars, but instead to the menu objects placed inside those menu bars.)
+</p>
+<p>
+Right click on the Menu Bar and select the dialog option. The MenuBar setup in the bottom box of the dialog will look like this:
+</p>
+<pre><code class="language-text">
+|
+|
+-----------Edit me
+|       |
+|       |
+|
+</code></pre>
+<p>
+<strong>
+Add the File menu
+</strong>
+. Select 
+<code>Edit me</code>
+, hit the edit button, and change the 
+<code>Label</code>
+ field to File. Click Okay. The tree will now look something like this:
+</p>
+<pre><code class="language-text">
+|
+|
+-----------File
+|       |&lt;-------------------------------------click here and Add label
+|
+</code></pre>
+<p>
+<strong>
+Add the Exit command
+</strong>
+. Highlight the branch by clicking in the position shown above. The Add label button will become available; click on it. A new branch labeled Edit me will be added to the branch. Edit this branch by clicking on the Edit button, change the Label field to say Exit, and switch to the Code tab. Change the object name to exit and then click the Event handler checkbox to create an 
+<code>on_exit</code>
+ handler method. Before you click OK the screen should look like:
+</p>
+<p>
+| | Figure 4: TextMenuItem Setup Code Tab
+</p>
+<p>
+Press Okay.
+</p>
+<p>
+The tree will now look something like this:
+</p>
+<pre><code class="language-text">
+|
+|
+-----------File
+|       |
+|       |-------------Exit(Txt)
+|       |
+| &lt;-----------------------------------------click here to add a menu item
+</code></pre>
+<p>
+<strong>
+Add the Help menu
+</strong>
+ from the trunk of the tree. Highlight the branch by clicking in the position shown above. The Add Menu button will become available; click on it. A new branch labeled Edit me will be added to the tree. Edit this branch by clicking on the Edit button, change the Label field to say Help, and click Okay. The tree will now look something like this:
+</p>
+<pre><code class="language-text">
+|
+|
+-----------File
+|       |
+|       |-------------Exit(Txt)|
+|       |
+|
+|---------Help
+|       |&lt;-----------------------------------------click here to add a menu label
+|
+</code></pre>
+<p>
+<strong>
+Add the About command
+</strong>
+. Highlight the branch by clicking in the position shown above. The Add label button will become available; click on it. A new branch labeled 
+<code>Edit me</code>
+ will be added to the branch. Edit this branch by clicking on the Edit button, change the Label to 
+<code>About...</code>
+ and select the Code tab. Change the object name to about and then click the event handler to create an 
+<code>on_about</code>
+ handler method. Click Okay. The tree should now look something like this:
+</p>
+<pre><code class="language-text">
+|
+|
+-----------File
+|       |
+|       |-------------Exit(Txt)
+|       |
+|
+|---------Help
+|      |
+|      |------------About
+|      |&lt;-----------------------------------------click here, Add a label
+|
+</code></pre>
+<p>
+<strong>
+Add the Help command
+</strong>
+. Highlight the branch by clicking in the position shown above. The Add label button will become available; click on it. A new branch labeled Edit me will be added to the branch. Edit this branch by clicking on the Edit button, change the label to Help, and switch to the Code tab. Change the object name to help, and then click the Event handler checkbox to create an 
+<code>on_help</code>
+ event handler method. Click Okay. The tree will now look something like this:
+</p>
+<pre><code class="language-text">
+|
+-----------File
+|       |
+|       |-------------Exit(Txt)
+|       |
+|
+|---------Help
+|      |
+|      |------------About(Txt)
+|      |
+|      |------------Help(txt)
+|
+</code></pre>
+<p>
+Hit Okay.
+</p>
+<p>
+Buttons and Labels
+</p>
+<p>
+<strong>
+Add a Button to the canvas
+</strong>
+, by clicking on the Button Component from the Ivib Menu Bar. Move the Button to somewhere near the left side of the canvas. Right click on the Button and select the dialog option. Change the label to say List Files, then select the Name tab. Change the name to ListBtn and then select the Events tab. Click on Add to create an on_ListBtn handler method, then click on Apply, and then click Okay.
+</p>
+<p>
+<strong>
+Add a Message Box Label
+</strong>
+ to the canvas by clicking on the Label component (designated &quot;Abc&quot;) on the Ivib menu bar. Move the label to the bottom of the canvas. Resize the width to almost the size of the canvas and resize the height to about the same height as the button.
+</p>
+<p>
+Right click on the Message Box and select the dialog option. Change the label to be empty, then click on the Name tab. Change the name to MsgBox, then click on the Other tab. Click on the Class variable radio button and the Draw Border checkbox so that there will be a border around our message box.
+</p>
+<p>
+Select the 
+<strong>
+Attribs Tab
+</strong>
+. Click Add and replace the Edit and me to fg and red respectively. This will change the foreground color to red.
+</p>
+<pre><code class="language-text">
+Attrib        Value
+fg            red
+</code></pre>
+<p>
+Click the 
+<strong>
+Apply
+</strong>
+ button to save the attribute. Press the Add button and replace the Edit and me with the values below. This will change the font attributes.
+</p>
+<pre><code class="language-text">
+Attrib        Value
+font          serif,18,bold
+</code></pre>
+<p>
+Hit the 
+<strong>
+Apply
+</strong>
+ button to save the changes. Hit Okay.
+</p>
+<p>
+<strong>
+Enter the canvas attributes
+</strong>
+. Select the Canvas menu option Dialog prefs...
+</p>
+<p>
+On the 
+<strong>
+Attribs
+</strong>
+ tab change the background from pale gray to yellowish white by selecting Add and changing the fields as follows:
+</p>
+<pre><code class="language-text">
+Attrib        Value
+bg            yellowish white
+</code></pre>
+<p>
+Hit the 
+<strong>
+Apply
+</strong>
+ button to save the changes
+</p>
+<p>
+On the 
+<strong>
+Methods
+</strong>
+ tab, leave the 
+<code>Generate main() procedure</code>
+ button on so the box is checked. We want to put our  main procedure in  this file.
+</p>
+<p>
+On the 
+<strong>
+Code
+</strong>
+ tab, change the Name field to maindialog.
+</p>
+<pre><code class="language-text">
+Name  maindialog
+</code></pre>
+<p>
+Hit Okay.
+</p>
+<p>
+From Ivib, go to the File menu and save the file.
+</p>
+<pre><code class="language-text">
+File-&gt;Save as:    main.icn
+</code></pre>
+<p>
+Make sure you save them in the directory you made for this application
+</p>
+<h4 id="the-about-box">
+The About Box
+</h4>
+<p>
+We want to create a small canvas for our About box. The About box will contain one Text List containing application information. From Ivib, go to the File menu and select New and a blank canvas will appear. Resize the canvas by dragging the bottom right corner so it is about 3/4 the original size.
+</p>
+<p>
+Add a Text List Box by clicking on the Text List component on the Ivib Menu Bar (this is the one in the upper right corner). Move it to the center, then right click on it to get the dialog selection. Under the Name tab, change its name to AboutTxtLst, then select the 
+<strong>
+Other
+</strong>
+ tab and click on the Class variable radio button. Hit Okay.
+</p>
+<p>
+<strong>
+Add the canvas attributes
+</strong>
+. Select the Dialog prefs... item from the Canvas menu.
+</p>
+<p>
+On the 
+<strong>
+Attribs
+</strong>
+ tab, click Add. A pair of text input boxes will appear for the attribute you want added; the attribute name field says &quot;Edit&quot; and the attribute value says &quot;me&quot;. Replace the &quot;Edit&quot; with attribute name &quot;label&quot; and replace the attribute value &quot;me&quot; with a the value &quot;About Ivib Primer&quot;. Click Apply.
+</p>
+<p>
+On the 
+<strong>
+Methods
+</strong>
+ tab, 
+<strong>
+un
+</strong>
+-click the 
+<code>Generate main() procedure</code>
+ button so the button is not down. We do not want a main procedure in this file.
+</p>
+<p>
+On the 
+<strong>
+Code
+</strong>
+ tab, change the name to aboutdialog. Finally, on the Events tab, click Add and change the event to MOUSE_PRESS_EVENT and change the method name to on_aboutdialog (this method will quit the dialog). Click Apply. The screen should look like:
+</p>
+<p>
+| | Figure 5: Dialog Preferences Events Tab
+</p>
+<p>
+Click Okay.
+</p>
+<p>
+From Ivib, go to the File menu and save the file with the name about.icn.
+</p>
+<pre><code class="language-text">
+File-&gt;Save as:    about.icn
+</code></pre>
+<p>
+Make sure you save it in the directory you made for this application.
+</p>
+<h4 id="the-help-screen">
+The Help Screen
+</h4>
+<p>
+We want to create another small canvas for the Help information. This canvas will contain a Text List, a Cancel Button and a Label for messages. From Ivib, go to the File menu and select New and a blank canvas will appear. Resize the canvas by dragging the bottom right corner so it is about 3/4 the original size.
+</p>
+<p>
+<strong>
+Add a Text List Box
+</strong>
+ to this canvas by clicking the Text List component from the Ivib Menu Bar. Move it to the center and then right click on it to get the dialog attributes. Select the Name tab, and change the name to HelpTxtLst. Select the Other tab, and click on the Class variable radio button. Click Okay.
+</p>
+<p>
+<strong>
+Add a Button
+</strong>
+ to the canvas, by clicking on the Button Component from the Ivib Menu Bar. Move the Button to somewhere near the bottom of the canvas below the text box.
+</p>
+<p>
+Right click on the Button and select the dialog option. Change the Label to Close, and select the Name tab. Change the name to CloseBtn. On the Events tab, click Add to create an on_CloseBtn() handler method. Click Apply, and then Okay.
+</p>
+<p>
+<strong>
+Add a Message Box
+</strong>
+ to the canvas by clicking on the Label component (Abc) on the Ivib menu bar. Move the label to the bottom of the canvas and resize it to be almost the length of the canvas.
+</p>
+<p>
+Right click on the Label and select the dialog option. Change the Label field to be empty.
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, change the name to MsgBox. On the 
+<strong>
+Other
+</strong>
+ tab, select the Class variable radio button. Click the 
+<strong>
+Draw Border
+</strong>
+ check box so that there will be a border. Click Okay.
+</p>
+<p>
+<strong>
+Add the canvas attributes
+</strong>
+. Select the Ivib Canvas menu's 
+<strong>
+Dialog prefs...
+</strong>
+ item. On the 
+<strong>
+Attribs
+</strong>
+ tab, Press Add to add an attribute. Change the attribute name from 
+<code>Edit</code>
+ to 
+<code>label</code>
+ and change the value 
+<code>me</code>
+ to 
+<code>Ivib Primer Help</code>
+. On the 
+<strong>
+Methods
+</strong>
+ tab, 
+<strong>
+un
+</strong>
+-click the 
+<code>Generate main() procedure</code>
+ button so the box is not checked. We do not want a 
+<code>main()</code>
+ procedure in this file.
+</p>
+<p>
+On the 
+<strong>
+Code
+</strong>
+ tab, change the name to helpdialog. Click Okay.
+</p>
+<p>
+From Ivib, go to the File menu and save the file.
+</p>
+<pre><code class="language-text">
+File-&gt;Save as:    help.icn
+</code></pre>
+<p>
+Make sure you save the file in the directory you made for this application.
+</p>
+<p>
+You can exit out of Ivib now with the File menu's Quit item.
+</p>
+<h4 id="adding-the-code">
+Adding the code
+</h4>
+<p>
+The code is now done for the GUI components. It is in the files main.icn, about.icn, and help.icn.
+</p>
+<p>
+If you look at the file main.icn you will notice Ivib created a class called maindialog and various methods that are associated with the components we added. For example, method on_about() will be the method used when you click on the about menu item on the menu bar. Method init_dialog() is the first method called when the class is created. It is a good place to initialize variables. It is our job to write the code for these methods.
+</p>
+<p>
+If any of the components are not spelled correctly, correct them using Ivib to keep the program code consistent with the graphics. However, when you change the names using Ivib, Ivib will add your new names, but not delete the old names. You may want to search the file for any references to the old names and remove all methods and references to the old names. If you do not remove the old names, your code will still work, but you will have unused methods and objects cluttering up the file. 
+<strong>
+Also, remember Unicon is case sensitive. All references to the objects must be the same case.
+</strong>
+</p>
+<p>
+<strong>
+Main Dialog Class
+</strong>
+. Edit the file main.icn using your favorite editor. This file contains the main procedure, which starts the application by displaying the main screen. Some of the methods in the file main.icn are shown below:
+</p>
+<pre><code class="language-unicon">
+
+import gui
+$include &quot;guih.icn&quot;
+#
+# maindialog is the class created by Ivib in the file main.icn
+#
+class maindialog : Dialog(MsgBox,........)
+   ...
+method on_ListBtn(ev)
+end
+
+method on_about(ev)
+end
+
+method on_exit(ev)
+end    
+
+method on_help(ev)
+end
+   ...
+end # dialog class
+</code></pre>
+<p>
+Find the main() procedure and change it if needed so it looks as shown below. This will cause the main screen to be displayed when the program starts up.
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   local d
+   d := maindialog()
+   d.show_modal()
+end
+</code></pre>
+<p>
+Add code so the About Canvas is displayed when the About Menu item is selected. Add the following code to on_about():
+</p>
+<pre><code class="language-unicon">
+
+method on_about(ev)
+   aboutdialog().show_modal()
+end
+</code></pre>
+<p>
+Add code so the Help Canvas is displayed when the Help Menu item is selected. Add the following code to on_help():
+</p>
+<pre><code class="language-unicon">
+
+method on_help(ev)
+   helpdialog().show_modal()
+end
+</code></pre>
+<p>
+We also need to add code to terminate the application when the Exit menu item is selected. Add the dispose() function to on_exit().
+</p>
+<pre><code class="language-unicon">
+
+method on_exit(ev)
+   dispose()
+end
+</code></pre>
+<p>
+Save this file as main.icn. Make sure you save it in the directory you made for this application.
+</p>
+<h4 id="makefile">
+Makefile
+</h4>
+<p>
+The following instructions mainly apply to Linux/UNIX users. An ASCII file called a makefile (and often named makefile or Makefile) is written to compile and link all our code together using the 
+<code>make</code>
+ program. On Windows, if you obtain a version of the make program such as 
+<code>make.exe</code>
+ or 
+<code>nmake.exe</code>
+, you can follow these instructions; in the makefile the executable (main) may need to be modified to say 
+<code>main.exe</code>
+.
+</p>
+<p>
+Create another file named makefile and enter the following. Be careful to follow make's syntax by beginning the unicon command lines with tab characters; some text editors (such as &quot;edit&quot;) convert these to spaces on you, which may cause the make (or nmake) program to fail. For example, if you just copy and paste these lines from your web browser, you will not have tab characters pasted where they need to be; sorry! Notepad, or better yet a real programmer's editor, will preserve your tab characters.
+</p>
+<pre><code class="language-text">
+#
+# makefile
+#
+CFLAGS=-c
+main: main.u about.u help.u
+        unicon -G -o main main.u about.u help.u
+about.u: about.icn
+        unicon $(CFLAGS) about
+help.u: help.icn
+        unicon $(CFLAGS) help
+main.u: main.icn
+        unicon $(CFLAGS) main
+</code></pre>
+<p>
+Make sure you save it in the directory you made for this application At the shell/command-line prompt enter:
+</p>
+<pre><code class="language-text">
+...%        make
+</code></pre>
+<p>
+If everything went well, there will not be any errors at this point.
+</p>
+<p>
+Note: if no make or nmake is available you can enter at the shell/command prompt:
+</p>
+<pre><code class="language-text">
+...% unicon -G main.icn about.icn help.icn
+</code></pre>
+<h4 id="running-the-program">
+Running the Program
+</h4>
+<p>
+At the shell/command prompt enter:
+</p>
+<pre><code class="language-text">
+...% main
+</code></pre>
+<p>
+(On Linux if the current directory is not on your PATH you can say ./main)
+</p>
+<p>
+When successful, the main screen will be displayed. You should be able to hit the menu items and view the help and about dialogs.
+</p>
+<p>
+<strong>
+The About Box
+</strong>
+. Edit the file about.icn using your favorite editor. Some of the methods in the file about.icn are shown below
+</p>
+<pre><code class="language-unicon">
+
+#
+# aboutdialog is the class created by Ivib in the file about.icn
+#
+
+class aboutdialog : Dialog(AboutTxtLst)
+   ...
+   method init_dialog()
+   end
+   method on_aboutdialog(ev)
+   end
+   ...
+end    # aboutdialog
+</code></pre>
+<p>
+We need to fill the Text List with the About information. We could actually have done this from inside Ivib, but just for fun let's add code to 
+<code>init_dialog()</code>
+ so the Text List is filled when the canvas is displayed. Edit about.icn and add the following code to the 
+<code>init_dialog()</code>
+ and 
+<code>on_aboutdialog()</code>
+ methods.
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+   local l
+   l := [
+         &quot;This is an example application&quot;,
+         &quot;To demonstrate an About Box&quot;,
+         &quot;Also, how to show another form&quot;,
+         &quot;Plus: using Makefiles with&quot;,
+         &quot;Ivib&quot;
+         ]
+     AboutTxtLst.set_contents(l)
+ end
+
+ method on_aboutdialog(ev)
+     dispose()
+ end
+</code></pre>
+<p>
+<strong>
+The Help Screen
+</strong>
+. Edit the file help.icn using your favorite editor. Some of the methods in the file help.icn are shown below.
+</p>
+<pre><code class="language-unicon">
+
+#
+# helpdialog is the class created by Ivib in the file help.icn
+#
+
+class helpdialog : Dialog(HelpTxtLst, MsgBox)
+   ...
+   method init_dialog()
+   end
+   method on_CloseBtn(ev)
+   end
+   ...
+end  # helpdialog class
+</code></pre>
+<p>
+The help screen will read in a text file and display it in the text list we created. We'll add code to the method init_dialog() to open the help file and display it. Edit the file help.icn and add the following code to the method init_dialog():
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+local l, helpfile, fd
+   helpfile := &quot;help.txt&quot;
+   if fd := open(helpfile) then {
+      MsgBox.set_label(&quot;File &quot; || helpfile || &quot; &quot;)
+      l := []  # create an empty list
+      while put(l, read(fd)) # read lines, put in list
+      close(fd)
+      HelpTxtLst.set_contents(l)
+      }
+   else
+      MsgBox.set_label(&quot;Cannot open help file: &quot; || helpfile)
+end
+</code></pre>
+<p>
+We also need to add code to terminate the application when the Cancel Button is clicked. Add a call to the dispose() function to on_CloseBtn().
+</p>
+<pre><code class="language-unicon">
+
+method on_CloseBtn(ev)
+   dispose()
+end
+</code></pre>
+<p>
+You will also need to create a text file named help.txt with any information you find helpful.
+</p>
+<p>
+<strong>
+The Main Screen
+</strong>
+. The main dialog will demonstrate the use of file dialog box. It will open a file dialog when the List Button is pressed and display the selected file in a message box. First we need to link in the FileDialog class from the Unicon class library. Add the link statement before the maindialog class declaration as follows:
+</p>
+<pre><code class="language-text">
+import gui
+$include &quot;guih.icn&quot;
+
+link filedialog         # this the line you add
+</code></pre>
+<p>
+Add the following code to the 
+<code>on_ListBtn()</code>
+ method. The file dialog will be displayed when the List button is pressed and the selected file will be displayed in the MsgBox.
+</p>
+<pre><code class="language-unicon">
+
+method on_ListBtn(ev)
+   local s, fd
+      fd := FileDialog()
+      fd.set_attribs(&quot;label=Select file demonstration&quot;)
+      fd.show_modal(self)
+      s := fd.get_result() | fail
+      if /s | s == &quot;&quot; | s[-1] == &quot;\\&quot; then {
+         MsgBox.set_label(&quot;Select a file&quot;)
+         return
+         }   
+      MsgBox.set_label(&quot;File : &quot; || s || &quot; was selected &quot;)
+end
+</code></pre>
+<p>
+The application is now complete. Use the makefile or Unicon command to compile and link the program and run the application as described in the Makefile section above. Now you can go back and add labels, or resize components as needed.
+</p>
+<h3 id="part-ii-another-simple-ivib-application">
+<em>
+Part II: Another Simple IVIB Application
+</em>
+</h3>
+<p>
+The following example demonstrates how to create a simple application that uses modeless dialogs, edit dialog features, tab sets, and overlays. The application will contain a main screen with a table, overlay and tab set. The main screen will call an edit dialog that will have cut, copy, paste, undo, and redo features. This example will illustrate:
+</p>
+<ol start="1">
+<li>
+Modeless Dialogs
+</li>
+<li>
+Tab Sets, Overlays
+</li>
+<li>
+Capturing Table events double clicks, right clicks, column clicks
+</li>
+<li>
+Copy, Cut, Paste from clipboard
+</li>
+<li>
+Using buttons and keeping selected regions for copy, cut, paste
+</li>
+<li>
+Single Undo/Redo instead of default compound undo/redo
+</li>
+<li>
+Tab Jumps to components
+</li>
+</ol>
+<h4 id="modeless-dialogs">
+Modeless Dialogs
+</h4>
+<p>
+We are going to create a main dialog that contains a table of games. After you select one of the games from the table, a modeless dialog will be displayed. First, create a directory where you can save all the files created for this application. Change into this directory, and launch Ivib. You will see a blank canvas.
+</p>
+<p>
+Enter the canvas attributes. Either right click on the Canvas for Dialog or go to the file menu option Canvas-&gt;Dialog prefs.
+</p>
+<p>
+On the 
+<strong>
+Code
+</strong>
+ tab, enter:
+</p>
+<pre><code class="language-text">
+Name  dialogmain
+</code></pre>
+<p>
+On the 
+<strong>
+Methods
+</strong>
+ tab, leave the 
+<code>Generate main() procedure</code>
+ checkbox ON so the box is checked. We want to put our 
+<code>main()</code>
+ procedure in this file. Leave all the other checkboxes on on the Methods Tab checked also.
+</p>
+<p>
+On the 
+<strong>
+Attribs
+</strong>
+ tab, Hit Add and replace Edit me with:
+</p>
+<p>
+Attrib
+</p>
+<p>
+Value
+</p>
+<p>
+<code>font</code>
+</p>
+<p>
+<code>sans,12</code>
+</p>
+<p>
+Hit 
+<strong>
+Apply
+</strong>
+. This will set the default font to sans 12 for every component in this dialog.
+</p>
+<p>
+On the 
+<strong>
+Events
+</strong>
+ tab, hit the Add Button.
+</p>
+<p>
+Under Event: Hit scroll down to CLOSE_BUTTON_EVENT. Under Handler enter: 
+<code>on_dialogmain</code>
+. We will use this method to capture the Windows X (close) event at the top right of the Dialog. Hit 
+<strong>
+Apply
+</strong>
+.
+</p>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+ to close Dialog Prefs.
+</p>
+<p>
+<strong>
+Add a Button to the canvas
+</strong>
+, by clicking on the Button Component from the Ivib Menu Bar. Move the Button to somewhere around the left side of the canvas. Note: you can resize the canvas or the button by dragging the right bottom corner to make it larger/smaller.
+</p>
+<p>
+Right Click on the Button to add some attributes as follows:
+</p>
+<p>
+| On the 
+<strong>
+General
+</strong>
+ tab enter: | 
+<strong>
+Label
+</strong>
+ Modeless
+</p>
+<p>
+| On the 
+<strong>
+Other
+</strong>
+ tab: | Check the 
+<strong>
+Class variable
+</strong>
+ checkbox
+</p>
+<p>
+| On the 
+<strong>
+Name
+</strong>
+ tab: | Name text_button_modeless
+</p>
+<p>
+| On the 
+<strong>
+Events
+</strong>
+ tab: | Hit the Add Button
+</p>
+<p>
+Under 
+<strong>
+Event
+</strong>
+: Scroll down to 
+<code>BUTTON_RELEASE_EVENT</code>
+</p>
+<p>
+Under 
+<strong>
+Handler
+</strong>
+ enter: (it may be automatically added) 
+<code>on_text_button_modeless</code>
+</p>
+<p>
+Hit 
+<strong>
+Apply
+</strong>
+.
+</p>
+<p>
+This will create a method 
+<code>on_text_button_modeless()</code>
+ that will be invoked by a 
+<code>BUTTON_RELEASE_EVENT</code>
+.
+</p>
+<p>
+Hit Okay.
+</p>
+<p>
+You may need to resize the button so the text will fit.
+</p>
+<p>
+Add an Exit Button by clicking on the Button icon on the Tool Bar. Right Click on the Button to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+General
+</strong>
+ tab, enter: Label Exit
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, enter: Name text_button_exit
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check the: Class variable checkbox
+</p>
+<p>
+On the Events Tab: Hit the Add Button
+</p>
+<p>
+Under Event: Scroll down to 
+<code>BUTTON_RELEASE_EVENT</code>
+</p>
+<p>
+| Under Handler enter: (it may be automatically added) | 
+<code>on_text_button_exit</code>
+</p>
+<p>
+| Hit Apply | Hit Okay
+</p>
+<p>
+Move the exit button to the bottom right side of the dialog as shown in Figure 6 of main.icn below:
+</p>
+<img class="figure" src="assets/utr6/modeless.png" alt="">
+<p>
+Figure 6: main.icn my button Tab
+</p>
+<p>
+<strong>
+Add a Message Box Label
+</strong>
+ to the canvas by clicking on the Label component (Abc) on the Ivib menu bar. Move the label to the bottom of the canvas and resize it to be almost the width of the canvas. Refer to the Figure 6. The message label is the long rectangle at the bottom of main.icn. Right Click on the Label to add some attributes as follows:
+</p>
+<p>
+| On the 
+<strong>
+Other
+</strong>
+ tab, check the: | Class variable checkbox
+</p>
+<p>
+Click the 
+<strong>
+Draw Border
+</strong>
+ check box so that there IS a border.
+</p>
+<p>
+| On the 
+<strong>
+Name
+</strong>
+ tab enter: | Name label_msgbox
+</p>
+<p>
+| On 
+<strong>
+General
+</strong>
+ Tab enter: | Label : (make it blank - this label will be our message box) Hit Okay
+</p>
+<p>
+From the Menu, Slect File-&gt;Save As and enter main.icn
+</p>
+<pre><code class="language-text">
+File-&gt;Save as:    main.icn
+</code></pre>
+<p>
+Make sure you save them in the directory you made for this application.
+</p>
+<p>
+<strong>
+Create an Edit Dialog
+</strong>
+ by going to the Ivib menu to File-&gt;New. A blank canvas will appear.
+</p>
+<p>
+<strong>
+Enter the canvas attributes
+</strong>
+. Either right click on the Canvas for Dialog or go to the file menu option: Canvas-&gt;Dialog prefs.
+</p>
+<p>
+| On the 
+<strong>
+Code
+</strong>
+ tab enter: | Name dialogedit
+</p>
+<p>
+On the 
+<strong>
+Methods
+</strong>
+ tab, 
+<strong>
+un
+</strong>
+-check the 
+<code>Generate main() procedure</code>
+ checkbox, so the checkbox is NOT checked. We DO NOT want to put a main procedure in this file.
+</p>
+<p>
+On the 
+<strong>
+Attribs
+</strong>
+ tab, hit Add and replace Edit me with:
+</p>
+<pre><code class="language-text">
+Attrib      Value
+label       Edit dialog     Hit Apply
+font        sans,12     Hit Apply
+</code></pre>
+<p>
+This will add a title to the top of the canvas and change the default font to sans. You can also add different background and foreground colors by using the attributes bg and fg.
+</p>
+<p>
+| On the 
+<strong>
+Events
+</strong>
+ Tab : | Hit Add and scroll down to 
+<code>CLOSE_BUTTON_EVENT</code>
+. Enter on_dialogedit   for the Event Handler and hit Apply. We will use this method to   capture the Windows X (close) Event at the top right of the Dialog.   Note Ivib may have added another event handler. Please delete it. The   CLOSE_BUTTON_EVENT handled by the on_dialogedit method should be the   only entry. Hit Okay to close Dialog Prefs.
+</p>
+<p>
+Add an Exit Button by clicking on the Button icon on the Tool Bar. Right Click on the Button to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+General
+</strong>
+ tab enter:
+</p>
+<pre><code class="language-text">
+Label  Exit
+</code></pre>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab enter:
+</p>
+<pre><code class="language-text">
+Name text_button_exit
+</code></pre>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab check the:
+</p>
+<pre><code class="language-text">
+Class variable checkbox
+</code></pre>
+<p>
+| On the 
+<strong>
+Events
+</strong>
+ Tab, hit the Add Button. | Under Event: Scroll down to 
+<code>BUTTON_RELEASE_EVENT</code>
+</p>
+<p>
+| Under Handler enter: | 
+<code>on_text_button_exit</code>
+ (it may be automatically added)
+</p>
+<p>
+| Hit 
+<strong>
+Apply
+</strong>
+. | Hit 
+<strong>
+Okay
+</strong>
+</p>
+<p>
+You may need to resize the button so the text will fit. Move the Exit button to bottom right corner as shown in Figure 7 of edit.icn below:
+</p>
+<img class="figure" src="assets/utr6/editicn.png" alt="">
+<p>
+Figure 7: edit.icn
+</p>
+<p>
+<strong>
+Add a Message Box Label
+</strong>
+ to the canvas by clicking on the Label component (Abc) on the Ivib menu bar. Move the label to the bottom of the canvas and resize it to be almost the width of the canvas. Refer to Figure 7 of edit.icn. The message label is the long rectangle at the bottom of figure 7. Right click on the Label to add some attributes as follows:
+</p>
+<p>
+| On the 
+<strong>
+Other
+</strong>
+ tab check the: | 
+<strong>
+Class variable
+</strong>
+ checkbox
+</p>
+<p>
+Click the 
+<strong>
+Draw Border
+</strong>
+ check box so that there is a border.
+</p>
+<p>
+| On the 
+<strong>
+Name
+</strong>
+ tab enter: | Name label_msgbox
+</p>
+<p>
+| On 
+<strong>
+General
+</strong>
+ tab enter: | Label : (make it blank - this label will be our message box) | Hit 
+<strong>
+Okay
+</strong>
+</p>
+<p>
+From Ivib, go to the File menu and execute this command:
+</p>
+<pre><code class="language-text">
+File-&gt;Save as:    edit.icn
+</code></pre>
+<p>
+Make sure you save them in the directory you made for this application and close Ivib.
+</p>
+<ol start="3">
+<li>
+Using an editor, open up main.icn
+</li>
+</ol>
+<p>
+<strong>
+Caution!
+</strong>
+ Because you are saving files using Ivib and your editor, make sure that you save your file using the text editor before changing the graphics using Ivib. Also, make sure that you refresh the buffer (get the the latest) in your text editor after you change the graphics using Ivib. If you are nervous about writing over your changes you can make a backup copy to see how this works. Using the Gnu Emacs editor is a good idea, since it reminds you to refresh the buffer if Ivib has changed anything. Also, if you renamed any variables, the old names and their methods may still be there. Note: all variables are case sensitive so CancelBtn is not the same as cancelbtn. For example, if you forgot to uncheck 
+<code>generate main procedure</code>
+, the main procedure will still remain. You will need to manually remove the main procedure and uncheck it in Ivib.
+</p>
+<p>
+Edit main.icn and add the following code to the on_text_button_modeless method:
+</p>
+<pre><code class="language-unicon">
+
+method on_text_button_modeless(ev)
+  dedit := dialogedit()                   
+  dedit.show_modeless()             # show edit dialog
+  dispatcher.message_loop(dialogmain())
+end
+</code></pre>
+<p>
+The third line 
+<code>dispatcher.message_loop(dialogmain())</code>
+ makes the modal dialogmain the parent of the modeless dialogedit. When using modeless dialogs, at least one dialog must be modal. In this case, it is the main dialog. You only need to add this line once. If you call a modeless dialog from dedit, the dialogedit, you will not need this line.
+</p>
+<p>
+Also, add 
+<code>dispose()</code>
+ to the 
+<code>on_text_button_exit()</code>
+ method to close the dialog.
+</p>
+<pre><code class="language-unicon">
+
+method on_text_button_exit(ev)
+  dispose()
+end
+</code></pre>
+<p>
+Add the following code to on_dialogmain so the dialog will close for the X event
+</p>
+<pre><code class="language-unicon">
+
+method on_dialogmain(ev)
+  if \ev.param = -11 then  #windows x box
+     on_text_button_exit(ev)
+end 
+</code></pre>
+<p>
+Save main.icn.
+</p>
+<p>
+<strong>
+Edit edit.icn
+</strong>
+ and add the following code to 
+<code>on_text_button_exit()</code>
+ to close the dialog.
+</p>
+<pre><code class="language-unicon">
+
+method on_text_button_exit(ev)
+   dispose()
+end
+</code></pre>
+<p>
+Also add the following code to on_dialogedit.
+</p>
+<pre><code class="language-unicon">
+
+method on_dialogedit(ev)
+  if \ev.param = -11 then  #windows x box
+     on_text_button_exit(ev)
+end
+</code></pre>
+<p>
+Save edit.icn.
+</p>
+<p>
+Compile the program:
+</p>
+<pre><code class="language-text">
+&gt; unicon -o demo -G main.icn edit.icn
+</code></pre>
+<p>
+Run the program
+</p>
+<pre><code class="language-text">
+&gt; demo
+</code></pre>
+<p>
+When the main dialog comes up, you can click on the 'Modeless' button and a new edit dialog will appear. Notice you can go back and forth from main dialog to edit dialogs. Every time you click, a new dialog will be created. This is different from the show_modal dialogs where the focus was only given to one dialog at a time.
+</p>
+<p>
+We may not want our users creating too many dialog boxes. Let’s add Some code to limit them to one only. If they click on the modeless button, and there is already a dialog open, we will set the focus on the already opened dialog box.
+</p>
+<p>
+<strong>
+In main.icn
+</strong>
+, add the global variable dedit at the top of main.icn (before the class declaration). This is the edit dialog variable that will tell us if the dialog is open.
+</p>
+<pre><code class="language-text">
+global dedit
+</code></pre>
+<p>
+Add the following code to the 
+<code>on_text_button_modeless()</code>
+ method and the 
+<code>int_dialog()</code>
+ method.
+</p>
+<pre><code class="language-unicon">
+
+method on_text_button_modeless(ev)
+   local winedit
+
+   if \dedit then {
+      if winedit := dedit.get_win() then {
+         Raise(winedit)
+         dedit.set_focus(dedit.label_msgbox)
+         return
+      }
+   }
+
+   dedit := dialogedit()                   
+   dedit.show_modeless()             # show edit dialog
+   dispatcher.message_loop(dialogmain())
+end
+method init_dialog()
+   dedit := &amp;null
+end
+</code></pre>
+<p>
+Save main.icn in the correct directory. In edit.icn, add the dedit := &amp;null line to the on_text_button_exit method:
+</p>
+<pre><code class="language-unicon">
+
+method on_text_button_exit(ev)
+    dedit := &amp;null
+    dispose()
+ end
+</code></pre>
+<p>
+This sets the global variable 
+<code>dedit</code>
+ to 
+<code>&amp;null</code>
+ when the Dialog is closed. It can be closed by hitting the exit button or by hitting the X button in the right top corner.
+</p>
+<p>
+Save the file. Compile and run the program. You will get only one edit dialog no matter how many times you hit the modeless button.
+</p>
+<h4 id="tables-and-tabs-sets">
+Tables and Tabs Sets
+</h4>
+<p>
+<strong>
+Do not be confused!
+</strong>
+ Tables with a capital T are GUI components that arrange elements into rows and columns; they are not the same thing as the 
+<code>table</code>
+ data type.
+</p>
+<p>
+<strong>
+Add a Tabset to the main.icn canvas
+</strong>
+ by clicking on the Tabset Component from the Ivib Tool bar. It is the fourth component from the right on the top row. Move the Tabset to somewhere around the middle of the canvas. Enlarge it so it is similar to Figure 6. Right Click on the TabSet to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab check the: Class Variable checkbox
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ Tab enter: Name tab_set_demo
+</p>
+<p>
+On the 
+<strong>
+General
+</strong>
+ tab you see: tab_item_1\*
+</p>
+<p>
+Click on it and an Edit box will appear. Change it as follows to create a tab for the button:
+</p>
+<pre><code class="language-text">
+Label: My button
+Name: tab_item_btn
+</code></pre>
+<p>
+Hit 
+<strong>
+Apply
+</strong>
+.
+</p>
+<p>
+Now create another tab for a table by hitting Add and tab_item_2 will be added and highlighted. Change it as follows to create a tab for the Table:
+</p>
+<pre><code class="language-text">
+Label: My Table
+Name: tab_item_table
+</code></pre>
+<p>
+<strong>
+Class variable
+</strong>
+ should be checked. Hit 
+<strong>
+Apply
+</strong>
+.
+</p>
+<p>
+Now create a third tab by hitting Add and tab_item_3 will be added and highlighted. Change it as follows to create a tab for the Table:
+</p>
+<pre><code class="language-text">
+Label  My misc
+Name: tab_item_misc
+</code></pre>
+<p>
+Hit 
+<strong>
+Apply
+</strong>
+.
+</p>
+<p>
+Hit Okay and the dialog box will close. You will need to enlarge horizontally the dialog so that the three tabs appear in order. Refer to Figure 6.
+</p>
+<p>
+Move the modeless button from the main canvas to the my button tab.
+</p>
+<p>
+Right click on the Tabset to open the Tabset Setup dialog box. At the bottom, on the General Tab, you see:
+</p>
+<pre><code class="language-text">
+tab_item_btn*
+tab_item_table
+tab_item_misc
+</code></pre>
+<p>
+The 
+<code>*</code>
+ after 
+<code>tab_item_btn</code>
+ indicates it is the tab item, you are currently editing. Click on tab_item_table so it is highlighted, then hit the which button. Now 
+<code>tab_item_table</code>
+ should have the star. Hit Okay, and you will now see on the main dialog that the 
+<code>tab_item_table</code>
+ tab can be edited.
+</p>
+<p>
+Add a table to this tab, by clicking on the Table Component on the Ivib Tool Bar. It is the fourth component from the left in the bottom row. Move the table from the main canvas to the my table tab. Resize it as shown in the Figure 8 of main.icn below:
+</p>
+<img class="figure" src="assets/utr6/mainicn.png" alt="">
+<p>
+Figure 8: main.icn
+</p>
+<p>
+We are going to add some columns in the table so 
+<strong>
+right click on the table
+</strong>
+ to get the Table Setup Dialog.
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab check the: 
+<strong>
+Class Variable
+</strong>
+ checkbox.
+</p>
+<p>
+On the 
+<strong>
+General
+</strong>
+ tab in Table Setup, Hit the Add button.
+</p>
+<p>
+Now we will add the first column to our information table. Add the following to the 
+<strong>
+General
+</strong>
+ tab:
+</p>
+<pre><code class="language-unicon">
+
+Label :Name
+Width: 200
+Align l
+Name: table_column_1 (class variable should be checked)
+</code></pre>
+<p>
+Hit Apply
+</p>
+<p>
+Add another column by clicking the 
+<strong>
+Add
+</strong>
+ button:
+</p>
+<pre><code class="language-unicon">
+
+Label :# of Players
+Width: 125
+Align  l
+Name: table_column_2
+(class variable should be checked)
+</code></pre>
+<p>
+Hit 
+<strong>
+Apply
+</strong>
+</p>
+<p>
+On the 
+<strong>
+Selection
+</strong>
+ tab, the drop down box that says No selection, change this to 
+<strong>
+Select One
+</strong>
+. Note: If you change it to Select Many, then they can select multiple rows by Control Shift and Click (mouse) at the same time.
+</p>
+<p>
+On the 
+<strong>
+Events
+</strong>
+ tab, hit the Add Button.
+</p>
+<p>
+| Under Event: Scroll down to 
+<code>MOUSE_RELEASE_EVENT</code>
+ | Under Handler enter: 
+<code>on_table_1</code>
+ (it may be automatically added)
+</p>
+<p>
+Hit Apply
+</p>
+<p>
+This will create a method 
+<code>on_table_1()</code>
+ that will be invoked by a 
+<code>MOUSE_RELEASE_EVENT</code>
+. Note: Make sure that this is the only event added. Sometimes Ivib initially adds an 
+<code>ACTION_EVENT</code>
+. Please delete all other events.
+</p>
+<p>
+Click 
+<strong>
+Okay
+</strong>
+ to close the setup dialog. You will probably need to make the Tabset and the Table larger as shown in Figure 8.
+</p>
+<p>
+From the Ivib Menu, Save As 
+<code>main.icn</code>
+.
+</p>
+<p>
+Add the following code to the 
+<code>init_dialog()</code>
+ method in 
+<code>main.icn</code>
+:
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+   local lst
+   lst := [[&quot;tic tac toe&quot;,&quot;3&quot;], [&quot;Monopoly&quot;,&quot;8&quot;], [&quot;Chess&quot;,&quot;2&quot;], [&quot;Checkers&quot;,&quot;2&quot;],
+             [&quot;Clue&quot;,&quot;6&quot;],[&quot;DOOM&quot;,&quot;3&quot;],[&quot;EverQuest&quot;,&quot;no limit&quot;],[&quot;Global Thermonuclear War&quot;,&quot;no limit&quot;]]
+   table_1.set_contents(lst)
+   dedit := &amp;null
+end
+</code></pre>
+<p>
+Save main.icn. Compile and run the program. You should be able to click on the tabs to display the three different tabs. Notice the 'My table Tab' is displayed first. We can change this by setting the 
+<strong>
+Which
+</strong>
+ back to 
+<code>tab_item_btn</code>
+ in Ivib if we want the button tab to show initially.
+</p>
+<h4 id="capturing-events-click-counts-and-goto">
+Capturing Events, Click Counts and GoTo
+</h4>
+<p>
+We are now going to add code so that an edit dialog box will come up every time we double click on one of the games in the table. We will add a global variable editdlg that is a table of dialogs. The keys for the table are the positions in the table. This example will demonstrate:
+</p>
+<ol start="1">
+<li>
+Double Click
+</li>
+<li>
+Finding the selected positions and the contents of the table using 
+<code>get_contents()</code>
+ and 
+<code>get_selections()</code>
+</li>
+<li>
+Setting the position of the table by using set_selections and go_to.
+</li>
+<li>
+Using Events to capture the right click and the Windows X close.
+</li>
+</ol>
+<p>
+Add the following global variable to 
+<code>main.icn</code>
+. This is the table that will keep track of all the dialogs
+</p>
+<pre><code class="language-text">
+global editdlg
+</code></pre>
+<p>
+Also, add two more lines to the 
+<code>init_dialog()</code>
+ method. The first new line initializes and creates the table 
+<code>editdlg</code>
+. The second new line sets the click delay so we can distinguish double clicks from single clicks.
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+local lst
+   lst := [[&quot;tic tac toe&quot;,&quot;3&quot;], [&quot;Monopoly&quot;,&quot;8&quot;], [&quot;Chess&quot;,&quot;2&quot;], [&quot;Checkers&quot;,&quot;2&quot;], [&quot;Clue&quot;,&quot;6&quot;],[&quot;DOOM&quot;,&quot;3&quot;],[&quot;EverQuest&quot;,&quot;no limit&quot;],[&quot;Global Thermonuclear War&quot;,&quot;no limit&quot;]]
+   table_1.set_contents(lst)
+   dedit := &amp;null
+   editdlg := table()
+   set_double_click_delay(100000)  # set click  delay  ford double click
+end
+</code></pre>
+<p>
+Add the following code to the method 
+<code>on_table_1()</code>
+:
+</p>
+<pre><code class="language-unicon">
+
+method on_table_1(ev)
+local posn,poslst,msg,gamelst,cc
+poslst := []
+posn := 0
+game := &quot;&quot;
+gamelst := []
+cc := 0
+
+if \ev &amp; \ev.source  &amp; \ev.type &amp;  \ev.param then 
+   write(&quot;sc &quot;,image(ev.source),&quot; type &quot;,image(ev.type),&quot; param &quot;,image(ev.param))
+else
+    return
+
+if \ev.param = -6 then { #right click
+       posn := table_1.get_table_content().get_line_under_pointer() | 0
+       if posn &lt; 1 then return
+
+       table_1.set_selections([posn]) #  add to selected list, highlight it
+       table_1.goto_pos(posn)   
+       table_1.set_cursor(posn)
+       label_msgbox.set_label(&quot;right click demo at pos  &quot;||posn)
+       self.display()
+       return
+ }
+# 
+#  returns list of selected items in this case only one because 'select one' is set for the table
+  poslst :=  table_1.get_selections() | [] 
+   if *poslst &gt; 0 then
+     posn := poslst[1]   # the selected position
+   else
+     return    
+#  returns a list of lists with 2 items game and number players   
+   gamelst :=  table_1.get_contents()  
+
+#  get the selected name of the game from the table, the first item in the list
+   game := gamelst[posn][1]
+    cc := get_click_count()
+   if cc &gt; 1 then {
+       game := game || &quot; double click &quot;
+#    create a global table editdlg to keep track of all the open dialogs  
+     if not member (editdlg, posn) then {
+       (editdlg[posn] := dialogedit(posn,game))
+       editdlg[posn].show_modeless()
+     }
+     else {
+       Raise(editdlg[posn].get_win())
+        editdlg[posn].set_focus(editdlg[posn].label_msgbox) 
+     }
+     return
+
+   }  # end cc &gt; 1
+
+   if posn &gt;= *gamelst then
+       posn := 1
+    else
+       posn +:= 1
+
+    table_1.set_selections([posn]) #  add to selected list, highlight it
+    table_1.goto_pos(posn)   
+    table_1.set_cursor(posn)
+    label_msgbox.set_label(&quot;single click - going to next selection &quot;)
+    label_msgbox.display()
+ end
+</code></pre>
+<p>
+Save main.icn.
+</p>
+<p>
+First, this code will write the ev.param, ev.type and ev.code to determine what the ev.param is for a right click. It is -6, so if there is a right click, it is displayed in label_msgbox and the selected position is highlighted and returns out of the method. Second, this code gets the selected item from a list of selected items by calling get_selections. Since we have set the table in Ivib to ‘select one’, only one item may be selected. So the list is either a one item list or empty if nothing has been selected. We can get the table contents by calling get_contents. For tables, it will return a list of lists where each list (inside the big list) represents a row of size equal to the number of columns. In this example, we only have two columns; games and players. If an item is double clicked, then the edit dialog for the selected game and position is displayed.
+</p>
+<p>
+This example also demonstrates the use of the goto_pos, set_cursor and set_selections methods. If an item is single clicked, then the selection is moved to the next position unless it is the last position. If it is the last position, then it is moved to the first position. This is a pretty stupid thing to do, but it does demonstrate these features.
+</p>
+<p>
+We are also passing the game name and its position to the edit dialog. So two variables will need to be added to the class definition for dialogedit in edit.icn as follows:
+</p>
+<pre><code class="language-unicon">
+
+class dialogedit : Dialog(posn, msg, label_msgbox, text_button_exit)
+</code></pre>
+<p>
+Note: Add posn as the first and msg as the second. The order is important. Also, note that Ivib will not alter them, but it will add new components in front of them. This means that you must move them back to the beginning if you add new components using Ivib.
+</p>
+<p>
+Since we now have more multiple dialogs, we need to make sure they are set to &amp;null when the edit dialog terminates. Therefore, the following code will also need to be added to edit.icn.
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+if \msg &amp; \posn then
+  label_msgbox.set_label(posn||&quot; &quot;||msg)
+end
+</code></pre>
+<p>
+   method  on_text_button_exit(ev)       delete(editdlg,posn)       dedit := &amp;null       dispose()    end
+</p>
+<p>
+Save edit.icn. Compile and run the program. If you right click on any of the rows in the table, 'right click demo at position x' will be displayed in the message label. If you double click on any of the games, you will see either a new dialog or an existing dialog will be raised to the front. The new dialog will display the chosen game and it's position. If you single click, the cursor position goes to the next game or to the beginning if you are on the last game. This program also writes to standard output the values of ev.source, ev.type, and ev.param every time the mouse is released on the table.
+</p>
+<h4 id="overlays-and-hour-glasses">
+Overlays, and Hour Glasses
+</h4>
+<p>
+Open up edit.icn using Ivib. Add an Overlay to the edit.icn canvas, by clicking on the Overlay Component from the Ivib Tool Bar. It is the second component from the right in the top row. Move the Overlay to somewhere around the middle of the canvas. Enlarge it so its width and length are about twice the default size (see figure 7 of edit.icn). The overlay works very much like the Tabset component. It allows the program to hide components.
+</p>
+<p>
+Right Click on the Overlay to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check the 
+<strong>
+Class Variable
+</strong>
+ checkbox.
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, enter:
+</p>
+<pre><code class="language-text">
+Name overlay_set
+</code></pre>
+<p>
+| On the 
+<strong>
+General
+</strong>
+ tab, you see: | overlay_item_1\*
+</p>
+<p>
+Click on it and an Edit box will appear. Change the name as follows: This will be the initial overlay
+</p>
+<pre><code class="language-text">
+Name: overlay_item_blank
+</code></pre>
+<p>
+Hit Apply.
+</p>
+<p>
+Create a second overlay by hitting 
+<strong>
+Add
+</strong>
+ and 
+<code>overlay_item_2</code>
+ will be added and highlighted. Change the name as follows:
+</p>
+<pre><code class="language-text">
+Name: overlay_item_edit
+Hit Apply.
+</code></pre>
+<p>
+Click on 
+<strong>
+overlay_item_edit
+</strong>
+ so it is highlighted, then hit the 
+<strong>
+which
+</strong>
+ button. Now 
+<strong>
+overlay_item_edit
+</strong>
+ should have the star.
+</p>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+ to close the setup dialog.
+</p>
+<p>
+<strong>
+Add an EditableText List Box
+</strong>
+ to the overlay by clicking the 
+<strong>
+EditableText List
+</strong>
+ component from the Ivib Menu Bar. It is the first one from the left in the second row. Move it on top of the Overlay and resize it (see figure 7 of edit.icn). Now, right click on it to get the dialog attributes.
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check the: 
+<strong>
+Class Variable
+</strong>
+ checkbox.
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, enter:
+</p>
+<pre><code class="language-text">
+Name editable_text_list_instruct
+</code></pre>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+.
+</p>
+<p>
+<strong>
+Add another EditableText List Box
+</strong>
+ to the overlay by clicking the 
+<strong>
+EditableText List
+</strong>
+ component from the Ivib Menu Bar. It is the first one from the left in the second row. Move it on top of the Overlay and move it directly under the editable_text_list_instruct editabletextlist. (see figure 7 of edit.icn) Now, right click on it to get the dialog attributes
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check the 
+<strong>
+Class Variable
+</strong>
+ checkbox.
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, enter:
+</p>
+<pre><code class="language-text">
+Name editable_text_list_game
+</code></pre>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+.
+</p>
+<p>
+Set the overlay back to the blank overlay by right clicking on the Overlay to change the which. At the bottom in the OverlaySet Setup panel, Click on 
+<strong>
+overlay_item_blank
+</strong>
+ so it is highlighted, then hit the 
+<strong>
+which
+</strong>
+ button. Now 
+<strong>
+overlay_item_blank
+</strong>
+ should have the star. Hit Okay.
+</p>
+<h4 id="copy-cut-paste-undo-and-redo">
+Copy, Cut, Paste, Undo and Redo
+</h4>
+<p>
+<strong>
+Add 6 Buttons
+</strong>
+. Move the buttons to the left of the overlay set (see figure 7 of edit.icn). Right Click on each the Buttons to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check: 
+<strong>
+Class Variable
+</strong>
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, enter: Name text_button_cut
+</p>
+<p>
+On the 
+<strong>
+General
+</strong>
+ tab, enter: Label Cut
+</p>
+<p>
+On the Events Tab add:
+</p>
+<pre><code class="language-text">
+Event                   Handler
+BUTTON_RELEASE_EVENT            on_text_button_cut
+</code></pre>
+<p>
+<strong>
+Make SURE this is the ONLY event. Delete any other events that may have been added by Ivib.
+</strong>
+</p>
+<p>
+<strong>
+Hit Apply. Hit Okay.
+</strong>
+</p>
+<p>
+Do the same for the remaining buttons as follows:
+</p>
+<pre><code class="language-text">
+Name text_button_copy
+Label  Copy
+Name text_button_paste
+Label  Paste
+Name text_button_undo
+Label  Undo
+Name text_button_redo
+Label  Redo
+Name text_button_ok
+Label  OK
+</code></pre>
+<p>
+We are going to create code to add and verify the password. First 
+<strong>
+Add a label
+</strong>
+ to the canvas by clicking on the Label component (Abc) on the Ivib menu bar. Move the label below the buttons (see figure 7 of edit.icn). Right Click on the Label to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+Name
+</strong>
+ tab, enter: 
+<code>Name: label_pw</code>
+</p>
+<p>
+On 
+<strong>
+General Setup
+</strong>
+: 
+<code>Label : Password</code>
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check the 
+<strong>
+Class Variable
+</strong>
+ checkbox.
+</p>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+.
+</p>
+<p>
+<strong>
+Add a textfield
+</strong>
+ to the canvas by clicking on the textField component on the Ivib tool bar. This is the component third from the top left. Move the textfield below the buttons and just to the right of the label_pw (see figure 7 of edit.icn). You may need to resize it. Right Click on the textfield to add some attributes as follows:
+</p>
+<p>
+On the 
+<strong>
+Other
+</strong>
+ tab, check 
+<strong>
+Class Variable
+</strong>
+</p>
+<p>
+On the 
+<strong>
+Name Tab
+</strong>
+ enter: 
+<strong>
+Name text_field_pw
+</strong>
+</p>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+.
+</p>
+<p>
+You will probably want to resize it. Refer to Figure 7 of edit.icn. Save the Dialog in Ivib as 
+<code>edit.icn</code>
+.
+</p>
+<p>
+Now edit the source file 
+<code>edit.icn</code>
+. Remember to refresh the Ivib changes.
+</p>
+<p>
+Notice that in the class declaration, the components: 
+<code>text_button_copy</code>
+, 
+<code>text_button_cut</code>
+, 
+<code>text_button_paste</code>
+, 
+<code>text_button_redo</code>
+, 
+<code>text_button_undo</code>
+, 
+<code>text_button_ok</code>
+, 
+<code>editable_text_list_instruct</code>
+, 
+<code>editable_text_list_game</code>
+, 
+<code>overlay_set</code>
+, 
+<code>text_field_pw</code>
+ have been added before 
+<code>posn</code>
+ and 
+<code>msg</code>
+. You will need to move them to the end because we are passing 
+<code>posn</code>
+ and 
+<code>msg</code>
+ from the main dialog, and they must be the first and second variable.
+</p>
+<p>
+The class variables should look something like this when you are finished:
+</p>
+<pre><code class="language-unicon">
+
+class dialogedit : Dialog(posn, msg, text_button_copy, text_button_cut,
+   text_button_paste, text_button_redo, text_button_undo, text_button_ok,
+   editable_text_list_instruct, editable_text_list_game, overlay_set,
+   text_field_pw , text_button_exit, label_msgbox, overlay_item_blank,
+   overlay_item_edit, label_pw .............    )
+</code></pre>
+<p>
+We are going to let the user enter the game instructions only if they type in the password and hit the OK button. The overlay is initially set to 
+<code>overlay_item_blank</code>
+ because we set the which button in Ivib. However, when the correct password is typed, then the overlay will switch over to 
+<code>overlay_item_edit</code>
+ so the instructions can be entered. If the wrong password is typed and the OK button is hit, then we will make the user wait. This demonstrates the use of the hour glass mouse pointer. (Although, usually we use the hourglass when the program is processing). Add the following code to edit.icn as follows:
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+if \msg &amp; \posn then {
+   label_msgbox.set_label(posn||&quot; &quot;||msg)
+   editable_text_list_game.set_contents([msg]) 
+}
+text_field_pw.set_displaychar(&quot;*&quot;) # replace characters with * in password
+end
+
+method on_button_ok(ev)
+local pw, t2, wait
+pw := &quot;&quot;
+label_msgbox.set_label(&quot;&quot;)
+label_msgbox.display()
+
+pw :=  text_field_pw.get_contents()
+if pw == &quot;joshua&quot; then {
+     overlay_set.set_which_one(overlay_item_edit)
+     label_msgbox.set_label(&quot;Enter Game Instructions &quot;)
+     label_msgbox.display()
+
+}
+else {
+   t2 := &amp;time  
+   WAttrib(win,&quot;pointer=&quot; || (&quot;wait&quot;|&quot;watch&quot;))  # change mouse pointer to hourglass
+   label_msgbox.set_label(&quot;Incorrect Password Please wait &quot;)
+   while &amp;time - t2  &lt; 5000 do 
+        wait := 1
+   WAttrib(win,&quot;pointer=arrow&quot;)  # change mouse pointer to arrow
+   label_msgbox.set_label(&quot;OK try again &quot;)
+   label_msgbox.display()
+
+  }
+end
+</code></pre>
+<p>
+Save edit.icn. Compile and run the program. Double click on a game to get to the edit screen. You will see that if you type in the correct password ('joshua'), and hit Ok, the blank edit box where you can type in instructions will be visible. Hard coding passwords is not a good idea, but this example demonstrates the use of overlays and replacing the characters with stars. If you type in the wrong password, you will have to wait.
+</p>
+<p>
+Open up edit.icn using your editor. Add the following code to the 
+<code>init_dialog()</code>
+ method:
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+ text_button_copy.clear_accepts_focus()  # keeps selected region 
+ text_button_cut.clear_accepts_focus()    
+  ........
+  .........
+end
+</code></pre>
+<p>
+NOTE: THIS CODE IS NECESSARY TO ALLOW THE SELECTED REGION IN THE EDITABLE TEXTLIST TO REMAIN SELECTED. OTHERWISE, THE SELECTED REGION WILL BE LOST WHEN THE EVENT OF HITTING THE COPY OR CUT BUTTON IS INVOKED.
+</p>
+<p>
+Now add the following code for copy, cut, paste, redo and undo.
+</p>
+<pre><code class="language-unicon">
+
+method on_button_cut(ev)
+editable_text_list_instruct.handle_cut()
+end
+method on_button_copy(ev)
+editable_text_list_instruct.handle_copy()
+end
+method on_button_paste(ev)
+editable_text_list_instruct.handle_paste()
+end
+method on_button_undo(ev)
+editable_text_list_instruct.handle_undo()
+end
+method on_button_redo(ev)
+editable_text_list_instruct.handle_redo()
+end
+</code></pre>
+<p>
+Save edit.icn and compile and run the program.
+</p>
+<pre><code class="language-text">
+unicon -o demo -G main edit myeditabletextlist
+</code></pre>
+<p>
+You should be able to copy/cut/paste/undo/redo in the 
+<code>editable_text_list_instruct</code>
+ box. However, you may want to copy text from other sources. We need to be able to cut/copy and paste using the Windows clipboard. To do this we will need to create a subclass for our EditableTextList. We will create a new file myeditabletextlist.icn that will inherit all the methods of editabletext list except for:
+</p>
+<pre><code class="language-text">
+handle_copy
+handle_paste
+handle_cut
+</code></pre>
+<p>
+Create a new file myeditabletextlist.icn and copy in the following code:
+</p>
+<pre><code class="language-unicon">
+
+#
+# myeditabletextlist subclass of EditableTextList to 
+# allow clipboard operation in Cut/Copy?paste
+#
+import gui
+link graphics
+import undo
+$include &quot;guih.icn&quot;
+
+class myeditabletextlist : EditableTextList()
+
+   method handle_cut(e)
+      start_handle(e)
+      if has_region() then {
+         copy_to_clipboard(get_region())
+         delete_region(e)
+      }
+      end_handle(e)
+   end
+
+   method handle_copy(e)
+      start_handle(e)
+      if has_region() then {
+         copy_to_clipboard(get_region())
+      }
+      end_handle(e)
+   end
+
+  method copy_to_clipboard(l)
+   local large_str, i
+
+   if /l | *l = 0 then fail
+   large_str := l[1]
+
+    every i := 2 to *l do
+        large_str ||:=  l[i]
+
+    WAttrib(&quot;selection=&quot; || large_str)     
+    return large_str
+
+   end
+
+   method get_list_from_clipboard()
+   local large_str, l, str,start,blank1,tab1,p
+   blank1 := ' '
+   tab1 := '\t'
+   start := 1
+   end1 := 1
+   str := &quot;&quot;
+   p := 1
+   large_str := &quot;&quot;
+   large_str := WAttrib(&quot;selection&quot;)
+   if /large_str then fail
+   l := []
+
+   while   end1  :=   upto(&quot;\n&quot;,large_str,start,0) do {
+      str := large_str[start:end1]
+      if p := upto(&amp;ascii--blank1,str) then
+         str := str[p:0]
+       put(l, str)
+      start := end1 + 1
+  }
+  str := large_str[start:0]
+  if p := upto(&amp;ascii--blank1--tab1,str) then
+     str := str[p:0]
+  put(l,str)
+
+  return l
+  end
+
+#  insert_cr is a global variable to tell paste
+#  to add a line feed after each line 
+   method get_pasteable_clipboard(insert_cr)
+      local x, t, s, c
+      x := []
+      t := &quot;&quot;
+
+      x :=  get_list_from_clipboard() | fail
+
+       every j := 1 to *x do  t := t || trim(string(x[j]))  || &quot; &quot;
+
+      # Apply the filter to the string to paste
+      s := &quot;&quot;
+      every c := !t do {
+         if member(printable, c) then
+            s ||:= c
+      }
+      if *s = 0 then
+         fail
+      return s
+   end
+
+   method handle_paste(e,insert_cr)
+      local s, ce, ed
+
+      start_handle(e)
+      if s := get_pasteable_clipboard(insert_cr) then {
+         ce := CompoundEdit()
+
+         if has_region() then {
+            ed := EditableTextListDeleteRegionEdit(self)
+            ed.redo()
+            ce.add_edit(ed)
+         }
+         ed := EditableTextListPasteEdit(self, s)
+         ed.redo()
+         ce.add_edit(ed)
+
+         undo_manager.add_edit(ce)
+         changed := 1
+      }
+      end_handle(e)
+   end
+ end # myeditabletextlist class
+</code></pre>
+<p>
+Now open up edit.icn using Ivib. Right click on the Overlay set and switch to overlay_item_edit. Right click on the top edit box text_list_instruct to get the dialog box.
+</p>
+<p>
+| On the 
+<strong>
+Name
+</strong>
+ tab, change the 
+<strong>
+Class
+</strong>
+ to 
+<code>myeditabletextList</code>
+. | (Make sure this is all in lower case to match the class in   myeditabletextlist.icn)
+</p>
+<p>
+Hit 
+<strong>
+Okay
+</strong>
+, and save edit.icn
+</p>
+<p>
+This will allow all cut/copy/pastes into 
+<code>editable_text_list_instruct</code>
+ to use our subclass to pick up the windows clipboard.
+</p>
+<pre><code class="language-text">
+unicon -o demo -G main edit myeditabletextlist
+</code></pre>
+<p>
+Now, when you run demo you should be able to cut, copy, paste from other documents into the instructions edit box (editable_text_list_instruct).
+</p>
+<h4 id="tab-jumps-and-compound-undo-redos">
+Tab Jumps and Compound Undo/Redos
+</h4>
+<p>
+There are a few more things we will add to the demonstration:
+</p>
+<ol start="1">
+<li>
+Tab Jumps
+</li>
+<li>
+Compound Undos/Redos
+</li>
+<li>
+Using events on table columns
+</li>
+</ol>
+<p>
+<strong>
+Tab Jumps
+</strong>
+. Open up edit.icn using your editor. Be sure to refresh to the changes from Ivib from above. Add the following code to the 
+<code>init_dialog()</code>
+ method:
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+editable_text_list_game.clear_accepts_focus() # allows tab jump or disables tab insert
+
+ .......
+ ........
+end
+</code></pre>
+<p>
+NOTE: This code will not allow the tab to jump to the editable_text_list_game box. It will disable any type of input to it. After completing this Tutorial, you may want to make editable_text_list_game a 'myeditabletextlist' component so you can use the tabs, copy, cut, paste, undo, redo from the buttons. This will require that events are used to determine which edit box (editable_text_list_game or editable_text_list_list) to apply the function.
+</p>
+<p>
+You may want to use the tab key to jump from one component to another. In our demo, the tab key just inserts a tab into the first text box in edit.icn. Suppose, we would like the tab key to jump to another component. To do this, you need to add the following methods to the subclass myeditabletextlist.icn:
+</p>
+<pre><code class="language-unicon">
+
+method keeps(e)
+   # This component keeps all events.
+   return e ~=== &quot;\t&quot;
+end
+
+method handle_event(e)
+
+   if (e === &quot;\t&quot;)  then 
+      return
+
+   (\self.vsb).handle_event(e)
+   (\self.hsb).handle_event(e)
+   if e === (&amp;lpress | &amp;rpress | &amp;mpress) then
+      handle_press(e)
+   else if e === (&amp;ldrag | &amp;rdrag | &amp;mdrag) then
+      handle_drag(e)
+   else if e === (&amp;lrelease | &amp;rrelease | &amp;mrelease) then
+      handle_release(e)
+   else if \self.has_focus then {
+      case e of {
+         Key_Home : handle_key_home(e)
+         Key_End : handle_key_end(e)
+         Key_PgUp : handle_key_page_up(e)
+         Key_PgDn : handle_key_page_down(e)
+         Key_Up : handle_key_up(e)
+         Key_Down : handle_key_down(e)
+         Key_Left : handle_key_left(e)
+         Key_Right : handle_key_right(e)
+         &quot;\b&quot; : handle_delete_left(e)
+         &quot;\r&quot; | &quot;\l&quot;: handle_return(e)
+         &quot;\^k&quot; : handle_delete_line(e)
+         &quot;\^a&quot; : handle_select_all(e)
+         &quot;\^e&quot; : handle_end_of_line(e)
+         &quot;\d&quot; | &quot;\^d&quot; : handle_delete_right(e)
+         &quot;\^x&quot; :  handle_cut(e)
+         &quot;\^c&quot; :  handle_copy(e)
+         &quot;\^v&quot; :  handle_paste(e)
+         &quot;\^z&quot; :  handle_undo(e)
+         &quot;\^y&quot; :  handle_redo(e)
+         default : handle_default(e)
+      }
+   }
+end
+</code></pre>
+<p>
+Compile and run the program. Notice that the tab key makes the cursor jump from component to component. If you want to order the tab jumps, go into Ivib, hit control-shift and simultaneously select the text_button_paste, text_button_undo, text_button_redo,text_field_pw, text_button_ok, text_button_exit in that order respectively. While still holding the control-shift, go to the Selection Item on the menu and select 'Reorder'. Now you can tab jump from top to bottom.
+</p>
+<h4 id="compound-undos-and-redos">
+Compound Undos and Redos
+</h4>
+<p>
+If you use undo and redo in our demo dialog, you will notice that the Undo undoes compound edits instead of single edits. If you would like to undo single edits, you will need to create a subclass of the undomanager. Create a file 
+<code>myundomanager.icn</code>
+ and copy the following code in to it.
+</p>
+<pre><code class="language-unicon">
+
+import undo
+# UndoManager is a CompoundEdit.  Until it is closed it allows undos and redos
+# within its list of edits, moving a pointer into the list appropriately.
+#
+class myundomanager:UndoManager(limit, index)
+   method add_edit(other)
+      if \closed then
+         return self.CompoundEdit.add_edit(other)
+      while *l &gt;= index do
+          pull(l)
+       put(l, other)
+       index +:= 1
+
+      while (*l &gt; limit) &amp; (index &gt; 1) do {
+         index -:= 1
+         pop(l)
+      }
+   end
+end # class
+</code></pre>
+<p>
+Now, edit 
+<code>myeditabletextlist.icn</code>
+, and add initially code to use 
+<code>MyUndoManager</code>
+. Add this code right before the class end statement:
+</p>
+<pre><code class="language-unicon">
+
+initially(a[])
+   wordlist := []
+   noedit := 0
+   tab_move := &amp;null
+   self.LineBasedScrollArea.initially()
+   self.set_accepts_focus()
+   undo_manager := myundomanager()  # use local undomanager
+   printable := cset(&amp;cset[33:0]) ++ '\t\n'
+   tab_width := 8
+   set_wrap_mode(&quot;off&quot;)
+   self.cursor_x := self.cursor_y := 1
+   set_fields(a)   # insert initially before class end statement
+# NO END STATEMENT FOR INITIALLY
+</code></pre>
+<p>
+    end # class myeditabletextlist.icn
+</p>
+<p>
+Compile and link
+</p>
+<pre><code class="language-text">
+unicon -o demo -G main edit  myeditabletextlist  myundomanager
+</code></pre>
+<p>
+Run the demo again to test the single undos/redos.
+</p>
+<h4 id="table-column-events">
+Table Column Events
+</h4>
+<p>
+So far we have just been using the table on the main screen to select the games (rows). We may also want to use the Name column or the #Players column. In this example, we will sort the columns when a column is selected. The columns are actually components (subclasses of TextButton), and can be reached via the get_column(n) method of Table, where n is the index of the column.
+</p>
+<p>
+Edit main.icn. Add a class variable 
+<code>table_1_col_select</code>
+ to the class declaration. We will use this variable to tell us if the column has been clicked. The class declaration should look like the following:
+</p>
+<pre><code class="language-unicon">
+
+class dialogmain : Dialog (table_1_col_select, tab_item_btn, ..........
+</code></pre>
+<p>
+Add the following lines to the end of 
+<code>init_dialog()</code>
+:
+</p>
+<pre><code class="language-unicon">
+
+method init_dialog()
+   .......
+   ......
+   table_1_col_select := 0  # class variable initialize
+   on_table_1()  # Listen for events
+end
+</code></pre>
+<p>
+Next we need to add code to on_table_1 which is triggered by a MOUSE_RELEASE_EVENT to listen for a column event.
+</p>
+<p>
+Add the following code to the beginning of the method on_table_1():
+</p>
+<pre><code class="language-unicon">
+
+method on_table_1(ev)
+ local posn,poslst,msg,gamelst,cc
+poslst := []
+posn := 0
+game := &quot;&quot;
+gamelst := []
+cc := 0
+table_1.get_column(1).connect(self, &quot;on_table_column_1&quot;, MOUSE_RELEASE_EVENT)
+  if  table_1_col_select = 1 then {
+     table_1_col_select := 0 
+     return
+  }
+
+ table_1.get_column(2).connect(self, &quot;on_table_column_2&quot;, MOUSE_RELEASE_EVENT)
+  if  table_1_col_select = 1 then {
+     table_1_col_select := 0 
+     return
+  }
+
+if \ev &amp; \ev.source  &amp; \ev.type &amp;  \ev.param then  
+.......
+........
+
+end
+</code></pre>
+<p>
+Add the following to methods to handle the events. These methods Sort the selected columns:
+</p>
+<pre><code class="language-unicon">
+
+method on_table_column_1()
+local lst,k,slst ,T
+lst := []
+slst := []
+table_1_col_select := 1
+lst :=    table_1.get_contents()
+T := table()
+
+every k := 1 to *lst do 
+  insert(T,lst[k][1],lst[k][2])
+
+lst := sort(T,1)
+table_1.set_contents(lst) # sort by table key
+end
+
+method on_table_column_2()
+local lst,k,slst ,T
+lst := []
+table_1_col_select := 1
+lst :=    table_1.get_contents()
+T := table()
+every k := 1 to *lst do 
+  insert(T,lst[k][1],lst[k][2])
+
+lst := []
+lst := sort(T,2)  # sort by table elements
+table_1.set_contents(lst)
+end
+</code></pre>
+<p>
+Compile and run. When you click on the table columns, they should sort by Name or number of players. This demonstrates the use of table columns.
+</p>
+<h4 id="conclusions-and-future-work">
+Conclusions and Future Work
+</h4>
+<p>
+Using IVIB is easy, but becoming proficient with it requires some familiarization and a certain comfort level with object-oriented programming. We believe this GUI toolkit is easier to learn than most competing tools. We plan to merge traditional IDE code editing, compiling, and executing capabilities into Ivib in a future release.
+</p>
+<p>
+It is possible to use Ivib with regular procedural code, and it would be easy to extend Ivib to call a procedure for each event. This would allow Icon programmers to benefit from the new GUI toolkit. We would be happy to see this added to Ivib.
+</p>
+<h5 id="acknowledgements">
+Acknowledgements
+</h5>
+<p>
+Robert Parlett inspired and astonished us by writing a GUI library better than we could have hoped for, entirely on his own, as a volunteer effort. His work was done in Idol and porting it to run under Unicon allowed us to identify some bugs in the new compiler. We hope our work adds value to Robert's accomplishment. Phillip Thomas provided corrections to this manuscript.
+</p>
+<h2 id="references">
+References
+</h2>
+<p>
+Ralph Griswold, Clinton Jeffery, and Gregg Townsend, &quot;Graphics Programming in Icon&quot;, Peer-to-Peer Communications, 1998.
+</p>
+<p>
+C. Jeffery, S. Mohamed, R. Pereda, R. Parlett, &quot;Programming with Unicon&quot;, unicon.sourceforge.net/ub/ub.pdf, 2001-2005.
+</p>
+<img class="figure logo" src="assets/utr6/unilogo.jpg" alt="">
+<img class="figure" src="assets/utr6/dlogpref.png" alt="">
+<div class="prevnext">
+<a href="utr5b.html">&larr; UTR 5b: The Implementation of Graphics in Unicon Version 12</a>
+<a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr6.pdf">pdf</a> | <a href="_sources/utr6.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

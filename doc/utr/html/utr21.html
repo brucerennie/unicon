@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuring and Building Version 13 of Unicon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li class="current">UTR 21: Configuring and Building Version 13 of Unicon</li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr20.html">&larr; UTR 20: The Unicon JSON Library</a>
+<a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Configuring and Building Version 13 of Unicon</h1>
+<p class="report-authors">Jafar Al-Gharaibeh and Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 21</p>
+<p class="report-date">2019-04-16</p>
+<p class="report-pdf"><a href="utr21.pdf">pdf</a> · <a href="_sources/utr21.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon Version 13 features a fully automatic configuration and build mechanism based on GNU autoconf.</p>
+</div>
+</header>
+<h4 id="1-background">
+1. Background
+</h4>
+<p>
+The implementation of the Unicon programming language is written mostly in C and RTL [4], a superset of C, for which a translator to C is provided. The Unicon translator itself is written in Unicon, with the C-based legacy Icon translator icont used as the code generator and linker. A small amount of assembly-language code is utilized if available for the context switch used by co-expressions. See Appendix B. This code is optional and only affects co-expressions.
+</p>
+<p>
+There presently are implementations of Unicon only for platforms that host UNIX-compatible shell scripting and configuration tools such as autoconf. This includes most versions of UNIX such as Linux, \*BSD and MacOS, as well as Microsoft Windows 10 via its Ubuntu shell or MSYS and MinGW development environment.
+</p>
+<p>
+All implementations of Unicon are obtained from the same source code, using conditional compilation and defined constants to select and configure platform-dependent code. Appropriate values for these constants are determined automatically by a 
+<code>configure</code>
+ shell script, as is common on UNIX-based software. The 
+<code>configure</code>
+ script is run automatically the first time a build is performed, or when any configuration files may have been changed. The 
+<code>configure</code>
+ script can also be run manually by typing 
+<code>./configure</code>
+ or on windows 
+<code>sh configure</code>
+ A number of features in a Unicon build are optional, selected by command line arguments to the 
+<code>configure</code>
+ script. Consequently, installing Unicon on a new platform is largely a matter of selecting configuration options (usually the defaults are adequate), and typing 
+<code>make</code>
+.
+</p>
+<p>
+The purpose of this document is to describe aspects of the process of configuring Version 13 of the Unicon source code, in the event that optional arguments are needed or if 
+<code>make</code>
+ does not work out of the box. For example, 
+<code>make</code>
+ might not work on a platform on which Unicon has not previously been installed.
+</p>
+<p>
+Building Unicon with a new C compiler on an operating system where Unicon has previously been installed may be a fairly simple task and ideally will be handled by the 
+<code>configure</code>
+ script. Porting Unicon to a new operating system or to an environment in which the 
+<code>configure</code>
+ script does not run is more complex; read this report carefully before undertaking such a project.
+</p>
+<h4 id="2-requirements">
+2. Requirements
+</h4>
+<h5 id="c-data-sizes">
+C Data Sizes
+</h5>
+<p>
+Unicon places the following requirements on C data sizes:
+</p>
+<ul>
+<li>
+<code>char</code>
+ must be 8 bits.
+</li>
+<li>
+<code>int</code>
+ must be 32 or 64 bits.
+</li>
+<li>
+<code>long</code>
+ and pointers must be 32 or 64 bits.
+</li>
+<li>
+All pointers must be the same length.
+</li>
+<li>
+<code>long</code>
+ and pointers should be the same length.
+</li>
+</ul>
+<p>
+If your C data sizes do not meet these requirements, do not expect Unicon to build. If 
+<code>long</code>
+ and pointers are not the same length, such as the case on Windows, new data type definitions might be needed to ensurethe runtime uses the correct data type sizes.
+</p>
+<h5 id="the-c-compiler">
+The C Compiler
+</h5>
+<p>
+The main requirement for implementing Unicon is a production-quality C compiler that supports ANSI C. The term &quot;production quality&quot; implies robustness, correctness, the ability to address large amounts of memory, the ability to handle large files and complicated expressions, and a comprehensive run-time library.
+</p>
+<h5 id="memory">
+Memory
+</h5>
+<p>
+The Unicon programming language requires a substantial amount of memory to run. The practical minimum depends somewhat on the platform, but the minimum would be measured in megabytes, not kilobytes or gigabytes.
+</p>
+<h5 id="file-space">
+File Space
+</h5>
+<p>
+The source code for Unicon is several megabytes. Test programs and other auxiliary files take additional room, as does compilation and testing. While the implementation can be divided into components that can be built separately, this approach may be painful.
+</p>
+<h4 id="3-file-structure">
+3. File Structure
+</h4>
+<p>
+The files for Unicon are organized in a hierarchy. The top level, assuming the hierarchy is rooted in 
+<code>unicon</code>
+ is:
+</p>
+<pre><code class="language-text">
+          |-bin------    executable binaries and support files
+          |-config---    configurations
+|-unicon--|-src------    source code
+          |-tests----    tests
+          |-uni------    unicon
+</code></pre>
+<p>
+There are several subdirectories in 
+<code>config</code>
+. Historically this directory contained support for different operating systems and compilers. At this point it is largely vestigial.
+</p>
+<pre><code class="language-text">
+          |-editor---
+          |-port-----
+--config--|-scripts--
+          |-unix-----
+          |-win32----
+</code></pre>
+<dl>
+<dt>| Some configuration directories contain subdirectories for different</dt>
+<dd>
+<p>
+platforms. These subdirectories contain various files, depending on the platform.
+</p>
+</dd>
+<dt>| The directory ``src`` contains the source code for various components</dt>
+<dd>
+<p>
+of Unicon.
+</p>
+</dd>
+</dl>
+<pre><code class="language-text">
+          |-asm-------   assembler (co-expression) source
+          |-common----   common source
+          |-gdbm------   GDBM local indexed file library source
+          |-h---------   header files
+          |-iconc-----   Optimizing compiler source
+-src------|-icont-----   VM bytecode translator source
+          |-lib-------   libraries
+          |-preproc---   C preprocessor source
+          |-rtt-------   run-time translator source
+          |-runtime---   run-time support
+          |-xpm-------   XPM image-file format support
+</code></pre>
+<p>
+The directory 
+<code>tests</code>
+ contains the test material for various components of Unicon.
+</p>
+<pre><code class="language-text">
+          |-bench-----   benchmarks
+          |-calling---   calling C functions from Unicon
+          |-coexpr----   co-expressions
+          |-container-   container
+          |-general---   general tests
+          |-graphics--   graphics facilities
+          |-ipl-------   Icon program library
+          |-lib-------   library
+-tests----|-mt--------   multi-thread?
+          |-pattern---   pattern matching
+          |-posix-----   POSIX facilities
+          |-preproc---   C preprocessor tests
+          |-samples---   short sample programs
+          |-special---   special features
+          |-thread----   threads
+          |-udb-------   debugger
+          |-unicon----   unicon language features
+</code></pre>
+<p>
+The directory 
+<code>uni</code>
+ contains source code for the Unicon translator and class libraries. Code in these subdirectories is generally written in Unicon.
+</p>
+<pre><code class="language-text">
+          |-3d--------   3D graphics class libraries
+          |-cint------   C interface support
+          |-gprogs----   graphics programs
+          |-gui-------   graphical user interface class library
+          |-ide-------   ui integrated development environment
+          |-ivib------   version 1 improved visual interface builder (deprecated)
+          |-iyacc-----   Icon yacc, a parser generator
+          |-lib-------   general purpose Unicon libraries
+          |-monvis----   monitoring and visualization tools
+          |-native----   native something
+-uni------|-parser----   a unicon parser library
+          |-progs-----   programs
+          |-shell-----   a simple shell
+          |-udb-------   Unicon debugger
+          |-ulex------   Unicon lexical analyzer generator
+          |-unicon----   Unicon translator
+          |-unidep----   Unicon dependency generator
+          |-unidoc----   Unicon documentation generator
+          |-util------   utilities
+          |-xml-------   XML library
+</code></pre>
+<p>
+The Unicon optimizing compiler (unicon -C) requires the presence of a C compiler and is therefore not included in all distributions of Unicon.
+</p>
+<h4 id="4-parameters-and-definitions">
+4. Parameters and Definitions
+</h4>
+<dl>
+<dt>| There are many defined constants and macros in the source code for</dt>
+<dd>
+<p>
+Unicon that vary from platform to platform. Over the range of possible platforms, there are many possibilities. A list is given in Appendix A. 
+<em>
+Do not be intimidated by the large number of options listed there;
+</em>
+ most are provided only for unusual situations and only a few are needed for any one platform.
+</p>
+</dd>
+<dt>| Historically, the defined constants and macros needed for a specific</dt>
+<dd>
+<p>
+platform were placed manually in 
+<code>src/h/define.h</code>
+. On reasonable modern platforms, this has all been done away with and corresponding defines are automatically determined by the 
+<code>configure</code>
+ script and placed in 
+<code>src/h/auto.h</code>
+ using the placeholder and input file 
+<code>src/h/auto.h.in</code>
+. In addition to the C language definitions placed in 
+<code>src/h/auto.h</code>
+, the 
+<code>configure</code>
+ script also generates symbols and environment variable definitions which are used during the build process or in some cases control the behavior of the build itself. These additional files are all placed in the top level directory and include:
+</p>
+<p>
+ 
+<code>Makefile</code>
+  updated from 
+<code>Makefile.in</code>
+  
+<code>Makedefs</code>
+  generated from 
+<code>Makedefs.in</code>
+. It holds parameters and symbols used  with the C language compiler.  
+<code>Makedefs.uni</code>
+  generated from 
+<code>Makedefs.uni.in</code>
+. It holds parameters symbols used  with the Unicon language translator and compiler.
+</p>
+</dd>
+</dl>
+<p>
+In the unfortunate event that you need to build Unicon on a system where the 
+<code>configure</code>
+ script does not run, 
+<code>src/h/define.h</code>
+ can still be used and you can still manually copy in or tweak makefiles or the Makedefs files and such, however this should be considered a last resort. An example 
+<code>src/h/define.h</code>
+ for a &quot;vanilla&quot; 32-bit platform is:
+</p>
+<pre><code class="language-text">
+#define HostStr &quot;new host&quot;
+#define NoCoexpr
+#define PORT 1
+</code></pre>
+<p>
+<code>HostStr</code>
+ provides the value used in the Unicon keyword 
+<code>&amp;host</code>
+ and should be changed as appropriate. 
+<code>NoCoexpr</code>
+ causes Unicon to be configured without co-expressions. This definition can be removed when co-expressions are implemented. See Appendix B. 
+<code>PORT</code>
+ indicates an implementation for an unspecified operating system. It should be changed to a name for the operating system for the new platform (see Section 7). Other definitions probably need to be added, of course.
+</p>
+<h4 id="5-configuring-unicon-for-a-unix-platform">
+5. Configuring Unicon for a UNIX Platform
+</h4>
+<p>
+Unicon has been implemented for many UNIX platforms; support for the POSIX standard (see Reference 4) is expected. 
+<code>make</code>
+ might just do the right thing, running the 
+<code>configure</code>
+ script and then building the Unicon translators and runtime system. The full configure+build sequence is:
+</p>
+<pre><code class="language-text">
+./configure
+make
+</code></pre>
+<p>
+The biggest issue with building Unicon on a new machine is usually the question of what optional language features are required, and what packages of C libraries and header files must be built or installed in order for Unicon to provide those features.
+</p>
+<h5 id="5-1-configure-arguments">
+5.1 Configure Arguments
+</h5>
+<p>
+The Unicon configure script will enable many features that it finds libraries and header files for, by default. A summary of the enabled and disabled features is given at the end of the configuration script. Some experimental features are not part of the Unicon language canon and not turned on by default, but can be turned on from the configure script. Disabling unwanted features, or enabling non-canon features, is accomplished by command line arguments to 
+<code>configure</code>
+. The command
+</p>
+<pre><code class="language-text">
+./configure --help
+</code></pre>
+<p>
+lists these available arguments. An assortment of them are given below for illustrative purposes:
+</p>
+<pre><code class="language-text">
+--disable-graphics      No graphics subsystem
+--disable-graphics3d    No 3D graphics support
+--disable-concurrency   No concurrent thread support
+--disable-pattern       No pattern type support
+--disable-database      No database support
+--disable-ssl           No SSL support
+--disable-audio         No audio support
+--disable-voip          No VOIP support
+--disable-plugins       No loadfunc or plugins support
+--disable-iconc         Build Unicon Compiler (Iconc/Uniconc)
+--enable-iconcurrency   enable thread support in Unicon Compiler
+--enable-ovld           enable operator overloading
+--enable-udbtools       enable Unicon debugger tools
+--enable-progs          enable Unicon programs
+--enable-verbosebuild   Show full CC build lines with all compiler arguments
+--enable-thin           Do a minimalist build disabling non critical
+                        features
+</code></pre>
+<p>
+Similarly, many optional libraries may be located in interesting non-default locations, which are specified via arguments to 
+<code>configure</code>
+ such as:
+</p>
+<pre><code class="language-text">
+--with-zlib[=DIR]       Use zlib package (DIR: custom library path)
+--with-xlib[=DIR]       Use xlib package (DIR: custom library path)
+--with-freetype[=DIR]   Use freetype package (DIR: custom library path)
+--with-Xft[=DIR]        Use Xft package (DIR: custom library path)
+--with-jpeg[=DIR]       Use jpeg package (DIR: custom library path)
+--with-png[=DIR]        Use png package (DIR: custom library path)
+--with-opengl[=DIR]     Use opengl package (DIR: custom library path)
+--with-ftgl[=DIR]       Use ftgl package (DIR: custom library path)
+--with-ogg[=DIR]        Use ogg package (DIR: custom library path)
+--with-SDL[=DIR]        Use SDL package (DIR: custom library path)
+--with-smpeg[=DIR]      Use smpeg package (DIR: custom library path)
+--with-openal[=DIR]     Use openal package (DIR: custom library path)
+--with-jvoip[=DIR]      Use jvoip package (DIR: custom library path)
+--with-odbc[=DIR]       Use odbc package (DIR: custom library path)
+--with-pthread[=DIR]    Use pthread package (DIR: custom library path)
+--with-ssl[=DIR]        Use ssl package (DIR: custom library path)
+</code></pre>
+<h5 id="5-2-example-enabling-graphics-facilities">
+5.2 Example: Enabling Graphics Facilities
+</h5>
+<p>
+On UNIX systems that run X Windows, you may wish to configure Unicon with X support. Unicon's graphics facilities call Xlib, the standard C interface to X. At present, configuration of X Window facilities is provided only for UNIX platforms.
+</p>
+<p>
+In order to build Unicon with these X Window functions, you will need to know what library or libraries are required to link in the X facilities into C programs; this library information is needed when 
+<code>iconx</code>
+ is built and when 
+<code>iconc</code>
+ links a compiled Unicon executable. Normally, the answer will be 
+<code>-lX11</code>
+, but on some platforms additional libraries or alternate paths are required. Consult appropriate manuals to find out what libraries are needed.
+</p>
+<p>
+The 
+<code>configure</code>
+ will find the X11 library if your platform has it at one of the most common locations. If not, there are two possibilities. If it is installed at an unusual location, you may end up using a command line option to configure to specify its location:
+</p>
+<pre><code class="language-text">
+./configure --with-xlib=/my/unusual/location
+</code></pre>
+<p>
+In a more extreme case, you may have to install the development libraries and header include files appropriate for C language X11 development on your system.
+</p>
+<p>
+Historically, the files 
+<code>xiconx.mak</code>
+ and 
+<code>xiconc.def</code>
+, if they are present, were used during Unicon configuration to supply non-default library information to the interpreter and the compiler. Although these files are not normally used any more, the description below is retained it is needed on some non-UNIX build at some point.
+</p>
+<p>
+If a platform requires an additional pseudo-terminal library and a BSD-compatibility package in order to link X applications, you would edit the 
+<code>Makedefs</code>
+ top level files and change the XLIB line to include the new 
+<code>-lbsd</code>
+ library as follows:
+</p>
+<pre><code class="language-text">
+XLIB= -L../../bin -lX11 -lpt -lbsd
+</code></pre>
+<p>
+Historically, and possibly still, there was a corresponding 
+<code>xiconc.def</code>
+ file that took a line such as
+</p>
+<pre><code class="language-text">
+#define ICONC XLIB &quot;-lX11 -lpt -lbsd&quot;
+</code></pre>
+<dl>
+<dt>| The former (XLIB=...) line gets prepended to the flags passed to the C</dt>
+<dd>
+<p>
+compiler/linker when building 
+<code>iconx</code>
+, while the latter file gets included and compiled into 
+<code>iconc</code>
+ when X is configured. Then proceed to the 
+<code>make</code>
+ build step.
+</p>
+</dd>
+<dt>| In order to build Unicon with X support, some platforms also will have</dt>
+<dd>
+<p>
+to specify the location of the X header files. Normally they are in 
+<code>/usr/include/X11</code>
+; if they are in some other place on your platform, you will need to locate them and identify the appropriate option to add to the C compiler command line, usually 
+<code>-I</code>
+ 
+<em>
+path
+</em>
+, where 
+<em>
+path
+</em>
+ is the directory above the X11 include directory.
+</p>
+</dd>
+</dl>
+<p>
+For the Unicon compiler, this option is added via the 
+<code>COpts</code>
+ macro in 
+<code>define.h</code>
+ for your configuration. The 
+<code>COpts</code>
+ macro must define a quoted C string. For the interpreter, the option is added to the 
+<code>CFLAGS</code>
+ argument of the 
+<code>common.hdr</code>
+, 
+<code>icont.hdr</code>
+, 
+<code>runtime.hdr</code>
+, and 
+<code>xpm.hdr</code>
+ Makefile headers for your configuration.
+</p>
+<h4 id="6-configuring-unicon-for-an-ms-windows-platform">
+6. Configuring Unicon for an MS Windows Platform
+</h4>
+<p>
+In the case of Windows, the primary considerations in configuring Unicon have to do with the C compiler that is used. Historically Icon ran on many 16- to 64-bit DOS and Windows compilers. At present, Unicon is known to build on Windows using either
+</p>
+<ul>
+<li>
+the 64-bit Mingw version of GCC, when the version 1 of MSYS UNIX-like tools and shell are installed.
+</li>
+<li>
+the Windows Ubuntu shell allows a Unix-like Unicon to be built that runs well other than known issues in the threads facilities.
+</li>
+</ul>
+<p>
+For the 64-bit Mingw version of GCC, the configuration and build step is performed by invoking
+</p>
+<pre><code class="language-text">
+make WUnicon64
+make
+</code></pre>
+<p>
+where the first line is an alias for
+</p>
+<pre><code class="language-text">
+sh configure --build=x86_64-w64-ming32 --disable-iconc
+</code></pre>
+<p>
+This begs the question of how to build Unicon's iconc on Windows. Undoubtedly, many Bothan spies will die to bring us this information. A Windows iconc port was performed awhile back, but building it does not occur by default.
+</p>
+<p>
+The rest of this section should speculate on what it would take to build Unicon using the last-known-but-currently-unsupported Windows Compiler, Microsoft's C/C++ compiler.
+</p>
+<p>
+Unicon's autoconf-based configuration script, 
+<code>configure</code>
+, has not been tested as to whether it would find or use a Microsoft C compiler if it was on the path. It is thus expected that a traditional Icon-style manual configuration process would be required. Feel free to update the files in the config/win32/msvc/ directory for us and have a go at it.
+</p>
+<p>
+An MS Windows configuration includes 
+<code>Makefile</code>
+\ s, batch scripts, and response files for linking. These files should be modified for the new compiler as appropriate. According to config/win32/msvc/status, the last time MSVC was used in a built was 2014 under Visual C++ 18.0 from Visual Studio 12.0.
+</p>
+<h4 id="7-configuring-unicon-for-a-new-operating-system">
+7. Configuring Unicon for a New Operating System
+</h4>
+<p>
+The conditional compilation for specific operating systems is concerned primarily with matters such as differences in file naming, the handling of input and output, and environmental factors. Conditional compilation uses logical expressions composed from these symbols. An example is:
+</p>
+<pre><code class="language-text">
+   ...
+#if NT
+   ...
+/* code for MS Windows */
+   ...
+#endif
+#if UNIX || VMS
+   ...
+/* code for UNIX and VMS */
+   ...
+#endif
+   ...
+</code></pre>
+<p>
+Each symbol is defined to be either 1 (for the target operating system) or 0 (for all other operating systems). This is accomplished by defining the symbol for the target operating system to be 1 in 
+<code>define.h</code>
+. In 
+<code>config.h</code>
+, which includes 
+<code>define.h</code>
+, all other operating-system symbols are defined to be 0.
+</p>
+<dl>
+<dt>| Logical conditionals with ``#if`` are used instead of defined or</dt>
+<dd>
+<p>
+undefined names with 
+<code>#ifdef</code>
+ to avoid nested conditionals, which become very complicated and difficult to understand when there are several alternative operating systems. Note that it is important not to use 
+<code>#ifdef</code>
+ in place of 
+<code>#if</code>
+, since all the names are defined.
+</p>
+</dd>
+<dt>| The file ``define.h`` for a different operating system should</dt>
+<dd>
+<p>
+initially contain
+</p>
+<p>
+ ::
+</p>
+<p>
+    #define PORT 1
+</p>
+</dd>
+</dl>
+<p>
+as indicated in Section 4. You can use 
+<code>PORT</code>
+ during the configuration for a different operating system. Later you should come back and change 
+<code>PORT</code>
+ to some more appropriate name.
+</p>
+<dl>
+<dt>| Note: The ``PORT`` sections contain deliberate syntax errors (so</dt>
+<dd>
+<p>
+marked) to prevent sections from being overlooked during configuration. These syntax errors must, of course, be removed before compilation.
+</p>
+</dd>
+<dt>| To make it easy to locate places where there is code that may be</dt>
+<dd>
+<p>
+dependent on the operating system, such code usually is bracketed by unique comments of the following form:
+</p>
+<p>
+ ::
+</p>
+<p>
+    /
+<em>
+     
+</em>
+ The following code is operating-system dependent.     
+<em>
+/        ...     /
+</em>
+     
+<em>
+ End of operating-system specific code.     
+</em>
+/
+</p>
+</dd>
+</dl>
+<p>
+Between these beginning and ending comments, the code for different operating systems is provided using conditional expressions such as those indicated above.
+</p>
+<p>
+Look through some of the files for such segments to get an idea of what is involved. Each segment contains comments that describe the purpose of the code. In some cases, the most likely code or a suggestion is given in the conditional code under 
+<code>PORT</code>
+. In some cases, no code will be needed. In others, code for an existing operating system may suffice for the new one.
+</p>
+<p>
+In any event, code for the new operating system name must be added to each such segment, either by adding it to a logical disjunction to take advantage of existing code for other operating systems, as in
+</p>
+<pre><code class="language-text">
+#if MSDOS || UNIX || PORT
+   ...
+#endif
+
+#if VMS
+   ...
+#endif
+</code></pre>
+<p>
+and removing the present code for 
+<code>PORT</code>
+ or by filling in the segment with the appropriate code, as in
+</p>
+<pre><code class="language-text">
+#if PORT
+   ...
+   /* code for the new operating system */
+   ...
+#endif
+</code></pre>
+<dl>
+<dt>| If no code is needed for the target operating system in a particular</dt>
+<dd>
+<p>
+situation, a comment should be provided so that it is clear that the situation has been considered.
+</p>
+</dd>
+<dt>| You may find need for code that is operating-system dependent at a</dt>
+<dd>
+<p>
+place where no such dependency presently exists. If the situation is idiosyncratic to your operating system, which is most likely, simply use a conditional for 
+<code>PORT</code>
+ as shown above. If the situation appears to need different code for several operating systems, add a new segment similar to the other ones, being sure to provide something appropriate for all operating systems.
+</p>
+</dd>
+<dt>| Do not use ``#else`` constructions in these segments; this increases</dt>
+<dd>
+<p>
+the probability of logical errors and obscures the mutually exclusive nature of operating system differences.
+</p>
+</dd>
+</dl>
+<h4 id="8-trouble-reports-and-feedback">
+8. Trouble Reports and Feedback
+</h4>
+<p>
+If you run into problems, contact us at the Unicon Project:
+</p>
+<p>
+   Unicon Project, c/o Clinton Jeffery    Department of Computer Science    The University of Idaho    875 Perimeter Drive    Moscow, ID 83844-1010    U.S.A.    (208) 885-4789 (voice)
+</p>
+<p>
+Please also let us know of any suggestions for improvements to the configuration process.
+</p>
+<p>
+Once you have completed your installation, please send us copies of any files that you modified so that we can make corresponding changes in the central version of the source code. Once this is done, you can get a new copy of the source code whenever changes or extensions are made to the implementation. Be sure to include documentation on any features that are not implemented in your installation or any changes that would affect users.
+</p>
+<h5 id="references">
+References
+</h5>
+<dl>
+<dt>| 1. Clinton Jeffery and Donald Ward, editors, *The Implementation of</dt>
+<dd>
+<p>
+the Icon and Unicon: a Compendium*, unicon.org/book/ib.pdf.
+</p>
+</dd>
+<dt>| 2. B. W. Kernighan and D. M. Ritchie, *The C Programming Language*,</dt>
+<dd>
+<p>
+Prentice-Hall, Inc., Englewood Cliffs, NJ, first edition, 1978.
+</p>
+</dd>
+<dt>| 3. *American National Standard for Information Systems -- Programming</dt>
+<dd>
+<p>
+Language - C, ANSI X3.159-1989*, American National Standards Institute, New York, 1990.
+</p>
+</dd>
+<dt>| 4. *IEEE Standard 1003.1-1988, Portable Operating System Interface for</dt>
+<dd>
+<p>
+Computer Environments* (&quot;POSIX .1&quot;), Institute of Electrical and Electronics Engineers, New York, 1988.
+</p>
+</dd>
+</dl>
+<h4 id="appendix-a-configuration-parameters-and-definitions">
+Appendix A -- Configuration Parameters and Definitions
+</h4>
+<h5 id="c-compiler-considerations">
+C Compiler Considerations
+</h5>
+<p>
+On some platforms it may be necessary to provide a different 
+<em>
+typedef
+</em>
+ for pointer than is provided by default. For example, one old-timey version of Microsoft C used a 
+<code>define.h</code>
+ with the following in it:
+</p>
+<pre><code class="language-text">
+typedef huge void *pointer;
+</code></pre>
+<p>
+If an alternative 
+<em>
+typedef
+</em>
+ is used for pointer, add
+</p>
+<pre><code class="language-text">
+#define PointerDef
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+ to avoid the default one.
+</p>
+<p>
+Sometimes computing the difference of two pointers causes problems. Pointer differences are computed using the macro 
+<code>DiffPtrs(p1, p2)</code>
+, which has the default definition:
+</p>
+<pre><code class="language-text">
+#define DiffPtrs(p1, p2) (word)((p1)-(p2))
+</code></pre>
+<p>
+where word is a 
+<em>
+typedef
+</em>
+ that is provided automatically and usually is 
+<em>
+long int
+</em>
+.
+</p>
+<p>
+This definition can be overridden in 
+<code>define.h</code>
+. For example, at one time Microsoft C used
+</p>
+<pre><code class="language-text">
+#define DiffPtrs(p1, p2) ((word)(p1)-(word)(p2))
+</code></pre>
+<p>
+If you provide an alternate definition for pointer differencing, be careful to enclose all arguments in parentheses.
+</p>
+<h5 id="character-set">
+Character Set
+</h5>
+<p>
+The default character set for Unicon is ASCII. If you are configuring Unicon for a platform that uses the EBCDIC character set, add
+</p>
+<pre><code class="language-text">
+#define EBCDIC 1
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="data-sizing-and-alignment">
+Data Sizing and Alignment
+</h5>
+<p>
+There are two constants that relate to the size of C data:
+</p>
+<pre><code class="language-text">
+WordBits    (default: 32)
+IntBits     (default: WordBits)
+</code></pre>
+<p>
+<code>IntBits</code>
+ is the number of bits in a C 
+<em>
+int
+</em>
+. It may be 16, 32, or 64. 
+<code>WordBits</code>
+ is the number of bits in a C 
+<em>
+long
+</em>
+ (Unicon's &quot;word&quot;). It may be 32 or 64.
+</p>
+<p>
+If your C library expects 
+<em>
+doubles
+</em>
+ to be aligned at double-word boundaries, add
+</p>
+<pre><code class="language-text">
+#define Double
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<p>
+The word alignment of stacks used by co-expressions is controlled by
+</p>
+<pre><code class="language-text">
+StackAlign   (default: 2)
+</code></pre>
+<p>
+If your platform needs a different alignment, provide an appropriate definition in 
+<code>define.h</code>
+.
+</p>
+<p>
+Most computers have downward-growing C stacks, for which stack addresses decrease as values are pushed. If you have an upward-growing stack, for which stack addresses increase as values are pushed, add
+</p>
+<pre><code class="language-text">
+#define UpStack
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="floating-point-arithmetic">
+Floating-Point Arithmetic
+</h5>
+<p>
+There are three optional definitions related to floating-point arithmetic:
+</p>
+<pre><code class="language-text">
+Big        (default: 9007199254740092.)
+LogHuge    (default: 309)
+Precision  (default: 10)
+</code></pre>
+<p>
+The values of 
+<code>Big</code>
+, 
+<code>LogHuge</code>
+, and 
+<code>Precision</code>
+ give, respectively, the largest floating-point number that does not lose precision, the maximum base-10 exponent + 1 of a floating-point number, and the number of digits provided in the string representation of a floating-point number. If the default values given above do not suit the floating-point arithmetic on your platform, add appropriate definitions to 
+<code>define.h</code>
+.
+</p>
+<h5 id="large-integers">
+Large Integers
+</h5>
+<p>
+Large-integer arithmetic is normally enabled. Because this feature increases the size of the run-time system by 15-20%, it may be necessary to disable it on computers with limited memory. To do this, add
+</p>
+<pre><code class="language-text">
+#define NoLargeInts
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="storage-region-sizes">
+Storage Region Sizes
+</h5>
+<p>
+The default sizes of Unicon's run-time storage regions for allocated data normally are calculated from the amount of physical memory on the machine. However, different values can be set:
+</p>
+<pre><code class="language-text">
+MaxAbrSize   (default: 2% of available memory)
+MaxStrSize   (default: 2% of available memory)
+</code></pre>
+<p>
+Since users can override the set values with environment variables, it is unwise to change them from their defaults except in unusual cases.
+</p>
+<p>
+The sizes for Unicon's main interpreter stack and co-expression stacks also can be set:
+</p>
+<pre><code class="language-text">
+MStackSize   (default: 0.5% of available memory)
+StackSize    (default: 0.02% of available memory)
+</code></pre>
+<p>
+As for the block and string storage regions, it is unwise to change the default values except in unusual cases.
+</p>
+<p>
+Finally, a list used for pointers to strings during garbage collection, can be sized:
+</p>
+<pre><code class="language-text">
+QualLstSize  (default: 5000)
+</code></pre>
+<p>
+This one normally is best left unchanged. The qualifier list gets reallocated (and doubled in size) whenever it is found to be not large enough.
+</p>
+<h5 id="allocation-sizing">
+Allocation Sizing
+</h5>
+<p>
+<em>
+Note: the following discussion is true but obsolete. It is retained for historical reasons and may be of some small use to embedded systems and retro computing enthusiasts.
+</em>
+</p>
+<p>
+<code>malloc()</code>
+ is used to allocate space for Unicon's storage regions. This limits region sizes to the value of the largest unsigned int. Historically, some platforms provided alternative allocation routines for allocating larger regions. To change the allocation procedure for regions, add a definition for 
+<code>AllocReg</code>
+ to 
+<code>define.h</code>
+. For example, an ancient huge-memory-model implementation of Icon for Microsoft C used the following:
+</p>
+<pre><code class="language-text">
+#define AllocReg(n) halloc((long)n, sizeof(char))
+</code></pre>
+<p>
+Note: Unicon still uses 
+<code>malloc()</code>
+ for allocating other blocks. If this is a problem, it may be possible to change this by defining 
+<code>malloc</code>
+ in 
+<code>define.h</code>
+, as in
+</p>
+<pre><code class="language-text">
+#define malloc lmalloc
+</code></pre>
+<p>
+where 
+<code>lmalloc()</code>
+ is a local routine for allocating large blocks of memory. If this is done, and the size of the allocation is not 
+<em>
+unsigned int
+</em>
+, add an appropriate definition for the type by defining 
+<code>AllocType</code>
+ in 
+<code>define.h</code>
+, such as
+</p>
+<pre><code class="language-text">
+#define AllocType unsigned long int
+</code></pre>
+<p>
+It is also necessary to add a definition for the limit on the size of a Unicon region:
+</p>
+<pre><code class="language-text">
+#define MaxBlock n
+</code></pre>
+<p>
+where 
+<code>n</code>
+ is the maximum size allowed (the default for 
+<code>MaxBlock</code>
+ is 
+<code>MaxUnsigned</code>
+, the largest 
+<em>
+unsigned int
+</em>
+). It generally is not advisable to set 
+<code>MaxBlock</code>
+ to the largest size an alternative allocation routine can return. For the huge-memory-model implementation mentioned above, 
+<code>MaxBlock</code>
+ is 256000.
+</p>
+<h5 id="file-name-suffixes">
+File Name Suffixes
+</h5>
+<p>
+The suffixes used to identify source programs, ucode object files, and icode binary program files may be specified in 
+<code>define.h</code>
+:
+</p>
+<pre><code class="language-text">
+#define SourceSuffix  (default: &quot;.icn&quot;)
+#define U1Suffix      (default: &quot;.u1&quot;)
+#define U2Suffix      (default: &quot;.u2&quot;)
+#define USuffix       (default: &quot;.u&quot;)
+#define IcodeSuffix   (default: &quot;&quot;)
+#define IcodeASuffix  (default: &quot;&quot;)
+</code></pre>
+<dl>
+<dt>| ``USuffix`` is used for *ucode* files that are Unicon's combined</dt>
+<dd>
+<p>
+assembler/object file format. Ucode files are formed from two temporary files that use the 
+<code>U1Suffix</code>
+ and 
+<code>U2Suffix</code>
+, respectively. 
+<code>IcodeASuffix</code>
+ is an alternative suffix that 
+<code>iconx</code>
+ uses when searching for icode files specified without a suffix. For example, on a Windows system, a non-exe-bundled binary bytecode file might adopt the IcodeSuffix 
+<code>&quot;.cmd&quot;</code>
+ or the case-insensitive alternative 
+<code>IcodeASuffix</code>
+ is 
+<code>&quot;.CMD&quot;</code>
+.
+</p>
+</dd>
+<dt>| If values other than the defaults are specified, care must be taken</dt>
+<dd>
+<p>
+not to introduce conflicts or collisions among names of different types of files.
+</p>
+</dd>
+</dl>
+<h5 id="paths">
+Paths
+</h5>
+<p>
+If 
+<code>icont</code>
+ is given a source program in a directory different from the local one (&quot;current working directory&quot;), there is a question as to where ucode and icode files should be created: in the local directory or in the directory that contains the source program. On most platforms, the appropriate place is in the local directory (the user may not have write permission in the directory that contains the source program). However, on some platforms, the directory that contains the source file is appropriate. By default, the directory for creating new files is the local directory. The other choice can be selected by adding
+</p>
+<pre><code class="language-text">
+#define TargetDir SourceDir
+</code></pre>
+<h5 id="command-line-options">
+Command-Line Options
+</h5>
+<p>
+The command-line options that are supported by 
+<code>icont</code>
+ and 
+<code>iconc</code>
+ are defined by 
+<code>IconOptions</code>
+. The default value (see 
+<code>config.h</code>
+) will do for most platforms, but an alternative can be included in 
+<code>define.h</code>
+.
+</p>
+<p>
+Similarly, the error message produced for erroneous command lines is defined by 
+<code>TUsage</code>
+ for 
+<code>icont</code>
+ and 
+<code>CUsage</code>
+ for 
+<code>iconc</code>
+. The default values, which should correspond to the value of 
+<code>IconOptions</code>
+, are in 
+<code>config.h</code>
+, but may be overridden by definitions in 
+<code>define.h</code>
+.
+</p>
+<p>
+If your C library includes 
+<code>getopt()</code>
+, you can add
+</p>
+<pre><code class="language-text">
+#define SysOpt
+</code></pre>
+<p>
+to use the library function instead of Unicon's private version.
+</p>
+<h5 id="host-identification">
+Host Identification
+</h5>
+<p>
+If your system does not include a 
+<code>uname()</code>
+ library function, the value of the Unicon keyword 
+<code>&amp;host</code>
+ must be specified by adding
+</p>
+<pre><code class="language-text">
+#define HostStr &quot;identification&quot;
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="directory-reading">
+Directory Reading
+</h5>
+<p>
+If your platform supports the 
+<code>opendir()</code>
+ and 
+<code>readdir()</code>
+ functions for reading directories, add
+</p>
+<pre><code class="language-text">
+#define ReadDirectory
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="keyboard-functions">
+Keyboard Functions
+</h5>
+<p>
+If your platform supports the keyboard functions 
+<code>getch()</code>
+, 
+<code>getche()</code>
+, and 
+<code>kbhit()</code>
+, add
+</p>
+<pre><code class="language-text">
+#define KeyboardFncs
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<p>
+You can also define 
+<code>KeyboardFncs</code>
+ if you supply your own keyboard functions; see 
+<code>src/runtime/rlocal.r</code>
+ for examples.
+</p>
+<h5 id="dynamic-loading">
+Dynamic Loading
+</h5>
+<p>
+If your platform supports the 
+<code>dlopen()</code>
+ and 
+<code>dlsym()</code>
+ functions for dynamic loading, add
+</p>
+<pre><code class="language-text">
+#define LoadFunc
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="co-expressions">
+Co-Expressions
+</h5>
+<p>
+The implementation of co-expressions requires an assembly-language context switch. If your platform does not have a co-expression context switch, you can implement one as described in Appendix B. Alternatively, you can disable co-expressions by adding
+</p>
+<pre><code class="language-text">
+#define NoCoexpr
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="x-window-facilities">
+X Window Facilities
+</h5>
+<p>
+The files needed to build Unicon with X Window facilities are not in the same places on all platforms. If Unicon fails to build because an include file needed by X cannot be found, it may be necessary to edit 
+<code>src/h/sys.h</code>
+ to reflect the local location.
+</p>
+<p>
+Some early versions of X Window Systems, notably X11R3, do not support the attribute 
+<code>iconic</code>
+. If this is the case for your platform, add
+</p>
+<pre><code class="language-text">
+#define NoIconify
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+. This disables the attribute 
+<code>iconic</code>
+, causing references to it to fail.
+</p>
+<h5 id="compiler-options">
+Compiler Options
+</h5>
+<p>
+The C compiler called by the Icon compiler,\ 
+<code>iconc</code>
+, to process its output defaults to 
+<code>cc</code>
+. If you want to use a different C compiler, add
+</p>
+<pre><code class="language-text">
+#define CComp &quot;name&quot;
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+, where 
+<em>
+``name``
+</em>
+ is the name of the C compiler you want the Icon compiler to use. Note the quotation marks surrounding the name. For example, to use Gnu C, add
+</p>
+<pre><code class="language-text">
+#define CComp &quot;gcc&quot;
+</code></pre>
+<p>
+By default, the C compiler is called with no options. If you want specific options, add
+</p>
+<pre><code class="language-text">
+#define COpts &quot;options&quot;
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+. Again, note the quotation marks. For example, to request C optimizations, you might add
+</p>
+<pre><code class="language-text">
+#define COpts &quot;-O&quot;
+</code></pre>
+<p>
+If your system does not have 
+<code>ranlib</code>
+, add
+</p>
+<pre><code class="language-text">
+#define NoRanlib
+</code></pre>
+<p>
+to 
+<code>define.h</code>
+.
+</p>
+<h5 id="dynamic-hashing-constants">
+Dynamic Hashing Constants
+</h5>
+<p>
+Four parameters configure the implementation of tables and sets:
+</p>
+<p>
+   
+<code>HSlots</code>
+    Initial number of hash buckets; it must be a power of 2    
+<code>HSegs</code>
+    Maximum number of hash bucket segments    
+<code>MaxHLoad  </code>
+    Maximum allowable loading factor    
+<code>MinHLoad</code>
+    Minimum loading factor for new structures
+</p>
+<p>
+The default values (listed below) are appropriate for most platforms. If you want to change the values, read the discussion that follows.
+</p>
+<p>
+Every set or table starts with 
+<code>HSlots</code>
+ hash buckets, using one bucket segment. When the average hash bucket exceeds 
+<code>MaxHLoad</code>
+ entries, the number of buckets is doubled and one more segment is consumed. This repeats until 
+<code>HSegs</code>
+ segments are in use; after that, structure still grows but no more hash buckets are added.
+</p>
+<p>
+<code>MinHLoad</code>
+ is used only when copying a set or table or when creating a new set through the intersection, union, or difference of two other sets. In these cases a new set may be more lightly loaded than otherwise, but it is never less than 
+<code>MinHLoad</code>
+ if it exceeds a single bucket segment.
+</p>
+<p>
+For all machines, the default load factors are 5 for 
+<code>MaxHLoad</code>
+ and 1 for 
+<code>MinHLoad</code>
+. Because splitting or combining buckets halves or doubles the load factor, 
+<code>MinHLoad</code>
+ should be no more than half 
+<code>MaxHLoad</code>
+. The average number of elements in a hash bucket over the life of a structure is about (
+<code>2/3)*MaxHLoad</code>
+, assuming the structure is not so huge as to be limited by 
+<code>HSegs</code>
+. Increasing 
+<code>MaxHLoad</code>
+ delays the creation of new hash buckets, reducing memory demands at the expense of increased search times. It has no effect on the memory requirements of minimally-sized structures.
+</p>
+<p>
+<code>HSlots</code>
+ and 
+<code>HSegs</code>
+ interact to determine the minimum size of a structure and its maximum efficient capacity. The size of an empty set or table is directly related to 
+<code>HSegs+HSlots</code>
+; smaller values of these parameters reduce the memory needs of programs using many small structures. Doubling 
+<code>HSlots</code>
+ delays the onset of the first structure reorganization until twice as many elements have been inserted. It also doubles the capacity of a structure, as does increasing 
+<code>HSegs</code>
+ by 1.
+</p>
+<p>
+The maximum number of hash buckets is 
+<code>HSlots*(2^(HSegs-1))</code>
+. A structure can be considered &quot;full&quot; when it contains 
+<code>MaxHLoad</code>
+ times that many entries; beyond that, lookup times gradually increase as more elements are added. Until a structure becomes full, the values of 
+<code>HSlots</code>
+ and 
+<code>HSegs</code>
+ do not affect lookup times.
+</p>
+<p>
+For machines with 16-bit 
+<em>
+ints
+</em>
+, the defaults are 4 for 
+<code>HSlots</code>
+ and 6 for 
+<code>HSegs</code>
+. Sets and tables grow from 4 hash buckets to a maximum of 128, and become full at 640 elements. For other machines, the defaults are 8 for 
+<code>HSlots</code>
+ and 10 for 
+<code>HSegs</code>
+. Sets and tables grow from 8 hash buckets to a maximum of 4096, and become full at 20480 elements.
+</p>
+<h5 id="implementation-debugging-code">
+Implementation Debugging Code
+</h5>
+<p>
+Separate from user debugger tools such as 
+<code>udb</code>
+, Unicon contains some code to assist in debugging the implementation. It is enabled by the definitions
+</p>
+<pre><code class="language-text">
+#define DeBugTrans  /* debugging code for the translator in icont */
+#define DeBugLinker /* debugging code for the linker in icont */
+#define DeBugIconx  /* debugging code for the run-time */
+</code></pre>
+<p>
+All three of these are automatically defined if 
+<code>DeBug</code>
+ is defined.
+</p>
+<p>
+The debugging code for the translator consists of functions for dumping symbol tables (see 
+<code>icont/tsym.c</code>
+). These functions are rarely needed and there are no calls to them in the source code as it is distributed.
+</p>
+<p>
+The debugging code for the linker consists of a function for dumping the code region (see 
+<code>icont/lcode.c</code>
+) and code for generating a debugging file that is a printable image of the icode file produced by the linker. This debugging file, which is produced if the option 
+<code>-L</code>
+ is given on the command line when 
+<code>icont</code>
+ is run, may be useful if icode files are incorrect.
+</p>
+<p>
+The debugging code for the executor consists of a few validity checks at places where problems have been encountered in the past. It also provides functions for dumping Unicon values. See 
+<code>runtime/rmisc.r</code>
+ and 
+<code>runtime/rmemmgt.r</code>
+.
+</p>
+<p>
+When installing Unicon on a new operating system, it is advisable to enable the debugging code until Unicon is known to be running properly. The code produced is innocuous and adds only a few percent to the size of the executable files. It should be removed by deleting the definition listed above from 
+<code>define.h</code>
+ as the final step in the implementation for a new operating system.
+</p>
+<h4 id="appendix-b-implementing-a-co-expression-context-switch">
+Appendix B -- Implementing a Co-Expression Context Switch
+</h4>
+<p>
+If your platform does not have a co-expression context switch, you can implement one as described in this appendix. Note: If your platform does not allow the C stack to be at an arbitrary place in memory, there is probably little hope of implementing co-expressions.
+</p>
+<p>
+The routine 
+<code>coswitch()</code>
+ is needed for context switching. This routine requires assembly language, since it must manipulate hardware registers. It either can be written as a C routine with asm directives or directly as an assembly language routine.
+</p>
+<p>
+Calls to the context switch have the form 
+<code>coswitch(old_cs,new_cs,first)</code>
+, where 
+<code>old_cs</code>
+ is a pointer to an array of words (C 
+<em>
+longs
+</em>
+) that contain C state information for the current co-expression, 
+<code>new_cs</code>
+ is a pointer to an array of words that hold C state information for a co-expression to be activated, and 
+<code>first</code>
+ is 1 or 0, depending on whether or not the new co-expression has or has not been activated before. The zeroth element of a C state array always contains the hardware stack pointer (
+<code>sp</code>
+) for that co-expression. The other elements can be used to save any C frame pointers and any other registers your C compiler expects to be preserved across calls.
+</p>
+<p>
+The default size of the array for saving the C state is 15. This number may be changed by adding
+</p>
+<pre><code class="language-text">
+#define CStateSize n
+</code></pre>
+<p>
+| to 
+<code>define.h</code>
+, where 
+<code>n</code>
+ is the number of elements needed. | The first thing 
+<code>coswitch</code>
+ does is to save the current pointers and   registers in the 
+<code>old_cs</code>
+ array. Then it tests 
+<code>first</code>
+. If   
+<code>first</code>
+ is zero, 
+<code>coswitch</code>
+ sets 
+<code>sp</code>
+ from 
+<code>new_cs[0]</code>
+, clears   the C frame pointers, and calls 
+<code>new_context</code>
+. If 
+<code>first</code>
+ is not   zero, it loads the (previously saved) 
+<code>sp</code>
+, C frame pointers, and   registers from 
+<code>new_cs</code>
+ and returns. | Written in C, 
+<code>coswitch</code>
+ has the form:
+</p>
+<pre><code class="language-text">
+/*
+* coswitch
+*/
+coswitch(old_cs, new_cs, first)
+long *old_cs, *new_cs;
+int first;
+{
+   ...
+   /* save sp, frame pointers, and other registers in old_cs */
+      ...
+   if (first == 0) { /* this is first activation */
+         ...
+      /* load sp from new_cs[0] and clear frame pointers */
+         ...
+      new_context(0, 0);
+      syserr(&quot;new_context() returned in coswitch&quot;);
+      }
+   else {
+         ...
+      /* load sp, frame pointers, and other registers from new cs */
+         ...
+      }
+   }
+</code></pre>
+<p>
+After you implement 
+<code>coswitch</code>
+, remove the 
+<code>#define NoCoexpr</code>
+ from 
+<code>define.h</code>
+. Verify that 
+<code>StackAlign</code>
+ and 
+<code>UpStack</code>
+, if needed, are properly defined.
+</p>
+<dl>
+<dt>| To test your context switch, run the programs in</dt>
+<dd>
+<p>
+<code>tests/general/coexpr.lst</code>
+. Ideally, there should be no differences in the comparison of outputs.
+</p>
+</dd>
+<dt>| If you have trouble with your context switch, the first thing to do is</dt>
+<dd>
+<p>
+double-check the registers that your C compiler expects to be preserved across calls -- different C compilers on the same computer may have different requirements.
+</p>
+</dd>
+</dl>
+<p>
+Another possible source of problems is built-in stack checking. Co-expressions rely on being able to specify an arbitrary region of memory for the C stack. If your C compiler generates code for stack probes that expects the C stack to be at a specific location, you may need to disable this code or replace it with something more appropriate.
+</p>
+<h4 id="appendix-c-obtaining-packages-to-enable-optional-unicon-features">
+Appendix C -- Obtaining Packages to Enable Optional Unicon Features
+</h4>
+<h5 id="linux">
+Linux
+</h5>
+<p>
+Binary packages for specific development libraries are usually available. Packages are installed using tools whose names have changed over time, and often require super-user privileges. For example, on Ubuntu and other Debian-based Linux distributions, you may need to say
+</p>
+<pre><code class="language-text">
+sudo apt-get install lib
+</code></pre>
+<p>
+while on Fedora and other Redhat-based Linux distributions you might say
+</p>
+<pre><code class="language-text">
+sudo dnf install lib
+</code></pre>
+<p>
+category
+</p>
+<p>
+Ubuntu/Mint/Debian
+</p>
+<p>
+Fedora/Redhat/Centos
+</p>
+<p>
+graphics
+</p>
+<p>
+libx11-dev
+</p>
+<p>
+libX11-devel
+</p>
+<p>
+libjpeg-dev
+</p>
+<p>
+libjpeg-devel
+</p>
+<p>
+libpng-dev
+</p>
+<p>
+libpng12-devel
+</p>
+<p>
+3d
+</p>
+<p>
+libglu1-mesa-dev
+</p>
+<p>
+mesa-libGL-devel, mesa-libGLU-devel
+</p>
+<p>
+libxft-dev
+</p>
+<p>
+libXft-devel
+</p>
+<p>
+libfreetype6-dev
+</p>
+<p>
+libftgl-dev
+</p>
+<p>
+audio
+</p>
+<p>
+libopenal-dev
+</p>
+<p>
+openal-devel
+</p>
+<p>
+libalut-dev
+</p>
+<p>
+freealut-devel
+</p>
+<p>
+libogg-dev
+</p>
+<p>
+libogg-devel
+</p>
+<p>
+libvorbis-dev
+</p>
+<p>
+libvorbis-devel
+</p>
+<p>
+database
+</p>
+<p>
+unixodbc-dev
+</p>
+<p>
+unixODBC-devel
+</p>
+<p>
+web
+</p>
+<p>
+libssl-dev
+</p>
+<p>
+openssl-devel
+</p>
+<h5 id="windows">
+Windows
+</h5>
+<p>
+Windows Unicon is built with Mingw64, for which many of the optional libraries described above are not easily available in binary form. Some of them can be built from source code successfully. The known-successful libraries, where to obtain them, and how to compile them should be listed here eventually, feel free to pester the authors if you need specific functionality on Windows.
+</p>
+<h5 id="macos">
+MacOS
+</h5>
+<p>
+MacOS has its own third-party software sites. For example, the X Window System was a part of MacOS for awhile, but is now relegated to a large external optional download. How to obtain, install or compile optional third party libraries for MacOS should be listed here eventually, feel free to pester the authors if you need specific functionality on MacOS.
+</p>
+<!-- unhandled directive: |[logo]| image -->
+<div class="prevnext">
+<a href="utr20.html">&larr; UTR 20: The Unicon JSON Library</a>
+<a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr21.pdf">pdf</a> | <a href="_sources/utr21.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Unicon documentation</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="/unicon/assets/site.css" />
+</head>
+<body class="unicon-doc-home">
+<nav class="unicon-site-nav" aria-label="Site">
+  <div class="unicon-site-nav-inner">
+    <a class="home" href="/unicon/">Unicon</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/">Documentation</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/utr/html/">Technical reports</a>
+    <span class="sep">·</span>
+    <a href="/unicon/CONTRIBUTING.html">Contributing</a>
+    <span class="sep">·</span>
+    <a href="/unicon/COPYING.html">License</a>
+    <span class="sep">·</span>
+    <a href="/unicon/config/editor/">Editor configs</a>
+    <span class="sep">·</span>
+    <a href="https://github.com/uniconproject/unicon">GitHub</a>
+  </div>
+</nav>
+<header id="title-block-header">
+<h1 class="title">Unicon documentation</h1>
+</header>
+<p>In-tree manuals and reports for Unicon. Pick a path below; most HTML
+is generated from RST (or LaTeX for the books).</p>
+<h2 id="start-here">Start here</h2>
+<table>
+<thead>
+<tr class="header">
+<th>I want to…</th>
+<th>Go to</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><p><strong>Learn Unicon</strong></p></td>
+<td><p><a href="unicon/html/faq.html">FAQ</a> · published <a
+href="https://unicon.sourceforge.io/ubooks.html">Books</a></p></td>
+</tr>
+<tr class="even">
+<td><p><strong>Read reports</strong></p></td>
+<td><p><a href="utr/html/index.html">Technical report collection</a>
+(UTR 1–23, plus UTF-8 notes)</p></td>
+</tr>
+<tr class="odd">
+<td><p><strong>Debug</strong></p></td>
+<td><p><a href="utr/html/utr10.html">UTR 10 — UDB</a> · short <a
+href="udb/index.html">overview</a></p></td>
+</tr>
+</tbody>
+</table>
+<h2 id="language-reference">Language reference</h2>
+<ul>
+<li><a href="utr/html/utr8.html">UTR 8 — Language reference</a></li>
+<li><a href="utr/html/utr11.html">UTR 11 — unicon(1) man page</a></li>
+<li><a href="unicon/html/posix.html">POSIX interface notes</a></li>
+<li><a href="utr/html/utf8.html">UTF-8 support notes</a></li>
+</ul>
+<h2 id="books-latex-sources">Books (LaTeX sources)</h2>
+<p>Manuscripts in the tree; printed/PDF editions are on the project
+site.</p>
+<ul>
+<li><a href="book/">Programming with Unicon</a> —
+<code>doc/book/</code></li>
+<li><a href="ib/">Icon implementation book</a> —
+<code>doc/ib/</code></li>
+<li>Site: <a href="https://unicon.sourceforge.io/ubooks.html">Books
+page</a></li>
+</ul>
+<h2 id="tools-and-how-tos">Tools and how-tos</h2>
+<ul>
+<li><a href="uscribe/out/index.html">uscribe user guide</a> — RST →
+HTML/PDF doc tool</li>
+<li><a href="utr/html/utr15.html">UTR 15 — writing a UTR</a></li>
+<li><a href="unicon/html/simple.html">CGI library example</a></li>
+</ul>
+<h2 id="archives">Archives</h2>
+<p>Older or superseded material kept for reference.</p>
+<ul>
+<li><a href="icon/">Icon 9.3 documents</a> — IPDs, Icon FAQs, man
+pages</li>
+<li><a href="unicon/html/svn.html">SVN checkout notes</a> — legacy;
+development uses Git</li>
+<li><a href="unicon/html/reports.html">Alternate reports
+listing</a></li>
+</ul>
+<h2 id="build-the-html-contributors">Build the HTML (contributors)</h2>
+<p>From a configured Unicon tree:</p>
+<pre><code>make -C doc/utr html        # technical reports
+make -C doc/unicon html     # FAQ, Posix, …
+make -C doc/uscribe html   # uscribe guide</code></pre>
+<p>Preview this site locally:</p>
+<pre><code>bash config/scripts/gh-pages/build-gh-pages-site.sh _site
+bash config/scripts/gh-pages/serve-local.sh</code></pre>
+<footer class="unicon-site-footer">
+  <a href="/unicon/">Home</a>
+  · <a href="/unicon/doc/">Documentation</a>
+  · Source on <a href="https://github.com/uniconproject/unicon">GitHub</a>
+</footer>
+</body>
+</html>

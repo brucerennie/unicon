@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Unicon Benchmark Suite</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li class="current">UTR 16a: A Unicon Benchmark Suite</li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr15.html">&larr; UTR 15: How to Write a Unicon Technical Report</a>
+<a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">A Unicon Benchmark Suite</h1>
+<p class="report-authors">Shea Newton and Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 16a</p>
+<p class="report-date">2014-06-09</p>
+<p class="report-pdf"><a href="utr16.pdf">pdf</a> · <a href="_sources/utr16.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>A benchmark suite was used to demonstrate the performance of various Icon language features on systems and compilers of the late 1980's. For Unicon, the addition of various language features combined with generations of processor improvements motivated the development of a new benchmark suite. This document describes updates to the existing Icon benchmark suite for use in Unicon as well as additional benchmarking programs that serve to better analyze Unicon's performance on today's machines.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+This technical report describes a benchmark suite for the Unicon language, called the Unicon 12 Benchmark Suite. The Unicon 12 benchmarks include revisions of the Icon benchmark suite as well as new benchmarks that measure the performance of additional language features. In addition to enabling the comparison of different platforms and different Unicon implementations, several multi-language benchmarks enable comparison of Unicon's performance to other languages implementing the same algorithms.
+</p>
+<p>
+For this project, the Icon benchmark suite was modified in order to increase computation time. These modifications include either larger data sets, an increased number of calculations or more results generated from existing calculations. Additions to the Icon suite include programs developed for the Computer Language Benchmarks Game found at 
+<a href="http://benchmarksgame.alioth.debian.org/" rel="noopener">http://benchmarksgame.alioth.debian.org/</a>
+. These programs allow comparison between similar algorithms implemented in a wide range of languages and on various machine architectures.
+</p>
+<h2 id="modifications-to-the-existing-icon-benchmark-suite">
+Modifications to the Existing Icon Benchmark Suite
+</h2>
+<p>
+Included in the Unicon Version 12.1 source distribution are five Icon benchmarks in the directory 
+<code>tests/bench/icon</code>
+. These tests were used to compare different platforms for running Icon in the late 1980's. Figure 1 describes these programs and their runtimes as the average of three executions, on a dual core machine running 64-bit Linux Mint 12 with an AMD Opteron 2212 2.0 GHz processor and 8 GB of RAM. These times were measured with the Unicon keyword 
+<code>&amp;time</code>
+, which measures CPU time with a clock resolution of 1ms on typical Linux Unicon platforms.
+</p>
+<p>
+The modifications necessary to increase the run-times of these programs were slight, generally increasing n, where n is the number of outcomes generated or simply providing larger data sets for those programs that used input files. As can be seen from Figure 1, on modern processors the original Icon benchmarks that used to take many seconds now have runtimes small enough that even a 1ms resolution may introduce significant errors in the measurements. These modified benchmarks are available from 
+<a href="http://unicon.org" rel="noopener">Unicon.org</a>
+.
+</p>
+<p>
+<strong>
+Figure 1. Existing Icon Benchmark Suite, modifications and performance on a modern machine.
+</strong>
+</p>
+<table id="fig1">
+<thead>
+<tr>
+<th>
+Benchmark: Features Represented
+</th>
+<th>
+Description
+</th>
+<th>
+Run-times
+</th>
+<th>
+Changes
+</th>
+<th>
+Extended Run-times
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+concord: strings, lists
+</td>
+<td>
+Produces concordance from standard input to standard output where words less than three characters long are ignored.
+</td>
+<td>
+157ms
+</td>
+<td>
+The original 447 line 
+<em>
+Unix Programmer's Manual
+</em>
+ input was replaced with a 4719 line .txt version of Dostoevsky's, 
+<em>
+Notes from the Underground
+</em>
+</td>
+<td>
+11.351s
+</td>
+</tr>
+<tr>
+<td>
+deal: strings, lists
+</td>
+<td>
+Deals bridge hands.
+</td>
+<td>
+140ms
+</td>
+<td>
+The number of hands dealt was increased from 1 to 50,000.
+</td>
+<td>
+7.421s
+</td>
+</tr>
+<tr>
+<td>
+ipxref: strings, lists, records and tables
+</td>
+<td>
+Produces a cross reference for Icon programs. 
+[<a class="cite" href="#cite-griswold-newsletter">4</a>]</td>
+<td>
+43ms
+</td>
+<td>
+ipxref originally cross-referenced itself, 239 lines, but inputs 50,687 lines of source code 
+[<a class="cite" href="#cite-jeffery-sesrit">5</a>].
+</td>
+<td>
+6.309s
+</td>
+</tr>
+<tr>
+<td>
+queens: recursion, backtracking
+</td>
+<td>
+Generates solutions to the n-queens problem. Program does generation, backtracking and text synthesis. 
+[<a class="cite" href="#cite-griswold-newsletter">4</a>]</td>
+<td>
+197ms
+</td>
+<td>
+Now implements a larger n, where n is the number of queens for which to generate a solution. N was changed from 6 to 12.
+</td>
+<td>
+11.593s
+</td>
+</tr>
+<tr>
+<td>
+rsg: strings, lists
+</td>
+<td>
+Generates randomly selected sentences from a grammar. 
+[<a class="cite" href="#cite-griswold-newsletter">4</a>]</td>
+<td>
+190ms
+</td>
+<td>
+Originally generated 1000 sentences, this number was changed in order to generate 50,000 sentences.
+</td>
+<td>
+7.276s
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="additions-to-the-existing-suite">
+Additions to the Existing Suite
+</h2>
+<p>
+A major shortcoming of the Icon benchmark suite is that it did not cover many of the important language features that defined Icon. The Icon benchmarks deliberately avoided I/O and traditional numeric processing; their failure to emphasize other language features was unintentional. In any case, in order to overcome this issue, the Unicon benchmark suite needs to expand in order to account for Unicon and Icon's feature set. Ideally, the Unicon benchmark suite will eventually include coverage of the following:
+</p>
+<ul>
+<li>
+integer, real, and arbitrary precision arithmetic
+</li>
+<li>
+programmer-defined generators, suspension, and backtracking
+</li>
+<li>
+tables / sets
+</li>
+<li>
+threads
+</li>
+<li>
+object construction, field access, method invocation
+</li>
+<li>
+2D and 3D graphics
+</li>
+<li>
+TCP and UDP network communication
+</li>
+<li>
+DBM and ODBC databases
+</li>
+</ul>
+<p>
+Due to time and resource limitations, the Unicon 12 benchmark suite omits I/O benchmarking, but addresses the first four of these areas using algorithms developed for the Computer Language Benchmark Game found at 
+<a href="http://benchmarksgame.alioth.debian.org" rel="noopener">http://benchmarksgame.alioth.debian.org</a>
+. The advantage of these algorithms is that their performance on various machines and their implementations in various languages is well documented and timed.
+</p>
+<p>
+Figure 2 describes the programs that make up the Computer Language Benchmarks Game 
+[<a class="cite" href="#cite-shootout-2014">6</a>]. The source code for Unicon versions of these programs are included in the appendix of this report, and available from 
+<a href="http://unicon.org" rel="noopener">Unicon.org</a>
+.
+</p>
+<p>
+<strong>
+Figure 2. Descriptions of the programs that comprise the Computer Language Benchmarks Game.
+</strong>
+</p>
+<table id="fig2">
+<thead>
+<tr>
+<th>
+Benchmark
+</th>
+<th>
+Description
+</th>
+<th>
+Features Represented
+</th>
+<th>
+N
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+n-body
+</td>
+<td>
+performs an N-body simulation of the Jovian planets
+</td>
+<td>
+real numbers, records
+</td>
+<td>
+50,000,000
+</td>
+</tr>
+<tr>
+<td>
+fannkuch-redux
+</td>
+<td>
+repeatedly accesses a tiny integer-sequence
+</td>
+<td>
+integers, lists
+</td>
+<td>
+12
+</td>
+</tr>
+<tr>
+<td>
+meteor-contest
+</td>
+<td>
+searches for solutions to a shape packing puzzle
+</td>
+<td>
+integers, records
+</td>
+<td>
+2098
+</td>
+</tr>
+<tr>
+<td>
+fasta
+</td>
+<td>
+generates and writes random DNA sequences
+</td>
+<td>
+records, lists, strings, suspend, generators
+</td>
+<td>
+25,000,000
+</td>
+</tr>
+<tr>
+<td>
+spectral-norm
+</td>
+<td>
+calculates an eigenvalue using the power method
+</td>
+<td>
+real numbers, lists
+</td>
+<td>
+5,500
+</td>
+</tr>
+<tr>
+<td>
+reverse-complement
+</td>
+<td>
+reads DNA sequences and writes their reverse-complement
+</td>
+<td>
+strings, lists
+</td>
+<td>
+25,000,000
+</td>
+</tr>
+<tr>
+<td>
+mandelbrot
+</td>
+<td>
+generates a Mandelbrot set and writes a portable bitmap
+</td>
+<td>
+integers, threads
+</td>
+<td>
+16,000
+</td>
+</tr>
+<tr>
+<td>
+k-nucleotide
+</td>
+<td>
+repeatedly updates hash-tables and k-nucleotide strings
+</td>
+<td>
+strings, lists
+</td>
+<td>
+25,000,000
+</td>
+</tr>
+<tr>
+<td>
+regex-dna
+</td>
+<td>
+matches DNA 8-mers and substitutes nucleotides for IUB code
+</td>
+<td>
+records, strings, threads
+</td>
+<td>
+5,000,000
+</td>
+</tr>
+<tr>
+<td>
+pidigits
+</td>
+<td>
+calculates the digits of Pi with streaming arbitrary-precision arithmetic
+</td>
+<td>
+arbitrary precision integers
+</td>
+<td>
+10,000
+</td>
+</tr>
+<tr>
+<td>
+chameneos-redux
+</td>
+<td>
+repeatedly performs symmetrical thread rendezvous requests
+</td>
+<td>
+threads, records
+</td>
+<td>
+6,000,000
+</td>
+</tr>
+<tr>
+<td>
+thread-ring
+</td>
+<td>
+repeatedly switches from thread to thread passing one token
+</td>
+<td>
+threads
+</td>
+<td>
+50,000,000
+</td>
+</tr>
+<tr>
+<td>
+binary-trees
+</td>
+<td>
+allocates and deallocates many binary trees
+</td>
+<td>
+integers, lists, threads
+</td>
+<td>
+20
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="benchmark-game-results">
+Benchmark Game Results
+</h2>
+<p>
+Preliminary results for the implemented benchmarks follow, along with the performance of similar algorithms implemented in Python and C. Timings for the Unicon programs were calculated as real/wall clock time using Unicon's gettimeofday() and CPU time using the Unicon keyword 
+<code>&amp;time</code>
+. Unicon's 
+<code>&amp;time</code>
+ keyword has a 1ms resolution, while the gettimeofday() calculates timing with a resolution of 1µs. For these tables, gettimeofday() results have been rounded to the nearest millisecond. Python and C timings were calculated using Linux's 
+<code>time(1)</code>
+ utility where the CPU time reported below is the sum of the reported user and system time.
+</p>
+<p>
+The times presented here represent the average runtime of over three executions on a 32 core machine running 64-bit Fedora 16 with an AMD Opteron 6272 2.1 GHz processor and 32 GB of RAM. Unicon was compiled with 
+<code>-O2</code>
+ optimization and concurrency enabled. The C and Python results are presumably for carefully tuned, near optimal solutions, while the Unicon times are based on somewhat untuned translations of the C and Python solutions. For instance, due to the efficiency of string scanning in Icon and Unicon, there has been very little work done to optimize regular expression functionality. At this point, the benchmarks show Unicon to be 1.6x-334x slower than C, and 1x faster to 30x slower than Python. Unicon's optimizing compiler, invoked via 
+<code>unicon -C</code>
+ and commonly referred to as Uniconc, performs remarkably well. When it is enabled in Unicon source distributions (via make Uniconc after the VM build is performed via make Unicon), Uniconc demonstrates execution times 1.6x faster to 60x slower than C and 11x faster to 6.2x slower than Python.
+</p>
+<p>
+Additional benchmarks, tuning, and updated numbers will increase the usefulness of the information, and identify opportunities for language implementation improvements. For example, one of the Python benchmarks depends on installation of a C library (GMP) that appears to outperform Unicon's arbitrary precision integer implementation.
+</p>
+<p>
+<strong>
+Figure 3. Execution times for the Computer Language Shootout Game benchmarks expressed as ratios of C program execution times.
+</strong>
+</p>
+<table id="fig3">
+<thead>
+<tr>
+<th>
+Benchmark
+</th>
+<th>
+C
+</th>
+<th>
+Python
+</th>
+<th>
+Unicon
+</th>
+<th>
+Uniconc
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+n-body
+</td>
+<td>
+10.318s
+</td>
+<td>
+136x
+</td>
+<td>
+345.2x
+</td>
+<td>
+57.9x
+</td>
+</tr>
+<tr>
+<td>
+fannkuch-redux
+</td>
+<td>
+65.245s
+</td>
+<td>
+61.5x
+</td>
+<td>
+199.7x
+</td>
+<td>
+20.3x
+</td>
+</tr>
+<tr>
+<td>
+meteor-contest
+</td>
+<td>
+0.188s
+</td>
+<td>
+100.6x
+</td>
+<td>
+98.9x
+</td>
+<td>
+9.1x
+</td>
+</tr>
+<tr>
+<td>
+fasta
+</td>
+<td>
+8.195s
+</td>
+<td>
+45.1x
+</td>
+<td>
+70.4x
+</td>
+<td>
+10.2x
+</td>
+</tr>
+<tr>
+<td>
+spectral-norm
+</td>
+<td>
+37.929s
+</td>
+<td>
+37.6x
+</td>
+<td>
+58.4x
+</td>
+<td>
+7.2x
+</td>
+</tr>
+<tr>
+<td>
+reverse-complement
+</td>
+<td>
+1.583s
+</td>
+<td>
+6.5x
+</td>
+<td>
+10.4x
+</td>
+<td>
+4.1x
+</td>
+</tr>
+<tr>
+<td>
+mandelbrot
+</td>
+<td>
+49.677s
+</td>
+<td>
+1.3x
+</td>
+<td>
+8.1x
+</td>
+<td>
+8.1x
+</td>
+</tr>
+<tr>
+<td>
+k-nucleotide
+</td>
+<td>
+9.413s
+</td>
+<td>
+64.8x
+</td>
+<td>
+180.9x
+</td>
+<td>
+55.4x
+</td>
+</tr>
+<tr>
+<td>
+regex-dna
+</td>
+<td>
+21.228s
+</td>
+<td>
+1.3x
+</td>
+<td>
+1.7x
+</td>
+<td>
+0.6x
+</td>
+</tr>
+<tr>
+<td>
+pidigits
+</td>
+<td>
+2.491s
+</td>
+<td>
+1x
+</td>
+<td>
+8.6x
+</td>
+<td>
+3.1x
+</td>
+</tr>
+<tr>
+<td>
+chameneos-redux (thread specific)
+</td>
+<td>
+2.083s
+</td>
+<td>
+211.2x
+</td>
+<td>
+334x
+</td>
+<td>
+N/A
+</td>
+</tr>
+<tr>
+<td>
+thread-ring (thread specific)
+</td>
+<td>
+7m:32.017s
+</td>
+<td>
+1.4x
+</td>
+<td>
+1.6x
+</td>
+<td>
+N/A
+</td>
+</tr>
+<tr>
+<td>
+binary-trees
+</td>
+<td>
+22.408s
+</td>
+<td>
+2.1x
+</td>
+<td>
+62.2x
+</td>
+<td>
+11.6x
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="future-work">
+Future Work
+</h2>
+<p>
+In order to answer the question of how Unicon performs on various operating systems and architectures, the Unicon project is soliciting the community of Unicon users to record and report results on diverse platforms. A similar approach was taken for Icon in the 1980's with a table of user-reported benchmark results published in the Icon Newsletter #31 
+[<a class="cite" href="#cite-griswold-newsletter">4</a>]. Obtaining end user participation depends on an end product that is both easy for users to run, and easy for them to report their results. The Unicon 12 Benchmark Suite aims to meet this end and includes multiple scripts and logging tools. Scripts included in the package are designed to allow users to log results for multiple run-times estimated at 15 minutes, 1 hour, and 20 hours to run to completion. Details about these tools can be found in Appendix A or the README file in 
+<code>test/bench</code>
+.
+</p>
+<p>
+There remains the work of developing further benchmarks for the suite in order for it to address Unicon's feature set comprehensively. Those benchmarks should include programs covering object construction, field access, method invocation, 2D and 3D graphics, TCP and UDP network communication, and DBM and ODBC databases.
+</p>
+<h2 id="conclusions">
+Conclusions
+</h2>
+<p>
+The Unicon 12 benchmark suite serves a variety of purposes. It was motivated by a need to compare Unicon's speed on different operating systems and CPU types. In addition it allows comparison of different Unicon implementations.
+</p>
+<p>
+Future revisions to the Unicon 12 suite might not include all the original Icon benchmarks, since they are somewhat redundant. Similarly, not all the language benchmark game benchmarks might be necessary, since some of them are redundant with each other or with Icon benchmarks.
+</p>
+<p>
+In terms of language coverage, there remains the work of developing further benchmarks for the suite in order for it to address Unicon's feature set comprehensively. Those benchmarks should include programs covering object construction, field access, method invocation, 2D and 3D graphics, TCP and UDP network communication, and DBM and ODBC databases.
+</p>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-levine92" value="1">
+John R. Levine and Tony Mason and Doug Brown. &quot;Lex \&amp; Yacc&quot;. O'Reilly and Associates. 1992.
+</li>
+<li id="cite-ray03" value="2">
+K. Ray and Ray Pereda and Clinton Jeffery. &quot;Ulex -- A Lexical Analyzer Generator for Unicon&quot;. http://unicon.org/utr/utr2/utr2a.pdf. 2003.
+</li>
+<li id="cite-jeffery-1995-cs-tr" value="3">
+Clinton Jeffery. &quot;How to Write a UTSA CS Division Technical Report&quot;. 1995.
+</li>
+<li id="cite-griswold-newsletter" value="4">
+Ralph Griswold. &quot;Icon Benchmarks&quot;. The Icon Newsletter. 1989.
+</li>
+<li id="cite-jeffery-sesrit" value="5">
+Clinton Jeffery and David Rice. &quot;sesrit.icn&quot;. http://www2.cs.uidaho.edu/~jeffery/courses/game/sesrit.icn. 1999.
+</li>
+<li id="cite-shootout-2014" value="6">
+Brent Fulgham and Isaac Gouy. &quot;The Computer Language Benchmarks Game&quot;. http://benchmarksgame.alioth.debian.org/.
+</li>
+<li id="cite-merr" value="7">
+Clinton Jeffery. &quot;Merr: an LR Syntax Error Message Tool&quot;. http://unicon.org/merr.
+</li>
+<li id="cite-crawford" value="8">
+anonymous, but owing to Douglas Crawford. &quot;Introducing JSON&quot;. json.org.
+</li>
+<li id="cite-beck-sunit" value="9">
+Kent Beck. &quot;Simple Smalltalk Testing: With Patterns&quot;. Available at https://web.archive.org/web/20150315073817/http://www.xprogramming.com/testfram.htm [Verified 13 May 2024].
+</li>
+</ol></div>
+<h2 id="appendix-a-readme">
+Appendix A: README
+</h2>
+<pre><code class="language-text">
+
+=========
+Unicon 12 Benchmark Suite 
+
+Requirements for Windows: At least sh.exe and make.exe on the
+path. You may need the MinGW package.
+
+Linux systems should be fine.
+
+Some of these benchmarks require that Unicon has concurrency enabled. 
+
+To check if Unicon has concurrency enabled, type &quot;unicon -features&quot; on
+the command line and check for concurrent threads listed as a feature.
+
+If you've built Unicon from sources, concurrency may be enabled by
+un-commenting the line &quot;#define Concurrent 1&quot; in the file define.h
+located in /src/h/ in your Unicon directory. 
+
+In this zip, four automated Unicon versions of the Computer Language
+Benchmark Game's programs may be run using the Unicon scripts
+&quot;run-test,&quot; &quot;run-short,&quot; &quot;run-med&quot; and &quot;run-shootout.&quot; The intricacies
+of these scripts are detailed below.
+
+Instructions for building and running the benchmarks included in this
+zip file:
+
+1. After unzipping the folder, run the make command to build independent
+   executables, .u files for the automated scripts, and the .dat files
+   required for k-nucleotide, regex-dna and reverse-complement. 
+
+2. Once built, the script executables run-test and run-shootout may be
+   run in two ways:
+
+	[A] One option is to run a script with no arguments 
+	    (e.g., ./run-test or ./run-benchmark ), in order 
+	    to run each benchmark in succession with output suppressed.
+
+	[B] The second option is to run the script with the name of
+   	the benchmark you'd like to run (listed below) as the script's 
+	    argument (e.g., ./run-test binary-trees or 
+    ./run-shootout meteor-contest, in order to run that specific 
+    benchmark with output suppressed.
+
+3. Aside from the scripts, ideally the make command will build
+   independent executables that may be run on their own in order to
+   see output or to set your own input values. These executables do not
+   have timing mechanisms built into them.   
+
+4. The included makefile has rules for each benchmark and script so
+   you should be able to make each independently if desired.	 
+
+Generating Input Files 
+========================= 
+A file fasta.c was included in order to quickly generate the input
+.dat files. If there is no C compiler present you may opt to generate
+all input files with a Unicon program when prompted after running make
+or you may generate them incrementally. Using Unicon to generate input
+files can take some time so if you'd like to generate input
+incrementally, you may specify which version or versions of the
+benchmarks to generate input files for using the generate program
+included in this package.
+
+Examples would be: 
+./generate test 
+or
+./generate benchmark
+or 
+./generate test benchmark med
+to generate a few at a time
+
+Running the benchmarks 
+========================= 
+The data at below represents input values required for a short Unicon
+benchmark run and a full &quot;benchmark shootout game website approved
+run.&quot; Also included are the input values for testing and for an
+alternate version of the benchmarks adjusted in order to achieve,
+hopefully, meaningful results without requiring an entire 20+ hour
+run.
+
+Approximate time takes to run each version of this benchmark suite:
+
+run-test: 20 seconds
+run-benchmark: 5 minutes
+run-shootout: 20 hours
+run-med: 1 hour
+
+
+
+Testing Purposes: run-test 
+-------------------------------------------------------
+concord concord.test
+deal 500
+ipxref ipxref.test
+queens 9
+rsg rsg.test
+binary-trees: 10    
+chameneos-redux: 600    
+fannkuch: 7    
+fasta: 1000    
+k-nucleotide: fasta output 25,000     
+mandelbrot: 200     
+meteor-contest: 1     
+n-body: 1000    
+pidigits: 500    
+regex-dna: fasta output 10,000    
+reverse-complement: fasta output 150000    
+spectral-norm: 100    
+thread-ring: 1000    
+
+Standard Unicon 12 Benchmark Run: run-benchmark    
+-------------------------------------------------------
+concord concord.dat
+deal 50000
+ipxref ipxref.dat
+queens 12
+rsg rsg.dat
+binary-trees: 14    
+chameneos-redux: 65,000     
+fannkuch: 9    
+fasta: 250000    
+k-nucleotide: fasta output 150,000     
+mandelbrot: 750    
+meteor-contest: 600    
+n-body: 10,0000    
+pidigits: 7,000    
+regex-dna: fasta output 700,000    
+reverse-complement: fasta output 15,000,000    
+spectral-norm: 300    
+thread-ring: 700,000    
+
+Full Benchmark Shootout Game Run: run-shootout  
+-------------------------------------------------------
+binary-trees: 20    
+chameneos-redux: 6,000,000    
+fannkuch: 12    
+fasta: 25,000,000    
+k-nucleotide: fasta output 25,000,000    
+mandelbrot: 16,000    
+meteor-contest: 2098    
+n-body: 50,000,000    
+pidigits: 10,000    
+regex-dna: fasta output 5,000,000    
+reverse-complement: fasta output 25,000,000    
+spectral-norm: 5,500    
+thread-ring: 50,000,000    
+
+Alternate &quot;n&quot; Benchmark Shootout Game Run: run-med
+-------------------------------------------------------
+binary-trees: 17  
+chameneos-redux: 1,500,000  
+fannkuch: 10    
+fasta: 7,000,000    
+k-nucleotide: fasta output 3,000,000     
+mandelbrot: 3,500    
+meteor-contest: 2,098     
+n-body: 1,500,000    
+pidigits: 10,000    
+regex-dna: fasta output 5,000,000    
+reverse-complement: fasta output 25,000,000    
+spectral-norm: 1,300        
+thread-ring: 15,000,000     
+</code></pre>
+<h2 id="appendix-b-source">
+Appendix B: Source
+</h2>
+<p>
+The following is source code for the Unicon programs translated from algorithms written for the Computer Language Benchmark Game.
+</p>
+<h3 id="n-body-icn">
+n-body.icn
+</h3>
+<pre><code class="language-unicon">
+
+# n-body.icn
+#
+# The Computer Language Benchmarks Game
+# http://benchmarksgame.alioth.debian.org/
+#
+# Translated from Kevin Carson, Tupteq, Fredrick Johansson,
+# Daniel Nanz and Maciej Fijalkowski's Python program
+
+link printf
+
+global PI, SOLAR_MASS, DAYS_PER_YEAR, BODIES, SYSTEM, PAIRS
+
+procedure combinations(L)
+   result := []
+   every put(result, [L[x := 1 to *L], L[x+1 to *L]])
+   return result
+end
+
+record xyz(x,y,z)
+
+procedure advance(dt, n)
+   every i := 1 to n do {
+      every p := !PAIRS do {
+         p1 := p[1]
+         p11 := p1[1]
+         v1 := p1[2]
+         p2 := p[2]
+         p21 := p2[1]
+         v2 := p2[2]
+         dx := p11.x - p21.x
+         dy := p11.y - p21.y
+         dz := p11.z - p21.z
+         mag := dt * ((dx * dx + dy * dy + dz * dz) ^ -1.5)
+         b1m := p1[3] * mag
+         b2m := p2[3] * mag
+         v1.x -:= dx * b2m
+         v1.y -:= dy * b2m
+         v1.z -:= dz * b2m
+         v2.x +:= dx * b1m
+         v2.y +:= dy * b1m
+         v2.z +:= dz * b1m
+         }
+      every s := !SYSTEM do {
+         r := s[1]
+         v := s[2]
+         r[1] +:= dt * v.x
+         r[2] +:= dt * v.y
+         r[3] +:= dt * v.z
+         }
+      }
+end
+
+procedure report_energy()
+   local e := 0.0, p1
+   every p := !PAIRS do {
+      p1 := p[1]
+      p11 := p1[1]
+      p2 := p[2]
+      p21 := p2[1]
+      dx := p11.x - p21.x
+      dy := p11.y - p21.y
+      dz := p11.z - p21.z
+      e -:= p1[3] * p2[3] / ((dx * dx + dy * dy + dz * dz) ^ 0.5)
+      }
+
+   every b := !SYSTEM do {
+      v := b[2]
+      e +:= b[3] * (v.x * v.x + v.y * v.y + v.z * v.z) / 2.
+         }
+
+   fprintf(output, &quot;%.9r\n&quot;, e)
+end
+
+procedure offset_momentum(ref)
+   local px := 0, py := 0, pz := 0.0
+   every s := !SYSTEM do {
+      v := s[2]
+      m := s[3]
+      px -:= v.x * m
+      py -:= v.y * m
+      pz -:= v.z * m
+      }
+   v := ref[2]
+   m := ref[3]
+   v.x := px / m
+   v.y := py / m
+   v.z := pz / m
+end
+
+procedure run_nbody(argv)
+   local ref := &quot;sun&quot;
+   PI := 3.14159265358979323
+   SOLAR_MASS := 4 * PI * PI
+   DAYS_PER_YEAR := 365.24
+
+   BODIES := table(
+             &quot;sun&quot;,
+                [xyz(0.0, 0.0, 0.0), xyz(0.0, 0.0, 0.0), SOLAR_MASS],
+             &quot;jupiter&quot;,
+                [xyz(4.84143144246472090e+00,
+                   -1.16032004402742839e+00,
+                   -1.03622044471123109e-01),
+                 xyz(1.66007664274403694e-03 * DAYS_PER_YEAR,
+                    7.69901118419740425e-03 * DAYS_PER_YEAR,
+                   -6.90460016972063023e-05 * DAYS_PER_YEAR),
+                    9.54791938424326609e-04 * SOLAR_MASS],
+              &quot;saturn&quot;,
+                 [xyz(8.34336671824457987e+00,
+                    4.12479856412430479e+00,
+                   -4.03523417114321381e-01),
+                  xyz(-2.76742510726862411e-03 * DAYS_PER_YEAR,
+                    4.99852801234917238e-03 * DAYS_PER_YEAR,
+                    2.30417297573763929e-05 * DAYS_PER_YEAR),
+                    2.85885980666130812e-04 * SOLAR_MASS],
+              &quot;uranus&quot;,
+                  [xyz(1.28943695621391310e+01,
+                      -1.51111514016986312e+01,
+                      -2.23307578892655734e-01),
+                   xyz(2.96460137564761618e-03 * DAYS_PER_YEAR,
+                       2.37847173959480950e-03 * DAYS_PER_YEAR,
+                      -2.96589568540237556e-05 * DAYS_PER_YEAR),
+                       4.36624404335156298e-05 * SOLAR_MASS],
+              &quot;neptune&quot;,
+                  [xyz(1.53796971148509165e+01,
+                      -2.59193146099879641e+01,
+                       1.79258772950371181e-01),
+                   xyz(2.68067772490389322e-03 * DAYS_PER_YEAR,
+                       1.62824170038242295e-03 * DAYS_PER_YEAR,
+                      -9.51592254519715870e-05 * DAYS_PER_YEAR),
+                       5.15138902046611451e-05 * SOLAR_MASS]
+                    )
+
+   SYSTEM := []
+   every put(SYSTEM, !BODIES)
+   PAIRS := combinations(SYSTEM)
+   offset_momentum(BODIES[ref])
+   report_energy()
+   advance(0.01, argv[1])
+   report_energy()
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_nbody(argv)
+end
+$endif
+</code></pre>
+<h3 id="fannkuch-icn">
+fannkuch.icn
+</h3>
+<pre><code class="language-unicon">
+
+# fannkuch.icn
+#
+# The Computer Language Benchmarks Game
+# http://benchmarksgame.alioth.debian.org/
+# Translated from Isaac Gouy, Buck Golemon 
+# and Justin Peel's Python program
+
+procedure fannkuch(n)
+   maxFlipsCount := checksum := 0
+   permSign := 1
+   perm1 := list(n)
+   every perm1[i := 1 to n] := i-1
+   count := copy(perm1) 
+
+   repeat { 
+      k := perm1[1]
+      if k ~= 0 then {
+         perm := copy(perm1) 
+         flipsCount := 1
+         kk := perm[k + 1]
+         while kk ~= 0 do {
+            # reverse elements 1..k+1
+            top := k+2
+            every i := 1 to (k+1)/2 do
+               perm[i] :=: perm[top-i]
+            flipsCount +:= 1
+            k := kk
+            kk := perm[kk+1]
+            }
+         if maxFlipsCount &lt; flipsCount then {
+            maxFlipsCount := flipsCount
+            }
+         if permSign = 1 then {
+            checksum +:= flipsCount 
+            }
+         else { 
+            checksum -:= flipsCount
+            }
+         }
+      # generate another permutation via incremental change
+      flag := 1
+      if permSign = 1 then {
+         perm1[1] :=: perm1[2]
+         permSign := 0
+         }
+      else {
+         perm1[2] :=: perm1[3]
+         permSign := 1 
+         every r := 3 to n - 1 do {
+            if count[r] ~= 0 then {
+               flag := 0
+               break
+               }
+            count[r] := r-1
+            perm0 := pop(perm1)
+            insert(perm1, r + 1, perm0)
+            }
+         if flag = 1 then {
+            r := n
+            if count[r] = 0 then {
+               write(output, checksum)
+               return maxFlipsCount
+               }
+            }
+         count[r] -:= 1
+         }
+      }
+end
+
+procedure run_fannkuch(av)
+   n := integer(av[1])
+   write(output, &quot;Pfannkuchen(&quot;, n, &quot;) = &quot;, fannkuch(n))
+end
+
+$ifdef MAIN
+procedure main(av)
+   output := &amp;output
+   run_fannkuch(av)
+end
+$endif
+</code></pre>
+<h3 id="meteor-contest-icn">
+meteor-contest.icn
+</h3>
+<pre><code class="language-unicon">
+
+# meteor-contest.icn
+#
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+# Translated from Olof Kraigher's 
+# Python program
+
+global width, height, masksAtCell 
+global solutions, masks, directions 
+global rotate, flip, moves, pieces
+
+record xy(x, y)
+
+procedure findFreeCell(board)
+   bitposn := 1
+   every y := 0 to height - 1 do {
+      every x := 0 to width - 1 do {
+         if iand(board, bitposn) = 0 then
+            return xy(x, y)
+	 bitposn := ishift(bitposn, 1)
+         }
+      }
+end
+
+procedure floodFill(board, coords)
+   local bitposn
+   x := coords.x
+   y := coords.y
+   bitposn := ishift(1, x + width * y)
+
+   if (not valid(x,y)) | (iand(board, bitposn) ~= 0) then
+      return board
+   board := ior(board, bitposn)
+   every board := ior(board, floodFill(board, (!moves)(x, y)))
+   return board
+end
+
+procedure noIslands(mask)
+   zeroes := zerocount(mask)
+   if zeroes &lt; 5 then fail
+   while mask ~= 16r3FFFFFFFFFFFF do {
+      mask := floodFill(mask, findFreeCell(mask))
+      new_zeroes := zerocount(mask)
+      if (zeroes - new_zeroes) &lt; 5 then fail
+      zeroes := new_zeroes
+      }
+   return
+end
+
+procedure getBitmask(x,y,piece)
+   mask := ishift(1, (x + width*y))
+
+   every cell := !piece do {
+      results := moves[cell](x,y)
+      x := results.x
+      y := results.y
+      if (0 &lt;= x &lt; width) &amp; (0 &lt;= y &lt; height) then # valid
+         mask := ior(mask, ishift(1, (x + width*y)))
+      else {
+         fail
+         }
+      }
+   return mask
+end
+
+procedure allBitmasks(piece, color)
+   bitmasks := []
+   every !2 do {
+      every rotations := 1 
+      to (6 - 3*(if color = 4 then 1 else 0)) do {
+         every y := 0 to height - 1 do {
+            every x := 0 to width - 1 do {
+               if noIslands(mask := getBitmask(x, y, piece)) 
+               then {
+                  put(bitmasks, mask) 
+                  }
+               }
+            }
+         every piece[cell := 1 to *piece] := rotate[piece[cell]]
+         }
+      every piece[cell := 1 to *piece] := flip[piece[cell]]
+      }
+   return bitmasks
+end
+
+procedure generateBitmasks()
+   local color := 0
+
+   every piece := !pieces do {
+      m := sort(allBitmasks(piece, color))
+      cellMask := ishift(1, (width*height-1))
+      cellCounter := width*height - 1
+      j := *m
+      while j &gt; 0 do {
+         if iand(m[j], cellMask) = cellMask then {
+            put(masksAtCell[cellCounter + 1, color+1], m[j])
+            j -:= 1
+            }
+         else {
+            cellMask := ishift(cellMask, -1)
+            cellCounter -:= 1
+            }
+         }
+      color +:= 1
+      }
+end
+
+procedure solveCell(cell, board, n)
+
+   if *solutions &gt;= n then {
+      return
+      }
+   if board = 16r3FFFFFFFFFFFF then {
+      s := stringOfMasks(masks)
+      put(solutions, s, s) # inverse(s))
+      return
+      }
+   if iand(board, ishift(1, cell)) ~= 0 then {
+      solveCell(cell-1, board, n)
+      return
+      }
+   if cell &lt; 0 then {
+      return
+      }
+   every color := 1 to 10 do {
+      if masks[color] = 0 then {
+         every mask := !masksAtCell[cell + 1, color] do {
+            if iand(mask, board)=0 then { # legal
+               masks[color] := mask
+               solveCell(cell-1, ior(board, mask), n)
+               masks[color] := 0
+               }
+            }
+         }
+      }
+end
+
+procedure solve(n)
+   generateBitmasks()
+   solveCell(width*height-1, 0, n)
+end
+
+procedure stringOfMasks(masks)
+   s := &quot;&quot;
+   mask := 1
+   every !height do {
+      every !width do {
+         every color := 0 to 9 do {
+            if iand(masks[color+1], mask) ~= 0 then {
+               s ||:= color
+               break
+               }
+            else if color = 9 then
+               s ||:= &quot;.&quot;
+            }
+         mask := ishift(mask, 1)
+         }
+      }
+   return s
+end
+
+procedure inverse(s)
+
+   ns := s
+   write(output, image(s))
+   every x := 0 to width - 1 do 
+      every y := 0 to height - 1 do {
+         ns[(x + y*width) + 1] := 
+            s[(width-x-1 + (width - y - 1)*width) + 1]
+
+         }
+   return s
+end
+
+procedure printSolution(solution)
+   every y := 0 to height - 1 do {
+      every x := 0 to width - 1 do 
+         writes(output, solution[(x + y*width) + 1], &quot; &quot;)
+      if (y%2) = 0 then {
+         write(output, )
+         writes(output, &quot; &quot;)
+         }
+      else
+         write(output, )
+      }
+end
+
+procedure valid(x, y)
+   return (0 &lt;= x &lt; width) &amp; (0 &lt;= y &lt; height)
+end
+
+procedure legal(mask, board)
+   return iand(mask, board) = 0
+end
+
+procedure zerocount(mask)
+   static zeros_in_4bits
+   local sum := -2
+   initial zeros_in_4bits := 
+                   [
+                    4, 3, 3, 2, 3, 
+                    2, 2, 1, 3, 2, 
+                    2, 1, 2, 1, 1,0
+                   ]
+   every x := 0 to 48 by 4 do {
+      sum +:= zeros_in_4bits[
+                 1 + ishift(iand(ishift(15,x), mask),-x)
+                            ]
+      }
+   return sum
+end
+
+procedure move_E(x, y)
+   return xy(x+1, y)
+end
+procedure move_W(x, y)
+   return xy(x-1,y)
+end
+procedure move_NE(x, y)
+   return xy(x+(y%2), y-1)
+end
+procedure move_NW(x, y)
+   return xy(x+(y%2)-1, y-1)
+end
+procedure move_SE(x, y)
+   return xy(x+(y%2), y+1)
+end
+procedure move_SW(x, y)
+   return xy(x+(y%2)-1, y+1)
+end
+
+procedure run_meteorcontest(argv)
+
+   if *argv &lt; 1 then stop(&quot;usage: meteor-contest num&quot;)
+   width := 5
+   height := 10
+
+   directions :=
+      table( 
+            &quot;E&quot;, 0,
+            &quot;NE&quot;, 1,
+            &quot;NW&quot;, 2,
+            &quot;W&quot;, 3,
+            &quot;SW&quot;, 4,
+            &quot;SE&quot;, 5
+            )
+   rotate := table(
+                   &quot;E&quot;, &quot;NE&quot;,
+                   &quot;NE&quot;, &quot;NW&quot;,
+                   &quot;NW&quot;, &quot;W&quot;,
+                   &quot;W&quot;, &quot;SW&quot;,
+                   &quot;SW&quot;, &quot;SE&quot;,
+                   &quot;SE&quot;, &quot;E&quot;
+                   )
+   flip := table(
+                 &quot;E&quot;, &quot;W&quot;,
+                 &quot;NE&quot;, &quot;NW&quot;,
+                 &quot;NW&quot;, &quot;NE&quot;,
+                 &quot;W&quot;, &quot;E&quot;,
+                 &quot;SW&quot;, &quot;SE&quot;,
+                 &quot;SE&quot;, &quot;SW&quot;
+                 )
+   moves := table(
+                 &quot;E&quot;, move_E,
+                 &quot;W&quot;, move_W,
+                 &quot;NE&quot;, move_NE,
+                 &quot;NW&quot;, move_NW,
+                 &quot;SE&quot;, move_SE,
+                 &quot;SW&quot;, move_SW
+                 )
+   pieces := [
+              [&quot;E&quot;, &quot;E&quot;, &quot;E&quot;, &quot;SE&quot;],
+              [&quot;SE&quot;, &quot;SW&quot;, &quot;W&quot;, &quot;SW&quot;],
+              [&quot;W&quot;, &quot;W&quot;, &quot;SW&quot;, &quot;SE&quot;],
+              [&quot;E&quot;,  &quot;E&quot;, &quot;SW&quot;, &quot;SE&quot;],
+              [&quot;NW&quot;, &quot;W&quot;, &quot;NW&quot;, &quot;SE&quot;, &quot;SW&quot;],
+              [&quot;E&quot;,  &quot;E&quot;, &quot;NE&quot;, &quot;W&quot;],
+              [&quot;NW&quot;, &quot;NE&quot;, &quot;NE&quot;, &quot;W&quot;],
+              [&quot;NE&quot;, &quot;SE&quot;, &quot;E&quot;, &quot;NE&quot;],
+              [&quot;SE&quot;, &quot;SE&quot;, &quot;E&quot;, &quot;SE&quot;],
+              [&quot;E&quot;, &quot;NW&quot;, &quot;NW&quot;, &quot;NW&quot;]
+              ]
+   solutions := []
+   masks := list(10, 0)
+
+   masksAtCell := list(width * height)
+   every !masksAtCell := [[], [], [], [], [], [], [], [], [], []]
+
+   solve(argv[1])
+   write(output, *solutions, &quot; solutions found\n&quot;)
+   printSolution(min(solutions))
+   write(output, )
+   printSolution(max(solutions))
+   write(output, )
+end 
+
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_meteorcontest(argv)
+end 
+$endif
+</code></pre>
+<h3 id="fasta-icn">
+fasta.icn
+</h3>
+<pre><code class="language-unicon">
+
+# fasta.icn
+#
+# The Computer Language Benchmarks Game
+# http://benchmarksgame.alioth.debian.org/
+# Translated from Ian Osgood and 
+# Henrich Acher's Python program
+
+procedure genRandom()
+   static ia, ic, im, imf, seed
+   initial {   
+      ia := 3877
+      ic := 29573
+      im := 139968
+      seed := 42
+      imf := real(im)
+      }
+   seed := (seed * ia + ic) % im
+   return seed / imf
+end
+
+procedure makeCumulative (genelist) 
+   local P := [], C := [], prob := 0.0
+   every i := !genelist do {
+      prob +:= i.p
+      put(P, prob)
+      put(C, i.c)
+      }
+   return [P, C]
+end
+
+procedure repeatFasta(src, n)
+   width := 60
+   r := *src 
+   s := src || src || src[1 : n % r + 1]
+   every j := 0 to integer(n / width)-1 do {
+      i := j * width % r
+      write(output, s[i + 1 +: width]) 
+      }
+   if n % width ~= 0 then
+      write(output, s[-(n % width) : 0])
+end
+
+procedure randomFasta(genelist, n)
+   local width := 60
+   local results := makeCumulative(genelist)
+   probs := results[1]
+   chars := results[2]
+   every 0 to integer(n / width)-1 do {
+      x := &quot;&quot;
+      every 1 to width do
+         x ||:= chars[bisect(probs, genRandom())]
+      write(output, x)
+      }
+   if n % width ~= 0 then {
+      y := &quot;&quot;
+      every 1 to n%width do
+         y ||:= chars[bisect(probs, genRandom())]
+      write(output, y)
+      }
+end
+
+procedure bisect(L, x)
+   i := 1
+   while L[i] &lt; x do i +:= 1
+   return i
+end
+
+record aminoacids(p, c)
+
+procedure run_fasta(argv) 
+   alu := &quot;GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG_
+          GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA_
+          CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT_
+          ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA_
+          GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG_
+          AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC_
+          AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA&quot;
+
+   iub := [ aminoacids(0.27, &quot;a&quot;),
+           aminoacids(0.12, &quot;c&quot;),
+           aminoacids(0.12, &quot;g&quot;),
+           aminoacids(0.27, &quot;t&quot;),
+           aminoacids(0.02, &quot;B&quot;),
+           aminoacids(0.02, &quot;D&quot;),
+           aminoacids(0.02, &quot;H&quot;),
+           aminoacids(0.02, &quot;K&quot;),
+           aminoacids(0.02, &quot;M&quot;),
+           aminoacids(0.02, &quot;N&quot;),
+           aminoacids(0.02, &quot;R&quot;),
+           aminoacids(0.02, &quot;S&quot;),
+           aminoacids(0.02, &quot;V&quot;),
+           aminoacids(0.02, &quot;W&quot;),
+           aminoacids(0.02, &quot;Y&quot;)]
+   homosapiens := [
+                   aminoacids(0.3029549426680, &quot;a&quot;),
+                   aminoacids(0.1979883004921, &quot;c&quot;),
+                   aminoacids(0.1975473066391, &quot;g&quot;),
+                   aminoacids(0.3015094502008, &quot;t&quot;)
+                   ]
+   n := integer(argv[1])
+   write(output, &quot;&gt;ONE Homo sapiens alu&quot;)
+   repeatFasta(alu, n*2)
+   write(output, &quot;&gt;TWO IUB ambiguity codes&quot;)
+   randomFasta(iub, n*3)
+   write(output, &quot;&gt;THREE Homo sapiens frequency&quot;)
+   randomFasta(homosapiens, n*5)
+end
+
+$ifdef MAIN
+procedure main(argv) 
+   output := &amp;output
+   run_fasta(argv) 
+end
+$endif
+</code></pre>
+<h3 id="spectral-norm-icn">
+spectral-norm.icn
+</h3>
+<pre><code class="language-unicon">
+
+# spectral-norm.icn
+#
+# The Computer Language Benchmarks Game
+# http://benchmarksgame.alioth.debian.org/
+#
+# Translated from Sebastien Loisel, Isaac Gouy, Simon
+# Descarpentries and Vadim Zelenin's Python program
+
+procedure eval_A (i, j)
+   return 1.0 / ((ishift((i + j) * (i + j + 1), -1) + i + 1))
+end
+
+procedure eval_A_times_u (u, resulted_list)
+   u_len := *u
+
+   every i := 0 to u_len - 1 do {
+      partial_sum := 0
+      every j := 0 to u_len - 1 do {
+         partial_sum +:= eval_A(i, j) * u[j + 1]
+         } 
+      resulted_list[i + 1] := partial_sum
+      }
+end
+
+procedure eval_At_times_u (u, resulted_list)
+   u_len := *u
+
+   every i := 0 to u_len - 1 do {
+      partial_sum := 0
+      every j := 0 to u_len - 1 do {
+         partial_sum +:= eval_A (j, i) * u[j + 1]
+         }
+      resulted_list[i + 1] := partial_sum
+      }
+end
+
+procedure eval_AtA_times_u (u, out, tmp)
+   eval_A_times_u (u, tmp)
+   eval_At_times_u (tmp, out)
+end
+
+procedure run_spectralnorm(av)
+   n := integer(av[1])
+   u := list(n, 1.0)
+   v := list(n, 1.0)
+   tmp := list(n, 1.0)
+
+   every 1 to 10 do {
+      eval_AtA_times_u (u, v, tmp)
+      eval_AtA_times_u (v, u, tmp)
+      }
+
+   vBv := vv := 0
+
+   every i := 1 to n do {
+      vi := v[i]
+      vBv +:= u[i] * vi
+      vv +:= vi * vi
+      }
+
+   write(output, sqrt(vBv/vv))
+end
+
+$ifdef MAIN
+procedure main(av)
+   output := &amp;output
+   run_spectralnorm(av)
+end
+$endif
+</code></pre>
+<h3 id="reverse-complement-icn">
+reverse-complement.icn
+</h3>
+<pre><code class="language-unicon">
+
+# reverse-complement.icn
+#
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+# Translated from Jacob Lee, Steven Bethard,
+# Daniele Varrazzo and Daniel Nanz's 
+# Python program
+
+procedure mapseq(str)
+   head := &quot;&quot;
+   ns := &quot;&quot;
+   H := []
+   M := []
+   chars := &amp;letters ++ '&gt; '
+
+   str ? {
+      while tab(upto(chars)) do {
+         if c := move(1)  == &quot;&gt;&quot; then {
+            if *head &gt; 0 then {
+               put(M, ns)
+               ns := &quot;&quot;
+               }
+            head := tab(many(chars))
+            head := c || head
+            put(H, head)
+            }
+         else {
+            ns ||:= tab(many(chars)) 
+            }
+         }
+      put(M, ns)
+      }
+
+   every i := 1 to *M do {
+      M[i] := reverse(map(M[i],
+                      &quot;ACBDGHKMNSRUTVYacbdghkmnsrutwvy&quot;,
+                      &quot;TGVHCDMKNSYAABRTGVHCDMKNSYAAWBR&quot;)
+                     ) 
+      }
+   return [H, M]
+end
+
+procedure run_reversecomplement(argv)
+   fin := open(argv[1])
+   str := reads(fin, stat(argv[1]).size)
+   L := mapseq(str)  
+   i := 1
+   while i &lt; 4 do {
+      write(output, L[1,i])
+      L[2, i] ? {
+         while write(output, move(60))
+         s := tab(0)
+         if *s &gt; 0 then 
+            write(output, s)
+         }
+      i +:= 1
+      }
+
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_reversecomplement(argv)
+end
+$endif
+</code></pre>
+<h3 id="mandelbrot-icn">
+mandelbrot.icn
+</h3>
+<pre><code class="language-unicon">
+
+# mandelbrot.icn
+#
+# The Computer Language Benchmarks Game
+# http://benchmarksgame.alioth.debian.org/
+# Translated from Greg Buchholz's C program   
+
+global w, h, wr, hr
+$define iter 50
+$define limit 2.0
+
+procedure do_y(y)
+   local bit_num, byte_acc, x, Zr, Zi, Cr, Ci, Tr, Ti, i, rv
+   bit_num := byte_acc := 0
+   rv := &quot;&quot;
+
+      Ci := (2.0*y/hr - 1.0)
+      every x := 0 to w-1 do {
+         Zr := Zi := Tr := Ti := 0.0
+         Cr := (2.0*x/wr - 1.5) 
+	 every i := 0 to iter-1 do {
+	    if Tr+Ti &gt; 4.0 then break
+            Zi := 2.0 * Zr * Zi + Ci
+            Zr := Tr - Ti + Cr
+            Tr := Zr * Zr
+            Ti := Zi * Zi
+            }
+
+         byte_acc := ishift(byte_acc, 1) 
+         if Tr+Ti &lt;= 4.0 then { 
+            byte_acc := ior(byte_acc, 1)
+            }          
+         bit_num +:= 1 
+
+         if bit_num = 8 then {
+            rv ||:= char(byte_acc)
+            byte_acc := bit_num := 0
+            }
+         }
+      if bit_num ~= 0 then {
+	 byte_acc := ishift(byte_acc, abs(8-w%8))
+	 rv ||:= char(byte_acc)
+	 byte_acc := bit_num := 0
+	 }
+     return rv
+end
+
+procedure run_mandelbrot(argv)
+   local y, i, pool
+
+   pool := Pool(64)
+   wL := list()
+   rL := list()
+   w := h := integer(argv[1])
+   wr := hr := real(w)
+
+   write(output, &quot;P4\n&quot;, w, &quot; &quot;, h)
+
+   every i := 0 to h-1 do
+      put(wL, i)
+   rL := pool.imap(do_y, wL)
+   pool.kill()
+   every i := !rL do
+      writes(output, i)
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_mandelbrot(argv)
+end
+$endif
+</code></pre>
+<h3 id="k-nucleotide-icn">
+k-nucleotide.icn
+</h3>
+<pre><code class="language-unicon">
+
+# k-nucleotide.icn
+#
+# The Computer Language Shootout
+# http://shootout.alioth.debian.org/
+# Translated from Ian Osgood, 
+# Sokolov Yura and bearophile's
+# Python program
+
+link printf, sort
+
+procedure gen_freq(sequ, frame)
+   ns := *sequ + 1 - frame
+   frequences := table(0)
+   every ii := 1 to ns do {
+      nucleo := sequ[ii:ii+frame]
+      if member(frequences, nucleo) then
+         frequences[nucleo] +:= 1
+      else
+         frequences[nucleo] := 1
+      }
+   return [ns, frequences]
+end
+
+procedure rev(L)
+   i := *L
+   temp := []
+   while i &gt; 0 do{
+      put(temp, L[i])
+      i -:= 1
+      }
+   return temp
+end
+
+procedure sort_sequ(sequ, length)
+   local results, l, reverse
+   results := gen_freq(sequ, length)
+   n := results[1]
+   frequences := results[2]
+   l := sort(frequences, 2)  
+   l := sortff(l, 2, 1)
+   l := rev(l)
+   every pair := !l do {
+      st := pair[1]; fr := pair[2];
+      fprintf(output, &quot;%s %.3r\n&quot;, st, 100.0*fr/n)
+      }
+   write(output, )
+end
+
+procedure find_sequ(sequ, s)
+   local results := []
+   results := gen_freq(sequ, *s)
+   n := results[1]
+   t := results[2]
+   fprintf(output, &quot;%d\t%s\n&quot;, t[s], s)
+end
+
+procedure run_knucleotide(argv)
+   fin := open(argv[1])
+   se := [
+          &quot;GGT&quot;, &quot;GGTA&quot;, &quot;GGTATT&quot;, 
+          &quot;GGTATTTTAATT&quot;, &quot;GGTATTTTAATTTATAGT&quot;
+          ]
+
+   while line := read(fin) do {
+      if line[1:4] == &quot;&gt;TH&quot; then
+         break
+      }      
+   sequ := &quot;&quot;
+   while line := read(fin) do
+      sequ ||:= line 
+   sequence := map(sequ, &amp;lcase, &amp;ucase)
+   every nl := 1 to 2 do
+      sort_sequ(sequence, nl)
+   every  s := !se do
+      find_sequ(sequence, s)
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_knucleotide(argv)
+end
+$endif
+</code></pre>
+<h3 id="regex-dna-icn">
+regex-dna.icn
+</h3>
+<pre><code class="language-unicon">
+
+#regex-dna.icn
+#
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+
+link findre, pool
+global variants, subst, sequ
+record sp(f, r)
+
+procedure do_trim()
+   outs := &quot;&quot;
+   sequ ? {
+      while outs ||:= tab(findp()) &amp; mark := __endpoint do {
+         tab(mark)
+	 }
+      outs ||:= sequ[&amp;pos:0]
+   }
+   return copy(outs)
+end
+
+procedure do_variants(e)
+      i := e[2](sequ)
+      return e[1] || &quot; &quot; || i
+end
+
+procedure do_subst()
+   every e := !subst do {
+      outs := &quot;&quot;   
+      sequ ? {
+         while outs ||:= tab(find(e.f)) do  {
+            outs ||:= e.r
+            move(1)
+         }
+         outs ||:= sequ[&amp;pos:0]
+      }
+      sequ := copy(outs)
+   }
+   return sequ
+end
+
+#
+# The initial pattern p was &quot;&gt;+[A-Za-z ]*\n+|\n+&quot;
+# The findre() api calls for us to set __endpoint to the position
+# after the match.
+#
+procedure findp(p, subj:&amp;subject, i1:&amp;pos, i2:0)
+   alphaspace := &amp;letters ++ ' '
+
+   every i := upto('&gt;\n',subj,i1,i2) do {
+      case subj[i] of {
+	 &quot;&gt;&quot;: {
+	    i3 := many('&gt;', subj, i, i2)
+	    i3 := many(alphaspace, subj, i3, i2)
+	    if not i3 := many('\n', subj, i3, i2) then {
+	       next
+	       }
+	    __endpoint := i3
+	    }
+	 &quot;\n&quot;: {
+	    i3 := many('\n', subj, i, i2)
+	    __endpoint := i3
+	    }
+	 }
+      suspend i
+      }
+end
+
+
+#
+# generate all the positions in s at which this pattern matches, in order
+#
+
+#  agggtaaa|tttaccct
+procedure var_1(s)
+local i := 0
+   s ? { every find(&quot;agggtaaa&quot;|&quot;tttaccct&quot;) do i +:= 1 }
+   return i
+end
+
+# &quot;[cgt]gggtaaa|tttaccc[acg]&quot;,
+procedure var_2(s)
+local i := 0
+s ? {
+   every tab(upto('cgt')+1) &amp; =&quot;gggtaaa&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;tttaccc&quot;)+7) &amp; tab(any('acg')) do i +:= 1
+   return i
+   }
+end
+
+
+# &quot;a[act]ggtaaa|tttacc[agt]t&quot;,
+procedure var_3(s)
+local i := 0
+s ? {
+   every tab(find(&quot;a&quot;)+1) &amp; tab(any('act')) &amp; =&quot;ggtaaa&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;tttacc&quot;)+6) &amp; tab(any('agt')) &amp; =&quot;t&quot; do i +:= 1
+   return i
+   }
+end
+
+# &quot;ag[act]gtaaa|tttac[agt]ct&quot;,
+procedure var_4(s)
+local i := 0
+s ? {
+   every tab(find(&quot;ag&quot;)+2) &amp; tab(any('act')) &amp; =&quot;gtaaa&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;tttac&quot;)+5) &amp; tab(any('agt')) &amp; =&quot;ct&quot; do i +:= 1
+   return i
+   }
+end
+
+# &quot;agg[act]taaa|ttta[agt]cct&quot;,
+procedure var_5(s)
+local i := 0
+s ? {
+   every tab(find(&quot;agg&quot;)+3) &amp; tab(any('act')) &amp; =&quot;taaa&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;ttta&quot;)+4) &amp; tab(any('agt')) &amp; =&quot;cct&quot; do i +:= 1
+   return i
+   }
+end
+
+# &quot;aggg[acg]aaa|ttt[cgt]ccct&quot;,
+procedure var_6(s)
+local i := 0
+s ? {
+   every tab(find(&quot;aggg&quot;)+4) &amp; tab(any('acg')) &amp; =&quot;aaa&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;ttt&quot;)+3) &amp; tab(any('cgt')) &amp; =&quot;ccct&quot; do i +:= 1
+   return i
+   }
+end
+
+#  &quot;agggt[cgt]aa|tt[acg]accct&quot;,
+procedure var_7(s)
+local i := 0
+s ? {
+   every tab(find(&quot;agggt&quot;)+5) &amp; tab(any('cgt')) &amp; =&quot;aa&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;tt&quot;)+2) &amp; tab(any('acg')) &amp; =&quot;accct&quot; do i +:= 1
+   return i
+   }
+end
+
+#  &quot;agggta[cgt]a|t[acg]taccct&quot;,
+procedure var_8(s)
+local i := 0
+s ? {
+   every tab(find(&quot;agggta&quot;)+6) &amp; tab(any('cgt')) &amp; =&quot;a&quot; do i +:= 1
+   &amp;pos := 1
+   every tab(find(&quot;t&quot;)+1) &amp; tab(any('acg')) &amp; =&quot;taccct&quot; do i +:= 1
+   return i
+   }
+end
+
+# &quot;agggtaa[cgt]|[acg]ttaccct&quot;
+procedure var_9(s)
+local i := 0
+s ? {
+   every tab(find(&quot;agggtaa&quot;)+7) &amp; tab(any('cgt')) do i +:= 1
+   &amp;pos := 1
+   every tab(upto('acg')+1) &amp; =&quot;ttaccct&quot; do i +:= 1
+   return i
+   }
+end
+
+procedure run_regexdna(av)
+   fin := open(av[1]) | stop(&quot;usage: regex-dna filename&quot;)
+   siz := stat(av[1]).size | stop(&quot;can't stat &quot;, av[1])
+   sequ := reads(fin, siz) | stop(&quot;can't read &quot;, av[1])
+   pool := Pool(9)
+   p := &quot;&gt;+[A-Za-z ]*\n+|\n+&quot;
+   ilen := *sequ
+
+   outs := &quot;&quot;
+   sequ ? {
+      while outs ||:= tab(findp()) &amp; mark := __endpoint do {
+         tab(mark)
+	 }
+      outs ||:= sequ[&amp;pos:0]
+   }
+   sequ := copy(outs)
+
+   clen := *sequ
+
+   variants := [[&quot;agggtaaa|tttaccct&quot;, var_1],
+		[&quot;[cgt]gggtaaa|tttaccc[acg]&quot;, var_2],
+		[&quot;a[act]ggtaaa|tttacc[agt]t&quot;, var_3],
+		[&quot;ag[act]gtaaa|tttac[agt]ct&quot;, var_4],
+		[&quot;agg[act]taaa|ttta[agt]cct&quot;, var_5],
+		[&quot;aggg[acg]aaa|ttt[cgt]ccct&quot;, var_6],
+		[&quot;agggt[cgt]aa|tt[acg]accct&quot;, var_7],
+		[&quot;agggta[cgt]a|t[acg]taccct&quot;, var_8],
+		[&quot;agggtaa[cgt]|[acg]ttaccct&quot;, var_9]
+                ]
+   subst := [ sp(&quot;B&quot;, &quot;(c|g|t)&quot;),
+             sp(&quot;D&quot;, &quot;(a|g|t)&quot;),
+             sp(&quot;H&quot;, &quot;(a|c|t)&quot;),
+             sp(&quot;K&quot;, &quot;(g|t)&quot;),
+             sp(&quot;M&quot;, &quot;(a|c)&quot;),
+             sp(&quot;N&quot;, &quot;(a|c|g|t)&quot;),
+             sp(&quot;R&quot;, &quot;(a|g)&quot;),
+             sp(&quot;S&quot;, &quot;(c|g)&quot;),
+             sp(&quot;V&quot;, &quot;(a|c|g)&quot;),
+             sp(&quot;W&quot;, &quot;(a|t)&quot;),
+             sp(&quot;Y&quot;, &quot;(c|t)&quot;)
+             ]
+
+   wL := []
+   every e := !variants do put(wL, e)
+
+   rL := pool.imap(do_variants, wL)
+   pool.kill()
+   every write(output, !rL)
+
+   every e := !subst do {
+      outs := &quot;&quot;   
+      sequ ? {
+         while outs ||:= tab(find(e.f)) do  {
+            outs ||:= e.r
+            move(1)
+         }
+         outs ||:= sequ[&amp;pos:0]
+      }
+      sequ := copy(outs)
+   }
+
+   write(output, &quot;\n&quot;, ilen)
+   write(output, clen)
+   write(output, *sequ)
+end
+
+$ifdef MAIN
+procedure main(av)
+   output := &amp;output
+   run_regexdna(av)
+end
+$endif
+</code></pre>
+<h3 id="pidigits-icn">
+pidigits.icn
+</h3>
+<pre><code class="language-unicon">
+
+# pidigits.icn
+#
+# The Computer Language Benchmarks Game
+# http://benchmarksgame.alioth.debian.org/
+# Translated from Mario Pernici's Python program
+
+link printf
+
+procedure run_pidigits(av)
+   N := integer(av[1])
+   i := k := ns := a := t := u := 0
+   k1 := n := d := 1
+   repeat {
+      k +:= 1
+      t := ishift(n,1)
+      n *:= k
+      a +:= t
+      k1 +:= 2
+      a *:= k1
+      d *:= k1
+      if a &gt;= n then {
+         cse := n * 3 + a
+         t := cse / d
+         u := cse % d + n
+         if d &gt; u then {
+            ns := ns * 10 + t
+            i +:= 1
+            if i % 10 = 0 then {
+               fprintf(output, &quot;%010d\t:%d\n&quot;, ns, i)
+               ns := 0
+               }
+            else if i &gt;= N then {
+               fprintf(output, &quot;%-10dxx\t:%d\n&quot;, ns, i)
+               break
+               }
+            a := (a - d * t) * 10
+            n *:= 10
+            }
+         }
+      }
+end
+
+$ifdef MAIN
+procedure main(av)
+   output := &amp;output
+   run_pidigits(av)
+end
+$endif
+</code></pre>
+<h3 id="chameneos-redux-icn">
+chameneos-redux.icn
+</h3>
+<pre><code class="language-unicon">
+
+# chameneos-redux.icn
+#
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+# Translated from Daniel Nanz's 
+# Python program
+
+global creature_colors, compl_dict, in_lock, out_lock, venue 
+
+procedure complement(c1, c2)
+   if c1 == c2 then return c1
+   if c1 == &quot;blue&quot; then {
+      if c2 == &quot;red&quot; then return &quot;yellow&quot;
+      return &quot;red&quot;
+      }
+   if c1 == &quot;red&quot; then {
+      if c2 == &quot;blue&quot; then return &quot;yellow&quot;
+      return &quot;blue&quot;
+      }
+   if c2 == &quot;blue&quot; then return &quot;red&quot;
+   return &quot;blue&quot;
+end
+
+procedure check_complement()
+   every c1 := !creature_colors do
+      every c2 := !creature_colors do
+         write(output, c1, &quot; + &quot;, c2, &quot; -&gt; &quot;, compl_dict[c1||c2])
+   write(output, )
+end
+
+procedure spellout(n)
+   numbers := [&quot;zero&quot;, &quot;one&quot;, &quot;two&quot;, &quot;three&quot;, &quot;four&quot;,
+               &quot;five&quot;, &quot;six&quot;, &quot;seven&quot;, &quot;eight&quot;, &quot;nine&quot;]
+   s := &quot;  &quot;
+   every c := !string(n) do
+      s ||:= numbers[c+1] || &quot; &quot;
+   return s
+end
+
+procedure report(input_zoo, met, self_met)
+   s := &quot;  &quot;
+   every j := !input_zoo do 
+      s ||:= j || &quot; &quot;
+   write(output, s)
+   every i := 1 to *met do 
+      write(output, met[i], spellout(self_met[i]))
+   i := 0
+   every i +:= !met 
+   write(output, spellout(i), &quot;\n&quot;)
+end
+
+procedure creature(my_id, my_lock, in_lock, out_lock)
+   repeat {
+      lock_acquire(my_lock)
+      lock_acquire(in_lock)
+      critical venue: venue[1] := my_id
+      lock_release(out_lock) 
+      }
+end
+
+procedure lock_object()
+   repeat{
+      @&gt;&gt;  
+         &lt;&lt;@ 
+         }
+end
+
+procedure lock_release(T)
+   @&gt;&gt;T
+end
+procedure lock_acquire(T)
+   &lt;&lt;@T
+end
+
+procedure let_them_meet(meetings_left, input_zoo)
+   local c_no, met, self_met, colors, my_locks
+   c_no := *input_zoo
+   met := list(c_no, 0)
+   self_met := list(c_no, 0)
+   colors := copy(input_zoo)
+   my_locks := []
+   in_lock := thread lock_object()
+   lock_acquire(in_lock)  
+   out_lock := thread lock_object()
+   lock_acquire(out_lock) 
+   every 1 to *input_zoo do {
+      put(my_locks, thread lock_object())
+      }
+   every ci := 1 to c_no do {
+      thread creature(ci, my_locks[ci], in_lock, out_lock)
+      }
+   delay(0)
+
+   lock_release(in_lock)  
+   lock_acquire(out_lock) 
+
+   critical venue: id1 := venue[1]
+   while meetings_left &gt; 0 do {
+      lock_release(in_lock)
+      lock_acquire(out_lock)
+      critical venue: id2 := venue[1]
+      if id1 ~= id2 then {
+         new_color := compl_dict[colors[id1]||colors[id2]]
+         colors[id1] := new_color
+         colors[id2] := new_color
+         met[id1] +:= 1
+         met[id2] +:= 1
+         }
+      else {
+         self_met[id1] +:= 1
+         met[id1] +:= 1
+         }
+      meetings_left -:= 1
+      if meetings_left &gt; 0 then {
+         lock_release(my_locks[id1])
+         id1 := id2
+         }
+      else{
+         report(input_zoo, met, self_met)
+         }
+      }
+end
+
+procedure chameneosiate(n)
+   check_complement()
+   let_them_meet(n, [&quot;blue&quot;, &quot;red&quot;, &quot;yellow&quot;])
+   let_them_meet(n, [&quot;blue&quot;, &quot;red&quot;, &quot;yellow&quot;, &quot;red&quot;, &quot;yellow&quot;,
+                     &quot;blue&quot;, &quot;red&quot;, &quot;yellow&quot;, &quot;red&quot;, &quot;blue&quot;])
+end
+
+procedure run_chameneos(argv)
+   venue := mutex([-1])
+   creature_colors := [&quot;blue&quot;, &quot;red&quot;, &quot;yellow&quot;]
+   compl_dict := table(
+                       &quot;blueblue&quot;, complement(&quot;blue&quot;, &quot;blue&quot;),
+                       &quot;bluered&quot;, complement(&quot;blue&quot;, &quot;red&quot;),
+                       &quot;blueyellow&quot;, complement(&quot;blue&quot;, &quot;yellow&quot;),
+                       &quot;redblue&quot;, complement(&quot;red&quot;, &quot;blue&quot;),
+                       &quot;redred&quot;, complement(&quot;red&quot;, &quot;red&quot;),
+                       &quot;redyellow&quot;, complement(&quot;red&quot;, &quot;yellow&quot;),
+                       &quot;yellowblue&quot;, complement(&quot;yellow&quot;, &quot;blue&quot;),
+                       &quot;yellowred&quot;, complement(&quot;yellow&quot;, &quot;red&quot;),
+                       &quot;yellowyellow&quot;, complement(&quot;yellow&quot;, &quot;yellow&quot;)
+                       )
+   chameneosiate(integer(argv[1]))
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_chameneos(argv)
+end
+$endif
+</code></pre>
+<h3 id="thread-ring-icn">
+thread-ring.icn
+</h3>
+<pre><code class="language-unicon">
+
+# thread-ring.icn
+#
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+# Translated from Antti Kervinen and
+# Tupteq's Python program
+
+global main_lock, first_lock, n
+procedure threadfun(number, my_lock, next_lock)
+   repeat {
+      critical my_lock: wait(my_lock)
+      if n &gt; 0 then {
+         n -:= 1
+         signal(next_lock)
+         }
+      else {
+         write(output, number)
+         signal(main_lock)
+         }
+      }
+end
+
+procedure run_threadring(argv)
+   n := argv[1]
+   main_lock := condvar()
+   next_lock := first_lock := condvar()
+   every number := 1 to 503 do {
+      my_lock := next_lock
+      next_lock := if number &lt; 503 then condvar() else first_lock
+      thread threadfun(number, my_lock, next_lock)
+      }
+   signal(first_lock)
+   critical main_lock: wait(main_lock)
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_threadring(argv)
+end
+$endif
+</code></pre>
+<h3 id="binary-trees-icn">
+binary-trees.icn
+</h3>
+<pre><code class="language-unicon">
+
+# binary-trees.icn
+#
+# The Computer Language Benchmarks Game
+# http://shootout.alioth.debian.org/
+#
+# Translated from Python code written by
+# Antoine Pitrou, Dominique Wahli and
+# Daniel Nanz
+
+link memlog
+link pool
+
+record nodes(a, b, c)
+procedure make_tree(i, d)
+   if d &gt; 0 then {
+      i2 := i + i
+      d -:= 1
+      return nodes(i, make_tree(i2 - 1, d), make_tree(i2, d))
+      }
+   return nodes(i, &amp;null, &amp;null)
+end
+
+procedure check_tree(nodelst)
+   local i := nodelst[1], l := nodelst[2], r := nodelst[3]
+   if /l then 
+      return i
+   else
+      return i + check_tree(l) - check_tree(r)
+end
+
+procedure make_check(i, d)
+   return (check_tree(make_tree(i, d)))
+end
+
+record ca(a,b)
+record cb(a,b)
+procedure get_argchunks(i, d)
+   local chunksize:= 5000, chunk := []
+   every k := 1 to i do { 
+      put(chunk, cb(ca(k, d), ca(-k, d)))
+      if *chunk = chunksize then {
+         suspend chunk
+         chunk := []
+         }
+      }
+   if *chunk &gt; 0 then
+      suspend chunk
+end
+
+procedure build_trees(d)
+   local i, cs
+   i := 2 ^ (mmd - d)
+   cs := 0
+   every argchunk := !get_argchunks(i,d) do {
+         cs +:= make_check(argchunk[1,1], argchunk[1,2])
+         cs +:= make_check(argchunk[2,1], argchunk[2,2])
+      }
+   return (i*2 || &quot;\t trees of depth &quot; || d || &quot;\t check: &quot; || cs )
+end
+
+global min_depth, max_depth, stretch_depth, mmd
+
+procedure run_binarytrees(argv)
+   local wL := [], rL := [] 
+   min_depth := 4
+   max_depth := argv[1]
+   stretch_depth := max_depth + 1
+   mmd := max_depth + min_depth
+
+   write(output, &quot;stretch tree of depth &quot;, stretch_depth,
+         &quot;\t check: &quot;, make_check(0, stretch_depth))
+
+   every d := min_depth to stretch_depth by 2 do
+      put(wL, d)
+
+   pool := Pool(*wL) 
+   rL := pool.imap(build_trees, wL)
+   pool.kill()   
+   every write(output, !rL)
+   long_lived_tree := make_tree(0, max_depth)
+
+   write(output, &quot;long lived tree of depth &quot;, max_depth,
+         &quot;\t check: &quot;, check_tree(long_lived_tree))
+end
+
+$ifdef MAIN
+procedure main(argv)
+   output := &amp;output
+   run_binarytrees(argv)
+end
+$endif
+
+#################################################
+# Optional sizes of environment varialbe BLKSIZE
+# to reduce garbage collections
+#
+# 1GB
+# export &quot;BLKSIZE=1073741824&quot;
+#
+# 2GB
+# export &quot;BLKSIZE=2147483648&quot;
+#
+# 3GB
+# export &quot;BLKSIZE=3221225472&quot;
+#
+#################################################
+
+#############################################
+# To potentially giving each thread block
+# region of their own
+#   
+#   # 40MB block region
+#   #pool := Pool(*wL, 41943040)
+#   # 400MB block region
+#   #pool := Pool(*wL, 419430400) 
+#   #1GB block region
+#############################################
+</code></pre>
+<div class="prevnext">
+<a href="utr15.html">&larr; UTR 15: How to Write a Unicon Technical Report</a>
+<a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr16.pdf">pdf</a> | <a href="_sources/utr16.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Unicon</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="/unicon/assets/site.css" />
+</head>
+<body>
+<nav class="unicon-site-nav" aria-label="Site">
+  <div class="unicon-site-nav-inner">
+    <a class="home" href="/unicon/">Unicon</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/">Documentation</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/utr/html/">Technical reports</a>
+    <span class="sep">·</span>
+    <a href="/unicon/CONTRIBUTING.html">Contributing</a>
+    <span class="sep">·</span>
+    <a href="/unicon/COPYING.html">License</a>
+    <span class="sep">·</span>
+    <a href="/unicon/config/editor/">Editor configs</a>
+    <span class="sep">·</span>
+    <a href="https://github.com/uniconproject/unicon">GitHub</a>
+  </div>
+</nav>
+<header id="title-block-header">
+<h1 class="title">Unicon</h1>
+</header>
+<h1 id="unicon">Unicon</h1>
+<p>Unicon is a very high level programming language descended from <a
+href="https://www.cs.arizona.edu/icon/">Icon</a>: expression-based,
+<strong>goal-directed</strong> evaluation, rich string and structure
+handling, and integrated graphics and systems programming features. It
+is a <strong>general-purpose</strong> language with object-oriented
+extensions, concurrency, and database and network libraries, used for
+teaching, research, and applications. It runs on many operating systems
+(Linux, Windows, macOS, BSD) and on common CPU architectures (e.g. i386,
+amd64, arm64).</p>
+<p><strong>License:</strong> the project is distributed under the
+<strong>GNU General Public License</strong>; see the <a
+href="/unicon/COPYING.html">COPYING</a> file in this repository (Debian packaging
+references <strong>GPL-2+</strong> in
+<code>debian/copyright</code>).</p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#build-instructions">Build Instructions</a></li>
+<li><a href="#contributing">Contributing</a></li>
+<li><a href="#help">Help</a></li>
+</ul>
+<h2 id="documentation">Documentation</h2>
+<p>Shipped manuals, technical reports, and other files are indexed under
+<strong><a href="doc/"><code>doc/</code></a></strong> (<a
+href="/unicon/doc/"><code>doc/index.rst</code></a> — documentation
+homepage). On <a
+href="https://unicon.sourceforge.io/">unicon.sourceforge.io</a>,
+<strong><a
+href="https://unicon.sourceforge.io/ubooks.html">Books</a></strong>
+lists editions and free PDFs (including <em>Programming with Unicon</em>
+and related titles), and <strong><a
+href="https://unicon.sourceforge.io/up/index.html">Unicon
+Programming</a></strong> is an example-oriented online guide. <strong><a
+href="https://rosettacode.org/wiki/Category:Unicon">Rosetta
+Code</a></strong> has Unicon solutions for many programming tasks. More
+technical reports and resources are linked from the project site.</p>
+<p><strong>GitHub Pages:</strong> <a
+href="https://uniconproject.github.io/unicon/">uniconproject.github.io/unicon</a>
+(this README) · <strong><a
+href="https://uniconproject.github.io/unicon/doc/">Documentation</a></strong>
+· <strong><a
+href="https://uniconproject.github.io/unicon/doc/utr/html/">UTR
+collection</a></strong>.</p>
+<h3 id="editors-and-ides">Editors and IDEs</h3>
+<p><strong>Syntax highlighting:</strong> <a
+href="/unicon/config/editor/"><code>config/editor/</code></a> ships highlighting
+and editor integration files for several environments (GNU Emacs,
+Sublime Text, Notepad++, and others); see <a
+href="/unicon/config/editor/"><code>config/editor/README</code></a> for
+installation notes.</p>
+<p><strong>Visual Studio Code:</strong> the <strong><a
+href="https://github.com/uniconproject/unicon/tree/master/.vscode"><code>.vscode/</code></a></strong>
+directory in this repository holds workspace settings (tasks, launch,
+optional recommendations). Unicon support is available in three
+extensions: <a
+href="https://marketplace.visualstudio.com/items?itemName=jafar.unicon-lsp"><strong>Unicon
+Helper</strong></a>, <a
+href="https://marketplace.visualstudio.com/items?itemName=jafar.unicon-debugger"><strong>Unicon
+Debugger</strong></a>, and <a
+href="https://marketplace.visualstudio.com/items?itemName=jafar.unicon-syntax"><strong>Unicon
+Syntax</strong></a> — or search the <a
+href="https://marketplace.visualstudio.com/search?term=unicon&amp;target=VSCode">Marketplace</a>
+for “Unicon”.</p>
+<h2 id="installation">Installation</h2>
+<p>The latest sources are available from Unicon’s git repositories and
+GitHub. To get the sources from either repo do:</p>
+<pre><code>git clone https://github.com/uniconproject/unicon.git
+</code></pre>
+<p>On Windows systems it is advised to add the
+<code>--config core.autocrlf=input</code> option to the <code>git</code>
+command. <code>git</code> is available on Linux via the standard package
+managers, for example on a Debian system:</p>
+<pre><code>sudo apt install git</code></pre>
+<p>On macOS git is available with Xcode. On Windows you can install and
+set up git using the instructions: <a
+href="https://unicon.org/git.html">here</a></p>
+<p>For source tarballs and binary distributions, see the unicon.org <a
+href="https://unicon.org/downloads.html">download page</a>.</p>
+<h2 id="build-instructions">Build Instructions</h2>
+<p><em>Prerequisites</em> - Gnu/Unix utilities such as shell, make,
+grep, etc. - C language compiler that supports C99 such as gcc or
+clang</p>
+<p>The initial configuration is done via a standard GNU autoconf script,
+run:</p>
+<pre><code>./configure --help</code></pre>
+<p>For configuration options help. On Windows:</p>
+<pre><code>sh configure --help</code></pre>
+<p>The configuration script allows you to enable or disable features in
+the Unicon build at compile time. Some of the features are turned on by
+default as long as the dependencies are satisfied. Those features can be
+turned off by doing <code>--disable-FEATURE</code>, for example:</p>
+<pre><code>./configure --disable-graphics</code></pre>
+<p>disables all graphics support. On the other hand, some features are
+disabled by default. Those can be turned on by doing
+<code>--enable-FEATURE</code>, for example, to enable operator
+overloading:</p>
+<pre><code>./configure --enable-ovld</code></pre>
+<p>One other aspect to consider is that the configure script is
+opportunistic when it comes to turning on features. Features that are
+enabled by default will be disabled automatically if they are missing
+dependencies. If you want to change the behavior to make the configure
+script stop with an error instead of skipping a feature when its
+dependencies are missing, just enable that feature explicitly. For
+example, if you want to enable https/ssl, do:</p>
+<pre><code>./configure --enable-ssl</code></pre>
+<p>If openssl development library is not present on the system, the
+configure script will stop with an error message:</p>
+<pre><code>configure: error: &quot;ssl requires libssl-dev or equivalent&quot;</code></pre>
+<h3 id="linux">Linux</h3>
+<p>Use the package manager in your Linux distribution to get the build
+utilities and C compiler. For example, on a Debian system</p>
+<pre><code>sudo apt install build-essential</code></pre>
+<p>Optionally, you can install development library dependencies to
+enable more Unicon features. Most of these libraries are listed below
+for common Linux distributions.</p>
+<p>Debian/Ubuntu:</p>
+<pre><code>apt install libgl1-mesa-dev libssl-dev libssh-dev libx11-dev libjpeg-dev libpng-dev libglu1-mesa-dev
+            libxft-dev libopenal-dev libalut-dev libogg-dev libvorbis-dev unixodbc-dev
+        libfreetype6-dev</code></pre>
+<p>Fedora/Centos (Depending on your Centos version, you may need to
+replace dnf with yum):</p>
+<pre><code>dnf install libjpeg-turbo-devel libpng-devel libX11-devel mesa-libGL-devel mesa-libGLU-devel
+            freetype-devel openal-devel freealut-devel libogg-devel libvorbis-devel
+        openssl-devel libssh-devel unixODBC-devel libXft-devel</code></pre>
+<p>Go into the Unicon directory and run:</p>
+<pre><code>./configure
+make -j</code></pre>
+<p>After that you can add <code>unicon/bin</code> to the $PATH
+environment variable or install Unicon instead:</p>
+<pre><code>make install</code></pre>
+<h3 id="macos">macOS</h3>
+<p>Install Xcode command line tools (or all of Xcode) from the macOS app
+store. After that the build steps are the same as those on Linux. To
+ensure using clang, explicitly set the compiler as follows:</p>
+<pre><code>./configure CC=clang CXX=clang++</code></pre>
+<p>If you want access to the graphics facilities of Unicon, you also
+need to download and install the XQuartz package from
+https://www.xquartz.org/. For native SSH/SFTP support, install libssh
+(for example <code>brew install libssh</code>).</p>
+<h3 id="bsd">*BSD</h3>
+<p>Install build dependencies. Make sure to use GNU <code>gmake</code>
+when building.</p>
+<pre><code>pkg install -y -f autoconf gmake lang/gcc git libssh</code></pre>
+<p>Configure, make, and optionally install unicon:</p>
+<pre><code>./configure
+gmake -j
+gmake install</code></pre>
+<h3 id="windows">Windows</h3>
+<p>There are two possibilities depending on the choice of the C runtime
+library. You can choose the legacy Microsoft Visual C++ Runtime
+(MSVCRT), which runs on all versions of Windows, or the newer Universal
+C Runtime (UCRT64), which is used by Visual Studio but is only available
+by default on Windows 10 and newer. Starting from version 13.3, binary
+distributions of Unicon for Windows will be built with UCRT64. See msys2
+<a href="https://www.msys2.org/docs/environments/">environments</a> for
+more details about available environments and their C Library
+options.</p>
+<h4 id="ucrt64">1. UCRT64:</h4>
+<ul>
+<li><p>Download and run the installer from https://www.msys2.org/. At
+the time of writing it is called <code>msys2-x86_64-20230127.exe</code>
+but it may be updated from that version.</p></li>
+<li><p>Go through the installation process to get a UCRT64
+environment.</p></li>
+<li><p>Using the UCRT64 shell, Install tools required for the
+build:</p></li>
+</ul>
+<pre><code>pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-diffutils git</code></pre>
+<ul>
+<li>Install the optional libraries for a full build (Unicon will build
+without them but some features will be absent).</li>
+</ul>
+<pre><code>pacman -S mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-libssh mingw-w64-ucrt-x86_64-libpng mingw-w64-ucrt-x86_64-libjpeg-turbo </code></pre>
+<ul>
+<li>Clone the Unicon repository:</li>
+</ul>
+<pre><code>git clone --config core.autocrlf=input https://github.com/uniconproject/unicon</code></pre>
+<p>The option <code>--config core.autocrlf=input</code> avoids problems
+with different conventions for the end of line character.</p>
+<ul>
+<li>Configure Unicon:</li>
+</ul>
+<pre><code>./configure --build=x86_64-w64-mingw32</code></pre>
+<p>The option <code>x86_64-w64-mingw32</code> ensures the build is
+64-bit. After the script finishes do:</p>
+<pre><code>make</code></pre>
+<p>Note that, although the build environment is UCRT64, the resulting
+Unicon binaries may also be run from the standard Windows command line
+<code>cmd</code> terminal.</p>
+<h4 id="msvcrt-legacy">2. MSVCRT (Legacy):</h4>
+<ul>
+<li><p>Download and run <a
+href="https://sourceforge.net/projects/mingw/files/Installer/">mingw-get-setup.exe</a></p>
+<p>Go through the install process and use it to install only msys-base.
+This will give you an MSYS (not MSYS2) environment with all the needed
+Linux/gnu utils.</p></li>
+<li><p>Get MinGW64 compiler suite, <a
+href="https://jmeubank.github.io/tdm-gcc/">TDM package</a> is known to
+work with Unicon. Most recent package is <a
+href="https://jmeubank.github.io/tdm-gcc/articles/2020-03/9.2.0-release">9.2.0</a></p></li>
+</ul>
+<p>Note that you may be missing the tool “make”. TDM MinGW comes with a
+“make” that is named mingw32-make.exe. That file can be found under the
+installation directory of MinGW64 inside the bin directory. Create a
+copy of that file and name it “make.exe” before continuing.</p>
+<ul>
+<li>Clone the Unicon repository (same steps as UCRT64 above).</li>
+</ul>
+<p>After that you can use the standard Windows command line
+<code>cmd</code> terminal to build Unicon.</p>
+<pre><code>sh configure</code></pre>
+<p>or</p>
+<pre><code>make WUnicon64</code></pre>
+<p>Which is a shortcut for running:</p>
+<pre><code>sh configure --build=x86_64-w64-mingw32</code></pre>
+<p>The option <code>x86_64-w64-mingw32</code> ensures the build is
+64-bit. After the script finishes do:</p>
+<pre><code>make</code></pre>
+<h2 id="contributing">Contributing</h2>
+<p>See <strong><a href="/unicon/CONTRIBUTING.html">CONTRIBUTING.md</a></strong>
+for reporting issues, pull requests, and <strong>developer
+builds</strong> (compiler sanitizers, GDB, <code>ASAN_OPTIONS</code>,
+etc.).</p>
+<h2 id="help">Help</h2>
+<ul>
+<li><strong>GitHub:</strong> <a
+href="https://github.com/uniconproject/unicon/issues">Issues</a> for
+bugs and feature requests.</li>
+<li><strong>Email:</strong> <a
+href="mailto:jeffery@unicon.org">jeffery@unicon.org</a> for other
+questions and comments.</li>
+</ul>
+<footer class="unicon-site-footer">
+  <a href="/unicon/">Home</a>
+  · <a href="/unicon/doc/">Documentation</a>
+  · Source on <a href="https://github.com/uniconproject/unicon">GitHub</a>
+</footer>
+</body>
+</html>

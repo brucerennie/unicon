@@ -1,0 +1,8333 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unicon Language Reference</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li class="current">UTR 8c: Unicon Language Reference</li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr7.html">&larr; UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a>
+<a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Unicon Language Reference</h1>
+<p class="report-authors">Clinton Jeffery, Shamim Mohamed, and Jafar Al Gharaibeh</p>
+<p class="report-tr">Unicon Technical Report: 8c</p>
+<p class="report-date">2017-02-23</p>
+<p class="report-pdf"><a href="utr8.pdf">pdf</a> · <a href="_sources/utr8.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon is a very high level application programming language with particular strengths in complex data structures, text processing, graphics, network I/O, and concurrency. This language reference is adapted for online documentation from Appendix A of Programming with Unicon.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+Unicon is expression-based. Nearly everything is an expression, including the common control structures such as while loops. The only things that are not expressions are declarations for procedures, methods, variables, records, classes, and linked libraries.
+</p>
+<p>
+In the reference, types are listed for parameters and results. If an identifier is used, any type is allowed. For results, generator expressions are further annotated with an asterisk (
+<strong>
+\
+</strong>
+*) and non-generators that can fail are annotated with a question mark (?). A question mark by itself (short for null?) denotes a predicate whose success or failure is what matters; the predicate return value (&amp;null) is not significant.
+</p>
+<h2 id="immutable-types-numbers-strings-csets">
+Immutable Types: Numbers, Strings, Csets
+</h2>
+<p>
+Unicon's immutable types are integers, real numbers, strings, and csets. Values of these types cannot change. Operators and functions on immutable types produce new values rather than modify existing ones. The simplest expressions are literal values, which occur only for immutable types. A literal value evaluates to itself.
+</p>
+<h4 id="integer">
+Integer
+</h4>
+<p>
+Integers are of arbitrary precision. Decimal integer literals are contiguous sequences of the digits 0 through 9, optionally preceded by a + or - sign. Suffixes K, M, G, T, or P multiply a literal by 1024, 1024^2, 1024^3, 1024^4, and 1024^5, respectively.
+</p>
+<p>
+Radix integer literals use the format 
+<em>
+radix
+</em>
+\ R\ 
+<em>
+digits
+</em>
+, where 
+<em>
+radix
+</em>
+ is a base in the range 2 through 36, and 
+<em>
+digits
+</em>
+ consists of one or more numerals in the supplied radix. After values 0-9, the letters A-Z are used for values 10-35. Radix literals are case insensitive, unlike the rest of the language, so the R may be upper or lower case, as may the following alphabetic digits.
+</p>
+<h4 id="real">
+Real
+</h4>
+<p>
+Reals are double-precision floating-point values. Real decimal literals are contiguous sequences of the digits 0 through 9, with a decimal point (a period) somewhere within or at either end of the digits. Real exponent literals use the format 
+<em>
+number
+</em>
+\ E\ 
+<em>
+integer
+</em>
+; E may be upper or lower case.
+</p>
+<h4 id="string">
+String
+</h4>
+<p>
+Strings are sequences of 0 or more characters, where a character is a value with a platform-dependent size and symbolic representation. On platforms with multi-byte character sets, multiple Icon characters represent a single symbol using a platform-dependent encoding. String literals consist of 0 or more characters enclosed in double quotes. A string literal may include escape sequences that use multiple characters to encode special characters. The escape sequences are given in Table A-1. Incomplete string literals may be continued on the next line if the last character on a line is an underscore (\_). In that case, the underscore, the newline, and any whitespace at the beginning of the next line are not part of the string literal.
+</p>
+<dl>
+<dt>Table A-1</dt>
+<dd>
+<p>
+Escape Codes and Characters
+</p>
+</dd>
+<dt>Code</dt>
+<dd>
+<p>
+Character
+</p>
+</dd>
+<dt>Code</dt>
+<dd>
+<p>
+Character
+</p>
+</dd>
+<dt>Code</dt>
+<dd>
+<p>
+Character
+</p>
+</dd>
+<dt>Code</dt>
+<dd>
+<p>
+Character
+</p>
+</dd>
+</dl>
+<p>
+\\b
+</p>
+<p>
+backspace
+</p>
+<p>
+\\d
+</p>
+<p>
+delete
+</p>
+<p>
+\\e
+</p>
+<p>
+escape
+</p>
+<p>
+\\f
+</p>
+<p>
+form feed
+</p>
+<p>
+\\l
+</p>
+<p>
+line feed
+</p>
+<p>
+\\n
+</p>
+<p>
+newline
+</p>
+<p>
+\\r
+</p>
+<p>
+carriage return
+</p>
+<p>
+\\t
+</p>
+<p>
+tab
+</p>
+<p>
+\\v
+</p>
+<p>
+vertical tab
+</p>
+<p>
+\\'
+</p>
+<p>
+quote
+</p>
+<p>
+&quot;
+</p>
+<p>
+double quote
+</p>
+<p>
+\\\\
+</p>
+<p>
+backslash
+</p>
+<p>
+\\\ 
+<em>
+ooo
+</em>
+</p>
+<p>
+octal
+</p>
+<p>
+\\^\ 
+<em>
+x
+</em>
+</p>
+<p>
+Control-
+<em>
+x
+</em>
+</p>
+<p>
+~
+</p>
+<p>
+~
+</p>
+<h4 id="cset">
+Cset
+</h4>
+<p>
+Csets are sets of 0 or more characters. Cset literals consist of 0 or more characters enclosed in single quotes. As with strings, a cset literal may include escape sequences that use multiple characters to encode special characters.
+</p>
+<h4 id="pattern">
+Pattern
+</h4>
+<p>
+Patterns are an immutable structure type used in matching, parsing or categorizing strings. Pattern literals consist of regular expressions enclosed in less than (&lt;) and greater than (&gt;) symbols. Within such marks, operators and reserved words do not have their normal meaning; instead concatenation becomes the implicit operator and a few characters have special interpretations, including asterisk, plus, question mark, curly braces, square brackets, and the period character. In addition to pattern literals, patterns may be composed using a number of pattern constructor operators and functions.
+</p>
+<h2 id="mutable-types-containers-and-files">
+Mutable Types: Containers and Files
+</h2>
+<p>
+Mutable types' values may be altered. Changes to a mutable value affect its allocated memory or its associated OS resource. Mutable types include lists, tables, sets, records, objects, and files, including windows, network connections and databases. These types are described in the entries for constructors that create them. Structure types hold collections of elements that may be of arbitrary, mixed type. Mutable types are not thread-safe. Mutual exclusion may be imposed for mutable values accessed by multiple threads, at a cost in performance.
+</p>
+<h4 id="list">
+List
+</h4>
+<p>
+Lists are dynamically sized, ordered sequences of zero or more values. They are constructed by function, by an explicit operator, or implicitly by a call to a variable argument procedure. They change size by stack and queue functions.
+</p>
+<h4 id="table">
+Table
+</h4>
+<p>
+Tables are dynamically sized, unordered mappings from keys to elements. They are constructed by function. The keys may be of arbitrary, mixed type.
+</p>
+<h4 id="set">
+Set
+</h4>
+<p>
+Sets are unordered collections. They are constructed by function.
+</p>
+<h4 id="record">
+Record
+</h4>
+<p>
+Records are ordered, fixed length sequences of elements accessed via named fields.
+</p>
+<h4 id="object">
+Object
+</h4>
+<p>
+Objects are ordered, fixed length sequences of elements that may be accessed via named fields and methods. Accessing an object's fields from outside its methods (using it as a record) is legal but deprecated.
+</p>
+<h4 id="file">
+File
+</h4>
+<p>
+Files are system resources corresponding to data on secondary storage, areas on users' displays, network connections, or databases. Operations on files cause input or output side effects on the system outside of the program execution.
+</p>
+<h2 id="variables">
+Variables
+</h2>
+<p>
+Variables are names for locations in memory where values can be stored. Values are stored in variables by assignment operators. A variable name begins with a letter or underscore, followed by zero or more letters, underscores, or digits. A variable name cannot be the same as one of Icon's reserved words, nor can it be the same as one of Icon's keywords if it follows an adjacent ampersand character. Variables can hold values of any type, and may hold different types of values at different times during program execution.
+</p>
+<p>
+There are four kinds of variables: global, local, static, and class. Global, local, and static variables are declared by introducing one of the reserved words (global, local, or static) followed by a comma-separated list of variable names. Global variables are declared outside of any procedure or method body, while local and static variables are declared at the beginning of procedure and method bodies. Local and static variable names may be followed by an assignment operator and an initial value; otherwise variables other than procedure and class names begin with the value 
+<code>&amp;null</code>
+.
+</p>
+<p>
+<em>
+Aliasing
+</em>
+ occurs when two or more variables refer to the same value, such that operations on one variable might affect the other. Aliasing is a common source of program bugs. Variables holding integer, real, string, or cset values are never aliased, because those types are immutable.
+</p>
+<h4 id="global">
+Global
+</h4>
+<p>
+Global variables are visible everywhere in the program, and exist at the same location for the entire program execution. Declaring a procedure declares a global variable initialized to the procedure value that corresponds to the code for that procedure. Global variables are not thread-safe.
+</p>
+<h4 id="local">
+Local
+</h4>
+<p>
+Local variables exist and are visible within a single procedure or method only for the duration of a single procedure invocation, including suspensions and resumptions, until the procedure returns, fails, or is 
+<em>
+vanquished
+</em>
+ by the return or failure of an ancestor invocation while it is suspended. Undeclared variables in any scope are implicitly local, but this dangerous practice should be avoided in large programs.
+</p>
+<p>
+Variables that are declared as 
+<em>
+parameters
+</em>
+ are local variables that are preinitialized to the values of actual parameters at the time of a procedure or method invocation. The semantics of parameter passing are the same as those of assignment.
+</p>
+<h4 id="static">
+Static
+</h4>
+<p>
+Static variables are visible only within a single procedure or method, but exist at the same location for the entire program execution. The value stored in a static variable is preserved between multiple calls to the procedure in which it is declared. Static variables are not thread-safe.
+</p>
+<h4 id="class">
+Class
+</h4>
+<p>
+Class variables are visible within the methods of a declared class. Class variables are created for each instance (object) of the class. The lifespan of class variables is the life span of the instance to which they belong. The value stored in a class variable is preserved between multiple calls to the methods of the class in which it is declared. Class variables are not thread-safe.
+</p>
+<h2 id="keywords">
+Keywords
+</h2>
+<p>
+Keywords are names with global scope and special semantics within the language. They begin with an ampersand character. Some keywords are names of common constant values, while others are names of variables that play a special role in Icon's control structures. The name of the keyword is followed by a : if it is read-only, or a := if it is a variable, followed by the type of value the keyword holds.
+</p>
+<dl>
+<dt>&amp;allocated : integer*</dt>
+<dd>
+<p>
+report memory use
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;allocated generates the cumulative number of bytes allocated in heap, static, string, and block regions during the entire program execution.
+</p>
+<dl>
+<dt>&amp;ascii : cset</dt>
+<dd>
+<p>
+ASCII character set
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;ascii produces a cset corresponding to the ASCII characters.
+</p>
+<dl>
+<dt>&amp;clock : string</dt>
+<dd>
+<p>
+time of day
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;clock produces a string consisting of the current time of day in hh:mm:ss format. See also keyword &amp;now.
+</p>
+<dl>
+<dt>&amp;collections : integer*</dt>
+<dd>
+<p>
+garbage collection activity
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;collections generates the number of times memory has been reclaimed in heap, static, string, and block regions.
+</p>
+<dl>
+<dt>&amp;column : integer</dt>
+<dd>
+<p>
+source code column
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;column returns the source code column number of the current execution point. This is especially useful for execution monitoring.
+</p>
+<dl>
+<dt>&amp;cset : cset</dt>
+<dd>
+<p>
+universal character set
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;cset produces a cset constant corresponding to the universal set of all characters.
+</p>
+<dl>
+<dt>&amp;current :co-expression</dt>
+<dd>
+<p>
+current co-expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;current produces the co-expression that is currently executing.
+</p>
+<dl>
+<dt>&amp;date : string</dt>
+<dd>
+<p>
+today's date
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;date produces the current date in yyyy/mm/dd format.
+</p>
+<dl>
+<dt>&amp;dateline : string</dt>
+<dd>
+<p>
+time stamp
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;dateline produces a human-readable time stamp that includes the day of the week, the date, and the current time, down to the minute.
+</p>
+<dl>
+<dt>&amp;digits : cset</dt>
+<dd>
+<p>
+digit characters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;digits produces a cset constant corresponding to the set of digit characters 0-9.
+</p>
+<dl>
+<dt>&amp;dump := integer</dt>
+<dd>
+<p>
+termination dump
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;dump controls whether the program dumps information on program termination or not. If &amp;dump is nonzero when the program halts, a dump of local and global variables and their values is produced.
+</p>
+<dl>
+<dt>&amp;e : real</dt>
+<dd>
+<p>
+natural log e
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;e is the base of the natural logarithms, 2.7182818...
+</p>
+<dl>
+<dt>&amp;error := integer</dt>
+<dd>
+<p>
+fail on error
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;error controls whether runtime errors are converted into expression failure. By assigning to this keyword, error conversion can be enabled or disabled for specific sections of code. The integer &amp;error is decremented by one on each error, and if it reaches zero, a runtime error is generated. Assigning a value of -1 effectively disables runtime errors indefinitely. See also &amp;syserr.
+</p>
+<dl>
+<dt>&amp;errornumber : integer?</dt>
+<dd>
+<p>
+runtime error code
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;errornumber is the error number of the last runtime error that was converted to failure, if there was one.
+</p>
+<dl>
+<dt>&amp;errortext : string?</dt>
+<dd>
+<p>
+runtime error message
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;errortext is the error message of the last error that was converted to failure.
+</p>
+<dl>
+<dt>&amp;errorvalue : any?</dt>
+<dd>
+<p>
+offending value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;errorvalue is the erroneous value of the last error that was converted to failure.
+</p>
+<dl>
+<dt>&amp;errout : file</dt>
+<dd>
+<p>
+standard error file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;errout is the standard error file. It is the default destination to which runtime errors and program termination messages are written.
+</p>
+<dl>
+<dt>&amp;eventcode := integer</dt>
+<dd>
+<p>
+program execution event
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;eventcode indicates the kind of behavior that occurred in a monitored program at the time of the most recent call to EvGet(). This keyword is only supported under interpreters built with execution monitoring support.
+</p>
+<dl>
+<dt>&amp;eventsource := co-expression</dt>
+<dd>
+<p>
+source of program execution events
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;eventsource is the co-expression that transmitted the most recent event to the current program. This keyword is null unless the program is an execution monitor. See also &amp;source. Under a monitor coordinator, &amp;eventsource is the coordinator and global variable Monitored is the target program.
+</p>
+<dl>
+<dt>&amp;eventvalue := any</dt>
+<dd>
+<p>
+program execution value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;eventvalue is a value from the monitored program that was being processed at the time of the last program event returned by EvGet(). This keyword is only supported under interpreters built with execution monitoring support.
+</p>
+<dl>
+<dt>&amp;fail : none</dt>
+<dd>
+<p>
+expression failure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;fail never produces a result. Evaluating it always fails.
+</p>
+<dl>
+<dt>&amp;features : string*</dt>
+<dd>
+<p>
+platform features
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;features generates strings that indicate the non-portable features supported on the current platform.
+</p>
+<dl>
+<dt>&amp;file : string?</dt>
+<dd>
+<p>
+current source file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;file is the name of the source file for the current execution point, if there is one. This is especially useful for execution monitoring.
+</p>
+<dl>
+<dt>&amp;host : string</dt>
+<dd>
+<p>
+host machine name
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;host is a string that identifies the host computer Icon is running on.
+</p>
+<dl>
+<dt>&amp;input : file</dt>
+<dd>
+<p>
+standard input file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;input is a standard input file. It is the default source for file input functions.
+</p>
+<dl>
+<dt>&amp;lcase : cset</dt>
+<dd>
+<p>
+lowercase letters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;lcase is a cset consisting of the lowercase letters from a to z.
+</p>
+<dl>
+<dt>&amp;letters : cset</dt>
+<dd>
+<p>
+letters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;letters is a cset consisting of the upper and lowercase letters A-Z and a-z.
+</p>
+<dl>
+<dt>&amp;level : integer</dt>
+<dd>
+<p>
+call depth
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;level gives the nesting level of the currently active procedure call. This keyword is not supported under the optimizing compiler, iconc.
+</p>
+<dl>
+<dt>&amp;line : integer</dt>
+<dd>
+<p>
+current source line number
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;line is the line number in the source code that is currently executing.
+</p>
+<dl>
+<dt>&amp;main : co-expression</dt>
+<dd>
+<p>
+main task
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;main is the co-expression in which program execution began.
+</p>
+<dl>
+<dt>&amp;now : integer</dt>
+<dd>
+<p>
+current time
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp; now produces the current time as the number of seconds since the epoch beginning 00:00:00 GMT, January 1, 1970. See also &amp;clock
+</p>
+<dl>
+<dt>&amp;null : null</dt>
+<dd>
+<p>
+null value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;null produces the null value.
+</p>
+<dl>
+<dt>&amp;output : file</dt>
+<dd>
+<p>
+standard output file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;output is the standard output file. It is the default destination for file output.
+</p>
+<dl>
+<dt>&amp;phi : real</dt>
+<dd>
+<p>
+golden ratio
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;phi is the golden ratio, 1.618033988...
+</p>
+<dl>
+<dt>&amp;pi : real</dt>
+<dd>
+<p>
+pi
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;pi is the value of pi, 3.141592653...
+</p>
+<dl>
+<dt>&amp;pos := integer</dt>
+<dd>
+<p>
+string scanning position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;pos is the position within the current subject of string scanning. It is assigned implicitly by entering a string scanning environment, moving or tabbing within the environment, or assigning a new value to &amp;subject. &amp;pos may not be assigned a value that is outside the range of legal indices for the current &amp;subject string. Each thread has its own instance of &amp;pos; assigning a value to it in one thread does not affect the string scanning environment of any another thread.
+</p>
+<dl>
+<dt>&amp;progname := string</dt>
+<dd>
+<p>
+program name
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;progname is the name of the current executing program.
+</p>
+<dl>
+<dt>&amp;random := integer</dt>
+<dd>
+<p>
+random number seed
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;random is the seed for random numbers produced by the random operator, unary ?. It is assigned a different sequence for each execution but may be explicitly set for reproducible results.
+</p>
+<dl>
+<dt>&amp;regions : integer*</dt>
+<dd>
+<p>
+region sizes
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;regions produces the sizes of the static region, the string region, and the block region. The first result is zero; it is included for backward compatibility reasons.
+</p>
+<dl>
+<dt>&amp;source : co-expression</dt>
+<dd>
+<p>
+invoking co-expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;source is the co-expression that activated the current co-expression.
+</p>
+<dl>
+<dt>&amp;storage : integer*</dt>
+<dd>
+<p>
+memory in use
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;storage gives the amount of memory currently used within the static region, the string region, and the block region. The first result is always zero and is included for backward compatibility reasons.
+</p>
+<dl>
+<dt>&amp;subject := string</dt>
+<dd>
+<p>
+string scanning subject
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;subject holds the default value used in string scanning and analysis functions. Assigning to &amp;subject implicitly assigns the value 1 to &amp;pos. Each thread has its own instance of &amp;subject; assigning a value to it in one thread does not affect the string scanning environment of any another thread.
+</p>
+<dl>
+<dt>&amp;syserr := integer</dt>
+<dd>
+<p>
+halt on system error
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;syserr controls whether a system error causes execution to halt. System errors cause expression failure by default. If &amp;syserr is set to a non-zero value, system errors are converted to runtime errors and halt execution with an error traceback.
+</p>
+<dl>
+<dt>&amp;time : integer</dt>
+<dd>
+<p>
+elapsed time
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp; time gives the number of milliseconds of CPU time that have elapsed since the program execution began. For wall clock time see &amp;now or &amp;clock.
+</p>
+<dl>
+<dt>&amp;trace := integer</dt>
+<dd>
+<p>
+trace program
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;trace gives the number of nesting levels to which program execution will be traced. 0 means no tracing. A negative value traces to an infinite depth. &amp;trace is set outside the program using the TRACE environment variable or the -t compiler option.
+</p>
+<dl>
+<dt>&amp;ucase : cset</dt>
+<dd>
+<p>
+upper case letters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;ucase is a cset consisting of all the upper case letters from A to Z.
+</p>
+<dl>
+<dt>&amp;version : string</dt>
+<dd>
+<p>
+version
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;version is a string that indicates which version of Unicon or Icon is executing.
+</p>
+<h4 id="graphics-keywords">
+Graphics keywords
+</h4>
+<p>
+Several of the graphics keywords are variables with assignment restricted to value of a particular type or types. Graphics keywords are more fully described in [Griswold98].
+</p>
+<dl>
+<dt>&amp;col : integer</dt>
+<dd>
+<p>
+mouse location, text column
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;col is the mouse location in text columns during the most recent Event(). If &amp;col is assigned, &amp;x gets a corresponding pixel location in the current font on &amp;window.
+</p>
+<dl>
+<dt>&amp;control : integer</dt>
+<dd>
+<p>
+control modifier flag
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;control produces the null value if the control key was pressed at the time of the most recently processed event, otherwise &amp;control fails.
+</p>
+<dl>
+<dt>&amp;interval : integer</dt>
+<dd>
+<p>
+time since last event
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;interval produces the time between the most recently processed event and the event that preceded it, in milliseconds.
+</p>
+<dl>
+<dt>&amp;ldrag : integer</dt>
+<dd>
+<p>
+left mouse button drag
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;ldrag produces the integer that indicates a left button drag event.
+</p>
+<dl>
+<dt>&amp;lpress : integer</dt>
+<dd>
+<p>
+left mouse button press
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;lpress produces the integer that indicates a left button press event.
+</p>
+<dl>
+<dt>&amp;lrelease : integer</dt>
+<dd>
+<p>
+left mouse button release
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;lrelease produces the integer that indicates a left button release event.
+</p>
+<dl>
+<dt>&amp;mdrag : integer</dt>
+<dd>
+<p>
+middle mouse button drag
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;mdrag produces the integer that indicates a middle button drag event.
+</p>
+<dl>
+<dt>&amp;meta : integer</dt>
+<dd>
+<p>
+meta modifier flag
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;meta produces the null value if the meta (Alt) key was pressed at the time of the most recently processed event, otherwise &amp;meta fails.
+</p>
+<dl>
+<dt>&amp;mpress : integer</dt>
+<dd>
+<p>
+middle mouse button press
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;mpress produces the integer that indicates a middle button press event.
+</p>
+<dl>
+<dt>&amp;mrelease : integer</dt>
+<dd>
+<p>
+middle mouse button release
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;mrelease produces the integer that indicates a middle button release event.
+</p>
+<dl>
+<dt>&amp;pick : string*</dt>
+<dd>
+<p>
+pick 3D objects
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;pick generates the object IDs selected at point (&amp;x,&amp;y) at the most recent Event(), if the event was read from a 3D window with the attribute pick=on.
+</p>
+<dl>
+<dt>&amp;rdrag : integer</dt>
+<dd>
+<p>
+right mouse button drag
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;rdrag produces the integer that indicates a right button drag event.
+</p>
+<dl>
+<dt>&amp;resize : integer</dt>
+<dd>
+<p>
+window resize event
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;resize produces the integer that indicates a window resize event.
+</p>
+<dl>
+<dt>&amp;row : integer</dt>
+<dd>
+<p>
+mouse location, text row
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;row is the mouse location in text rows during the most recent Event(). If &amp;row is assigned, &amp;y gets a corresponding pixel location in the current font on &amp;window.
+</p>
+<dl>
+<dt>&amp;rpress : integer</dt>
+<dd>
+<p>
+right mouse button press
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;rpress produces the integer that indicates a right button press event.
+</p>
+<dl>
+<dt>&amp;rrelease : integer</dt>
+<dd>
+<p>
+right mouse button release
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;rrelease produces the integer that indicates a right button release event.
+</p>
+<dl>
+<dt>&amp;shift : integer</dt>
+<dd>
+<p>
+shift modifier flag
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;shift produces the null value if the shift key was pressed at the time of the most recently processed event, otherwise &amp;shift fails.
+</p>
+<dl>
+<dt>&amp;window : window</dt>
+<dd>
+<p>
+default window
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;window is the default window argument for all window functions. &amp;window may be assigned any value of type window.
+</p>
+<dl>
+<dt>&amp;x : integer</dt>
+<dd>
+<p>
+mouse location, horizontal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;x is the horizontal mouse location in pixels during the most recent Event(). If &amp;x is assigned, &amp;col gets a corresponding text coordinate in the current font on &amp;window.
+</p>
+<dl>
+<dt>&amp;y : integer</dt>
+<dd>
+<p>
+mouse location, vertical
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+&amp;y is the vertical mouse location in pixels during the most recent Event(). If &amp;y is assigned, &amp;row gets a corresponding text coordinate in the current font on &amp;window.
+</p>
+<h2 id="control-structures-and-reserved-words">
+Control Structures and Reserved Words
+</h2>
+<p>
+Unicon has many reserved words. Some are used in declarations, but most are used in control structures. This section summarizes the syntax and semantics introduced by all the reserved words of the language. The reserved word under discussion is written in a bold font. The surrounding syntax uses square brackets for optional items and an asterisk for items that may repeat.
+</p>
+<dl>
+<dt>break expr</dt>
+<dd>
+<p>
+exit loop
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The break expression exits the nearest enclosing loop. 
+<em>
+expr
+</em>
+ is evaluated and treated as the result of the entire loop expression. If 
+<em>
+expr
+</em>
+ is another break expression, multiple loops will be exited.
+</p>
+<dl>
+<dt>expr1 to expr2 by expr3</dt>
+<dd>
+<p>
+step increment
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The by reserved word supplies a step increment to a to-expression (the default is 1).
+</p>
+<dl>
+<dt>case expr of { ? }</dt>
+<dd>
+<p>
+select expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The case expression selects one of several branches of code to be executed.
+</p>
+<dl>
+<dt>class name [: superclass]* (fields) methods [initially] end</dt>
+<dd>
+<p>
+class declaration
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The class declaration introduces a new object type into the program. The class declaration may include lists of superclasses, fields, methods, and an initially section.
+</p>
+<dl>
+<dt>create expr</dt>
+<dd>
+<p>
+create co-expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The create expression produces a new co-expression to evaluate 
+<em>
+expr
+</em>
+.
+</p>
+<dl>
+<dt>critical x : expr</dt>
+<dd>
+<p>
+serialize on x
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The critical expression serializes the execution of 
+<em>
+expr
+</em>
+ on value 
+<em>
+x
+</em>
+. Value 
+<em>
+x
+</em>
+ must be a mutex or protected object that has a mutex. The critical section causes 
+<em>
+x
+</em>
+ to be locked before evaluating 
+<em>
+expr
+</em>
+ and unlocked afterward. Breaking, returning or failing out of 
+<em>
+expr
+</em>
+ does not automatically unlock 
+<em>
+x
+</em>
+.
+</p>
+<dl>
+<dt>default : expr</dt>
+<dd>
+<p>
+default case branch
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The default branch of a case expression is taken if no other case branch is taken.
+</p>
+<dl>
+<dt>do expr</dt>
+<dd>
+<p>
+iteration expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The do reserved word specifies an expression to be executed for each iteration of a preceding while, every, or suspend loop (yes, suspend is a looping construct).
+</p>
+<dl>
+<dt>if expr1 then expr2 else expr3</dt>
+<dd>
+<p>
+else branch
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The else expression is executed if 
+<em>
+expr1
+</em>
+ fails to produce a result.
+</p>
+<dl>
+<dt>end</dt>
+<dd>
+<p>
+end of declared body
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The reserved word end signifies the end of a procedure, method, or class body.
+</p>
+<dl>
+<dt>every expr1 [do expr2]</dt>
+<dd>
+<p>
+generate all results
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The every expression always fails, causing 
+<em>
+expr1
+</em>
+ to be resumed for all its results.
+</p>
+<dl>
+<dt>fail</dt>
+<dd>
+<p>
+produce no results
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The fail reserved word causes the enclosing procedure or method invocation to terminate immediately and produce no results. The invocation may not be resumed. See also the keyword &amp;fail, which produces a less drastic expression failure. fail is equivalent to return &amp;fail
+</p>
+<dl>
+<dt>global var [, var]*</dt>
+<dd>
+<p>
+declare global variables
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Reserved word global introduces one or more global variables.
+</p>
+<dl>
+<dt>if expr then expr2 [else expr3]</dt>
+<dd>
+<p>
+conditional expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The if expression evaluates 
+<em>
+expr2
+</em>
+ only if 
+<em>
+expr1
+</em>
+ produces a result.
+</p>
+<dl>
+<dt>import name [, name]*</dt>
+<dd>
+<p>
+import package
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The import declaration introduces the names from package 
+<em>
+name
+</em>
+ so that they may be used without prefixing them with the package name.
+</p>
+<dl>
+<dt>initial expr</dt>
+<dd>
+<p>
+execute on first invocation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The initial expression is executed the first time a procedure or method is invoked. Any subsequent invocations (of the procedure or method) will not proceed until the initial expression has finished execution. A recursive invocation of the procedure inside the initial expression causes a runtime error.
+</p>
+<dl>
+<dt>initially [(parameters)]</dt>
+<dd>
+<p>
+initialize object
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The initially section defines a special method that is invoked automatically when an object is created. If the initially section has declared parameters, they are used as the parameters of the constructor for objects of that class.
+</p>
+<dl>
+<dt>invocable procedure [, procedure]*</dt>
+<dd>
+<p>
+allow string invocation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+{
+<strong>
+invocable all
+</strong>
+ }
+</p>
+<p>
+<strong>
+allow string invocation
+</strong>
+</p>
+<p>
+|
+</p>
+<p>
+The invocable declaration indicates that procedures may be used in string invocation.
+</p>
+<dl>
+<dt>link filename [, filename]*</dt>
+<dd>
+<p>
+link code module
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The link declaration directs that the code in 
+<em>
+filename
+</em>
+ will be added to the executable when this program is linked. 
+<em>
+filename
+</em>
+ may be an identifier or a string literal file path.
+</p>
+<dl>
+<dt>local var [:=\ initializer ] [, var [:= initializer ] ]\ *</dt>
+<dd>
+<p>
+declare local variables
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The local declaration introduces local variables into the current procedure or method. Variable declarations must be at the beginning of a procedure or method.
+</p>
+<dl>
+<dt>method name (params) body end</dt>
+<dd>
+<p>
+declare method
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The method declaration introduces a procedure that is invoked with respect to instances of a given class. The 
+<em>
+params
+</em>
+ and 
+<em>
+body
+</em>
+ are as in procedures, described below.
+</p>
+<dl>
+<dt>next</dt>
+<dd>
+<p>
+iterate loop
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The next expression causes a loop to immediate skip to its next iteration.
+</p>
+<dl>
+<dt>not expr</dt>
+<dd>
+<p>
+negate expression failure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The not expression fails if 
+<em>
+expr
+</em>
+ succeeds, and succeeds (producing null) if 
+<em>
+expr
+</em>
+ fails.
+</p>
+<dl>
+<dt>case expr of { ? }</dt>
+<dd>
+<p>
+introduce case branches
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The 
+<code>of</code>
+ reserved word precedes a special compound expression consisting of a sequence of case branches of the form 
+<em>
+expr
+</em>
+ : 
+<em>
+expr
+</em>
+. Case branches are evaluated in sequence until one matches the expression given between the word case and the of.
+</p>
+<dl>
+<dt>package name</dt>
+<dd>
+<p>
+declare package
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The package declaration segregates the global names in the current source file. In order to refer to them, client code must either import the package, or prepend 
+<em>
+name.
+</em>
+ (the package name followed by a period) onto the front of a name in the package.
+</p>
+<dl>
+<dt>procedure name (params) body end</dt>
+<dd>
+<p>
+declare procedure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The procedure declaration specifies a procedure with parameters and code body. The parameters are a comma-separated list of zero or more variable names. The last parameter may be suffixed by [ ] to indicate that following parameters will be supplied to the procedure in a list. The body is an optional sequence of local and static variable declarations, followed by a sequence of zero or more expressions.
+</p>
+<dl>
+<dt>record name (fields)</dt>
+<dd>
+<p>
+declare record
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The record declaration introduces a new record type into the program.
+</p>
+<dl>
+<dt>repeat expr</dt>
+<dd>
+<p>
+infinite loop
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The repeat expression introduces an infinite loop that will reevaluate 
+<em>
+expr
+</em>
+ forever. Of course, 
+<em>
+expr
+</em>
+ may exit the loop or terminate the program in any number of ways.
+</p>
+<dl>
+<dt>return expr</dt>
+<dd>
+<p>
+return from invocation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The return expression exits a procedure or method invocation, producing 
+<em>
+expr
+</em>
+ as its result. The invocation may not be resumed.
+</p>
+<dl>
+<dt>static var [, var]*</dt>
+<dd>
+<p>
+declare static variables
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The static declaration introduces local variables that persist for the entire program execution into the current procedure or method body. Variable declarations must be at the beginning of a procedure or method.
+</p>
+<dl>
+<dt>suspend expr [do expr]</dt>
+<dd>
+<p>
+produce result from invocation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The suspend expression produces one or more results from an invocation for use by the calling expression. The procedure or method may be resumed for additional results if the calling expression needs them. Execution in the suspended invocation resumes where it left off, in the suspend expression. A single evaluation of a suspend expression may produce multiple results for the caller if 
+<em>
+expr
+</em>
+ is a generator. An optional do expression is evaluated each time the suspend is resumed.
+</p>
+<dl>
+<dt>if expr1 then expr2</dt>
+<dd>
+<p>
+conditional expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The 
+<em>
+expr2
+</em>
+ following a \\bf then is evaluated only if 
+<em>
+expr1
+</em>
+ following an if succeeds. In that case, the result of the whole expression is the result of 
+<em>
+expr2
+</em>
+.
+</p>
+<dl>
+<dt>thread expr</dt>
+<dd>
+<p>
+create thread
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The \\bf thread expression creates and launches a concurrent thread to evaluate 
+<em>
+expr
+</em>
+.
+</p>
+<dl>
+<dt>expr1 to expr2</dt>
+<dd>
+<p>
+generate arithmetic sequence
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The to expression produces the integer sequence from 
+<em>
+expr1
+</em>
+ to 
+<em>
+expr2
+</em>
+.
+</p>
+<dl>
+<dt>until expr1 [do expr2]</dt>
+<dd>
+<p>
+loop until success
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The until expression loops as long as 
+<em>
+expr1
+</em>
+ fails.
+</p>
+<dl>
+<dt>while expr1 [do expr2]</dt>
+<dd>
+<p>
+loop until failure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The while expression loops as long as 
+<em>
+expr1
+</em>
+ succeeds.
+</p>
+<h2 id="operators-and-built-in-functions">
+Operators and Built-in Functions
+</h2>
+<p>
+Icon's built-ins operators and functions utilize automatic type conversion to provide flexibility and ease of programming. Automatic type conversions are limited to integer, real, string, and cset data types. Conversions to a &quot;number&quot; will convert to either an integer or a real, depending whether the value to be converted has a decimal. Conversions between numeric types and csets go through an intermediate conversion to a string value and are not generally useful.
+</p>
+<p>
+Indexes start at 1. Index 0 is the position after the last element of a string or list. Negative indexes are positions relative to the end. Subscripting operators and string analysis functions can take two indices to specify a section of the string or list. When two indices are supplied, they select the same string section whether they are in ascending or descending order.
+</p>
+<h4 id="operators">
+Operators
+</h4>
+<p>
+The result types of operators are the same as the operand types except as noted.
+</p>
+<h4 id="unary-operators">
+Unary operators
+</h4>
+<dl>
+<dt>! x : any*</dt>
+<dd>
+<p>
+generate elements
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The generate operator produces the elements of 
+<code>x</code>
+. If 
+<code>x</code>
+ is a string variable or refers to a structure value, the generated elements are variables that may be assigned. 
+<code>!i</code>
+ is equivalent to 
+<code>(1 to i)</code>
+ for integer 
+<code>i</code>
+. List, record, string, and file elements are generated in order, with string elements consisting of one-letter substrings. Set and table elements are generated in an undefined order. If 
+<code>x</code>
+ is a messaging connection to a POP server, 
+<code>!x</code>
+ produces complete messages as strings. Other types of files, including network connections, produce elements consisting of text lines.
+</p>
+<dl>
+<dt>/ x</dt>
+<dd>
+<p>
+null test
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>\\ x</dt>
+<dd>
+<p>
+nonnull test
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<p>
+The null and nonnull tests succeed and produce their operand if it satisfies the test.
+</p>
+<ul>
+<li>
+number negate
+</li>
+</ul>
+<p>
+|
+</p>
+<dl>
+<dt>+ number</dt>
+<dd>
+<p>
+numeric identity
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Negation reverses the sign of its operand. Numeric identity does not change its operand's value other than to convert to a required numeric type.
+</p>
+<dl>
+<dt>= string</dt>
+<dd>
+<p>
+tab/match
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The tab/match operator is equivalent to calling 
+<code>tab(match(s))</code>
+ on its operand.
+</p>
+<ul>
+<li>
+x : integer size
+</li>
+</ul>
+<p>
+|
+</p>
+<p>
+The size operator returns the number of elements in string, cset or structure 
+<code>x</code>
+.
+</p>
+<dl>
+<dt>. x : x</dt>
+<dd>
+<p>
+dereference
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The dereference operator returns the value 
+<code>x</code>
+.
+</p>
+<dl>
+<dt>? x : any</dt>
+<dd>
+<p>
+random element
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The random operator produces a random element from 
+<code>x</code>
+. If 
+<code>x</code>
+ is a string, 
+<code>?x</code>
+ produces a random one-letter substring. The result is a variable that may be assigned. If 
+<code>x</code>
+ is a positive integer, 
+<code>?x</code>
+ produces a random integer between 1 and x. 
+<code>?0</code>
+ returns a real in the range from 0.0-1.0.
+</p>
+<dl>
+<dt>\| x : x*</dt>
+<dd>
+<p>
+repeated alternation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The repeated alternation operator generates results from evaluating its operand over and over again in an infinite loop.
+</p>
+<dl>
+<dt>~ cset</dt>
+<dd>
+<p>
+cset complement
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The complement operator returns a cset consisting of all characters not in its operand.
+</p>
+<dl>
+<dt>^ co-expression</dt>
+<dd>
+<p>
+refresh co-expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The refresh operator restarts a co-expression so the next time it is activated it will begin with its first result.
+</p>
+<h4 id="binary-operators">
+Binary operators
+</h4>
+<p>
+Most binary operators may be augmented with an assignment. If such an operator is followed by a 
+<code>:=</code>
+ the left operand must be a variable, and the expression 
+<code>x</code>
+\ 
+<em>
+``op``
+</em>
+\ 
+<code>:= y</code>
+ is equivalent to 
+<code>x := x</code>
+\ 
+<em>
+``op``
+</em>
+\ 
+<code>y</code>
+. For example, 
+<code>x +:= 5</code>
+ is equivalent but faster than the expression 
+<code>x := x+5.</code>
+ In general, augmented operators are not thread-safe. They are only safe if applied to a local (non static) variable that has an atomic type. For example, sets are mutable (not safe anywhere) whereas csets are atomic (unsafe if global or static; safe if local).
+</p>
+<dl>
+<dt>number1 ^ number2</dt>
+<dd>
+<p>
+power
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>number1 * number2</dt>
+<dd>
+<p>
+multiply
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 / number2</dt>
+<dd>
+<p>
+divide
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 % number2</dt>
+<dd>
+<p>
+modulo
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>number1 + number2</dt>
+<dd>
+<p>
+add
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 - number2</dt>
+<dd>
+<p>
+subtract
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The arithmetic operators may be augmented.
+</p>
+<dl>
+<dt>set1 ** set2</dt>
+<dd>
+<p>
+intersection
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>set1 ++ set2</dt>
+<dd>
+<p>
+union
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>set1 -- set2</dt>
+<dd>
+<p>
+difference
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The set operators work on sets or csets. They may be augmented.
+</p>
+<dl>
+<dt>x . name</dt>
+<dd>
+<p>
+field
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>object . name (params)</dt>
+<dd>
+<p>
+method invocation
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>object $ superclass .name (params)</dt>
+<dd>
+<p>
+superclass method invocation
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<p>
+The field operator selects field name out of a record, object, or package. For objects, 
+<em>
+name
+</em>
+ may be a method, in which case the field operator is being used as part of a method invocation. Superclass method invocation consists of a dollar sign and superclass name prior to the field operator.
+</p>
+<dl>
+<dt>number1 = number2</dt>
+<dd>
+<p>
+equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 ~= number2</dt>
+<dd>
+<p>
+not equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 &lt; number2</dt>
+<dd>
+<p>
+less than
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 &lt;= number2</dt>
+<dd>
+<p>
+less or equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 &gt; number2</dt>
+<dd>
+<p>
+greater than
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>number1 &gt;= number2</dt>
+<dd>
+<p>
+greater or equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>string1 == string2</dt>
+<dd>
+<p>
+string equal
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>string1 ~== string2</dt>
+<dd>
+<p>
+string not equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>string1 &lt;&lt; string2</dt>
+<dd>
+<p>
+string less than
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>string1 &lt;&lt;= string2</dt>
+<dd>
+<p>
+string less or equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>string1 &gt;&gt; string2</dt>
+<dd>
+<p>
+string greater than
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>string1 &gt;&gt;= string2</dt>
+<dd>
+<p>
+string greater or equal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>x1 === x2</dt>
+<dd>
+<p>
+equivalence
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>x1 ~=== x2</dt>
+<dd>
+<p>
+non equivalence
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Relational operators produce their right operand if they succeed. They may be augmented.
+</p>
+<dl>
+<dt>var := expr</dt>
+<dd>
+<p>
+assign
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>var1 :=: var2</dt>
+<dd>
+<p>
+swap
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>var &lt;- expr</dt>
+<dd>
+<p>
+reversible assignment
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>var1 &lt;-&gt; var2</dt>
+<dd>
+<p>
+reversible swap
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<p>
+The several assignment operators all require variables for their left operands, and swap operators also require variables for their right operands. Assignment operators are usually thread safe but there are some situations where they are not. See the discussion of thread safe assignment without a mutex (in Chapter 8 of the Unicon book) for details. If in doubt, protect the global variable with a mutex.
+</p>
+<dl>
+<dt>string ? expr</dt>
+<dd>
+<p>
+scan string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning evaluates 
+<em>
+expr
+</em>
+ with 
+<code>&amp;subject</code>
+ equal to string and 
+<code>&amp;pos</code>
+ starting at 1. It may be augmented.
+</p>
+<dl>
+<dt>string ?? pattern</dt>
+<dd>
+<p>
+pattern match
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Pattern matching produces the substring(s) where pattern occurs within a string. It is conducted within a new string scanning environment as per string scanning above. It may be augmented.
+</p>
+<dl>
+<dt>x ! y</dt>
+<dd>
+<p>
+apply
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The binary bang (exclamation) operator calls x, using y as its parameters. x may be a procedure, or the string name of a procedure. y is a list or record.
+</p>
+<dl>
+<dt>[x] @ co-expression</dt>
+<dd>
+<p>
+activate co-expression
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<p>
+The activate operator transfers execution control from the current co-expression to its right operand co-expression. The transmitted value is 
+<code>x</code>
+, or 
+<code>&amp;null</code>
+ if no left operand is supplied. Activation may be augmented.
+</p>
+<dl>
+<dt>[x] @&gt; [y]</dt>
+<dd>
+<p>
+send message
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>[x] @&gt;&gt; [y]</dt>
+<dd>
+<p>
+blocking send message
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The send operator places a message in another thread's public inbox, or in the current thread's public outbox. The normal version fails if the box is full; the blocking version waits for space to become available.
+</p>
+<dl>
+<dt>[x] &lt;@ [y]</dt>
+<dd>
+<p>
+receive message
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>[x] &lt;&lt;@ [y]</dt>
+<dd>
+<p>
+blocking receive message
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The receive operator obtains a message from another thread's public outbox, or the current thread's public inbox. The normal version fails if the box is empty; the blocking version waits for a message to become available.
+</p>
+<dl>
+<dt>string1 \|\| string2</dt>
+<dd>
+<p>
+concatenation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>pattern1 \|\| pattern2</dt>
+<dd>
+<p>
+pattern concatenation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>list1 \||\| list2</dt>
+<dd>
+<p>
+list concatenation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The concatenation operators produce new values (or patterns that will match values) consisting of the left operand followed by the right operand. They may be augmented.
+</p>
+<dl>
+<dt>x1 &amp; x2</dt>
+<dd>
+<p>
+conjunction
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>expr1 \| expr2</dt>
+<dd>
+<p>
+alternation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The conjunction operator produces 
+<code>x2</code>
+ if 
+<code>x1</code>
+ succeeds. The alternation operator produces the results of 
+<code>expr1</code>
+ followed by the results of 
+<code>expr2</code>
+; it is a generator. These operators may be augmented.
+</p>
+<dl>
+<dt>x1 \\ integer</dt>
+<dd>
+<p>
+limitation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The limitation operator fails if it is resumed after its left operand has produced a number of results equal to its right operand.
+</p>
+<dl>
+<dt>( expr [, expr]* )</dt>
+<dd>
+<p>
+mutual evaluation
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>p ( expr [, expr]* )</dt>
+<dd>
+<p>
+invocation
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<p>
+By themselves, parentheses are used to override operator precedence in surrounding expressions. A comma-separated list of expressions is evaluated left to right, and fails if any operand fails. Its value is the right of the rightmost operand.
+</p>
+<p>
+When preceded by an operand, parentheses form an invocation. The operand may be a procedure, a method, a string that is converted to a procedure name, or an integer that selects the parameter to use as the result of the entire expression.
+</p>
+<dl>
+<dt>[ ]</dt>
+<dd>
+<p>
+empty list creation
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>[ expr [, expr]* ]</dt>
+<dd>
+<p>
+list creation
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>[: expr :]</dt>
+<dd>
+<p>
+list comprehension
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>expr1 [ expr2 [, expr]* ]</dt>
+<dd>
+<p>
+subscript
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>expr1 [ expr2 : expr3 ]</dt>
+<dd>
+<p>
+subsection
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>expr1 [ expr2 +: expr3 ]</dt>
+<dd>
+<p>
+forward relative subsection
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>expr1 [ expr2 -: expr3 ]</dt>
+<dd>
+<p>
+backward relative subsection
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+With no preceding operand, square brackets create and initialize lists. Initializer values are comma-separated, except in list comprehension where the expression's values (obtained as if by 
+<strong>
+every
+</strong>
+) are used to provide the initial list elements. When preceded by an operand, square brackets form a subscript or subsection. Multiple comma-separated subscript operands are equivalent to separate subscript operations with repeating square brackets, so 
+<code>x[y,z]</code>
+ is equivalent to 
+<code>x[y][z]</code>
+.
+</p>
+<p>
+Subscripting selects an element from a structure and allows that element to be assigned or for its value to be used. Lists and strings are subscripted using 1-based integer indices, tables are subscripted using arbitrary keys, and records may be subscripted by either string fieldname or 1-based integer index. Message connections may be subscripted by string header to obtain server responses; POP connections may also be subscripted by 1-based integer message numbers.
+</p>
+<p>
+Subsectioning works on strings and lists. For strings, the subsection is a variable if the string was a variable, and assignment to the subsection makes the variable hold the new, modified string constructed by replacing the subsection. For lists, a subsection is a new list that contains a copy of the elements from the original list.
+</p>
+<dl>
+<dt>expr1 ; expr2</dt>
+<dd>
+<p>
+bound expression
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+A semicolon bounds 
+<code>expr1</code>
+. Once 
+<code>expr2</code>
+ is entered, 
+<code>expr1</code>
+ cannot be resumed for more results. The result of 
+<code>expr2</code>
+ is the result of the entire expression. Semicolons are automatically inserted at ends of lines wherever it is syntactically allowable to do so. This results in many 
+<em>
+implicitly
+</em>
+ 
+<em>
+bounded
+</em>
+ expressions.
+</p>
+<dl>
+<dt>{ expr [; expr]* }</dt>
+<dd>
+<p>
+compound expression
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>p { expr [; expr]* }</dt>
+<dd>
+<p>
+programmer defined control structure
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<p>
+Curly brackets typically cause a sequence of bounded expressions to be treated as a single expression. Preceded by a procedure value, curly brackets introduce a programmer defined control structure in which a co-expression is created for each argument; the procedure is called with these co-expressions as its parameters, and can determine for itself whether, and in what order, to activate its parameters to obtain values.
+</p>
+<h4 id="built-in-functions">
+Built-in functions
+</h4>
+<p>
+Unicon's built-in functions are a key element of its ease of learning and use. They provide substantial functionality in a consistent and easily memorized manner.
+</p>
+<p>
+In addition to automatic type conversion, built-in functions make extensive use of optional parameters with default values. Default values are indicated in the function descriptions, with the exception of string scanning functions. String scanning functions end with three parameters that default to the string 
+<code>&amp;subject</code>
+, the integer 
+<code>&amp;pos</code>
+, and the end of string (0) respectively. The position argument defaults to 1 when the string argument is supplied rather than defaulted.
+</p>
+<dl>
+<dt>abs(N) : number</dt>
+<dd>
+<p>
+absolute value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>abs(N)</code>
+ produces the maximum of 
+<code>N</code>
+ or 
+<code>-N</code>
+.
+</p>
+<dl>
+<dt>acos(r) : real</dt>
+<dd>
+<p>
+arc cosine
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>acos(r)</code>
+ produces the arc cosine of 
+<code>r</code>
+. The argument is given in radians.
+</p>
+<dl>
+<dt>any(c, s, i, i) : integer?</dt>
+<dd>
+<p>
+cset membership
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning function 
+<code>any(c,s,i1,i2)</code>
+ produces 
+<code>i1+1</code>
+ if 
+<code>s[i1:i2][1]</code>
+ is in cset 
+<code>c</code>
+, but fails otherwise.
+</p>
+<dl>
+<dt>args(x,i) : any</dt>
+<dd>
+<p>
+number of arguments
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>args(p)</code>
+ produces the number of arguments expected by procedure 
+<code>p</code>
+. If 
+<code>p</code>
+ takes a variable number of arguments, 
+<code>args(p)</code>
+ returns a negative number to indicate that the final argument is a list conversion of an arbitrary number of arguments. For example, 
+<code>args(p)</code>
+ for a procedure 
+<code>p</code>
+ with formal parameters 
+<code>(x, y, z[ ])</code>
+ returns a 
+<code>-3</code>
+. 
+<code>args(C)</code>
+ produces the number of arguments in the current operation in co-expression 
+<code>C</code>
+, and 
+<code>args(C,i)</code>
+ produces argument number 
+<code>i</code>
+ within co-expression 
+<code>C</code>
+.
+</p>
+<dl>
+<dt>asin(real) : real</dt>
+<dd>
+<p>
+arc sine
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>asin(r1)</code>
+ produces the arc sine of 
+<code>r1</code>
+. The argument is given in radians.
+</p>
+<dl>
+<dt>atan(r, r:1.0) : real</dt>
+<dd>
+<p>
+arc tangent
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>atan(r1)</code>
+ produces the arc tangent of 
+<code>r1</code>
+. 
+<code>atan(r1,r2)</code>
+ produces the arc tangent of 
+<code>r1</code>
+ and 
+<code>r2</code>
+. Arguments are given in radians.
+</p>
+<dl>
+<dt>atanh(r) : real</dt>
+<dd>
+<p>
+inverse hyperbolic tangent
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>atanh(r)</code>
+ produces the inverse hyperbolic tangent of 
+<code>r</code>
+. Arguments are given in radians.
+</p>
+<dl>
+<dt>bal(cs:&amp;cset, cs:'(', cs:')', s, i, i) : integer*</dt>
+<dd>
+<p>
+balance string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning function 
+<code>bal(c1,c2,c3,s,i1,i2)</code>
+ generates the integer positions in 
+<code>s</code>
+ at which a member of 
+<code>c1</code>
+ in 
+<code>s[i1:i2]</code>
+ is balanced with respect to characters in 
+<code>c2</code>
+ and 
+<code>c3</code>
+.
+</p>
+<dl>
+<dt>center(s, i:1, s:&quot; &quot;) : string</dt>
+<dd>
+<p>
+center string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>center(s1,i,s2)</code>
+ produces a string of 
+<code>i</code>
+ characters. If 
+<code>i &gt; *s1</code>
+ then 
+<code>s1</code>
+ is padded equally on the left and right with 
+<code>s2</code>
+ to length 
+<code>i</code>
+. If 
+<code>i &lt; *s1</code>
+ then the center 
+<code>i</code>
+ characters of 
+<code>s1</code>
+ are produced.
+</p>
+<dl>
+<dt>channel(TH) : list</dt>
+<dd>
+<p>
+communicationsl channel
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>channel(TH)</code>
+ creates a communications channel between the current thread and thread 
+<em>
+TH
+</em>
+.
+</p>
+<dl>
+<dt>char(i) : string</dt>
+<dd>
+<p>
+encode character
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>char(i)</code>
+ produces a string consisting of the character encoded by integer 
+<code>i</code>
+.
+</p>
+<dl>
+<dt>chdir(s) : string</dt>
+<dd>
+<p>
+change directory
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>chdir(s)</code>
+ changes the current working directory to 
+<code>s</code>
+. 
+<code>chdir()</code>
+ returns the current working directory. The current working directory is shared between threads.
+</p>
+<dl>
+<dt>chmod(f, m) : ?</dt>
+<dd>
+<p>
+file permissions
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>chmod(f, m)</code>
+ sets the access permissions (&quot;mode&quot;) of a string filename (or on UNIX systems, an open file) 
+<code>f</code>
+ to a string or integer mode 
+<code>m</code>
+. The mode indicates the change to be performed. The string is of the form
+</p>
+<pre><code class="language-text">
+[ugoa]*[+-=][rwxRWXstugo]*
+</code></pre>
+<p>
+The first group describes the set of mode bits to be changed: 
+<code>u</code>
+ is the owner set, 
+<code>g</code>
+ is the group and 
+<code>o</code>
+ is the set of all others. The character 
+<code>a</code>
+ designates all the fields. The operator (
+<code>+-=</code>
+) describes the operation to be performed: 
+<code>+</code>
+ adds a permission, 
+<code>-</code>
+ removes a permission, and 
+<code>=</code>
+ sets a permission. The permissions themselves are:
+</p>
+<p>
+| 
+<code>r</code>
+ read | 
+<code>w</code>
+ write | 
+<code>x</code>
+ execute | 
+<code>R</code>
+ read if any other set already has r | 
+<code>W</code>
+ write if any other set already has w | 
+<code>X</code>
+ execute if any other set already has x | 
+<code>s</code>
+ setuid (if the first part contains u and/or setgid if the first   part contains g | 
+<code>t</code>
+ sticky if the first part has o | 
+<code>u</code>
+ the u bits on the same file | 
+<code>g</code>
+ the g bits on the same file | 
+<code>o</code>
+ the o bits on the same file
+</p>
+<p>
+If the first group is missing, then it is treated as &quot;all&quot; except that any bits in the user's umask will not be modified in the mode. Not all platforms make use of all mode bits described here; the mode bits that are used is a property of the filesystem on which the file resides.
+</p>
+<dl>
+<dt>classname(r) : string</dt>
+<dd>
+<p>
+class name
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>classname(r)</code>
+ produces the name of 
+<code>r</code>
+'s class.
+</p>
+<dl>
+<dt>close(f) : file \| integer</dt>
+<dd>
+<p>
+close file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>close(f)</code>
+ closes file, pipe, window, network or message connection, or database f and returns any resources associated with it to the operating system. If f was a window, close(f) causes it to disappear, but the window can still be written to and copied from until all open bindings are closed. If f was a pipe or network connection, close() returns the integer exit status of the connection, otherwise it returns the closed file.
+</p>
+<dl>
+<dt>cofail(CE) : any</dt>
+<dd>
+<p>
+transmit co-expression failure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>cofail(ce)</code>
+ activates co-expression ce, transmitting failure instead of a result.
+</p>
+<dl>
+<dt>collect(i:0, i:0) : null</dt>
+<dd>
+<p>
+collect garbage
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>collect(i1,i2)</code>
+ calls the garbage collector to ensure that i2 bytes are free in region i1. i1 can be 0 (no region in particular) 1 (static region) 2 (string region) or 3 (block region).
+</p>
+<dl>
+<dt>condvar() : condition variable</dt>
+<dd>
+<p>
+create condition variable
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+condvar() creates a new condition variable.
+</p>
+<dl>
+<dt>constructor(s, ...) : procedure</dt>
+<dd>
+<p>
+record constructor
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>constructor(label, field, field, ...)</code>
+ creates a new record type named 
+<code>label</code>
+ with fields named by its subsequent arguments, and returns a constructor procedure for this record type.
+</p>
+<dl>
+<dt>copy(any) : any</dt>
+<dd>
+<p>
+copy value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>copy(x)</code>
+ produces a copy of x. For immutable types (numbers, strings, csets, procedures) this is a no-op. For mutable types (lists, tables, sets, records, objects) a one-level deep copy of the object is made.
+</p>
+<dl>
+<dt>cos(r) : real</dt>
+<dd>
+<p>
+cosine
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>cos(r)</code>
+ produces the cosine of r. The argument is given in radians.
+</p>
+<dl>
+<dt>cset(any) : cset?</dt>
+<dd>
+<p>
+convert to cset
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>cset(x)</code>
+ converts x to a cset, or fails if the conversion cannot be performed.
+</p>
+<dl>
+<dt>ctime(i) : string</dt>
+<dd>
+<p>
+format a time value into local time
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ctime(i)</code>
+ converts an integer time given in seconds since the epoch, Jan 1, 1970 00:00:00 into a string in the local timezone. See also keywords &amp;clock and &amp;dateline.
+</p>
+<dl>
+<dt>dbcolumns(D,s) : list</dt>
+<dd>
+<p>
+ODBC column information
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dbcolumns(db, tablename)</code>
+ produces a list of record (catalog, schema, tablename, colname, datatype, typename, colsize, buflen, decdigits, numprecradix, nullable, remarks) entries. Fields 
+<code>datatype</code>
+ and 
+<code>typename</code>
+ are SQL-dependent and data source dependent, respectively. Field 
+<code>colsize</code>
+ gives the maximum length in characters for SQL_CHAR or SQL_VARCHAR columns.. Field 
+<code>decdigits</code>
+ gives the number of significant digits right of the decimal. Field 
+<code>numprecradix</code>
+ specifies whether 
+<code>colsize</code>
+ and 
+<code>decdigits</code>
+ are specified in bits or decimal digits. Field 
+<code>nullable</code>
+ is 0 if the column does not accept null values, 1 if it does accept null values, and 2 if it is not known whether the column accepts null values.
+</p>
+<dl>
+<dt>dbdriver(D) : record</dt>
+<dd>
+<p>
+ODBC driver information
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dbdriver(db)</code>
+ produces a record driver(name, ver, odbcver, connections, statements, dsn) that describes the details of the ODBC driver used to connect to database db. Connections and statements are the maximums the driver can support. Fields 
+<code>ver</code>
+ and 
+<code>odbcver</code>
+ are the driver and ODBC version numbers. Fields 
+<code>name</code>
+ and 
+<code>dsn</code>
+ are the driver filename and Windows Data Source Name associated with the connection.
+</p>
+<dl>
+<dt>dbkeys(D,string) : list</dt>
+<dd>
+<p>
+ODBC key information
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dbkeys(db,tablename)</code>
+ produces a list of record (columnname, sequencenumber) pairs containing information about the primary keys in tablename.
+</p>
+<dl>
+<dt>dblimits(D) : record</dt>
+<dd>
+<p>
+ODBC operation limits
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dblimits(db)</code>
+ produces a record with fields 
+<code>maxbinlitlen</code>
+, 
+<code>maxcharlitlen, maxcolnamelen, maxgroupbycols, maxorderbycols</code>
+, 
+<code>maxindexcols, maxselectcols, maxtblcols, maxcursnamelen, maxindexsize</code>
+, 
+<code>maxrownamelen, maxprocnamelen, maxqualnamelen, maxrowsize</code>
+, 
+<code>maxrowsizelong, maxstmtlen, maxtblnamelen, maxselecttbls</code>
+, and 
+<code>maxusernamelen</code>
+ that contains the upper bounds of the database for many parameters.
+</p>
+<dl>
+<dt>dbproduct(D) : record</dt>
+<dd>
+<p>
+database name
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dbproduct(db)</code>
+ produces a record (name, ver) that gives the name and the version of the DBMS product containing db.
+</p>
+<dl>
+<dt>dbtables(D) : list</dt>
+<dd>
+<p>
+ODBC table information
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dbtables(db)</code>
+ returns a list of record (qualifier, owner, name, type, remarks) entries that describe all of the tables in the database associated with db.
+</p>
+<dl>
+<dt>delay(i) : null</dt>
+<dd>
+<p>
+delay for i milliseconds
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>delay(i)</code>
+ pauses the program for at least i milliseconds.
+</p>
+<dl>
+<dt>delete(x1, x2, ...) : x1</dt>
+<dd>
+<p>
+delete element
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>delete(x1, x2)</code>
+ deletes elements denoted by the 2\ 
+<sup>nd</sup>
+ and following parameters from set, table, list, DBM database, or POP connection x1 if it is there. In any case, it returns x1. If x1 is a table or set, elements x\ 
+<sub>i</sub>
+ denote keys of arbitrary type. If x1 is a DBM database, indices must be strings. If x1 is a list or a POP messaging connection, elements xi are integer indices of the element to be deleted. POP messages are actually deleted when the close() operation closes that connection.
+</p>
+<dl>
+<dt>detab(string, integer:9,...) : string</dt>
+<dd>
+<p>
+replace tabs
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>detab(s,i,...)</code>
+ replaces tabs with spaces, with stops at columns indicated by the second and following parameters, which must all be integers. Tab stops are extended infinitely using the interval between the last two specified tab stops.
+</p>
+<dl>
+<dt>display(i:&amp;level, f:&amp;errout, CE:&amp;current) : null</dt>
+<dd>
+<p>
+write variables
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>display(i,f)</code>
+ writes the local variables of 
+<code>i</code>
+ most recent procedure activations, plus global variables, to file 
+<code>f</code>
+.
+</p>
+<dl>
+<dt>dtor(r) : real</dt>
+<dd>
+<p>
+convert degrees to radians
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>dtor(r)</code>
+ produces the equivalent of 
+<code>r</code>
+ degrees, expressed in radians.
+</p>
+<dl>
+<dt>entab(s, i:9,...) : string</dt>
+<dd>
+<p>
+replace spaces
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>entab(s,i,...)</code>
+ replaces spaces with tabs, with stops at columns indicated. Tab stops are extended infinitely using the interval between the last two specified tab stops.
+</p>
+<dl>
+<dt>errorclear() : null</dt>
+<dd>
+<p>
+clear error condition
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>errorclear()</code>
+ resets keywords &amp;errornumber, &amp;errortext, and &amp;errorvalue to indicate that no error is present.
+</p>
+<dl>
+<dt>eventmask(CE, cset) : cset \| null</dt>
+<dd>
+<p>
+get/set event mask
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>eventmask(ce)</code>
+ returns the event mask associated with the program that created ce, or &amp;null if there is no event mask. eventmask(ce,cs) sets that program's event mask to cs.
+</p>
+<dl>
+<dt>EvGet(c, flag) : string</dt>
+<dd>
+<p>
+get event from monitored program
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>EvGet(c,flag)</code>
+ activates a program being monitored until an event in cset mask 
+<code>c</code>
+ occurs. Under normal circumstances this is a one-character string event code.
+</p>
+<dl>
+<dt>EvSend(i, x, CE) : any</dt>
+<dd>
+<p>
+transmit event
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>EvSend(x, y, C)</code>
+ transmits an event with event code 
+<code>x</code>
+ and event value 
+<code>y</code>
+ to a monitoring co-expression 
+<code>C</code>
+.
+</p>
+<dl>
+<dt>exit(i:normalexit)</dt>
+<dd>
+<p>
+exit process
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>exit(i)</code>
+ terminates the current program execution, returning status code 
+<code>i</code>
+. The default is the platform-dependent exit code that indicates normal termination (0 on most systems).
+</p>
+<dl>
+<dt>exp(r) : real</dt>
+<dd>
+<p>
+exponential
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>exp(r)</code>
+ produces the result of &amp;e ^ r.
+</p>
+<dl>
+<dt>fetch(D, s?) : string \| row?</dt>
+<dd>
+<p>
+fetch database value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>fetch(d, k)</code>
+ fetches the value corresponding to key 
+<code>k</code>
+ from a DBM or SQL database 
+<code>d</code>
+. The result is a string (for DBM databases) or a row (for SQL databases). For SQL databases, when the string 
+<code>k</code>
+ is omitted, 
+<code>fetch(d)</code>
+ produces the next row in the current selection, and advances the cursor to the next row. A row is a record whose field names and types are determined by the columns specified in the current query. 
+<code>fetch(d)</code>
+ fails if there are no more rows to return from the current query. Typically a call to 
+<code>dbselect()</code>
+ will be followed by a while-loop that calls 
+<code>fetch()</code>
+ repeatedly until it fails.
+</p>
+<dl>
+<dt>fieldnames(R) : string*</dt>
+<dd>
+<p>
+get field names
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>fieldnames(r)</code>
+ produces the names of the fields in record 
+<code>r</code>
+.
+</p>
+<dl>
+<dt>find(s, s, i, i) : integer*</dt>
+<dd>
+<p>
+find string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning function 
+<code>find(s1,s2,i1,i2)</code>
+ generates the positions in 
+<code>s2</code>
+ at which 
+<code>s1</code>
+ occurs as a substring in 
+<code>s2[i1:i2]</code>
+.
+</p>
+<dl>
+<dt>flock(f, s) : ?</dt>
+<dd>
+<p>
+apply or remove file lock
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>flock(f,s)</code>
+ applies an advisory lock to the file. Advisory locks enable processes to cooperate when accessing a shared file, but do not enforce exclusive access. The following characters can be used to make up the operation string:
+</p>
+<p>
+| s shared lock | x exclusive lock | b don't block when locking | u unlock
+</p>
+<p>
+Locks cannot be applied to windows, directories or database files. A file may not simultaneously have shared and exclusive locks.
+</p>
+<dl>
+<dt>flush(f) : file</dt>
+<dd>
+<p>
+flush file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>flush(f)</code>
+ flushes all pending or buffered output to file 
+<code>f</code>
+.
+</p>
+<dl>
+<dt>function() : string*</dt>
+<dd>
+<p>
+name the functions
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>function()</code>
+ generates the names of the built-in functions.
+</p>
+<dl>
+<dt>get(L,i:1) : any?</dt>
+<dd>
+<p>
+get element from queue
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>get(L)</code>
+ returns an element which is removed from the head of the queue 
+<code>L</code>
+. 
+<code>get(L, i)</code>
+ removes 
+<code>i</code>
+ elements, returning the last one removed.
+</p>
+<dl>
+<dt>getch() : string?</dt>
+<dd>
+<p>
+get character from console
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>getch()</code>
+ waits for (if necessary) and returns a character typed at the keyboard, even if standard input was redirected. The character is not displayed.
+</p>
+<dl>
+<dt>getche() : string?</dt>
+<dd>
+<p>
+get and echo character from console
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>getche()</code>
+ waits for (if necessary) and returns a character typed at the console keyboard, even if standard input was redirected. The character is echoed to the screen.
+</p>
+<dl>
+<dt>getenv(s) : string?</dt>
+<dd>
+<p>
+get environment variable
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>getenv(s)</code>
+ returns the value of environment variable 
+<code>s</code>
+ from the operating system.
+</p>
+<dl>
+<dt>gettimeofday() : record</dt>
+<dd>
+<p>
+time of day
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Returns the current time in seconds and microseconds since the epoch, Jan 1, 1970 00:00:00. The 
+<code>sec</code>
+ value may be converted to a date string with ctime or gtime. See also keywords 
+<code>&amp;now</code>
+, 
+<code>&amp;clock</code>
+, and 
+<code>&amp;dateline</code>
+. Return value: 
+<code>record posix_timeval(sec, usec)</code>
+</p>
+<dl>
+<dt>globalnames(CE) : string*</dt>
+<dd>
+<p>
+name the global variables
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>globalnames(ce)</code>
+ generates the names of the global variables in the program that created co-expression 
+<code>ce</code>
+.
+</p>
+<dl>
+<dt>gtime(i) : string</dt>
+<dd>
+<p>
+format a time value into UTC
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Converts an integer time in seconds since the epoch, Jan 1, 1970 00:00:00 into a string in Coordinated Universal Time (UTC).
+</p>
+<dl>
+<dt>iand(i, i) : integer</dt>
+<dd>
+<p>
+bitwise and
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>iand(i1, i2)</code>
+ produces the bitwise AND of 
+<code>i1</code>
+ and 
+<code>i2</code>
+.
+</p>
+<dl>
+<dt>icom(i) : integer</dt>
+<dd>
+<p>
+bitwise complement
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>icom(i)</code>
+ produces the bitwise complement (one's complement) of 
+<code>i</code>
+.
+</p>
+<dl>
+<dt>image(any) : string</dt>
+<dd>
+<p>
+string image
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>image(x)</code>
+ returns the string image of the value 
+<code>x</code>
+.
+</p>
+<dl>
+<dt>insert(x1, x2, x3:&amp;null) : x1</dt>
+<dd>
+<p>
+insert element
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>insert(x1, x2, x3)</code>
+ inserts element 
+<code>x2</code>
+ into set, table, or list or DBM database 
+<code>x1</code>
+ if not already there. Unless 
+<code>x1</code>
+ is a set, the assigned value for element 
+<code>x2</code>
+ is 
+<code>x3</code>
+. For lists, 
+<code>x2</code>
+ is an integer index; for other types, it is a key. 
+<code>insert()</code>
+ always succeeds and returns 
+<code>x1</code>
+.
+</p>
+<dl>
+<dt>integer(any) : integer?</dt>
+<dd>
+<p>
+convert to integer
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>integer(x)</code>
+ converts value 
+<code>x</code>
+ to an integer, or fails if the conversion cannot be performed.
+</p>
+<dl>
+<dt>ior(i, i) : integer</dt>
+<dd>
+<p>
+bitwise or
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ior(i1, i2)</code>
+ produces the bitwise OR of 
+<code>i1</code>
+ and 
+<code>i2</code>
+.
+</p>
+<dl>
+<dt>ishift(i, i) : integer</dt>
+<dd>
+<p>
+bitwise shift
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ishift(i, j)</code>
+ produces the value obtained by shifting 
+<code>i</code>
+ by 
+<code>j</code>
+ bit positions. Shifting is to the left if 
+<code>j&gt;0</code>
+, or to the right if 
+<code>j&lt;0</code>
+. 
+<code>j</code>
+ zero bits are introduced at the end opposite the shift direction.
+</p>
+<dl>
+<dt>istate(CE, s) : integer</dt>
+<dd>
+<p>
+interpreter state
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>istate(ce, attrib)</code>
+ reports selected virtual machine interpreter state information. 
+<code>attrib</code>
+ must be one of: 
+<code>&quot;count&quot;</code>
+, 
+<code>&quot;ilevel&quot;</code>
+, 
+<code>&quot;ipc&quot;</code>
+, 
+<code>&quot;ipc_offset&quot;</code>
+, 
+<code>&quot;sp&quot;</code>
+, 
+<code>&quot;efp&quot;</code>
+, 
+<code>&quot;gfp&quot;</code>
+. Used by monitors.
+</p>
+<dl>
+<dt>ixor(i, i) : integer</dt>
+<dd>
+<p>
+bitwise xor
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ixor(i1, i2)</code>
+ produces the bitwise exclusive or of 
+<code>i1</code>
+ and 
+<code>i2</code>
+.
+</p>
+<dl>
+<dt>kbhit() : ?</dt>
+<dd>
+<p>
+check for console input
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>kbhit()</code>
+ checks to see if there is a keyboard character waiting to be read.
+</p>
+<dl>
+<dt>key(x) : any*</dt>
+<dd>
+<p>
+table keys
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>key(T)</code>
+ generates the key (entry) values from table 
+<code>T</code>
+. 
+<code>key(L)</code>
+ generates the indices from 1 to 
+<code>*L</code>
+ in list 
+<code>L</code>
+. 
+<code>key(R)</code>
+ generates the string field names of record 
+<code>R</code>
+.
+</p>
+<dl>
+<dt>keyword(s,CE:&amp;current,i:0) : any*</dt>
+<dd>
+<p>
+produce keyword value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>keyword(s,ce,i)</code>
+ produces the value of keyword 
+<code>s</code>
+ in the context of 
+<code>ce</code>
+'s execution, 
+<code>i</code>
+ levels up in the stack from the current point of execution. Used in execution monitors.
+</p>
+<dl>
+<dt>left(s, i:1, s:&quot; &quot;) : string</dt>
+<dd>
+<p>
+left format string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>left(s1,i,s2)</code>
+ formats 
+<code>s1</code>
+ to be a string of length 
+<code>i</code>
+. If 
+<code>s1</code>
+ is more than 
+<code>i</code>
+ characters, it is truncated. If 
+<code>s1</code>
+ is fewer than 
+<code>i</code>
+ characters it is padded on the right with as many copies of 
+<code>s2</code>
+ as needed to increase it to length 
+<code>i</code>
+.
+</p>
+<dl>
+<dt>list(integer:0, any:&amp;null) : list</dt>
+<dd>
+<p>
+create list
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>list(i, x)</code>
+ creates a list of size 
+<code>i</code>
+, in which all elements have the initial value 
+<code>x</code>
+. If 
+<code>x</code>
+ is a mutable value such as a list, all elements refer to the 
+<em>
+same
+</em>
+ value, not a separate copy of the value for each element.
+</p>
+<dl>
+<dt>load(s,L,f:&amp;input,f:&amp;output,f:&amp;errout,i,i,i) : co-expression</dt>
+<dd>
+<p>
+load Unicon program
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>load(s,arglist,input,output,error,blocksize,stringsize,stacksize)</code>
+ loads the icode file named 
+<code>s</code>
+ and returns that program's execution as a co-expression ready to start its 
+<code>main()</code>
+ procedure with parameter 
+<code>arglist</code>
+ as its command line arguments. The three file parameters are used as that program's 
+<code>&amp;input</code>
+, 
+<code>&amp;output</code>
+, and 
+<code>&amp;errout</code>
+. The three integers are used as its initial memory region sizes.
+</p>
+<dl>
+<dt>loadfunc(s, s) : procedure</dt>
+<dd>
+<p>
+load C function
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>loadfunc(filename,funcname)</code>
+ dynamically loads a compiled C function from the object library file given by 
+<code>filename</code>
+. 
+<code>funcname</code>
+ must be a specially written interface function that handles Icon data representations and calling conventions.
+</p>
+<dl>
+<dt>localnames(CE, i:0) : string*</dt>
+<dd>
+<p>
+local variable names
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>localnames(ce,i)</code>
+ generates the names of local variables in co-expression 
+<code>ce</code>
+, 
+<code>i</code>
+ levels up from the current procedure invocation. The default i of 0 generates names in the currently active procedure in ce.
+</p>
+<dl>
+<dt>lock(x) : x</dt>
+<dd>
+<p>
+lock mutex
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>lock(x)</code>
+ locks the mutex 
+<em>
+x
+</em>
+ or the mutex associated with thread-safe object 
+<em>
+x
+</em>
+.
+</p>
+<dl>
+<dt>log(r, r:&amp;e) : real</dt>
+<dd>
+<p>
+logarithm
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>log(r1,r2)</code>
+ produces the logarithm of 
+<code>r1</code>
+ to base 
+<code>r2</code>
+.
+</p>
+<dl>
+<dt>many(c, s, i, i) : integer?</dt>
+<dd>
+<p>
+many characters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning function 
+<code>many(c,s,i1,i2)</code>
+ produces the position in 
+<code>s</code>
+ after the longest initial sequence of members of 
+<code>c</code>
+ within 
+<code>s[i1:i2]</code>
+.
+</p>
+<dl>
+<dt>map(s, s:&amp;ucase, s:&amp;lcase) : string</dt>
+<dd>
+<p>
+map string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>map(s1,s2,s3)</code>
+ maps 
+<code>s1</code>
+, using 
+<code>s2</code>
+ and 
+<code>s3</code>
+. The resulting string will be a copy of 
+<code>s1</code>
+, with the exception that any of 
+<code>s1</code>
+'s characters that appear in 
+<code>s2</code>
+ are replaced by characters at the same position in 
+<code>s3</code>
+.
+</p>
+<dl>
+<dt>match(s, s:&amp;subject, i:&amp;pos, i:0) : integer</dt>
+<dd>
+<p>
+match string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning function 
+<code>match(s1,s2,i1,i2)</code>
+ produces 
+<code>i1+*s1</code>
+ if 
+<code>s1==s2[i1+:*s1]</code>
+, but fails otherwise.
+</p>
+<dl>
+<dt>max(n, ...) : number</dt>
+<dd>
+<p>
+largest value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>max(x, ...)</code>
+ returns the largest value among its arguments, which must be numeric.
+</p>
+<dl>
+<dt>member(x, ...) : x?</dt>
+<dd>
+<p>
+test membership
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>member(x, ...)</code>
+ returns 
+<code>x</code>
+ if its second and subsequent arguments are all members of set, cset, list or table 
+<code>x</code>
+ but fails otherwise. If 
+<code>x</code>
+ is a cset, all of the characters in subsequent string arguments must be present in 
+<code>x</code>
+ in order to succeed.
+</p>
+<dl>
+<dt>membernames(x) : list</dt>
+<dd>
+<p>
+class member names
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>membernames(x)</code>
+ produces a list containing the string names of the fields of x, where x is either an object or a string name of a class.
+</p>
+<dl>
+<dt>methodnames(x) : list</dt>
+<dd>
+<p>
+class method names
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>methodnames(x)</code>
+ produces a list containing the string names of the methods defined in class 
+<code>x</code>
+, where 
+<code>x</code>
+ is either an object or a string name of a class.
+</p>
+<dl>
+<dt>methods(x) : list</dt>
+<dd>
+<p>
+class method list
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>methods(x)</code>
+ produces a list containing the procedure values of the methods of x, where x is either an object or a string name of a class.
+</p>
+<dl>
+<dt>min(n, ...) : number</dt>
+<dd>
+<p>
+smallest value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>min(x, ...)</code>
+ returns the smallest value among its arguments, which must be numeric.
+</p>
+<dl>
+<dt>mkdir(s, s?) : ?</dt>
+<dd>
+<p>
+create directory
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>mkdir(path,mode)</code>
+ creates a new directory named 
+<code>path</code>
+ with mode 
+<code>mode</code>
+. The optional 
+<code>mode</code>
+ parameter can be numeric or a string of the form accepted by 
+<code>chmod()</code>
+. The function succeeds if a new directory is created.
+</p>
+<dl>
+<dt>move(i:1) : string</dt>
+<dd>
+<p>
+move scanning position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>move(i)</code>
+ moves 
+<code>&amp;pos</code>
+ 
+<code>i</code>
+ characters from the current position and returns the substring of 
+<code>&amp;subject</code>
+ between the old and new positions. This function reverses its effects by resetting the position to its old value if it is resumed.
+</p>
+<dl>
+<dt>mutex(x,y) : x</dt>
+<dd>
+<p>
+create a mutex
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>mutex()</code>
+ creates a new mutex. For 
+<code>mutex(x)</code>
+ associates the new mutex with structure 
+<em>
+x
+</em>
+. The call 
+<code>mutex(x,y)</code>
+ associates an existing mutex 
+<em>
+y
+</em>
+ (or mutex associated with protected object 
+<em>
+y
+</em>
+) with structure 
+<em>
+x
+</em>
+.
+</p>
+<dl>
+<dt>name(v, CE:&amp;current) : string</dt>
+<dd>
+<p>
+variable name
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>name(v)</code>
+ returns the name of variable 
+<code>v</code>
+ within the program that created co-expression 
+<code>c</code>
+. Keyword variables are recognized and named correctly. 
+<code>name()</code>
+ returns the base type and subscript or field information for variables that are elements within other values, but does not produce the source code variable name for such variables.
+</p>
+<dl>
+<dt>numeric(any) : number</dt>
+<dd>
+<p>
+convert to number
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>numeric(x)</code>
+ produces an integer or real number resulting from the type conversion of 
+<code>x</code>
+, but fails if the conversion is not possible.
+</p>
+<dl>
+<dt>open(s, s:&quot;rt&quot;, ...) : file?</dt>
+<dd>
+<p>
+open file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>open(s1, s2, ...)</code>
+ opens a file named 
+<code>s1</code>
+ with mode 
+<code>s2</code>
+ and attributes given in trailing arguments. The modes recognized by 
+<code>open()</code>
+ are:
+</p>
+<p>
+| 
+<code>&quot;a&quot;</code>
+\ append; write after current contents | 
+<code>&quot;b&quot;</code>
+\ open for both reading and writing (b does not mean binary   mode!) | 
+<code>&quot;c&quot;</code>
+\ create a new file and open it | 
+<code>&quot;d&quot;</code>
+\ open a [NG] DBM database | 
+<code>&quot;g&quot;</code>
+\ create a 2D graphics window | 
+<code>&quot;gl&quot;</code>
+\ create a 3D graphics window | 
+<code>&quot;n&quot;</code>
+\ connect to a remote TCP network socket | 
+<code>&quot;na&quot;</code>
+\ accept a connection from a TCP network socket | 
+<code>&quot;nau&quot;</code>
+\ accept a connection from a UDP network socket | 
+<code>&quot;nl&quot;</code>
+\ listen on a TCP network socket | 
+<code>&quot;nu&quot;</code>
+\ connect to a UDP network socket | 
+<code>&quot;m&quot;</code>
+\ connect to a messaging server (HTTP, SMTP, POP, ...) | 
+<code>&quot;o&quot;</code>
+\ open an ODBC connection to a (typically SQL) database | 
+<code>&quot;p&quot;</code>
+\ execute a program given by command line s1 and open a pipe to   it | 
+<code>&quot;r&quot;</code>
+\ read | 
+<code>&quot;t&quot;</code>
+\ use text mode, with newlines translated | 
+<code>&quot;u&quot;</code>
+\ use a binary untranslated mode | 
+<code>&quot;w&quot;</code>
+\ write
+</p>
+<p>
+Directories may only be opened for reading, and produce the names of all files, one per line. Pipes may be opened for reading or writing, but not both.
+</p>
+<p>
+When opening a network socket: the first argument 
+<code>s1</code>
+ is the name of the socket to connect. If 
+<code>s1</code>
+ is of the form &quot;s:i&quot;, it is an Internet domain socket on host s and port i; otherwise, it is the name of a Unix domain socket. If the host name is null, it represents the current host. Mode &quot;n&quot; allows an optional third parameter, an integer timeout (in milliseconds) after which 
+<code>open()</code>
+ fails if no connection has been established by that time.
+</p>
+<p>
+For a UDP socket, there is not really a connection, but any writes to that file will send a datagram to that address, so that the address doesn't have to be specified each time. Also, 
+<code>read()</code>
+ or 
+<code>reads()</code>
+ cannot be performed on a UDP socket; use receive. UDP sockets must be in the INET domain; the address must have a colon.
+</p>
+<p>
+For a DBM database, only one modifier character may be used: if 
+<code>s1</code>
+ is 
+<code>&quot;dr&quot;</code>
+ it indicates that the database should be opened in read-only mode. For an ODBC database, following the mode letter 
+<code>&quot;o&quot;</code>
+ comes an optional string default table name used by functions such as 
+<code>dbcolumns()</code>
+, followed by two generally required strings giving the username and password authentication for the connection.
+</p>
+<p>
+The filename argument is a Uniform Resource Indicator (URI) when opening a messaging connection. Arguments after the mode &quot;m&quot; are sent as headers. The HTTP User-Agent header defaults to &quot;Unicon Messaging/10.0&quot; and Host defaults to the host and port indicated in the URI. The SMTP From: header obtains its default from a UNICON_USERADDRESS environment variable if it is present.
+</p>
+<p>
+For 2D and 3D windows, attribute values may be specified in the following arguments to 
+<code>open()</code>
+. 
+<code>open()</code>
+ fails if a window cannot be opened or an attribute cannot be set to a requested value.
+</p>
+<dl>
+<dt>opmask(CE, c) : cset</dt>
+<dd>
+<p>
+opcode mask
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>opmask(ce)</code>
+ gets 
+<code>ce</code>
+'s program's opcode mask. The function returns 
+<code>&amp;null</code>
+ if there is no opcode mask. 
+<code>opmask(ce,cs)</code>
+ sets 
+<code>ce</code>
+'s program's opcode mask to 
+<code>cs</code>
+. This function is part of the execution monitoring facilities.
+</p>
+<dl>
+<dt>oprec(x) : record</dt>
+<dd>
+<p>
+get methods vector
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>oprec(r)</code>
+ produces a variable reference for 
+<code>r</code>
+'s class' methods vector.
+</p>
+<dl>
+<dt>ord(s) : integer</dt>
+<dd>
+<p>
+ordinal value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ord(s)</code>
+ produces the integer ordinal (value) of 
+<code>s</code>
+, which must be of size 1.
+</p>
+<dl>
+<dt>paramnames(CE, i:0) : string*</dt>
+<dd>
+<p>
+parameter names
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>paramnames(ce,i)</code>
+ produces the names of the parameters in the procedure activation 
+<code>i</code>
+ levels above the current activation in 
+<code>ce</code>
+.
+</p>
+<dl>
+<dt>parent(CE) : co-expression</dt>
+<dd>
+<p>
+parent program
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>parent(ce)</code>
+ returns 
+<code>&amp;main</code>
+ for ce's parent program. This is interesting only when programs are dynamically loaded using the 
+<code>load()</code>
+ function.
+</p>
+<dl>
+<dt>pipe() : list</dt>
+<dd>
+<p>
+create pipe
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>pipe()</code>
+ creates a pipe and returns a list of two file objects. The first is for reading, the second is for writing. See also function 
+<code>filepair()</code>
+.
+</p>
+<dl>
+<dt>pop(L \| Message) : any?</dt>
+<dd>
+<p>
+pop from stack
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>pop(L)</code>
+ removes an element from the top of the stack (
+<code>L[1]</code>
+) and returns it. 
+<code>pop(M)</code>
+ removes and returns the first message in POP mailbox connection M; the actual deletion occurs when the messaging connection is closed.
+</p>
+<dl>
+<dt>pos(i) : integer?</dt>
+<dd>
+<p>
+test scanning position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>pos(i)</code>
+ tests whether 
+<code>&amp;pos</code>
+ is at position 
+<code>i</code>
+ in 
+<code>&amp;subject</code>
+.
+</p>
+<dl>
+<dt>proc(any, i:1, C) : procedure?</dt>
+<dd>
+<p>
+convert to procedure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>proc(s,i)</code>
+ converts 
+<code>s</code>
+ to a procedure if that is possible. Parameter 
+<code>i</code>
+ is used to resolve ambiguous string names; it must be either 0, 1, 2, or 3. If 
+<code>i</code>
+ is 0, a built-in function is returned if it is available, even if the global identifier by that name has been assigned differently. If 
+<code>i</code>
+ is 1, 2, or 3, the procedure for an operator with that number of operands is produced. For example, 
+<code>proc(&quot;-&quot;,2)</code>
+ produces the procedure for subtraction, while 
+<code>proc(&quot;-&quot;)</code>
+ produces the procedure for unary negation. 
+<code>proc(C,i)</code>
+ returns the procedure activated 
+<code>i</code>
+ levels up with 
+<code>C</code>
+. 
+<code>proc(p, i, C)</code>
+ returns procedure 
+<code>p</code>
+ if it belongs to the program which created co-expression 
+<code>C</code>
+.
+</p>
+<dl>
+<dt>pull(L,i:1) : any?</dt>
+<dd>
+<p>
+remove from list end
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>pull(L)</code>
+ removes and produces an element from the end of a nonempty list 
+<code>L.</code>
+ 
+<code>pull(L, i)</code>
+ removes 
+<code>i</code>
+ elements, producing the last one removed.
+</p>
+<dl>
+<dt>push(L, any, ...) : list</dt>
+<dd>
+<p>
+push on to stack
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>push(L, x1, ..., xN)</code>
+ pushes elements onto the beginning of list 
+<code>L</code>
+. The order of the elements added to the list is the reverse of the order they are supplied as parameters to the call to 
+<code>push()</code>
+. 
+<code>push()</code>
+ returns the list that is passed as its first parameter, with the new elements added.
+</p>
+<dl>
+<dt>put(L, x1, ..., xN) : list</dt>
+<dd>
+<p>
+add to list end
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>put(L, x1, ..., xN)</code>
+ puts elements onto the end of list 
+<code>L</code>
+.
+</p>
+<dl>
+<dt>read(f:&amp;input) : string?</dt>
+<dd>
+<p>
+read line
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>read(f)</code>
+ reads a line from file 
+<code>f</code>
+. The end of line marker is discarded.
+</p>
+<dl>
+<dt>reads(f:&amp;input, i:1) : string?</dt>
+<dd>
+<p>
+read characters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>reads(f,i)</code>
+ reads up to 
+<code>i</code>
+ characters from file 
+<code>f</code>
+. It fails on end of file. If 
+<code>f</code>
+ is a network connection, 
+<code>reads()</code>
+ returns as soon as it has input available, even if fewer than 
+<code>i</code>
+ characters were delivered. If 
+<code>i</code>
+ is -1, 
+<code>reads()</code>
+ reads and produces the entire file as a string. Care should be exercised when using this feature to read very large files.
+</p>
+<dl>
+<dt>ready(f:&amp;input, i:0) : string?</dt>
+<dd>
+<p>
+non-blocking read
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ready(f,i)</code>
+ reads up to 
+<code>i</code>
+ characters from file 
+<code>f</code>
+. It returns immediately with available data and fails if no data is available. If 
+<code>i</code>
+ is 0, 
+<code>ready()</code>
+ returns all available input. It is not currently implemented for window values.
+</p>
+<dl>
+<dt>real(any) : real?</dt>
+<dd>
+<p>
+convert to real
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>real(x)</code>
+ converts 
+<code>x</code>
+ to a real, or fails if the conversion cannot be performed.
+</p>
+<dl>
+<dt>receive(f) : record</dt>
+<dd>
+<p>
+receive datagram
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>receive(f)</code>
+ reads a datagram addressed to the port associated with 
+<code>f</code>
+, waiting if necessary. The returned value is a record of type 
+<code>posix_message(addr, msg)</code>
+, containing the address of the sender and the contents of the message respectively.
+</p>
+<dl>
+<dt>remove(s) : ?</dt>
+<dd>
+<p>
+remove file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>remove(s)</code>
+ removes the file named 
+<code>s</code>
+.
+</p>
+<dl>
+<dt>rename(s, s) : ?</dt>
+<dd>
+<p>
+rename file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>rename(s1,s2)</code>
+ renames the file named 
+<code>s1</code>
+ to have the name 
+<code>s2</code>
+.
+</p>
+<dl>
+<dt>repl(x, i) : x</dt>
+<dd>
+<p>
+replicate
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>repl(x, i)</code>
+ concatenates and returns 
+<code>i</code>
+ copies of string or list 
+<code>x</code>
+.
+</p>
+<dl>
+<dt>reverse(x) : x</dt>
+<dd>
+<p>
+reverse sequence
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>reverse(x)</code>
+ returns a value that is the reverse of string or list 
+<code>x</code>
+.
+</p>
+<dl>
+<dt>right(s, i:1, s:&quot; &quot;) : string</dt>
+<dd>
+<p>
+right format string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>right(s1,i,s2)</code>
+ produces a string of length 
+<code>i</code>
+. If 
+<code>i&lt;*s1</code>
+, 
+<code>s1</code>
+ is truncated. Otherwise, the function pads 
+<code>s1</code>
+ on left with 
+<code>s2</code>
+ to length 
+<code>i</code>
+.
+</p>
+<dl>
+<dt>rmdir(s) : ?</dt>
+<dd>
+<p>
+remove directory
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>rmdir(d)</code>
+ removes the directory named 
+<code>d</code>
+. 
+<code>rmdir()</code>
+ fails if 
+<code>d</code>
+ is not empty or does not exist.
+</p>
+<dl>
+<dt>rtod(r) : real</dt>
+<dd>
+<p>
+convert radians to degrees
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>rtod(r)</code>
+ produces the equivalent of 
+<code>r</code>
+ radians, expressed in degrees.
+</p>
+<dl>
+<dt>runerr(i, any)</dt>
+<dd>
+<p>
+runtime error
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>runerr(i,x)</code>
+ produces runtime error 
+<code>i</code>
+ with value 
+<code>x</code>
+. Program execution is terminated.
+</p>
+<dl>
+<dt>seek(f, any) : file?</dt>
+<dd>
+<p>
+seek to file offset
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>seek(f,i)</code>
+ seeks to offset 
+<code>i</code>
+ in file 
+<code>f</code>
+, if it is possible. If 
+<code>f</code>
+ is a regular file, 
+<code>i</code>
+ must be an integer. If 
+<code>f</code>
+ is a database, 
+<code>i</code>
+ seeks a position within the current set of selected rows. The position is selected numerically if 
+<code>i</code>
+ is convertible to an integer; otherwise 
+<code>i</code>
+ must be convertible to a string and the position is selected associatively by the primary key.
+</p>
+<dl>
+<dt>select(x1, x2, ?) : list</dt>
+<dd>
+<p>
+files with available input
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>select(files?, timeout)</code>
+ waits for a input to become available on any of several files, typically network connections or windows. Its arguments may be files or lists of files, ending with an optional integer timeout value in milliseconds. It returns a list of those files among its arguments that have input waiting.
+</p>
+<p>
+If the final argument to 
+<code>select()</code>
+ is an integer, it is an upper bound on the time elapsed before select returns. A timeout of 0 causes 
+<code>select()</code>
+ to return immediately with a list of files on which input is currently pending. If no files are given, 
+<code>select()</code>
+ waits for its timeout to expire. If no timeout is given, 
+<code>select()</code>
+ waits forever for available input on one of its file arguments. Directories and databases cannot be arguments to 
+<code>select()</code>
+.
+</p>
+<dl>
+<dt>send(s, s) : ?</dt>
+<dd>
+<p>
+send datagram
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>send(s1, s2)</code>
+ sends a UDP datagram to the address 
+<code>s1</code>
+ (in host:port format) with the contents 
+<code>s2</code>
+.
+</p>
+<dl>
+<dt>seq(i:1, i:1) : integer*</dt>
+<dd>
+<p>
+generate sequence
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>seq(i, j)</code>
+ generates the infinite sequence 
+<code>i</code>
+, 
+<code>i+j</code>
+, 
+<code>i+2*j</code>
+, ... . 
+<code>j</code>
+ may not be 0.
+</p>
+<dl>
+<dt>serial(x) : integer?</dt>
+<dd>
+<p>
+structure serial number
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>serial(x)</code>
+ returns the serial number for structure 
+<code>x</code>
+, if it has one. Serial numbers uniquely identify structure values.
+</p>
+<dl>
+<dt>set(x, ...) : set</dt>
+<dd>
+<p>
+create set
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>set()</code>
+ creates a set. Arguments are inserted into the new set, with the exception of lists. 
+<code>set(L)</code>
+ creates a set whose members are the elements of list 
+<code>L</code>
+.
+</p>
+<dl>
+<dt>setenv(s) : ?</dt>
+<dd>
+<p>
+set environment variable
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>setenv()</code>
+ sets an environment variable 
+<code>s</code>
+ in the operating system.
+</p>
+<dl>
+<dt>signal(cv, i:1) : ??</dt>
+<dd>
+<p>
+signal a conditional variable
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>signal(x, y)</code>
+ signals the condition variable 
+<em>
+x
+</em>
+. If 
+<em>
+y
+</em>
+ is supplied, the condition variable is signaled 
+<em>
+y
+</em>
+ times. If 
+<em>
+y
+</em>
+ is 0, a &quot;broadcast&quot; signal is sent waking up all threads waiting on 
+<em>
+x
+</em>
+.
+</p>
+<dl>
+<dt>sin(r) : real</dt>
+<dd>
+<p>
+sine
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>sin(r)</code>
+ produces the sine of 
+<code>r</code>
+. The argument is given in radians.
+</p>
+<dl>
+<dt>sort(x, i:1) : list</dt>
+<dd>
+<p>
+sort structure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>sort(x, i)</code>
+ sorts structure 
+<code>x</code>
+. If 
+<code>x</code>
+ is a table, parameter 
+<code>i</code>
+ is the sort method. If 
+<code>i</code>
+ is 1 or 2, the table is sorted into a list of lists of the form [key, value]. If 
+<code>i</code>
+ is 3 or 4, the table is sorted into a list of alternating keys and values. Sorting is by keys for odd-values of 
+<code>i</code>
+, and by table element values for even-values of 
+<code>i</code>
+.
+</p>
+<dl>
+<dt>sortf(x, i:1) : list</dt>
+<dd>
+<p>
+sort by field
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>sortf(x,i)</code>
+ sorts a list, record, or set 
+<code>x</code>
+ using field 
+<code>i</code>
+ of each element that has one. Elements that don't have an 
+<code>i</code>
+'th field are sorted in standard order and come before those that do have an 
+<code>i</code>
+'th field.
+</p>
+<dl>
+<dt>spawn(CE, i, i) : thread</dt>
+<dd>
+<p>
+launch asynchronous thread
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>spawn(ce)</code>
+ launches co-expression 
+<em>
+ce
+</em>
+ as an asynchronous thread that will execute concurrently with the current co-expression. The two optional integers specify the memory in bytes allocated for the thread's block and string regions. The defaults are 10\\% of the main thread heap size.
+</p>
+<dl>
+<dt>sql(D, s) : integer</dt>
+<dd>
+<p>
+execute SQL statement
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>sql(db, query)</code>
+ executes arbitrary SQL code on 
+<code>db</code>
+. This function allows the program to do vendor-specific SQL and many SQL statements that cannot be expressed otherwise using the Unicon database facilities. 
+<code>sql()</code>
+ can leave the database in an arbitrary state and should be used with care.
+</p>
+<dl>
+<dt>sqrt(r) : real</dt>
+<dd>
+<p>
+square root
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>sqrt(r)</code>
+ produces the square root of 
+<code>r</code>
+.
+</p>
+<dl>
+<dt>stat(f) : record?</dt>
+<dd>
+<p>
+get file information
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>stat(f)</code>
+ returns a record with information about the file 
+<code>f</code>
+ which may be a path or a file object. The return value is of type: 
+<code>record posix_stat(dev, ino, mode, nlink, uid, gid, rdev</code>
+, 
+<code>size, atime, mtime, ctime, blksize, blocks, symlink)</code>
+. Many of these fields are POSIX specific, but a number are supported across platforms, such as the file size in bytes (the 
+<code>size</code>
+ field), access permissions (the 
+<code>mode</code>
+ field), and the last modified time (the 
+<code>mtime</code>
+ field).
+</p>
+<p>
+The 
+<code>atime</code>
+, 
+<code>mtime</code>
+, and 
+<code>ctime</code>
+ fields are integers that may be formatted with the 
+<code>ctime()</code>
+ and 
+<code>mtime()</code>
+ functions. The mode is a string similar to the long listing option of the UNIX 
+<code>ls(1)</code>
+ command. For example, 
+<code>&quot;-rwxrwsr-x&quot;</code>
+ represents a plain file with a mode of 2775 (octal). 
+<code>stat(f)</code>
+ fails if filename or path 
+<code>f</code>
+ does not exist.
+</p>
+<dl>
+<dt>staticnames(CE:&amp;current, i:0) : string*</dt>
+<dd>
+<p>
+static variable names
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>staticnames(ce,i)</code>
+ generates the names of static variables in the procedure 
+<code>i</code>
+ levels above the current activation in 
+<code>ce</code>
+.
+</p>
+<dl>
+<dt>stop(s|f, ...) :</dt>
+<dd>
+<p>
+stop execution
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>stop(args)</code>
+ halts execution after writing out its string arguments, followed by a newline, to 
+<code>&amp;errout</code>
+. If any argument is a file, subsequent string arguments are written to that file instead of 
+<code>&amp;errout</code>
+. The program exit status indicates that an error has occurred.
+</p>
+<dl>
+<dt>string(x) : string?</dt>
+<dd>
+<p>
+convert to string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>string(x)</code>
+ converts x to a string and returns the result, or fails if the value cannot be converted.
+</p>
+<dl>
+<dt>system(x, f:&amp;input, f:&amp;output, f:&amp;errout, s) : integer</dt>
+<dd>
+<p>
+execute system command
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>system(x, f1, f2, f3, waitflag)</code>
+ launches execution of a program in a separate process. 
+<code>x</code>
+ can be either a string or a list of strings. In the former case, whitespace is used to separate the arguments and the command is processed by the platform's command interpreter. In the second case, each member of the list is an argument and the second and subsequent list elements are passed unmodified to the program named in the first element of the list.
+</p>
+<p>
+The three file arguments are files that will be used for the new process' standard input, standard output and standard error. The return value is the exit status from the process. If the 
+<code>waitflag</code>
+ argument is 
+<code>&quot;nowait&quot;</code>
+, 
+<code>system()</code>
+ returns immediately after spasyswning the new process, and the return value is then the process id of the new process.
+</p>
+<dl>
+<dt>sys_errstr(i) : string?</dt>
+<dd>
+<p>
+system error string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>sys_errstr(i)</code>
+ produces the error string corresponding to 
+<code>i</code>
+, a value obtained from 
+<code>&amp;errno</code>
+.
+</p>
+<dl>
+<dt>tab(i:0) : string?</dt>
+<dd>
+<p>
+set scanning position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>tab(i)</code>
+ sets 
+<code>&amp;pos</code>
+ to 
+<code>i</code>
+ and returns the substring of 
+<code>&amp;subject</code>
+ spanned by the former and new positions. 
+<code>tab(0)</code>
+ moves the position to the end of the string. This function reverses its effects by resetting the position to its old value if it is resumed.
+</p>
+<dl>
+<dt>table(k,v, ..., x) : table</dt>
+<dd>
+<p>
+create table
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>table(x)</code>
+ creates a table with default value 
+<code>x</code>
+. If 
+<code>x</code>
+ is a mutable value such as a list, all references to the default value refer to the 
+<em>
+same
+</em>
+ value, not a separate copy for each key. Given more than one argument, 
+<code>table(k,v,...x)</code>
+ takes alternating keys and values and populates the table with these initial contents.
+</p>
+<dl>
+<dt>tan(r) : real</dt>
+<dd>
+<p>
+tangent
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>tan(r)</code>
+ produces the tangent of 
+<code>r</code>
+ in radians.
+</p>
+<dl>
+<dt>trap(s, p) : procedure</dt>
+<dd>
+<p>
+trap or untrap signal
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>trap(s, proc)</code>
+ sets up a signal handler for the signal 
+<code>s</code>
+ (the name of the signal). The old handler (if any) is returned. If 
+<code>proc</code>
+ is null, the signal is reset to its default value.
+</p>
+<p>
+Caveat: This is not supported by the optimizing compiler (the -C command line option, which invokes iconc).
+</p>
+<dl>
+<dt>trim(s, c:' ', i:-1) : string</dt>
+<dd>
+<p>
+trim string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>trim(s,c,i)</code>
+ removes characters in 
+<code>c</code>
+ from 
+<code>s</code>
+ at the back (
+<code>i</code>
+\ =-1, the default), at the front (
+<code>i</code>
+\ =1), or at both ends (
+<code>i</code>
+\ =0).
+</p>
+<dl>
+<dt>truncate(f, i) : ?</dt>
+<dd>
+<p>
+truncate file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>truncate(f, len)</code>
+ changes the file 
+<code>f</code>
+ (which may be a string filename, or an open file) to be no longer than length 
+<code>len</code>
+. 
+<code>truncate()</code>
+ does not work on windows, network connections, pipes, or databases.
+</p>
+<dl>
+<dt>trylock(x) : x?</dt>
+<dd>
+<p>
+try locking mutex
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>trylock(x)</code>
+ locks the mutex 
+<em>
+x
+</em>
+ or the mutex associated with thread-safe object 
+<em>
+x
+</em>
+, if it is not locked.
+</p>
+<dl>
+<dt>type(x) : string</dt>
+<dd>
+<p>
+type of value
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>type(x)</code>
+ returns a string that indicates the type of 
+<code>x</code>
+.
+</p>
+<dl>
+<dt>unlock(x) : x</dt>
+<dd>
+<p>
+unlock mutex
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>unlock(x)</code>
+ unlocks the mutex 
+<em>
+x
+</em>
+ or the mutex associated with thread-safe object 
+<em>
+x
+</em>
+.
+</p>
+<dl>
+<dt>upto(c, s, i, i) : integer*</dt>
+<dd>
+<p>
+find characters in set
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+String scanning function 
+<code>upto(c,s,i1,i2)</code>
+ generates the sequence of integer positions in 
+<code>s</code>
+ up to a character in 
+<code>c</code>
+ in 
+<code>s[i2:i2]</code>
+, but fails if there is no such position.
+</p>
+<dl>
+<dt>utime(s, i, i) : null</dt>
+<dd>
+<p>
+file access/modification times
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>utime(f, atime, mtime)</code>
+ sets the access time for a file named 
+<code>f</code>
+ to 
+<code>atime</code>
+ and the modification time to 
+<code>mtime</code>
+. The 
+<code>ctime</code>
+ is set to the current time. The effects of this function are platform specific. Some file systems support only a subset of these times.
+</p>
+<dl>
+<dt>variable(s, CE:&amp;current, i:0) : any?</dt>
+<dd>
+<p>
+get variable
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>variable(s, c, i)</code>
+ finds the variable with name 
+<code>s</code>
+ and returns a variable descriptor that refers to its value. The name 
+<code>s</code>
+ is searched for within co-expression 
+<code>c</code>
+, starting with local variables 
+<code>i</code>
+ levels above the current procedure frame, and then among the global variables in the program that created 
+<code>c</code>
+.
+</p>
+<dl>
+<dt>wait(x) : ?</dt>
+<dd>
+<p>
+wait for thread or condition variable
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>wait(x)</code>
+ waits for 
+<em>
+x
+</em>
+. If 
+<em>
+x
+</em>
+ is a thread, 
+<code>wait()</code>
+ waits for it to finish. If 
+<em>
+x
+</em>
+ is is a condition variable 
+<code>wait()</code>
+ waits until that variable is signaled by another thread.
+</p>
+<dl>
+<dt>where(f) : integer?</dt>
+<dd>
+<p>
+file position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>where(f)</code>
+ returns the current offset position in file 
+<code>f</code>
+. It fails on windows and networks. The beginning of the file is offset 1.
+</p>
+<dl>
+<dt>write(s|f, ...) : string|file</dt>
+<dd>
+<p>
+write text line
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>write(args)</code>
+ outputs strings, followed by a newline, to a file or files. Strings are written in order to their nearest preceding file, defaulting to 
+<code>&amp;output</code>
+. A newline is output to the preceding file after the last argument, as well as whenever a non-initial file argument directs output to a different file. 
+<code>write()</code>
+ returns its last argument.
+</p>
+<dl>
+<dt>writes(s|f, ...) : string|file</dt>
+<dd>
+<p>
+write strings
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>writes(args)</code>
+ outputs strings to one or more files. Each string argument is written to the nearest preceding file argument, defaulting to 
+<code>&amp;output</code>
+. 
+<code>writes()</code>
+ returns its last argument.
+</p>
+<h4 id="graphics-functions">
+Graphics functions
+</h4>
+<p>
+The names of built-in graphics functions begin with upper case. The built-in graphics functions are listed here. These functions are more thoroughly described in [Griswold98]. Extensive procedure and class libraries for graphics are described in [Griswold98] and in Appendix B. In 2D, arguments named 
+<code>x</code>
+ and 
+<code>y</code>
+ are pixel locations in zero-based integer coordinates. In 3D windows coordinates are given using real numbers, and functions by default take three coordinates (
+<code>x,y,z</code>
+) per vertex. Attribute 
+<code>dim</code>
+ can be set to 2 or 4, changing most 3D functions to take vertices in a (
+<code>x,y</code>
+) or (
+<code>x,y,z,w</code>
+) format. Arguments named 
+<code>row</code>
+ and 
+<code>col</code>
+ are cursor locations in one-based integer text coordinates. Most functions' first parameter named 
+<code>w</code>
+ defaults to 
+<code>&amp;window</code>
+ and the window argument can be omitted in the default case. Most graphics functions are not thread-safe.
+</p>
+<dl>
+<dt>Active() : window</dt>
+<dd>
+<p>
+produce active window
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Active()</code>
+ returns a window that has one or more events pending. If no window has an event pending, 
+<code>Active()</code>
+ blocks and waits for an event to occur. 
+<code>Active()</code>
+ starts with a different window on each call in order to avoid window &quot;starvation&quot;. 
+<code>Active()</code>
+ fails if no windows are open.
+</p>
+<dl>
+<dt>Alert() : window</dt>
+<dd>
+<p>
+alert the user
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Alert()</code>
+ produces a visual flash or audible beep that signifies to the user the occurrence of some notable event in the application.
+</p>
+<dl>
+<dt>Bg(w,s) : string</dt>
+<dd>
+<p>
+background color
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Bg(w)</code>
+ retrieves the background color. 
+<code>Bg(w,s)</code>
+ sets the background color by name, rgb, or mutable color value. 
+<code>Bg()</code>
+ fails if the background cannot be set to the requested color.
+</p>
+<dl>
+<dt>Clip(w,x:0,y:0,width:0,height:0) : window</dt>
+<dd>
+<p>
+clip to rectangle
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Clip(w,x,y,width,height)</code>
+ clips output to a rectangular area within the window. If 
+<code>width</code>
+ is 0, the clip region extends from 
+<code>x</code>
+ to the right side of the window. If 
+<code>height</code>
+ is 0, the clip region extends from 
+<code>y</code>
+ to the bottom of the window.
+</p>
+<dl>
+<dt>Clone(w,s,...) : window</dt>
+<dd>
+<p>
+clone context
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Clone(w)</code>
+ produces a new window binding in which a new graphics context is copied from 
+<code>w</code>
+ and bound to 
+<code>w</code>
+'s canvas. Additional string arguments specify attributes of the new binding, as in 
+<code>WAttrib()</code>
+. If the first string argument is 
+<code>&quot;g&quot;</code>
+ or 
+<code>&quot;gl&quot;</code>
+, 
+<code>Clone()</code>
+ binds the new context to a subwindow with separate canvas and input queue inside of and relative to 
+<code>w</code>
+. 
+<code>Clone()</code>
+ fails if an attribute cannot be set to a requested value.
+</p>
+<dl>
+<dt>Color(w, i, s,...) : window</dt>
+<dd>
+<p>
+set mutable color
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Color(w,i)</code>
+ produces the current setting of mutable color 
+<code>i</code>
+. 
+<code>Color(w,i,s,...)</code>
+ sets the color map entries identified by 
+<code>i[j]</code>
+ to the corresponding colors 
+<code>s[j]</code>
+. See [Griswold98].
+</p>
+<dl>
+<dt>ColorValue(w, s) : string</dt>
+<dd>
+<p>
+convert color name to rgb
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ColorValue(w,s)</code>
+ converts the string color 
+<code>s</code>
+ into a string with three comma-separated 16-bit integer values denoting the color's RGB components. 
+<code>ColorValue()</code>
+ fails if string 
+<code>s</code>
+ is not a valid name or recognized decimal or hex encoding of a color.
+</p>
+<dl>
+<dt>CopyArea(w1, w2,x:0,y:0,width:0,height:0,x2:0,y2:0) : window</dt>
+<dd>
+<p>
+copy area
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>CopyArea(w1,w2,x,y,width,height,x2,y2)</code>
+ copies a rectangular region within 
+<code>w1</code>
+ defined by 
+<code>x</code>
+,\ 
+<code>y</code>
+,\ 
+<code>width</code>
+,\ 
+<code>height</code>
+ to window 
+<code>w2</code>
+ at offset 
+<code>x2</code>
+,\ 
+<code>y2</code>
+. 
+<code>CopyArea()</code>
+ returns 
+<code>w1</code>
+. 
+<code>&amp;window</code>
+ is not a default for this function. The default copies all of 
+<code>w1</code>
+.
+</p>
+<dl>
+<dt>Couple(w1, w2) : window</dt>
+<dd>
+<p>
+couple window to context
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Couple(w1,w2)</code>
+ produces a new value that binds the window associated with 
+<code>w1</code>
+ to the graphics context associated with 
+<code>w2</code>
+.
+</p>
+<p>
+<strong>
+DrawArc(w, x, y, width, height:width, a1:0.0, a2:2*&amp;pi, ...) : window
+</strong>
+</p>
+<p>
+<strong>
+draw arc
+</strong>
+</p>
+<p>
+|
+</p>
+<p>
+<code>DrawArc(w,x,y,width,height,a1,a2,...)</code>
+ draws arcs or ellipses. Each is defined by six integer coordinates. 
+<code>x</code>
+, 
+<code>y</code>
+, 
+<code>width</code>
+ and 
+<code>height</code>
+ define a bounding rectangle around the arc; the center of the arc is the point 
+<code>(x+(width)/2,y+(height)/2)</code>
+. Angles are specified in radians. Angle 
+<code>a1</code>
+ is the starting position of the arc, where 0.0 is the 3 o'clock position and the positive direction is counter-clockwise. Angle 
+<code>a2</code>
+ is not the end position, but rather specifies the direction and extent of the arc.
+</p>
+<dl>
+<dt>DrawCircle(w, x, y, radius, a1:0.0, a2:2*&amp;pi, ...) : window</dt>
+<dd>
+<p>
+draw circle
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawCircle()</code>
+ draws a circle or arc, centered at (
+<code>x</code>
+,\ 
+<code>y</code>
+) and otherwise similar to 
+<code>DrawArc()</code>
+ with 
+<code>width=height</code>
+.
+</p>
+<dl>
+<dt>DrawCube(w, x, y, z, len ...) : record</dt>
+<dd>
+<p>
+draw cube
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawCube(w, x, y, z, len...)</code>
+ draws a cube with sides of length 
+<code>len</code>
+ at the position (
+<code>x</code>
+, 
+<code>y</code>
+, 
+<code>z</code>
+) on the 3D window 
+<code>w</code>
+. The display list element is returned. This procedure fails if the context attribute 
+<code>dim</code>
+ is set to 2.
+</p>
+<dl>
+<dt>DrawCurve(w, x1, y1, ...) : window</dt>
+<dd>
+<p>
+draw curve
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawCurve(w,x1,y1,...,xn,yn)</code>
+ draws a smooth curve connecting each 
+<code>x,y</code>
+ pair in the argument list. If the first and last point are the same, the curve is smooth and closed through that point.
+</p>
+<dl>
+<dt>DrawCylinder(w, x, y, z, h, r1, r2, ...) : record</dt>
+<dd>
+<p>
+draw cylinder
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawCylinder(w, x, y, z, h, r1, r2, ...)</code>
+ draws a cylinder with a top of radius 
+<code>r1</code>
+, a bottom with radius 
+<code>r2</code>
+, and a height 
+<code>h</code>
+ on 3D window 
+<code>w</code>
+. The disk is centered at the point (
+<code>x</code>
+, 
+<code>y</code>
+, 
+<code>z</code>
+). The display list element is returned. This procedure fails if the context attribute 
+<code>dim</code>
+ is set to 2.
+</p>
+<dl>
+<dt>DrawDisk(w, x, y, z, r1, r2, a1, a2, ...) : record</dt>
+<dd>
+<p>
+draw disk
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawDisk(W, x, y, z, r1, r2, a1, a2, ...)</code>
+\ 
+<code></code>
+\ draws a disk or partial disk centered at (
+<code>x</code>
+, 
+<code>y</code>
+, 
+<code>z</code>
+) on 3D window 
+<code>w</code>
+. The inner circle has radius 
+<code>r1</code>
+ and the outer circle has radius 
+<code>r2</code>
+. The parameters 
+<code>a1</code>
+ and 
+<code>a2</code>
+ are optional. If they are specified, a partial disk is drawn with a starting angle 
+<code>a1</code>
+ and sweeping angle 
+<code>a2</code>
+. The display list element is returned.
+</p>
+<dl>
+<dt>DrawImage(w, x, y, s) : window</dt>
+<dd>
+<p>
+draw bitmapped figure
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawImage(w,x,y, s)</code>
+ draws an image specified in string 
+<code>s</code>
+ at location 
+<code>x,y</code>
+.
+</p>
+<dl>
+<dt>DrawLine(w, x1, y1, z1 ...) : window [list]</dt>
+<dd>
+<p>
+draw line
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawLine(w,x1,y1,...,xn,yn)</code>
+ draws lines between each adjacent 
+<code>x,y</code>
+ pair of arguments. In 3D, 
+<code>DrawLine()</code>
+ takes from 2-4 coordinates per vertex and returns the list that represents the lines on the display list for refresh purposes.
+</p>
+<dl>
+<dt>DrawPoint(w, x1, y1, ...) : window [list]</dt>
+<dd>
+<p>
+draw point
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawPoint(w,x1,y1,...,xn,yn)</code>
+ draws points. In 3D, 
+<code>DrawPoint()</code>
+ takes from 2-4 coordinates per vertex and returns the list that represents the points on the display list for refresh purposes.
+</p>
+<dl>
+<dt>DrawPolygon(w, x1, y1, [z1,] ...) : window [list]</dt>
+<dd>
+<p>
+draw polygon
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawPolygon(w,x1,y1,...,xn,yn)</code>
+ draws a polygon. In 3D, 
+<code>DrawPolygon()</code>
+ takes from 2-4 coordinates per vertex and returns the list that represents the polygon on the display list for refresh purposes.
+</p>
+<dl>
+<dt>DrawRectangle(w, x1, y1, width1, height1 ...) : window</dt>
+<dd>
+<p>
+draw rectangle
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawRectangle(w,x1,y1,width1,height1,...)</code>
+ draws rectangles. Arguments 
+<code>width</code>
+ and 
+<code>height</code>
+ define the perceived size of the rectangle; the actual rectangle drawn is 
+<code>width+1</code>
+ pixels wide and 
+<code>height+1</code>
+ pixels high.
+</p>
+<dl>
+<dt>DrawSegment(w, x1, y1, [z1,] ...) : window [list]</dt>
+<dd>
+<p>
+draw line segment
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawSegment(w,x1,y1,...,xn,yn)</code>
+ draws lines between alternating 
+<code>x,y</code>
+ pairs in the argument list. In 3D, 
+<code>DrawSegment()</code>
+ takes from 2-4 coordinates per vertex and returns the list that represents the segments on the display list for refresh purposes.
+</p>
+<dl>
+<dt>DrawSphere(w, x, y, z, r, ...) : record</dt>
+<dd>
+<p>
+draw sphere
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawSphere(w, x, y, z, r,...)</code>
+ draws a sphere with radius r centered at (x, y, z) on 3D window w. The display list element is returned. This procedure fails if the context attribute 
+<code>dim</code>
+ is set to 2.
+</p>
+<dl>
+<dt>DrawString(w, x1, y1, s1, ...) : window</dt>
+<dd>
+<p>
+draw text
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawString(w,x,y,s)</code>
+ draws text 
+<code>s</code>
+ at coordinates (x, y). This function does not draw any background; only the characters' actual pixels are drawn. It is possible to use 
+<code>&quot;drawop=reverse&quot;</code>
+ with this function to draw erasable text. 
+<code>DrawString()</code>
+ does not affect the text cursor position. Newlines present in 
+<code>s</code>
+ cause subsequent characters to be drawn starting at (
+<code>x, current_y + leading</code>
+), where 
+<code>x</code>
+ is the 
+<code>x</code>
+ supplied to the function, 
+<code>current_y</code>
+ is the 
+<code>y</code>
+ coordinate the newline would have been drawn on, and leading is the current leading associated with the binding.
+</p>
+<dl>
+<dt>DrawTorus(w, x, y, z, r1, r2, ...) : record</dt>
+<dd>
+<p>
+draw torus
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>DrawTorus(w, x, y, z, r1, r2,...)</code>
+ draws a torus with inner radius 
+<code>r1</code>
+, outside radius 
+<code>r2</code>
+, and centered at (
+<code>x,y,z</code>
+) on 3D window 
+<code>w</code>
+. The display list element is returned. This procedure fails if the context attribute 
+<code>dim</code>
+ is set to 2.
+</p>
+<dl>
+<dt>EraseArea(w, x:0, y:0, width:0, height:0. ...) : window</dt>
+<dd>
+<p>
+erase rectangular area
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>EraseArea(w,x,y,width,height,...)</code>
+ erases rectangular areas within the window to the background color. If 
+<code>width</code>
+ is 0, the region cleared extends from 
+<code>x</code>
+ to the right side of the window. If 
+<code>height</code>
+ is 0, the region erased extends from 
+<code>y</code>
+ to the bottom of the window. In 3D, 
+<code>EraseArea(W)</code>
+ clears the contents of the entire window.
+</p>
+<dl>
+<dt>Event(w, i:infinity) : string|integer</dt>
+<dd>
+<p>
+read event on window
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Event(w, i)</code>
+ retrieves the next event available for window 
+<code>w</code>
+. If no events are available, 
+<code>Event()</code>
+ waits for 
+<code>i</code>
+ milliseconds. Keystrokes are encoded as strings, while mouse events are encoded as integers. The retrieval of an event is accompanied by assignments to the keywords 
+<code>&amp;x</code>
+, 
+<code>&amp;y</code>
+, 
+<code>&amp;row</code>
+, 
+<code>&amp;col</code>
+, 
+<code>&amp;interval</code>
+, 
+<code>&amp;control</code>
+, 
+<code>&amp;shift</code>
+, 
+<code>&amp;meta</code>
+, and if 3D attribute 
+<code>&quot;pick=on&quot;</code>
+, 
+<code>&amp;pick</code>
+. 
+<code>Event()</code>
+ fails if the timeout expires before an event occurs.
+</p>
+<dl>
+<dt>Fg(w, s) : string</dt>
+<dd>
+<p>
+foreground color
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Fg(w)</code>
+ retrieves the current foreground color. 
+<code>Fg(w,s)</code>
+ sets the foreground by name or value. 
+<code>Fg()</code>
+ fails if the foreground cannot be set to the requested color. In 3D, 
+<code>Fg(w, s)</code>
+ changes the material properties of subsequently drawn objects to the material properties specified by 
+<code>s</code>
+. The string 
+<code>s</code>
+ must be one or more semi-colon separated material properties. A material property is of the form
+</p>
+<p>
+[diffuse \| ambient \| specular \| emission] 
+<em>
+color name
+</em>
+ or &quot;shininess n&quot;, 0 &lt;= n &lt;= 128.
+</p>
+<p>
+If string 
+<code>s</code>
+ is omitted, the current values of the material properties will be returned.
+</p>
+<dl>
+<dt>FillArc(w, x, y, width, height, a1, a2, ...) : window</dt>
+<dd>
+<p>
+draw filled arc
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>FillArc(w,x,y,width,height,a1,a2,...)</code>
+ draws filled arcs, ellipses, and/or circles. Coordinates are as in 
+<code>DrawArc()</code>
+.
+</p>
+<dl>
+<dt>FillCircle(w, x, y, radius, a1, a2, ...) : window</dt>
+<dd>
+<p>
+draw filled circle
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>FillCircle(w,x,y, radius,a1,a2,...)</code>
+ draws filled circles. Coordinates are as in 
+<code>DrawCircle()</code>
+.
+</p>
+<dl>
+<dt>FillPolygon(w, x1, y1, [z1,] ...) : window</dt>
+<dd>
+<p>
+draw filled polygon
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>FillPolygon(w,x1,y1,...,xn,yn)</code>
+ draws a filled polygon. The beginning and ending points are connected if they are not the same. In 3D\ 
+<code>, FillPolygon()</code>
+ takes from 2-4 coordinates per vertex and returns the list that represents the polygon on the display list for refresh purposes.
+</p>
+<dl>
+<dt>FillRectangle(w, x:0, y:0, width:0, height:0, ...) : window</dt>
+<dd>
+<p>
+draw filled rectangle
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>FillRectangle(w,x,y,width,height,...)</code>
+ draws filled rectangles.
+</p>
+<dl>
+<dt>Font(w, s) : string</dt>
+<dd>
+<p>
+font
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Font(w)</code>
+ produces the name of the current font. 
+<code>Font(w,s)</code>
+ sets the window context's font to 
+<code>s</code>
+ and produces its name or fails if the font name is invalid. The valid font names are largely system-dependent but follow the format 
+<code>family[,styles],size</code>
+, where styles optionally add bold or italic or both. Four font names are portable: 
+<code>serif</code>
+ (Times or similar), 
+<code>sans</code>
+ (Helvetica or similar), 
+<code>mono</code>
+ (a mono spaced sans serif font) and 
+<code>typewriter</code>
+ (Courier or similar). 
+<code>Font()</code>
+ fails if the requested font name does not exist.
+</p>
+<dl>
+<dt>FreeColor(w, s, ...) : window</dt>
+<dd>
+<p>
+release colors
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>FreeColor(w,s1,...,sn)</code>
+ allows the window system to re-use the corresponding color map entries. Whether this call has an effect is dependent upon the particular implementation. If a freed color is still in use at the time it is freed, unpredictable results will occur.
+</p>
+<dl>
+<dt>GotoRC(w, row:1, col:1) : window</dt>
+<dd>
+<p>
+go to row,column
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>GotoRC(w,row,col)</code>
+ moves the text cursor to a particular row and column, given in numbers of characters; the upper-left corner is coordinate (1,1). The column calculation used by 
+<code>GotoRC()</code>
+ assigns to each column the pixel width of the widest character in the current font. If the current font is of fixed width, this yields the usual interpretation.
+</p>
+<dl>
+<dt>GotoXY(w, x:0, y:0) : window</dt>
+<dd>
+<p>
+go to pixel
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>GotoXY(w,x,y)</code>
+ moves the text cursor to a specific cursor location in pixels.
+</p>
+<dl>
+<dt>IdentityMatrix(w) : record</dt>
+<dd>
+<p>
+load the identity matrix
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>IdentityMatrix(w)</code>
+ changes the current matrix to the identity matrix on 3D window 
+<code>w</code>
+. The display list element is returned.
+</p>
+<dl>
+<dt>Lower(w) : window</dt>
+<dd>
+<p>
+lower window
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Lower(w)</code>
+ moves window 
+<code>w</code>
+ to the bottom of the window stack.
+</p>
+<dl>
+<dt>MatrixMode(w, s) : record</dt>
+<dd>
+<p>
+set matrix mode
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>MatrixMode(w, s)</code>
+ changes the matrix mode to 
+<code>s</code>
+ on 3D window 
+<code>w</code>
+. The string 
+<code>s</code>
+ must be either 
+<code>&quot;projection&quot;</code>
+ or 
+<code>&quot;modelview&quot;</code>
+; otherwise this procedure fails. The display list element is returned.
+</p>
+<dl>
+<dt>MultMatrix(w, L) : record</dt>
+<dd>
+<p>
+multiply transformation matrix
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>MultMatrix(w, L)</code>
+ multiplies the current transformation matrix used in 3D window w by the 4x4 matrix represented as a list of 16 values L.
+</p>
+<dl>
+<dt>NewColor(w, s) : integer</dt>
+<dd>
+<p>
+allocate mutable color
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>NewColor(w,s)</code>
+ allocates an entry in the color map and returns a small negative integer for this entry, usable in calls to routines that take a color specification, such as 
+<code>Fg()</code>
+. If 
+<code>s</code>
+ is specified, the entry is initialized to the given color. 
+<code>NewColor()</code>
+ fails if it cannot allocate an entry.
+</p>
+<dl>
+<dt>PaletteChars(w, s) : string</dt>
+<dd>
+<p>
+pallete characters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PaletteChars(w,s)</code>
+ produces a string containing each of the letters in palette 
+<code>s</code>
+. The palletes &quot;c1&quot; through &quot;c6&quot; define different color encodings of images represented as string data; see [Griswold98].
+</p>
+<dl>
+<dt>PaletteColor(w, p, s) : string</dt>
+<dd>
+<p>
+pallete color
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PaletteColor(w,s)</code>
+ returns the color of key 
+<code>s</code>
+ in palette 
+<code>p</code>
+ in 
+<code>&quot;</code>
+\ 
+<em>
+``r``
+</em>
+\ 
+<code>,</code>
+\ 
+<em>
+``g``
+</em>
+\ 
+<code>,</code>
+\ 
+<em>
+``b``
+</em>
+\ 
+<code>&quot;</code>
+ format.
+</p>
+<dl>
+<dt>PaletteKey(w, p, s) : integer</dt>
+<dd>
+<p>
+pallete key
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PaletteKey(w,s)</code>
+ returns the key of closest color to 
+<code>s</code>
+ in palette 
+<code>p</code>
+.
+</p>
+<dl>
+<dt>Pattern(w, s) : w</dt>
+<dd>
+<p>
+define stipple pattern
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Pattern(w,s)</code>
+ selects stipple pattern 
+<code>s</code>
+ for use during draw and fill operations. 
+<code>s</code>
+ may be either the name of a system-dependent pattern or a literal of the form 
+<em>
+width
+</em>
+,\ 
+<em>
+bits
+</em>
+. Patterns are only used when the 
+<code>fillstyle</code>
+ attribute is 
+<code>stippled</code>
+ or 
+<code>opaquestippled</code>
+. 
+<code>Pattern()</code>
+ fails if a named pattern is not defined. An error occurs if 
+<code>Pattern()</code>
+ is given a malformed literal.
+</p>
+<dl>
+<dt>Pending(w, x, ...) : L</dt>
+<dd>
+<p>
+produce event queue
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Pending(w)</code>
+ produces the list of events waiting to be read from window 
+<code>w</code>
+. If no events are available, the list is empty (its size is 0). 
+<code>Pending(w,x1,...,xn)</code>
+ adds 
+<code>x1</code>
+ through 
+<code>xn</code>
+ to the end of 
+<code>w</code>
+'s pending list in guaranteed consecutive order.
+</p>
+<dl>
+<dt>Pixel(w, x:0, y:0, width:0, height:0) : i1...in</dt>
+<dd>
+<p>
+generate window pixels
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Pixel(w,x,y,width,height)</code>
+ generates pixel contents from a rectangular area within window 
+<code>w</code>
+. 
+<code>width * height</code>
+ results are generated starting from the upper-left corner and advancing down to the bottom of each column before the next one is visited. Pixels are returned in integer values; ordinary colors are encoded nonnegative integers, while mutable colors are negative integers that were previously returned by 
+<code>NewColor()</code>
+. Ordinary colors are encoded with the most significant eight bits all zero, the next eight bits contain the red component, the next eight bits the green component, and the least significant eight bits contain the blue component. 
+<code>Pixel()</code>
+ fails if part of the requested rectangle extends beyond the canvas.
+</p>
+<dl>
+<dt>PopMatrix(w) : record</dt>
+<dd>
+<p>
+pop the matrix stack
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PopMatrix(w)</code>
+ pops the top matrix from either the projection or modelview matrix stack on 3D window 
+<code>w</code>
+, depending on the current matrix mode\ 
+<code>.</code>
+ This procedure fails if there is only one matrix on the matrix stack. The display list element is returned.
+</p>
+<dl>
+<dt>PushMatrix(w) : record</dt>
+<dd>
+<p>
+push the matrix stack
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PushMatrix(w)</code>
+ pushes a copy of the current matrix onto the matrix stack on 3D window 
+<code>w</code>
+. The current matrix mode determines on what stack is pushed. This procedure fails if the stack is full. The 
+<code>&quot;projection&quot;</code>
+ stack is of size two; the 
+<code>&quot;modelview&quot;</code>
+ stack is of size thirty two. The display list element is returned.
+</p>
+<dl>
+<dt>PushRotate(w, a, x, y, z) : record</dt>
+<dd>
+<p>
+push and rotate
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PushRotate()</code>
+ is equivalent to 
+<code>PushMatrix()</code>
+ followed by 
+<code>Rotate()</code>
+.
+</p>
+<dl>
+<dt>PushScale(w, x, y, z) : record</dt>
+<dd>
+<p>
+push and scale
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PushScale()</code>
+ is equivalent to 
+<code>PushMatrix()</code>
+ followed by 
+<code>Scale()</code>
+.
+</p>
+<dl>
+<dt>PushTranslate(w, x, y, z) : record</dt>
+<dd>
+<p>
+push and translate
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>PushTranslate()</code>
+ is equivalent to 
+<code>PushMatrix()</code>
+ followed by 
+<code>Translate()</code>
+.
+</p>
+<dl>
+<dt>QueryPointer(w) : x, y</dt>
+<dd>
+<p>
+produce mouse position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>QueryPointer(w)</code>
+ generates the 
+<code>x</code>
+ and 
+<code>y</code>
+ coordinates of the mouse relative to window 
+<code>w</code>
+. If 
+<code>w</code>
+ is omitted, 
+<code>QueryPointer()</code>
+ generates the coordinates relative to the upper-left corner of the entire screen.
+</p>
+<dl>
+<dt>Raise(w) : window</dt>
+<dd>
+<p>
+raise window
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Raise(w)</code>
+ moves window 
+<code>w</code>
+ to the top of the window stack, making it entirely visible and possibly obscuring other windows.
+</p>
+<dl>
+<dt>ReadImage(w, s, x:0, y:0) : integer</dt>
+<dd>
+<p>
+load image file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>ReadImage(w,s,x,y)</code>
+ loads an image from the file named by s into window (or texture) w at offset 
+<code>x,y</code>
+. 
+<code>x</code>
+ and 
+<code>y</code>
+ are optional and default to 0,0. GIF, JPG, PNG, and BMP formats are supported, along with platform-specific formats. If 
+<code>ReadImage()</code>
+ reads the image into 
+<code>w</code>
+, it returns either an integer 0 indicating no errors occurred or a nonzero integer indicating that one or more colors required by the image could not be obtained from the window system. 
+<code>ReadImage()</code>
+ fails if file 
+<code>s</code>
+ cannot be opened for reading or is an invalid file format.
+</p>
+<dl>
+<dt>Refresh(w) : window</dt>
+<dd>
+<p>
+redraw the window
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Refresh(w)</code>
+\ redraws the contents of window 
+<code>w</code>
+. It is used mainly when objects have been moved in a 3D scene. The window 
+<code>w</code>
+ is returned.
+</p>
+<dl>
+<dt>Rotate(w, a, x, y, z) : record</dt>
+<dd>
+<p>
+rotate objects
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Rotate(w, a, x, y, z,...)</code>
+ rotates subsequent objects drawn on 3D window 
+<code>w</code>
+ by angle 
+<code>a</code>
+ degrees, in the direction (
+<code>x,y,z</code>
+). The display list element is returned.
+</p>
+<p>
+Scale(w, x, y, z) : record
+</p>
+<p>
+scale objects
+</p>
+<p>
+|
+</p>
+<p>
+<code>Scale(w, x, y, z,...)</code>
+ scales subsequent objects drawn on 3D window 
+<code>w</code>
+ according to the given coordinates. The display list element is returned.
+</p>
+<dl>
+<dt>Texcoord(w, x, y, ...) : list</dt>
+<dd>
+<p>
+define texture coordinates
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Texcoord(W, x</code>
+\ 
+<sub></sub>
+<code>1,y</code>
+<code>\ </code>
+<code>1</code>
+<code>\ </code>
+<code>,</code>
+<code>\ </code>
+<code>\ </code>
+..., x
+<code>\ :sub:</code>
+<code>n, y</code>
+<code>\ </code>
+<code>n</code>
+<code>\ </code>
+<code>)</code>
+<code>\ </code>
+sets the texture coordinates to
+<code>\ </code>
+x
+<code>\ :sub:</code>
+<code>1, y</code>
+<code>\ </code>
+<code>1</code>
+<code>\ </code>
+<code>, ...,</code>
+<code>\ </code>
+<code>\ </code>
+x
+<code>\ :sub:</code>
+<code>n, y</code>
+<code>\ </code>
+<code>n</code>
+<code>\ </code>
+in 3D window w. Each x, y, pair forms one texture coordinate.
+<code>\ </code>
+Texcoord(W, L)
+<code>\ </code>
+sets the texture coordinates to those specified in the list
+<code>\ </code>
+L
+<code>\ </code>
+.
+<code>\ </code>
+Texcoord(W, s)
+<code>\ </code>
+sets the texture coordinates to those specified by
+<code>\ </code>
+s
+<code>\ </code>
+. The string
+<code>\ </code>
+s
+<code>\ </code>
+must be
+<code>\ </code>
+&quot;auto&quot;
+<code>\ </code>
+otherwise the procedure will fail. In all cases the display list element is returned.``
+</p>
+<dl>
+<dt>TextWidth(w, s) : integer</dt>
+<dd>
+<p>
+pixel width of text
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>TextWidth(w,s)</code>
+ computes the pixel width of string 
+<code>s</code>
+ in the font currently defined for window 
+<code>w</code>
+.
+</p>
+<dl>
+<dt>Texture(w, s) : record</dt>
+<dd>
+<p>
+apply texture
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Texture(w, s)</code>
+\ specifies a texture image that is applied to subsequent objects drawn on 3D window 
+<code>w</code>
+. The string 
+<code>s</code>
+ specifies the texture image as a filename, a string of the form 
+<code>width,pallet,data</code>
+ or 
+<code>width,#,data</code>
+, where pallet is a pallet from the Unicon 2D graphics facilities and data is the hexadecimal representation of an image. 
+<code>Texture(w1, w2)</code>
+ specifies that the contents of 2D or 3D window 
+<code>w2</code>
+ be used as a texture image that is applied to subsequent objects on the window 
+<code>w1</code>
+. The display list element is returned.
+</p>
+<dl>
+<dt>Translate(w, x, y, z, ...) : record</dt>
+<dd>
+<p>
+translate object positions
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Translate(w, x, y, z,...)</code>
+ moves objects drawn subsequently on 3D window w in the direction (
+<code>x,y,z</code>
+). The display list element is returned.
+</p>
+<dl>
+<dt>Uncouple(w) : window</dt>
+<dd>
+<p>
+release binding
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>Uncouple(w)</code>
+ releases the binding associated with file 
+<code>w</code>
+. 
+<code>Uncouple()</code>
+ closes the window only if all other bindings associated with that window are also closed.
+</p>
+<dl>
+<dt>WAttrib(w, s1, ...) : x, ...</dt>
+<dd>
+<p>
+generate or set attributes
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WAttrib(w, s1, ...)</code>
+ retrieves and/or sets window and context attributes. If called with exactly one attribute, integers are produced for integer-value attributes; all other values are represented by strings. If called with more than one attribute argument, 
+<code>WAttrib()</code>
+ produces one string result per argument, prefixing each value by the attribute name and an equals sign (=). If 
+<code>xi</code>
+ is a window, subsequent attributes apply to 
+<code>xi</code>
+. 
+<code>WAttrib()</code>
+ fails if an attempt is made to set the attribute 
+<code>font</code>
+, 
+<code>fg</code>
+, 
+<code>bg</code>
+, or 
+<code>pattern</code>
+ to a value that is not supported. A run-time error occurs for an invalid attribute name or invalid value.
+</p>
+<dl>
+<dt>WDefault(w, program, option) : string</dt>
+<dd>
+<p>
+query user preference
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WDefault(w,program,option)</code>
+ returns the value of option for program as registered with the X resource manager. In typical use this supplies the program with a default value for window attribute option from a program.option entry in an .XDefaults file. 
+<code>WDefault()</code>
+ fails if no user preference for the specified option is available.
+</p>
+<dl>
+<dt>WFlush(w) : window</dt>
+<dd>
+<p>
+flush window output
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WFlush(w)</code>
+ flushes window output on window systems that buffer text and graphics output. Window output is automatically flushed whenever the program blocks on window input. When this behavior is not adequate, a call to 
+<code>WFlush()</code>
+ sends all window output immediately, but does not wait for all commands to be received and acted upon. 
+<code>WFlush()</code>
+ is a no-op on window systems that do not buffer output.
+</p>
+<dl>
+<dt>WindowContents(w) : list</dt>
+<dd>
+<p>
+window display list
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WindowContents(w)</code>
+ returns a list of display elements, which are records or lists. Each element has a function name followed by the parameters of the function, or an attribute followed by its value.
+</p>
+<dl>
+<dt>WriteImage(w, s, x:0, y:0, width:0, height:0) : window</dt>
+<dd>
+<p>
+save image file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WriteImage(w,s,x,y,width,height)</code>
+ saves an image of dimensions width, height from window w at offset 
+<code>x,y</code>
+ to a file named 
+<code>s</code>
+. The default is to write the entire window. The file is written according to the filename extension, in either GIF, JPG, BMP, PNG, or a platform specific format such as XBM or XPM. 
+<code>WriteImage()</code>
+ fails if 
+<code>s</code>
+ cannot be opened for writing.
+</p>
+<dl>
+<dt>WSection(w, s) : record</dt>
+<dd>
+<p>
+define window section
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WSection(w,s)</code>
+ starts a new window section named 
+<code>s</code>
+ on 3D window 
+<code>w</code>
+ and returns a display list section marker record. During window refreshes if the section marker's 
+<code>skip</code>
+ field is 1, the section is skipped. The section name 
+<code>s</code>
+ is produced by 
+<code>&amp;pick</code>
+ if a primitive in the block is clicked on while attribute 
+<code>&quot;pick=on&quot;</code>
+. 
+<code>WSection(w)</code>
+ marks the end of a preceding section. 
+<code>WSection()</code>
+ blocks may be nested.
+</p>
+<dl>
+<dt>WSync(w, s) : w</dt>
+<dd>
+<p>
+synchronize with window system server
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+<code>WSync(w,s)</code>
+ synchronizes the program with the server attached to window 
+<code>w</code>
+ on those window systems that employ a client-server model. Output to the window is flushed, and 
+<code>WSync()</code>
+ waits for a reply from the server indicating all output has been processed. If 
+<code>s</code>
+ is 
+<code>&quot;yes&quot;</code>
+, all events pending on 
+<code>w</code>
+ are discarded. 
+<code>WSync()</code>
+ is a no-op on window systems that do not use a client-server model.
+</p>
+<h4 id="pattern-functions">
+Pattern functions
+</h4>
+<dl>
+<dt>Abort()</dt>
+<dd>
+<p>
+pattern cancel
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Abort() causes an immediate failure of the entire pattern match.
+</p>
+<dl>
+<dt>Any(c)</dt>
+<dd>
+<p>
+match any
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Any(c) matches any single character contained in c appearing in the subject string.
+</p>
+<dl>
+<dt>Arb()</dt>
+<dd>
+<p>
+arbitrary pattern
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Arb() matches zero or more characters in the subject string.
+</p>
+<dl>
+<dt>Arbno(p)</dt>
+<dd>
+<p>
+repetitive arbitrary pattern
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Arbno(p) matches repetitive sequences of p in the subject string.
+</p>
+<dl>
+<dt>Bal()</dt>
+<dd>
+<p>
+balanced parentheses
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Bal() matches the shortest non-null string which parentheses are balanced in the subject string.
+</p>
+<dl>
+<dt>Break(c)</dt>
+<dd>
+<p>
+pattern break
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Break(c) matches any characters in the subject string up to but not including any of the characters in cset c.
+</p>
+<dl>
+<dt>Breakx(c)</dt>
+<dd>
+<p>
+extended pattern break
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Breakx(c) matches any characters up to any of the subject characters in c, and will search beyond the break position for a possible larger match.
+</p>
+<dl>
+<dt>Fail()</dt>
+<dd>
+<p>
+pattern back
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Fail() signals a failure in the current portion of the pattern match and sends an instruction to go back and try a different alternative.
+</p>
+<dl>
+<dt>Fence()</dt>
+<dd>
+<p>
+pattern fence
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Fence() signals a failure in the current portion of the pattern match if it is trying to backing up to try other alternatives.
+</p>
+<dl>
+<dt>Len(i)</dt>
+<dd>
+<p>
+match fixed-length string
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Len(i) matches a string of a length of i characters in the subject string. It fails if i is greater than the number of characters remaining in the subject string.
+</p>
+<dl>
+<dt>NotAny(c)</dt>
+<dd>
+<p>
+match anything but
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+NotAny(c) matches any single character not contained in character set c appearing in the subject string.
+</p>
+<dl>
+<dt>Nspan(c)</dt>
+<dd>
+<p>
+optional pattern span
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Nspan() matches the longest available sequence of zero or more characters from the subject string that are contained in c.
+</p>
+<dl>
+<dt>Pos(i)</dt>
+<dd>
+<p>
+cursor position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Pos(i) sets the cursor or index position of the subject string to the position i according the Unicon index system shown below:
+</p>
+<pre><code class="language-text">
+-6 -5 -4 -3 -2 -1  0
+ |U |n |i |c |o |n |
+ 1  2  3  4  5  6  7
+</code></pre>
+<dl>
+<dt>Rem()</dt>
+<dd>
+<p>
+remainder pattern
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Rem() matches the remainder of the subject string.
+</p>
+<dl>
+<dt>Span(c)</dt>
+<dd>
+<p>
+pattern span
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Span(c) matches one or more characters from the subject string that are contained in c. It must match at least one character.
+</p>
+<dl>
+<dt>Succeed()</dt>
+<dd>
+<p>
+pattern succeeds
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Succeed() produces a pattern that, when matched, will cause the surrounding pattern match to succeed without further scrutiny.
+</p>
+<dl>
+<dt>Tab(n)</dt>
+<dd>
+<p>
+pattern tab
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Tab(n) matches any characters from the current cursor or index position up to the specified position of the subject string. Tab() uses the Unicon index system shown in Pos() and position n must be to the right of the current position.
+</p>
+<dl>
+<dt>Rpos(n)</dt>
+<dd>
+<p>
+reverse cursor position
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Rpos(n) sets the cursor or index position of the subject string to the position n back from the end of the string, equivalent to using Unicon's negative indices in Pos().
+</p>
+<pre><code class="language-text">
+6 5 4 3 2 1 0
+|S|N|O|B|O|L|
+</code></pre>
+<dl>
+<dt>Rtab(i)</dt>
+<dd>
+<p>
+pattern reverse tab
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Rtab(i) matches any characters from the current cursor or index position up to the specified position (back from the end) of the subject string, equivalent to using a negative index in Tab(). Position n must be to the right of the current position.
+</p>
+<h2 id="preprocessor">
+Preprocessor
+</h2>
+<p>
+Unicon features a simple preprocessor that supports file inclusion and symbolic constants. It is a subset of the capabilities found in the C preprocessor, and is used primarily to support platform-specific code sections and large collections of symbols.
+</p>
+<h4 id="preprocessor-commands">
+Preprocessor commands
+</h4>
+<p>
+Preprocessor directives are lines beginning with a dollar sign. The available preprocessor commands are:
+</p>
+<dl>
+<dt>$define symbol text</dt>
+<dd>
+<p>
+symbolic substitution
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+All subsequent occurrences of 
+<em>
+symbol
+</em>
+ are replaced by the 
+<em>
+text
+</em>
+ within the current file. Note that $define does not support arguments, unlike C.
+</p>
+<dl>
+<dt>$include filename</dt>
+<dd>
+<p>
+insert source file
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The named file is inserted into the compilation in place of the $include line.
+</p>
+<dl>
+<dt>$ifdef symbol</dt>
+<dd>
+<p>
+conditional compilation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>$ifndef symbol</dt>
+<dd>
+<p>
+conditional compilation
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>$else</dt>
+<dd>
+<p>
+conditional alternative
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<dl>
+<dt>$endif</dt>
+<dd>
+<p>
+end of conditional code
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The subsequent lines of code, up to an $else or $endif, are discarded unless 
+<em>
+symbol
+</em>
+ is defined by some $define directive. $ifndef reverses this logic.
+</p>
+<dl>
+<dt>$error text</dt>
+<dd>
+<p>
+compile error
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The compiler will emit an error with the supplied text as a message.
+</p>
+<dl>
+<dt>$line number [filename]</dt>
+<dd>
+<p>
+source code line
+</p>
+</dd>
+</dl>
+<p>
+| |
+</p>
+<dl>
+<dt>#line number [filename]</dt>
+<dd>
+<p>
+source code line
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+The subsequent lines of code are treated by the compiler as commencing from line 
+<em>
+number
+</em>
+ in the file 
+<em>
+filename
+</em>
+ or the current file if no filename is given.
+</p>
+<dl>
+<dt>$undef symbol</dt>
+<dd>
+<p>
+remove symbol definition
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+Subsequent occurrences of 
+<em>
+symbol
+</em>
+ are no longer replaced by any substitute text.
+</p>
+<dl>
+<dt>EBCDIC transliterations</dt>
+<dd>
+<p>
+alternative bracket characters
+</p>
+</dd>
+</dl>
+<p>
+|
+</p>
+<p>
+These character combinations were introduced for legacy keyboards that were missing certain bracket characters.
+</p>
+<pre><code class="language-text">
+$ for   {
+
+$) for }
+
+$&lt;  for [
+
+$&gt; for ]
+</code></pre>
+<p>
+These character combinations are substitutes for curly and square brackets on keyboards that do not have these characters.
+</p>
+<h4 id="predefined-symbols">
+Predefined symbols
+</h4>
+<p>
+Predefined symbols are provided for each platform and each feature that is optionally compiled in on some platforms. These symbols include:
+</p>
+<p>
+<strong>
+Preprocessor Symbol Feature
+</strong>
+</p>
+<p>
+| \_V9 Version 9 | \_CMS CMS | \_MACINTOSH Macintosh | \_MSDOS_386 MS-DOS/386 | \_MS_WINDOWS_NT MS Windows NT | \_MSDOS MS-DOS | \_MVS MVS | \_OS2 OS/2 | \_PORT PORT | \_UNIX UNIX | \_POSIX POSIX | \_DBM DBM | \_VMS VMS | \_ASCII ASCII | \_EBCDIC EBCDIC | \_CO_EXPRESSIONS co-expressions | \_CONSOLE_WINDOW console window | \_DYNAMIC_LOADING dynamic loading | \_EVENT_MONITOR event monitoring | \_EXTERNAL_FUNCTIONS external functions | \_KEYBOARD_FUNCTIONS keyboard functions | \_LARGE_INTEGERS large integers | \_MULTITASKING multiple programs | \_PIPES pipes | \_RECORD_IO record I/O | \_SYSTEM_FUNCTION system function | \_MESSAGING messaging | \_GRAPHICS graphics | \_X_WINDOW_SYSTEM X Windows | \_MS_WINDOWS MS Windows | \_WIN32 Win32 | \_PRESENTATION_MGR Presentation Manager | \_DOS_FUNCTIONS MS-DOS extensions
+</p>
+<h2 id="execution-errors">
+Execution Errors
+</h2>
+<p>
+There are two kinds of errors that can occur during the execution of an Icon program: runtime errors and system errors. Runtime errors occur when a semantic or logic error in a program results in a computation that cannot perform as instructed. System errors occur when an operating system call fails to perform a required service.
+</p>
+<h4 id="runtime-errors">
+Runtime errors
+</h4>
+<p>
+By default, a runtime error causes program execution to abort. Runtime errors are reported by name as well as by number. They are accompanied by an error traceback that shows the procedure call stack and value that caused the error, if there is one. The errors are listed below to illustrate the kinds of situations that can cause execution to terminate.
+</p>
+<p>
+The keyword 
+<code>&amp;error</code>
+ turns runtime errors into expression failure. When an expression fails due to a converted runtime error, the keywords 
+<code>&amp;errornumber</code>
+, 
+<code>&amp;errortext</code>
+, and 
+<code>&amp;errorvalue</code>
+ provide information about the nature of the error.
+</p>
+<p>
+| 101 integer expected or out of range | 102 numeric expected | 103 string expected | 104 cset expected | 105 file expected | 106 procedure or integer expected | 107 record expected | 108 list expected | 109 string or file expected | 110 string or list expected | 111 variable expected | 112 invalid type to size operation | 113 invalid type to random operation | 114 invalid type to subscript operation | 115 structure expected | 116 invalid type to element generator | 117 missing main procedure | 118 co-expression expected | 119 set expected | 120 two csets or two sets expected | 121 function not supported | 122 set or table expected | 123 invalid type | 124 table expected | 125 list, record, or set expected | 126 list or record expected | 140 window expected | 141 program terminated by window manager | 142 attempt to read/write on closed window | 143 malformed event queue | 144 window system error | 145 bad window attribute | 146 incorrect number of arguments to drawing function | 147 window attribute cannot be read or written as requested | 160 cannot open file | 161 bad file attribute | 162 cannot open socket | 170 string or integer expected | 171 posix header file not included | 172 posix record overridden by global value | 173 directory opened for writing | 174 directory or database invalid as file | 175 invalid mode string | 176 invalid signal | 177 invalid operation to flock/fcntl | 178 invalid procedure type | 179 fdup of closed file | 180 low-level read or select mixed with buffered read | 181 not a network connection | 182 not a UDP socket | 183 invalid protocol name | 184 invalid permission string for umask | 185 converting an active co-expression to a thread is not supported | 190 database expected | 201 division by zero | 202 remaindering by zero | 203 integer overflow | 204 real overflow, underflow, or division by zero | 205 invalid value | 206 negative first argument to real exponentiation | 207 invalid field name | 208 second and third arguments to map of unequal length | 209 invalid second argument to open | 210 non-ascending arguments to detab/entab | 211 by value equal to zero | 212 attempt to read file not open for reading | 213 attempt to write file not open for writing | 214 input/output error | 215 attempt to refresh &amp;main | 216 external function not found | 217 unsafe inter-program variable assignment | 301 evaluation stack overflow | 302 memory violation | 303 inadequate space for evaluation stack | 304 inadequate space in qualifier list | 305 inadequate space for static allocation | 306 inadequate space in string region | 307 inadequate space in block region | 308 system stack overflow in co-expression | 309 pattern stack overflow | 316 interpreter stack too large | 318 co-expression stack too large | 401 co-expressions not implemented | 402 program not compiled with debugging option | 500 program malfunction | 600 vidget usage error
+</p>
+<h4 id="system-errors">
+System errors
+</h4>
+<p>
+If an error occurs during the execution of a system function, by default the function fails and keywords &amp;errornumber, &amp;errortext and &amp;errorvalue will be set. This contrasts with runtime errors, which terminate execution by default. Whereas runtime errors can be converted to failure by setting &amp;error, system errors can be converted to a runtime error by setting keyword &amp;syserr to a non-null value.
+</p>
+<p>
+The complete set of system errors is by definition platform specific. Error numbers above the value 1000 are used for system errors. Many of the POSIX standard system errors are supported across platforms, and error numbers between 1001 and 1040 are reserved for the system errors listed below. Platforms may report other system error codes so long as they do not conflict with existing runtime or system error codes.
+</p>
+<p>
+| 1001 Operation not permitted | 1002 No such file or directory | 1003 No such process | 1004 Interrupted system call | 1005 I/O error | 1006 No such device or address | 1007 Arg list too long | 1008 Exec format error | 1009 Bad file number | 1010 No child processes | 1011 Try again | 1012 Out of memory | 1013 Permission denied | 1014 Bad address | 1016 Device or resource busy | 1017 File exists | 1018 Cross-device link | 1019 No such device | 1020 Not a directory | 1021 Is a directory | 1022 Invalid argument | 1023 File table overflow | 1024 Too many open files | 1025 Not a typewriter | 1027 File too large | 1028 No space left on device | 1029 Illegal seek | 1030 Read-only file system | 1031 Too many links | 1032 Broken pipe | 1033 Math argument out of domain of func | 1034 Math result not representable | 1035 Resource deadlock would occur | 1036 File name too long | 1037 No record locks available | 1038 Function not implemented | 1039 Directory not empty | 1040 socket error | 1041 cannot initialize network library | 1042 fdup of closed file | 1043 invalid signal | 1044 invalid operation to flock/fcntl | 1045 invalid mode string | 1046 invalid permission string for umask | 1047 invalid protocol name | 1048 low-level read or select mixed with buffered read | 1100 ODBC connection expected | 1200 system error (see errno) | 1201 malformed URL | 1202 missing username in URL | 1203 unknown scheme in URL | 1204 cannot parse URL | 1205 cannot connect | 1206 unknown host | 1207 invalid field in header | 1208 messaging file expected | 1209 cannot determine smtpserver (set UNICON_SMTPSERVER)
+</p>
+<div class="prevnext">
+<a href="utr7.html">&larr; UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a>
+<a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr8.pdf">pdf</a> | <a href="_sources/utr8.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

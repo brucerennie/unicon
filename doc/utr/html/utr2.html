@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iflex: A Lexical Analyzer Generator for Icon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li class="current">UTR 2: iflex: A Lexical Analyzer Generator for Icon</li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr1.html">&larr; UTR 1b: An ODBC Interface for the Unicon Programming Language</a>
+<a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">iflex: A Lexical Analyzer Generator for Icon</h1>
+<p class="report-authors">Ray Pereda</p>
+<p class="report-tr">Unicon Technical Report: 2</p>
+<p class="report-date">2000-02-25</p>
+<p class="report-pdf"><a href="utr2.pdf">pdf</a> · <a href="_sources/utr2.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>iflex is a software tool for building language processors. It is based on flex, a well-known tool for the C programming language. This paper describes the experience gained in creating iflex and a brief description of how to use the tool.</p>
+</div>
+</header>
+<h2 id="1-introduction">
+1. Introduction
+</h2>
+<p>
+Building a language processor such as a compiler is a complex task. Parsing is the extraction of the grammatical structure of a sentence in some language. The first step in parsing is extracting the lexical items or &quot;words&quot; in a sentence. iflex is a tool for doing just that, i.e. scanning, or also known more formally as lexical analysis.
+</p>
+<p>
+If this report is your first lex, you may wish to also read &quot;Lex &amp; Yacc,&quot; by [Levine92]. Also, the book by [Jeffery00] has a chapter on iflex. iyacc, the companion program for iflex is documented in [Pereda00].
+</p>
+<p>
+The name of the iflex tool stands for Icon Lexical Analyzer. It was created by modifying a program called flex to generate Icon code as an alternative to C. Flex is documented in [Paxson95]. The flex program in turn is based on a classic UNIX program called lex that dates back to 1975. Lex is documented in [Lesk75]. The iflex tool takes a lexical specification and produces a lexical analyzer that corresponds to that specification. A lexical analyzer is a fancy name for a scanner, and the lexical analyzer generated by iflex is simply a procedure named 
+<code>yylex()</code>
+. The specification of the lexical structure of many languages can be concisely and precisely stated using this notation. You only need to know the basics of regular expressions to get a useful understanding of them. The iflex tool specifications consist of a list of regular expressions.
+</p>
+<h2 id="2-example-1-a-word-count-program">
+2. Example #1, A Word Count Program
+</h2>
+<p>
+There is a UNIX program called 
+<code>wc</code>
+, short for word count, that counts newlines, words, and characters in a file. In this section, you will see how to build such a program using iflex. A short, albeit simplistic, definition of a word is any sequence of non-white space characters. White space characters are blanks and tabs. Below is a complete iflex program that operates like 
+<code>wc</code>
+:
+</p>
+<pre><code class="language-text">
+
+ws    [ \t]
+nonws [^ \t\n]
+%{
+global cc, wc, lc
+%}
+%%
+{nonws}+ cc +:= yyleng; wc +:= 1
+{ws}+ cc +:= yyleng
+\n lc +:= 1; cc +:= 1
+%%
+procedure main()
+  cc := wc := lc := 0
+  yylex()
+  write(right(lc, 8), right(wc, 8), right(cc, 8))
+end
+</code></pre>
+<p>
+All iflex programs, including this program, consist of three sections, separated by lines containing two percent signs. The three sections are the definitions section, the rules section, and the procedures section. In the word count program, the definitions section has two definitions, one for white space (
+<code>ws</code>
+) and one for non-white space (
+<code>nonws</code>
+). These definitions are followed by code to declare three global variables, which will be used as counters. The variables 
+<code>cc</code>
+, 
+<code>wc</code>
+, and 
+<code>lc</code>
+ are used to count the characters, words, and lines, respectively. The rules section in this example contains three rules. White space, words, and newlines each have a rule that matches and counts their occurrences. The procedure section has one procedure, 
+<code>main()</code>
+. It calls the lexical analyzer and then prints out the counts. There are many ways to write this word count program, with different performance characteristics. If speed is your primary consideration you can look in the documentation for flex to get five progressively more complex but faster versions of word count. The documentation is available on the Internet; just search for flex and Vern Paxson, the author.
+</p>
+<h2 id="3-example-2-a-lexical-analyzer-for-a-desktop-calculator">
+3. Example #2, A Lexical Analyzer for a Desktop Calculator
+</h2>
+<p>
+The above example illustrates using iflex to write standalone programs, but the function 
+<code>yylex()</code>
+ produced by iflex is usually called by a parser algorithm. The 
+<code>yylex()</code>
+ function can be used to produce a sequence of words, and a parser such as that generated by the iyacc program combines those words into sentences. So it makes sense to study how iflex is used in this typical context. One obvious difference is that in the earlier example, 
+<code>yylex()</code>
+ was only called once to process an entire file; in contrast, when a parser uses 
+<code>yylex()</code>
+ it calls it repeatedly, and 
+<code>yylex()</code>
+ returns with each word that it finds. You will see this in the following example. A calculator program is simple enough to understand in one sitting and complex enough to get a sense of how to use iflex with its parser generator counterpart, iyacc. In general, in a desktop calculator program the user types in complex formulas and the calculator evaluates them and prints out the answer. First things first: what are the words of this little language? Numbers, math operators, and variable names. A number is one or more digits followed by an optional decimal point and one or more digits. In regular expressions, you can write this as 
+<code>[0-9]+(\.[0-9]*)?</code>
+.
+</p>
+<p>
+The 0 through 9 is specified with a range using a dash for characters within the square brackets. The plus sign means one or more occurrences, whereas the star means zero or more occurrences. The backslash period means literally match a period; without a backslash a period matches any single character. The parentheses are used for grouping and the question mark means zero or more times. The math operators are simple &quot;words&quot; composed of one character such as the plus sign, minus sign, and star for multiplication. Variable names need to be meaningful; so why not let them be any combination of letters, digits, and underscores. You do not want to confuse them with numbers, so refine the definition by making sure that variables do not begin with a number. This definition of variable names corresponds to the following regular expression: 
+<code>[a-zA-Z_][a-zA-Z0-9_]*</code>
+.
+</p>
+<p>
+Here is some more information about the three sections that make up an iflex program. The definitions section contains Icon code that is copied verbatim into the generated final program, before the generated scanner code. You can put 
+<code>$include</code>
+ statements there to define symbolic constants for the different kinds of words in your scanner. The rules section contains a series of rules, composed of two parts: a regular expression and a fragment of Icon code that executes whenever that regular expression matches part of the input. The procedures section contains arbitrary code that is copied verbatim after the generated scanner's code. A complete scanner specification for the desktop calculator looks like:
+</p>
+<pre><code class="language-text">
+
+%{
+# y_tab.icn contains the symbol definitions for integer values
+# representing the terminal symbols NAME, NUMBER, and
+# ASSIGNMENT. It is generated with iyacc -d calc.y
+$include y_tab.icn
+%}
+letter [a-zA-Z_]
+digiletter [a-zA-Z0-9_]
+%%
+{letter}{digiletter}* { yylval := yytext; return NAME }
+[0-9]+(\.[0-9]+)? { yylval := numeric(yytext); return NUMBER }
+\n return 0 /* logical EOF */
+&quot;:=&quot; return ASSIGNMENT
+[ \t]+ ; /* ignore whitespace */
+. return ord(yytext)
+%%
+</code></pre>
+<p>
+There are a couple of details about iflex worth noting in this scanner. The iflex tool maintains a global variable named 
+<code>yytext</code>
+ that holds the characters that match a given regular expression. For example, a plus operator is returned by the scanner rule that says to return the character code corresponding to 
+<code>yytext</code>
+, 
+<code>ord(yytext)</code>
+, on the regular expression that consists of a lone period (
+<code>.</code>
+ matches any one character). Even if 
+<code>yytext</code>
+ is not part of 
+<code>yylex()</code>
+'s return value for a token, there are situations in which the string is of interest to the parser, which reads lexical values from a global variable called 
+<code>yylval</code>
+. When a variable name is encountered, it makes sense to copy 
+<code>yytext</code>
+ over into 
+<code>yylval</code>
+. On the other hand, when a number is encountered, the numeric value corresponding to the characters in 
+<code>yytext</code>
+ is computed and stored in 
+<code>yylval</code>
+. Since Icon allows a variable to hold any type of value, there is no need for a union or some other messy construct to handle the fact that different tokens have different kinds of lexical values.
+</p>
+<p>
+Before you conclude your study of iflex, two subtle points are worth knowing. The matches allowed by a list of regular expressions are often ambiguous, and this is normal and healthy. For example, does 
+<code>count10</code>
+ match a variable name and then an integer, or just one variable name? The iflex tool matches the longest substring of input that can match the regular expression. So it matches 
+<code>count10</code>
+ as one word, which is a variable name in this case. There is one more sticky point: what if two rules match the exact same input characters, with no longest match to break the tie? In this case, iflex picks the first rule listed in the specification that matches, so the order of the rules can be important.
+</p>
+<h2 id="appendix-a-summary-of-the-regular-expression-operators">
+Appendix: A Summary of the Regular Expression Operators
+</h2>
+<p>
+This lists the most commonly used operators in iflex. Advanced users will want to consult the documentation for flex or its predecessor, lex, for a more complete list.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Operator
+</th>
+<th>
+Description
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>.</code>
+</td>
+<td>
+Matches any single character except the newline character.
+</td>
+</tr>
+<tr>
+<td>
+<code>*</code>
+</td>
+<td>
+Matches zero or more occurrences of the preceding expression.
+</td>
+</tr>
+<tr>
+<td>
+<code>[]</code>
+</td>
+<td>
+A character class that matches any character within the brackets.
+</td>
+</tr>
+<tr>
+<td>
+<code>^</code>
+</td>
+<td>
+Matches the beginning of a line. This interpretation is used only when
+</td>
+</tr>
+<tr>
+<td>
+<code>$</code>
+</td>
+<td>
+Matches the end of a line. This interpretation is used only when the
+</td>
+</tr>
+<tr>
+<td>
+<code>\</code>
+</td>
+<td>
+Used to escape the special meaning of a character. For example, 
+<code>\$</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>+</code>
+</td>
+<td>
+Matches one or more occurrences of the preceding expression. For
+</td>
+</tr>
+<tr>
+<td>
+<code>?</code>
+</td>
+<td>
+Matches zero or one occurrence of the preceding expression. For
+</td>
+</tr>
+<tr>
+<td>
+<code>|</code>
+</td>
+<td>
+Matches either the preceding regular expression or the one following
+</td>
+</tr>
+<tr>
+<td>
+<code>&quot;...&quot;</code>
+</td>
+<td>
+Matches everything in quotes literally.
+</td>
+</tr>
+<tr>
+<td>
+<code>()</code>
+</td>
+<td>
+Groups a regular expression together, overriding the default operator
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="references">
+References
+</h2>
+<p>
+[Jeffery00] Jeffery, C., Mohamed, S., Pereda, R. and Parlett, R., 
+<em>
+Programming with Unicon: very high-level object-oriented application and system programming
+</em>
+. To be published.
+</p>
+<p>
+[Lesk75] Lesk, M. E., and Schmidt, E. LEX – Lexical Analyzer Generator, Computer Science Technical Report No. 39, Bell Laboratories, Murray Hill, New Jersey (October 1975).
+</p>
+<p>
+[Levine92] Levine, J. R., Mason, T., and Brown, D. 
+<em>
+Lex &amp; Yacc
+</em>
+, O'Reilly and Associates, Cambridge, Massachusetts, 1992.
+</p>
+<p>
+[Paxson95] Paxson, Vern, flex – a fast lexical analyzer generator, many replications on the Internet. Also available on Redhat Linux via the man command.
+</p>
+<p>
+[Pereda00] Pereda, Ray, iyacc – a Parser Generator of Icon, Unicon Technical Report 00-01, University of Nevada, Las Vegas, Las Vegas, Nevada (February 2000).
+</p>
+<div class="prevnext">
+<a href="utr1.html">&larr; UTR 1b: An ODBC Interface for the Unicon Programming Language</a>
+<a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr2.pdf">pdf</a> | <a href="_sources/utr2.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

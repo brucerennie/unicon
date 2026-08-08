@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li class="current">Introduction</li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+<li><a href="sphinx.html">uscribe and Sphinx</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<span></span>
+<a href="install.html">Installation &rarr;</a>
+</div>
+<h2 id="introduction">
+Introduction
+</h2>
+<img class="figure logo" src="images/uscribe-logo.png" alt="Uscribe — documentation for Unicon">
+<p>
+<em>
+uscribe
+</em>
+ is a prose/book documentation generator for Unicon. It reads a small RST-like markup, builds a doctree, resolves cross-chapter references, and writes themed HTML (and optionally LaTeX/PDF) for Unicon documentation and books.
+</p>
+<p>
+This manual is the user guide for uscribe itself. Sources live under 
+<code>doc/uscribe/</code>
+ in the unicon tree and are built 
+<em>
+with
+</em>
+ uscribe.
+</p>
+<h3 id="what-uscribe-is-for">
+What uscribe is for
+</h3>
+<ul>
+<li>
+Multi-chapter books and manuals (ordered by a manifest file)
+</li>
+<li>
+HTML output with sidebar navigation, search, and selectable themes
+</li>
+<li>
+Unicon code samples with syntax highlighting
+</li>
+<li>
+Images and simple admonitions
+</li>
+</ul>
+<p>
+It is 
+<strong>
+not
+</strong>
+ a full RST/docutils toolchain. The markup subset is intentionally small; extend the parser as real documents need more.
+</p>
+<h3 id="a-taste-of-unicon-highlighting">
+A taste of Unicon highlighting
+</h3>
+<p>
+Mark listings with 
+<code>.. code-block:: unicon</code>
+ (also 
+<code>icon</code>
+ or 
+<code>icn</code>
+). In HTML they are highlighted client-side:
+</p>
+<pre><code class="language-unicon">
+
+procedure greet(who)
+   write(&quot;Hello, &quot;, \who | &quot;world&quot;, &quot;!&quot;)
+end
+
+procedure main()
+   greet(&quot;uscribe&quot;)
+   greet()
+end
+</code></pre>
+<p>
+See 
+<a href="markup.html#markup-reference">Markup Reference</a>
+ for the full dialect and 
+<a href="quickstart.html#quick-start">Quick Start</a>
+ to generate a tiny book.
+</p>
+<h3 id="relation-to-unidoc">
+Relation to unidoc
+</h3>
+<p>
+<code>uni/unidoc/</code>
+ extracts API docs from Unicon source comments. 
+<em>
+uscribe
+</em>
+ is a separate tool for authored prose. They can coexist; a future 
+<code>.. api::</code>
+ bridge may connect them.
+</p>
+<h3 id="how-to-read-this-guide">
+How to read this guide
+</h3>
+<ul>
+<li>
+<a href="install.html#installation">Installation</a>
+ — build and install the 
+<code>uscribe</code>
+ binary
+</li>
+<li>
+<a href="quickstart.html#quick-start">Quick Start</a>
+ — generate HTML from a tiny book
+</li>
+<li>
+<a href="markup.html#markup-reference">Markup Reference</a>
+ — headings, lists, inline markup, directives
+</li>
+<li>
+<a href="themes.html#themes">Themes</a>
+ — basic, classic, dark, and the in-page switcher
+</li>
+<li>
+<a href="cli.html#command-line">Command Line</a>
+ — CLI options
+</li>
+<li>
+<a href="sphinx.html#uscribe-and-sphinx">uscribe and Sphinx</a>
+ — what maps to what if you know Sphinx
+</li>
+</ul>
+<div class="prevnext">
+<span></span>
+<a href="install.html">Installation &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="intro.pdf">pdf</a> | <a href="_sources/intro.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

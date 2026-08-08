@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Contributing to Unicon</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="/unicon/assets/site.css" />
+</head>
+<body>
+<nav class="unicon-site-nav" aria-label="Site">
+  <div class="unicon-site-nav-inner">
+    <a class="home" href="/unicon/">Unicon</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/">Documentation</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/utr/html/">Technical reports</a>
+    <span class="sep">·</span>
+    <a href="/unicon/CONTRIBUTING.html">Contributing</a>
+    <span class="sep">·</span>
+    <a href="/unicon/COPYING.html">License</a>
+    <span class="sep">·</span>
+    <a href="/unicon/config/editor/">Editor configs</a>
+    <span class="sep">·</span>
+    <a href="https://github.com/uniconproject/unicon">GitHub</a>
+  </div>
+</nav>
+<header id="title-block-header">
+<h1 class="title">Contributing to Unicon</h1>
+</header>
+<h1 id="contributing-to-unicon">Contributing to Unicon</h1>
+<h2 id="discussion">Discussion</h2>
+<p>Unicon is a community project: improvements to the language, runtime,
+libraries, tests, documentation, and tooling are all welcome. Before
+large changes, it helps to <strong>open an issue</strong> (or email) so
+maintainers can comment on direction, compatibility, and
+scope—especially for anything that affects the language definition, ABI,
+or build system.</p>
+<p><strong>What to send as a pull request:</strong> focused commits with
+a clear motivation; update <strong>tests</strong> or
+<strong>docs</strong> when behavior or interfaces change. Use the <a
+href="#pre-submission-checklist">Pre-submission checklist</a> before you
+submit. For release-critical fixes, say how you verified the change
+(platform, <code>make Test</code>, sanitizer build, etc.).</p>
+<h2 id="reporting-issues-and-getting-help">Reporting issues and getting
+help</h2>
+<ul>
+<li><strong>Bugs and feature ideas:</strong> use <a
+href="https://github.com/uniconproject/unicon/issues">GitHub Issues</a>
+for reproducible bugs, concrete feature requests, and build failures on
+supported platforms.</li>
+<li><strong>Email:</strong> <a
+href="mailto:jeffery@unicon.org">jeffery@unicon.org</a> when an issue
+tracker thread is not a good fit (e.g. security-sensitive reports, or
+very open-ended design discussion).</li>
+</ul>
+<h2 id="pull-requests">Pull requests</h2>
+<ul>
+<li>Use a <strong>clear branch name</strong> and <strong>commit
+messages</strong> that state what changed and why.</li>
+<li>Ensure the tree <strong>configures and builds</strong> on at least
+one platform you can run.</li>
+<li>Run <strong><code>make Test</code></strong> when your change can
+affect the interpreter, compiler, or runtime (CI runs a broad matrix;
+local <code>make Test</code> catches many regressions early).</li>
+<li>Follow <a href="#code-formatting">Code formatting</a>; avoid
+unrelated refactors in the same PR.</li>
+</ul>
+<h2 id="dev-containers">Dev containers</h2>
+<p>You can use <strong>Docker-based dev containers</strong> in
+<strong>VS Code</strong> to work in a <strong>Linux</strong> environment
+with multiple <strong>distro</strong> options without installing the
+full toolchain on your host. See <strong><a
+href="doc/dev-containers.md"><code>doc/dev-containers.md</code></a></strong>
+for prerequisites, how to open and switch configurations, and how to
+build and test inside the container.</p>
+<h2 id="pre-submission-checklist">Pre-submission checklist</h2>
+<p>Before you open or update a pull request:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" /><strong>Format code</strong> —
+follow project conventions; see <a href="#code-formatting">Code
+formatting</a>.</label></li>
+<li><label><input type="checkbox" /><strong>License</strong> — confirm
+your contribution is licensed appropriately; see <a
+href="#license-for-contributions">License for
+contributions</a>.</label></li>
+<li><label><input type="checkbox" /><strong>Sign-off</strong> — add a
+proper <code>Signed-off-by</code> line on commits; see <a
+href="#signing-off">Signing off</a>.</label></li>
+</ul>
+<h2 id="code-formatting">Code formatting</h2>
+<p>Match the <strong>style of the surrounding code</strong> in each
+file: naming, indentation, brace and comment conventions, and line
+length habits already used there. <strong>C and Unicon</strong> sources
+should stay consistent with nearby examples—avoid wide reformatting
+unrelated to your change. When in doubt, follow existing patterns in the
+same directory or subsystem.</p>
+<h2 id="license-for-contributions">License for contributions</h2>
+<p>By submitting a patch or pull request, you agree that your
+contribution can be distributed under the <strong>same licensing terms
+as the rest of the Unicon tree</strong>. The top-level <strong><a
+href="/unicon/COPYING.html"><code>COPYING</code></a></strong> file explains how
+different parts of the distribution are licensed (for example,
+<strong>GPL</strong>-covered Unicon extensions,
+<strong>public-domain</strong> Icon-derived material where noted, the
+<strong>Library GPL</strong> terms for certain class library and VM
+uses, and <strong>BSD</strong> for <code>src/libtp</code> as described
+there). Do not contribute material you are not entitled to license in
+this way, and call out any <strong>third-party</strong> or
+<strong>externally licensed</strong> files clearly in the commit message
+or PR description.</p>
+<h2 id="signing-off">Signing off</h2>
+<p>A <strong><code>Signed-off-by</code></strong> trailer is a
+developer’s <strong>certification</strong> that they have the
+<strong>right to submit</strong> the patch for inclusion in the project.
+It records agreement to the <strong><a
+href="https://developercertificate.org/">Developer’s Certificate of
+Origin</a></strong>. <strong>Commits without a proper
+<code>Signed-off-by</code> line cannot and will not be
+merged.</strong></p>
+<p>Add
+<strong><code>Signed-off-by: Your Name &lt;email@example.com&gt;</code></strong>
+to each commit message (typically the last line). With Git, use
+<strong><code>git commit -s</code></strong> (or
+<strong><code>git commit --signoff</code></strong>) so Git fills the
+line from your <code>user.name</code> and <code>user.email</code>.</p>
+<p>Example:</p>
+<pre class="text"><code>Signed-off-by: Ada Lovelace &lt;ada@example.com&gt;</code></pre>
+<h2 id="source-tree-overview">Source tree (overview)</h2>
+<ul>
+<li><strong><code>src/</code></strong> — C implementation of the
+<strong>translator</strong> (<code>icont</code>),
+<strong>compiler</strong> (<code>iconc</code>),
+<strong>preprocessor</strong>, and <strong>runtime</strong> (virtual
+machine, memory / GC, built-ins), plus headers in
+<strong><code>h/</code></strong> and related pieces such as
+<strong><code>rtt</code></strong>, <strong><code>asm</code></strong>,
+and <strong><code>lib/</code></strong> (bundled/native glue used by the
+build).</li>
+<li><strong><code>uni/</code></strong> — the <strong>Unicon
+compiler</strong> (under <strong><code>unicon/</code></strong>,
+<strong><code>parser/</code></strong>, and related dirs),
+<strong><code>lib/</code></strong> (Unicon library sources), and
+Unicon-language <strong>tools and subsystems</strong> (for example
+<strong><code>ivib</code></strong>, <strong><code>ide</code></strong>,
+<strong><code>udb</code></strong>, <strong><code>uflex</code></strong>,
+<strong><code>ulsp</code></strong>, <strong><code>utf8</code></strong>,
+<strong><code>3d</code></strong>, <strong><code>gui</code></strong>,
+<strong><code>shell</code></strong>, <strong><code>xml</code></strong>,
+<strong><code>unidoc</code></strong>,
+<strong><code>monvis</code></strong>).</li>
+<li><strong><code>ipl/</code></strong> — <strong>Icon Program
+Library</strong> packages shipped with the system;
+<strong><code>tests/</code></strong> — regression and feature
+tests.</li>
+</ul>
+<hr />
+<h2 id="configure-options-overview">Configure options (overview)</h2>
+<p>The build is driven by <strong><code>./configure</code></strong> (GNU
+autoconf). The authoritative list of flags is:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./configure</span> <span class="at">--help</span></span></code></pre></div>
+<p>Below is a contributor-oriented summary. Many features are <strong>on
+by default</strong> and are <strong>auto-disabled</strong> if
+dependencies are missing unless you <strong>explicitly</strong>
+<code>--enable-FEATURE</code>, in which case configure
+<strong>fails</strong> if that dependency is absent.</p>
+<h3 id="feature-toggles-high-level">Feature toggles (high level)</h3>
+<p>Typical <code>--disable-*</code> / <code>--enable-*</code> switches
+control subsystems such as <strong>graphics</strong>, <strong>3D
+graphics</strong>, <strong>concurrency</strong>, <strong>SSL</strong>,
+<strong>audio</strong>, <strong>plugins</strong>, <strong>Iconc</strong>
+(the Unicon compiler), <strong>operator overloading</strong>
+(<code>--enable-ovld</code>), <strong>UDB tools</strong>, and more. Use
+<strong><code>./configure --help</code></strong> for the full set and
+for platform-specific notes.</p>
+<p><strong><code>--enable-thin</code></strong> — minimalist build: turns
+off non-critical features to shrink the build and speed iteration when
+you only need a core interpreter/compiler.</p>
+<p><strong><code>--enable-verbosebuild</code></strong> — print full
+compiler command lines (useful when debugging flags or include
+paths).</p>
+<p><strong><code>--enable-doc</code></strong> /
+<strong><code>--enable-htmldoc</code></strong> — add Makefile rules to
+build documentation (see top-level <code>Makefile</code> /
+<code>doc/</code>).</p>
+<h3 id="developer-mode-warnings-and-debug-symbols">Developer mode,
+warnings, and debug symbols</h3>
+<table>
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><code>--enable-debug</code></strong></td>
+<td>Add <strong>debug symbols</strong> (<code>-g</code>) and, when no
+custom <code>CFLAGS</code> are set, a suitable <strong>optimization
+level</strong> for debugging (e.g. <code>-O0</code> for a normal debug
+build; sanitizer builds may use <code>-O1</code>). Use this whenever you
+need <strong>GDB</strong>, <strong>lldb</strong>, or readable
+<strong>stack traces</strong>.</td>
+</tr>
+<tr class="even">
+<td><strong><code>--enable-devmode</code></strong></td>
+<td><strong>Developer mode:</strong> enables
+<strong><code>--enable-debug</code></strong> and <strong>compiler
+warnings</strong> (<code>--enable-warnings</code>), and defines
+<strong><code>DEVELOPMODE</code></strong> in the build. Extra
+<strong>developer-only hooks</strong> in the runtime (see
+<code>DEVELOPMODE</code> in sources) are available for deeper
+inspection.</td>
+</tr>
+<tr class="odd">
+<td><strong><code>--enable-devmode=all</code></strong></td>
+<td>Same as <strong><code>yes</code></strong>, and also enables
+<strong>heap debugging</strong> and <strong>heap verification</strong>
+(<a href="#heap-debugging-and-verification">Heap debugging</a>)—heavier,
+use when tracking <strong>memory / GC / pointer</strong> bugs.</td>
+</tr>
+<tr class="even">
+<td><strong><code>--enable-warnings</code></strong></td>
+<td>Turn on <strong>most</strong> compiler warnings (off by default in
+many configurations).</td>
+</tr>
+<tr class="odd">
+<td><strong><code>--enable-werror</code></strong></td>
+<td>Treat <strong>warnings as errors</strong>—use in CI or when cleaning
+up warning debt; can be noisy on new toolchains.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>When to use what:</strong> day-to-day hacking on C/R code:
+<strong><code>--enable-devmode</code></strong> (or at least
+<strong><code>--enable-debug</code></strong> +
+<strong><code>--enable-warnings</code></strong>). Shipping binaries or
+bisecting performance: default optimized builds without devmode.</p>
+<h3 id="heap-debugging-and-verification">Heap debugging and
+verification</h3>
+<p>These options add <strong>runtime checks</strong> in the Unicon
+<strong>heap / block</strong> layer. They <strong>slow
+execution</strong> and are meant for <strong>development and
+debugging</strong>, not production installs.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 66%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><code>--enable-debugheap</code></strong></td>
+<td>Defines <strong><code>DebugHeap</code></strong>. Block access macros
+(e.g. <code>Blk</code>) gain <strong>runtime type and pointer
+checks</strong> so invalid block references are caught closer to the bug
+(see comments in <code>src/h/rmacros.h</code>). Use when
+<strong><code>gdb</code></strong> / <strong>Valgrind</strong> are not
+enough and you suspect <strong>corrupted pointers</strong> or
+<strong>wrong block kinds</strong>.</td>
+</tr>
+<tr class="even">
+<td><strong><code>--enable-verifyheap</code></strong></td>
+<td>Defines <strong><code>VerifyHeap</code></strong>. Enables
+<strong>structured heap/GC verification</strong> and logging controlled
+at run time (see <strong><code>VRFY</code></strong> below). Use when
+debugging <strong>GC invariants</strong>, <strong>region</strong>
+issues, or subtle <strong>memory</strong> problems.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>--enable-devmode=all</code></strong> turns on
+<strong>both</strong> options together with the rest of developer mode
+(see <a href="#developer-mode-warnings-and-debug-symbols">Developer
+mode, warnings, and debug symbols</a>).</p>
+<p><strong>Relationship:</strong>
+<strong><code>DebugHeap</code></strong> checks block access at use
+sites; <strong><code>VerifyHeap</code></strong> runs structured checks
+around <strong>GC</strong> and related structures. Use either or
+both.</p>
+<h3 id="runtime-vrfy-and-vrfyop-when-verifyheap-is-enabled">Runtime:
+<code>VRFY</code> and <code>VRFYOP</code> (when VerifyHeap is
+enabled)</h3>
+<p>With <strong><code>VerifyHeap</code></strong> compiled in, the
+runtime reads:</p>
+<ul>
+<li><strong><code>VRFY</code></strong> — bit-significant verification
+flags. <strong><code>0</code></strong> disables extra checks.
+<strong><code>-1</code></strong> enables <strong>all</strong>
+verification checks. <strong><code>-2</code></strong> enables all checks
+but <strong>suppresses some logging</strong> (CI sometimes sets
+<strong><code>VRFY=-2</code></strong> during tests to reduce noise while
+still exercising checks). Other values select subsets of types to verify
+(see implementation and comments in <code>src/runtime/rmemmgt.r</code>
+and the Unicon implementation documentation).</li>
+<li><strong><code>VRFYOP</code></strong> — controls <strong>“is
+verified”</strong> style messages (see <code>init.r</code> /
+<code>rmemmgt.r</code>).</li>
+</ul>
+<p>Example for a noisy local debug session:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">VRFY</span><span class="op">=</span>-1</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./yourprog</span></span></code></pre></div>
+<p>For quieter output with checks still on:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">VRFY</span><span class="op">=</span>-2</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./yourprog</span></span></code></pre></div>
+<hr />
+<h2 id="developer-builds-compiler-sanitizers">Developer builds: compiler
+sanitizers</h2>
+<p><a
+href="https://github.com/google/sanitizers/wiki/AddressSanitizer">AddressSanitizer</a>
+helps find out-of-bounds accesses, use-after-free, and related memory
+bugs in the Unicon runtime and in native code. It is supported when
+building with GCC or Clang on typical Unix-like hosts.</p>
+<p><strong>Configure and build</strong> with ASan enabled. Adding
+<code>--enable-debug</code> gives debug symbols so stack traces and
+debuggers are usable:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./configure</span> <span class="at">--enable-asan</span> <span class="at">--enable-debug</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j</span></span></code></pre></div>
+<p>Other <code>configure</code> switches select additional LLVM/GCC
+sanitizers (flags are applied to compile and link steps, including
+shared libraries):</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>--enable-asan</code></td>
+<td>AddressSanitizer (<code>-fsanitize=address</code>)</td>
+</tr>
+<tr class="even">
+<td><code>--enable-tsan</code></td>
+<td>ThreadSanitizer (<code>-fsanitize=thread</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>--enable-ubsan</code></td>
+<td>UndefinedBehaviorSanitizer (<code>-fsanitize=undefined</code>)</td>
+</tr>
+<tr class="even">
+<td><code>--enable-msan</code></td>
+<td>MemorySanitizer (<code>-fsanitize=memory</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>--enable-hwasan</code></td>
+<td>HardwareAssisted AddressSanitizer
+(<code>-fsanitize=hwaddress</code>; common on AArch64)</td>
+</tr>
+</tbody>
+</table>
+<p>Use <strong>at most one</strong> of <code>--enable-asan</code>,
+<code>--enable-tsan</code>, <code>--enable-msan</code>, and
+<code>--enable-hwasan</code>.
+<strong><code>--enable-ubsan</code></strong> may be combined with
+<code>--enable-asan</code> or <code>--enable-tsan</code>. MSan usually
+needs a toolchain (and often libc) built for MemorySanitizer. After
+<code>./configure</code>, <code>unicon-config.log</code> shows a single
+summary line such as <code>San: ASan UBSan</code>, or
+<code>San: no</code> when none of these are enabled.</p>
+<p><strong>Optional runtime tuning</strong> via
+<code>ASAN_OPTIONS</code>, for example:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">ASAN_OPTIONS</span><span class="op">=</span>abort_on_error=1:verbosity=1</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./prog</span></span></code></pre></div>
+<p><strong>LeakSanitizer</strong> runs with ASan on typical Linux setups
+and treats any allocation still live at exit as a leak, which can cause
+<code>make</code> to fail while building. If remaining leak reports are
+only a distraction while you care about <strong>memory safety
+errors</strong> (not leaks), you can disable leak detection for the
+whole build:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">ASAN_OPTIONS</span><span class="op">=</span>detect_leaks=0</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j</span></span></code></pre></div>
+<p><strong>Debug under GDB</strong> as usual; the process is already
+instrumented. To debug the <strong>interpreter</strong>
+(<code>iconx</code>) itself, use
+<strong><code>gdb --args</code></strong> so <code>iconx</code> and its
+argv are set in one shell line; then <strong><code>run</code></strong> /
+<strong><code>r</code></strong> at the <code>(gdb)</code> prompt starts
+with those arguments:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gdb</span> <span class="at">--args</span> ./bin/iconx prog</span></code></pre></div>
+<p>Replace <code>prog</code> with your icode file or executable name. If
+the Unicon <strong>program</strong> also needs its own command-line
+arguments, add them after <code>prog</code> (they are passed through to
+your code):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gdb</span> <span class="at">--args</span> ./bin/iconx prog arg1 arg2</span></code></pre></div>
+<p>Or start GDB on <code>iconx</code> without <code>--args</code>, then
+pass everything from the <strong><code>run</code></strong> command:</p>
+<pre class="text"><code>(gdb) run prog arg1 arg2</code></pre>
+<p>Use the same <code>ASAN_OPTIONS</code> in the environment GDB passes
+to the program if you need specific sanitizer behavior while
+stepping.</p>
+<hr />
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li>Dev containers (Docker / VS Code): <a
+href="doc/dev-containers.md"><code>doc/dev-containers.md</code></a></li>
+<li>Shipped documentation index: <a href="doc/">documentation
+index</a></li>
+<li>Continuous integration: <a
+href=".github/workflows/build.yml"><code>.github/workflows/build.yml</code></a></li>
+<li>Heap / verification details in the implementation book:
+<code>doc/ib/</code> (e.g. discussion of <code>VRFY</code> in the
+appendices)</li>
+</ul>
+<footer class="unicon-site-footer">
+  <a href="/unicon/">Home</a>
+  · <a href="/unicon/doc/">Documentation</a>
+  · Source on <a href="https://github.com/uniconproject/unicon">GitHub</a>
+</footer>
+</body>
+</html>

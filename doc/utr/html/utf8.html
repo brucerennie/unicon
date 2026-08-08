@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UTF-8 Support Notes</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li class="current">UTF-8 Support Notes</li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr23.html">&larr; UTR 23: Unicon Unit Testing Framework User's Guide</a>
+<span></span>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">UTF-8 Support Notes</h1>
+<p class="report-authors">Bruce Rennie</p>
+<p class="report-pdf"><a href="utf8.pdf">pdf</a> · <a href="_sources/utf8.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Application notes on Unicon UTF-8 string support, operator overloading, and related class libraries.</p>
+</div>
+</header>
+<h2 id="utf-8-support-notes">
+UTF-8 Support Notes
+</h2>
+<p>
+Application notes on Unicon UTF-8 string support, operator overloading, and related class libraries.
+</p>
+<p>
+<em>
+Notes by Bruce Rennie.
+</em>
+</p>
+<p>
+In relation to mapping lower to upper case or upper to lower case, there are a number of difficulties that will be encountered. These are documented on the Unicode.org website. To that end, three files have been copied from Unicode.org and placed under 
+<code>assets/utf8/</code>
+ for reference in developing appropriate mapping regimes. These mapping sets will need to be on a language by language basis and there are situations where there is no 1-1 mapping available for lower to upper or upper to lower case.
+</p>
+<p>
+There is now the corresponding methods and operator overload facilities for dealing with the use of UTF8 strings as numeric values and allowing these values to be converted to the appropriate numeric values for use in numeric operations.
+</p>
+<p>
+There are now consistent runtime errors in essentially all places where Unicon has runtime errors occurring for Unicon strings. The error messages are of the same standard format as the underlying Unicon system and use the same standard error codes as found in the Unicon runtime.
+</p>
+<h3 id="reference-data">
+Reference data
+</h3>
+<p>
+Unicode Consortium tables used when developing case-mapping regimes:
+</p>
+<ul>
+<li>
+<a href="assets/utf8/UnicodeData.txt" rel="noopener">UnicodeData.txt</a>
+_ — Unicode character database
+</li>
+<li>
+<a href="assets/utf8/CaseFolding.txt" rel="noopener">CaseFolding.txt</a>
+_ — case-folding mappings
+</li>
+<li>
+<a href="assets/utf8/SpecialCasing.txt" rel="noopener">SpecialCasing.txt</a>
+_ — special-casing rules
+</li>
+</ul>
+<p>
+Case mappings are language-dependent; some letters have no one-to-one upper/lower mapping.
+</p>
+<h3 id="package-and-class-inventory">
+Package and class inventory
+</h3>
+<h4 id="package-errorsystem">
+Package 
+<code>ErrorSystem</code>
+</h4>
+<h5 id="class-errorsystem">
+<code>class ErrorSystem</code>
+</h5>
+<pre><code class="language-text">
+
+method __proc_components(level, pos)
+method AbortIfDebug(param[])
+method AbortMessage(errorcode, file, lineno, param[])
+method Caller(addedlvl)
+method CallingComponents(name)
+method ClassCalling(level)
+method Debug(mode)
+method DebugMode()
+method ErrorOut(errorfile, writeappend)
+method IsOn()
+method MethodCalling(level)
+method NotInDebugMode()
+method Off()
+method On()
+method PackageCalling(level)
+method ParamCalling(level)
+method PrintMessage(param[])
+method ProcedureCalling(level)
+method StopMessage(param[])
+</code></pre>
+<h5 id="package-level-procedures">
+Package-level procedures
+</h5>
+<pre><code class="language-text">
+
+procedure AllOff()
+procedure AllOn()
+procedure trace(message[])
+</code></pre>
+<h4 id="package-classobject">
+Package 
+<code>ClassObject</code>
+</h4>
+<h5 id="class-classclass-errorsystem">
+<code>class ClassClass : ErrorSystem</code>
+</h5>
+<pre><code class="language-text">
+
+method __InitClass()
+method SetClass(obj)
+method __AuxMessage(errorno, messageno)
+
+method Addition(val1, val2)
+method Divide(val1, val2)
+method Minus(val1, val2)
+method Modulus(val1, val2)
+method Multiply(val1, val2)
+method Negate(val)
+method UnaryPlus(val)
+method Power(val1, val2)
+
+method Equals(val1, val2)
+method GTorEqual(val1, val2)
+method Greater(val1, val2)
+method LTorEqual(val1, val2)
+method Less(val1, val2)
+method Nequal(val1, val2)
+
+method Integer(val)
+method Numeric(val)
+method Real(val)
+</code></pre>
+<h5 id="class-classobject-errorsystem">
+<code>class ClassObject : ErrorSystem</code>
+</h5>
+<pre><code class="language-text">
+
+abstract method String()
+method __call_by_method_name(methname, params[])
+method ClassName()
+method Clone()
+method Copy()
+method operator_overload_error_error(methname)
+method Serial()
+method set_operator_overload_abort(noabort)
+
+method Addition(val)                    --&gt;     __add__
+method Divide(val)                      --&gt;     __div__
+method Minus(val)                       --&gt;     __minus__
+method Modulus(val)                     --&gt;     __mod__
+method Multiply(val)                    --&gt;     __mult__
+method Negate()                         --&gt;     __neg__
+method UnaryPlus()                      --&gt;     __number__
+method Power(val)                       --&gt;     __powr__
+
+method Equals(val)                      --&gt;     __numeq__
+method GTorEqual(val)                   --&gt;     __numge__
+method Greater(val)                     --&gt;     __numgt__
+method LTorEqual(val)                   --&gt;     __numle__
+method Less(val)                        --&gt;     __numlt__
+method Nequal(val)                      --&gt;     __numne__
+
+method Integer()
+method Numeric()
+method Real()
+
+method __add__(y)                       --&gt;     x + y
+method __div__(y)                       --&gt;     x / y
+method __minus__(y)                     --&gt;     x - y
+method __mod__(y)                       --&gt;     x % y
+method __mult__(y)                      --&gt;     x * y
+method __neg__()                        --&gt;     - x
+method __number__()                     --&gt;     + x
+method __powr__(y)                      --&gt;     x ^ y
+
+method __eqv__(y)                       --&gt;     x === y
+method __neqv__(y)                      --&gt;     x ~=== y
+
+method __lexeq__(y)                     --&gt;     x == y
+method __lexge__(y)                     --&gt;     x &gt;&gt;= y
+method __lexgt__(y)                     --&gt;     x &gt;&gt; y
+method __lexle__(y)                     --&gt;     x &lt;&lt;= y
+method __lexlt__(y)                     --&gt;     x &lt;&lt; y
+method __lexne__(y)                     --&gt;     x ~== y
+
+method __numeq__(y)                     --&gt;     x = y
+method __numge__(y)                     --&gt;     x &gt;= y
+method __numgt__(y)                     --&gt;     x &gt; y
+method __numle__(y)                     --&gt;     x &lt;= y
+method __numlt__(y)                     --&gt;     x &lt; y
+method __numne__(y)                     --&gt;     x ~= y
+
+method __cat__(y)                       --&gt;     x || y
+method __lcat__(y)                      --&gt;     x ||| y
+
+method __compl__()                      --&gt;     ~ x
+method __diff__(y)                      --&gt;     x -- y
+method __inter__(y)                     --&gt;     x ** y
+method __union__(y)                     --&gt;     x ++ y
+
+method __bang__()                       --&gt;     ! x
+method __random__()                     --&gt;     ? x
+method __refresh__()                    --&gt;     ^ x
+method __sect__(y, z)                   --&gt;     x[i:j]
+method __size__()                       --&gt;     * x
+method __subsc__(y)                     --&gt;     x[i]
+method __tabmat__()                     --&gt;     = x
+method __toby__(y, z)                   --&gt;     x to y by z
+</code></pre>
+<h5 id="package-level-procedures">
+Package-level procedures
+</h5>
+<pre><code class="language-text">
+
+procedure __NewNotSet(val)
+procedure AlreadyRun(object_tested)
+procedure DeepCopy(A, cache)
+procedure Execute(object_or_class_value)
+procedure IsObjectOf(value, expectedtypes[])
+procedure IsObject(value_tested)
+procedure ObjectProperties(object_or_classname)
+procedure set_operator_overload_error_messages()
+procedure SuperClass(this_object)
+procedure HasMethod(val, methodname)
+</code></pre>
+<h4 id="package-utf8">
+Package 
+<code>UTF8</code>
+</h4>
+<h5 id="class-utf8-classclass">
+<code>class UTF8 : ClassClass</code>
+</h5>
+<pre><code class="language-text">
+
+method __Initialise()
+method __ActualPos(ustr, i)
+method __Coerce(val)
+method __GetAt(ustr, i, j)
+method __AuxMessage(errorno, messageno)
+
+method BOMFound(str)
+method SkipBOM(str)
+method Valid(str)
+method ByteTranslate(byte)
+method Multibyte(codepoint)
+method SpecialString(str)
+method ToUnicode32(ustr)
+method Unicode32To(unicode)
+method HexTo(hexcode)
+method DecimalTo(num)
+
+method AmpPos()
+
+method Equiv(val1, val2)
+method Nequiv(val1, val2)
+
+method LexEquals(str1, str2)
+method LexGTorEq(str1, str2)
+method LexGT(str1, str2)
+method LexLTorEq(str1, str2)
+method LexLT(str1, str2)
+method LexNE(str1, str2)
+
+method Concatenate(ustr1, ustr2)
+
+method Complement(val)
+method Difference(val1, val2)
+method Intersect(val1, val2)
+method Union(val1, val2)
+
+method ForEach(str)
+method Size(str)
+method Random(str)
+method Subsection(ustr, i, j)
+method Subscript(str, i)
+method TabMatch(str)
+
+method Any(uset, ustr, i, j)
+method Bal(uset, usetopen, usetclose, ustr, i, j)
+method Center(ustr, i, pstr)
+method Char(i)
+method Cset(val)
+method Detab(ustr, i[])
+method Entab(ustr, i[])
+method Find(ustr1, ustr, i, j)
+method Left(ustr, i, pstr)
+method Many(uset, ustr, i, j)
+method Map(ustr, ustr1, ustr2)
+method Match(ustr1, ustr, i, j)
+method Move(i)
+method Ord(ustr)
+method Pos(i)
+method Repl(ustr, i)
+method Reverse(ustr)
+method Right(ustr, i, pstr)
+method String(val)
+method Tab(i)
+method Trim(ustr, uset, i, allutf8blanks)
+method Upto(uset, ustr, i, j)
+</code></pre>
+<h5 id="class-utf8object-classobject">
+<code>class __UTF8Object : ClassObject</code>
+</h5>
+<pre><code class="language-text">
+
+method Data()
+
+method Complement()                     --&gt;     __compl__
+method Difference(val)                  --&gt;     __diff__
+method Intersect(val)                   --&gt;     __inter__
+method Union(val)                       --&gt;     __union__
+
+method Equiv(val)                       --&gt;     __eqv__
+method Nequiv(val)                      --&gt;     __neqv__
+
+method LexEquals(str)                   --&gt;     __lexeq__
+method LexGTorEq(str)                   --&gt;     __lexge__
+method LexGT(str)                       --&gt;     __lexgt__
+method LexLTorEq(str)                   --&gt;     __lexle__
+method LexLT(str)                       --&gt;     __lexlt__
+method LexNE(str)                       --&gt;     __lexne__
+
+method ForEach()                        --&gt;     __bang__
+method Random()                         --&gt;     __random__
+method TabMatch()                       --&gt;     __tabmat__
+method Size()                           --&gt;     __size__
+method Concatenate(ustr)                --&gt;     __cat__
+method Subsection(i, j)                 --&gt;     __sect__
+method Subscript(i)                     --&gt;     __subsc__
+
+method String()
+method Invalid()
+</code></pre>
+<h5 id="class-utf8set-classclass">
+<code>class UTF8Set : ClassClass</code>
+</h5>
+<pre><code class="language-text">
+
+method __Coerce(val)
+method __AuxMessage(errorno, messageno)
+
+method Complement(uset)
+method Difference(uset1, uset2)
+method Intersect(uset1, uset2)
+method Union(uset1, uset2)
+
+method ForEach(val)
+method Size(val)
+method String(val)
+method Subscript(val, i)
+method Member(uset, val[])
+
+method Space()
+method UTF8Spaces()
+method Ascii()
+method Rparens()
+method Lparens()
+method All()
+method MaxSize()
+method Defined(str)
+</code></pre>
+<h5 id="class-utf8setobject-classobject">
+<code>class __UTF8SetObject : ClassObject</code>
+</h5>
+<pre><code class="language-text">
+
+method __DebugPrint(modifier, val, uset)
+
+method Equiv(uset)                      --&gt;     __eqv__
+method Nequiv(uset)                     --&gt;     __neqv__
+
+method LexEquals(str)                   --&gt;     __lexeq__
+method LexGTorEq(str)                   --&gt;     __lexge__
+method LexGT(str)                       --&gt;     __lexgt__
+method LexLTorEq(str)                   --&gt;     __lexle__
+method LexLT(str)                       --&gt;     __lexlt__
+method LexNE(str)                       --&gt;     __lexne__
+
+method Complement()                     --&gt;     __compl__
+method Difference(val)                  --&gt;     __diff__
+method Intersect(val)                   --&gt;     __inter__
+method Union(val)                       --&gt;     __union__
+
+method ForEach()                        --&gt;     __bang__
+method Size()                           --&gt;     __size__
+method Subscript(i)                     --&gt;     __subsc__
+method Random()                         --&gt;     __random__
+method TabMatch()                       --&gt;     __tabmat__
+method Concatenate(ustr)                --&gt;     __cat__
+method Subsection(i, j)                 --&gt;     __sect__
+
+method Member(c[])
+
+method UTF8Value()
+method String()
+</code></pre>
+<div class="prevnext">
+<a href="utr23.html">&larr; UTR 23: Unicon Unit Testing Framework User's Guide</a>
+<span></span>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utf8.pdf">pdf</a> | <a href="_sources/utf8.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

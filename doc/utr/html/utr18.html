@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pattern Matching in Unicon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li class="current">UTR 18c: Pattern Matching in Unicon</li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr17.html">&larr; UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a>
+<a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Pattern Matching in Unicon</h1>
+<p class="report-authors">Clinton Jeffery, Sudarshan Gaikaiwari, John Goettsche and Paden Rumsey</p>
+<p class="report-tr">Unicon Technical Report: 18c</p>
+<p class="report-date">2017-10-02</p>
+<p class="report-pdf"><a href="utr18.pdf">pdf</a> · <a href="_sources/utr18.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon Version 13 introduces a pattern type for matching strings. The literal constants for this pattern type are strings, csets, and regular expressions, while the operators and composition features are based on the SNOBOL4 pattern type. Patterns are both an alternative and an addition to the string scanning control structure.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+This technical report is a user's guide and reference to the pattern data type in the Unicon programming language. In order to understand this report, it will be helpful if the reader is familiar with Icon and Unicon's string scanning control structure. Compared with traditional methods, the pattern type allows more concise, more readable, and/or faster solutions for many string analysis problems. It is especially useful when:
+</p>
+<ul>
+<li>
+the format of strings is less than ideally structured
+</li>
+<li>
+the complexity of the patterns to be matched is high
+</li>
+<li>
+the ability to compose new patterns on the fly at runtime is desired
+</li>
+<li>
+there is a lot of string data and performance may be important
+</li>
+</ul>
+<h3 id="icon-scanning-vs-snobol-patterns-vs-unicon-patterns">
+Icon Scanning vs. Snobol Patterns vs. Unicon Patterns
+</h3>
+<p>
+Icon replaced SNOBOL's pattern data type with a string scanning control structure. The pattern type reintroduced into Unicon Version 13 is important for all the reasons that data is more convenient to manipulate than code: easier composition and reuse, modification and dynamic altering of patterns on the fly, and so on. SNOBOL veterans have complained that the Icon string scanning control structure is not as concise as SNOBOL patterns. Unicon patterns answer that criticism.
+</p>
+<p>
+A &quot;hello, world&quot; type of example is
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   write(read() ?? &lt;[hH]ello[ \t]*[wW]orld&gt;)
+end
+</code></pre>
+<p>
+This program reads a single line from standard input and executes a pattern match. The pattern will match as long as &quot;hello&quot; is followed by &quot;world&quot;, with optional whitespace in between. Either or both words may be capitalized. If the match is successful, the substring that matched is written to standard output, stripped of any leading or trailing characters.
+</p>
+<h3 id="the-two-types-of-snobol-pattern-statements">
+The Two Types of SNOBOL Pattern Statements
+</h3>
+<p>
+The two types of SNOBOL pattern statements, pattern matching and pattern replacement, use the following two templates:
+</p>
+<pre><code class="language-text">
+
+label subject pattern goto
+label subject pattern = object goto
+</code></pre>
+<p>
+Instead of using a &quot;label&quot; or &quot;goto&quot;, the pattern match in Unicon is a predicate expression, often used as the condition in an 
+<code>if</code>
+ expression. The SNOBOL pattern replacement statement has a more interesting Unicon embodiment. If a pattern match is performed on a variable, the matched portion is a substring variable that may be assigned with a replacement string. The following example searches for (a subset of) American-style dates and replaces them, moving the day to the beginning, as is common in other countries.
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   s := &quot;Adam's birthday is February 28, 1969. He is no spring chicken.&quot;
+   month := &lt;January|February|March&gt;
+   day := &lt;[1-3]?[0-9]&gt;
+   year := &lt;[0-9]{4}&gt;
+   s ?? month-&gt;part1 ||&quot; &quot;|| day-&gt;part2 || (&quot;, &quot;||year)-&gt;part3 :=
+      part2 || &quot; &quot; || part1 || part3
+   write(s)
+end
+</code></pre>
+<p>
+This is neither SNOBOL nor Icon, exactly. Details of the patterns and operators used are presented later in this report. After you have read about them, as an exercise you can modify the regular expressions here to be more complete or more correct.
+</p>
+<h2 id="pattern-matching-foundations">
+Pattern Matching Foundations
+</h2>
+<p>
+Pattern matching consists of two phases: (1) construction of a pattern to be matched, and (2) application of the pattern in a context. Application of a pattern in turn features two primary modes: match and search. A match reports whether a pattern matches a given string at a specific location. Its result is an extent of the match, or a failure. The search for a pattern involves finding a match, reporting the start position and perhaps extent where the match has occurred.
+</p>
+<p>
+In string scanning, the duality of match and search is seen in the built-in function set: 
+<code>find()</code>
+ is a search for a 
+<code>match()</code>
+; 
+<code>upto()</code>
+ is a search for an 
+<code>any()</code>
+. Pattern matching has two forms of pattern application: anchored and unanchored. An anchored pattern match tests whether a pattern occurs at a given position within a given subject string. An anchored match is performed by the tabmatch operator 
+<code>=p</code>
+. It is legal only within a string scanning environment.
+</p>
+<pre><code class="language-text">
+
+s ? { ... =p ... }
+</code></pre>
+<p>
+An unanchored pattern match is a search for a match, performed with the syntax
+</p>
+<pre><code class="language-unicon">
+
+s ?? p
+</code></pre>
+<p>
+This is a new string scan in a new environment, except with a pattern to match instead of an expression on the right side.
+</p>
+<h2 id="pattern-literals">
+Pattern Literals
+</h2>
+<p>
+The simplest to interpret pattern values are literals, expressed as 
+<em>
+regular expressions
+</em>
+. Regular expressions are concise, simple, readable, and sufficient for many purposes. However, regular expressions cannot match everything. Additional, more complex patterns can be constructed using 
+<em>
+pattern constructor
+</em>
+ operators and functions, described in the next section.
+</p>
+<p>
+Unicon regular expressions consist of a regular expression body, enclosed in less than (
+<code>&lt;</code>
+) and greater than marks (
+<code>&gt;</code>
+), as in the example
+</p>
+<pre><code class="language-unicon">
+
+x := &lt;abc&gt;
+</code></pre>
+<p>
+A regular expression is a pattern constructor that produces a single result of type pattern that may be used in subsequent pattern construction and matching operations. Within the body of a regular expression, most printable characters match themselves, and normal Unicon variables, values, operators and syntax constructs do not have their usual meaning. Instead, the following operators are supported:
+</p>
+<dl>
+<dt>ordinary characters evaluate to themselves</dt>
+<dd>
+<p>
+for example 
+<code>&lt;a&gt;</code>
+ is a pattern that matches the letter 
+<code>a</code>
+. Spaces inside a regular expression literal are not typically significant; to allow a space as part of a pattern it must be quoted.
+</p>
+</dd>
+<dt>implicit concatenation</dt>
+<dd>
+<p>
+inside a regular expression, juxtaposing two symbols is a concatenation. 
+<code>&lt;abc&gt;</code>
+ matches the string abc.
+</p>
+</dd>
+<dt>strings evaluate to their contents</dt>
+<dd>
+<p>
+for example, 
+<code>&lt;&quot;abc&quot;&gt;</code>
+ and 
+<code>&lt;abc&gt;</code>
+ construct the same pattern. Such ordinary Unicon string literals are the way to match any character that would otherwise be interpreted as a regular expression operator.
+</p>
+</dd>
+<dt>alternation</dt>
+<dd>
+<p>
+the lowest precedence regular expression operator is alternation, indicated by a single vertical bar, which means either-or. 
+<code>&lt;a|b&gt;</code>
+ matches either 
+<code>a</code>
+ or 
+<code>b</code>
+. Alternation is lower precedence than concatenation.
+</p>
+</dd>
+<dt>Kleene star</dt>
+<dd>
+<p>
+a unary suffix asterisk indicates that a pattern may occur zero or more times. Kleene star is of high precedence, so 
+<code>&lt;abc*&gt;</code>
+ matches 
+<code>a</code>
+ followed by 
+<code>b</code>
+ followed by zero or more 
+<code>c</code>
+'s. In contrast, 
+<code>&lt;(abc)*&gt;</code>
+ matches zero or more repetitions of 
+<code>abc</code>
+, and 
+<code>&lt;[abc]*&gt;</code>
+ matches zero or more occurrences of a, b, or c in any order.
+</p>
+</dd>
+<dt>csets</dt>
+<dd>
+<p>
+within regular expressions, square brackets denote a pattern that matches any one member of the designated character set. Ordinary cset literals delimited by apostrophes are also accepted. Inside square bracketed csets, hyphens indicate ranges of characters, such as 
+<code>&lt;[a-z]&gt;</code>
+. Logically, a cset is just shorthand for a big alternation of all its members, so 
+<code>&lt;[abc]&gt;</code>
+ is equivalent to 
+<code>&lt;(a|b|c)&gt;</code>
+.
+</p>
+</dd>
+</dl>
+<p>
+A more detailed definition of regular expressions in Unicon may be found in the Appendix. Other tools support many extensions of regular expressions, sometimes incompatibly, that you will not see here. Notably missing, for now, are caret (^) and dollar ($) for beginning-of-line and end-of-line.
+</p>
+<p>
+Unicon regular expressions compile down to SNOBOL-style patterns, and SNOBOL-style pattern matching generally matches the 
+<em>
+shortest
+</em>
+ string that can be matched by a pattern, not the longest possible match. In the current version of Unicon, this can cause surprises in behavior, especially in patterns that can match the empty string. If your regular expression can match the empty string, that is the shortest match and that is what you will get.
+</p>
+<h2 id="the-unicon-pattern-data-type">
+The Unicon Pattern Data Type
+</h2>
+<p>
+It is usually trivial to translate SNOBOL4 pattern construction code to Unicon patterns. This section explains Unicon patterns in detail so that programmers who have never been exposed to SNOBOL can understand and use them. Where necessary, differences between Unicon patterns and SNOBOL patterns are also pointed out. The simplest operands for pattern matching in Unicon are strings and character sets. These match themselves when used in a pattern matching expression, for example:
+</p>
+<pre><code class="language-unicon">
+
+&quot;Unicon&quot; ?? &quot;nic&quot; 
+</code></pre>
+<p>
+Like all Unicon expressions this expression can either succeed or fail. If the pattern is found in the subject then the expression succeeds and returns the first substring of the subject matched by the pattern. In the above expression a substring corresponding to the 2nd to 5th characters of the subject is returned. While strings and characters can be used in pattern matching expressions the pattern data type allows complicated patterns to be constructed and stored in variables. This pattern construction is done with the following operators and functions.
+</p>
+<h3 id="operators">
+Operators
+</h3>
+<p>
+Patterns are often built up from simple components using concatenation (
+<code>||</code>
+) and alternation (
+<code>.|</code>
+). These operators seem redundant and less concise than the corresponding regular expression operators, but unlike regular expressions, they accept arbitrary Unicon expressions (variables, function calls, etc.) as operands. While Unicon's usual string concatenation operator is used for pattern concatenation, the alternation pattern constructor 
+<code>.|</code>
+ is very different from the alternation control structure 
+<code>|</code>
+ --- it constructs an alternative to be explored later during a pattern match, rather than indicating an immediate alternative (a generator) during the current expression evaluation.
+</p>
+<p>
+When pattern match time occurs, a pattern formed by alternation of two elements succeeds if either of the elements matches. A pattern formed by concatenation of two elements matches if both those elements match consecutively. When two patterns are joined together by alternation they are called alternates. When two patterns 
+<code>P1</code>
+ and 
+<code>P2</code>
+ are combined using concatenation as 
+<code>P1 </code>
+||
+<code> P2</code>
+ then 
+<code>P2</code>
+ is the subsequent of 
+<code>P1</code>
+. Pattern concatenation has higher precedence than pattern alternation. So the pattern 
+<code>P1 </code>
+.|
+<code> P2 </code>
+||
+<code> P3</code>
+ matches either the pattern 
+<code>P1</code>
+ or the pattern formed by concatenation of 
+<code>P2</code>
+ and 
+<code>P3</code>
+. Parentheses can be used to group patterns differently. 
+<code>(P1 </code>
+.|
+<code> P2) </code>
+||
+<code> P3</code>
+ matches 
+<code>P1</code>
+ or 
+<code>P2</code>
+ followed by 
+<code>P3</code>
+.
+</p>
+<p>
+Thus patterns can be composed from subpatterns. When a subpattern successfully matches a portion of the subject, the matching subject characters are bound to it. The next sub pattern in the pattern must match beginning with the very next subject character. If a subsequent fails to match, the pattern backtracks, unbinding patterns until another alternative can be tried. A pattern match fails when an alternative that matches cannot be found.
+</p>
+<p>
+Suppose we wanted to construct a pattern that matched any of the following strings: COMPATIBLE, COMPREHENSIBLE and COMPRESSIBLE. The pattern can be constructed by
+</p>
+<pre><code class="language-unicon">
+
+&quot;COMP&quot; || (&quot;AT&quot; .| &quot;RE&quot; || (&quot;HEN&quot; .| &quot;S&quot;) || &quot;S&quot;) || &quot;IBLE&quot;
+</code></pre>
+<p>
+One way to understand patterns is to construct bead diagrams for them. In a bead diagram, pattern matching is the process of attempting to pass a needle and thread through a collection of beads which model the individual pattern components. Pattern subsequents are drawn side-by-side, left-to-right. Pattern alternates are stacked vertically, in columns, with a horizontal line between each alternative. A bead diagram for the preceding pattern is shown in Figure 1.
+</p>
+<figure class="figure" id="figure-1">
+<img src="assets/utr18/beaddia.png" alt="Bead Diagram">
+<figcaption>Figure 1
+: Bead Diagram
+</figcaption>
+</figure>
+<p>
+Consider the following pattern and its application
+</p>
+<pre><code class="language-unicon">
+
+Manufacturer := &quot;SONY&quot; .| &quot;DELL&quot;
+Type := &quot;Desktop&quot; .| &quot;Laptop&quot;
+Machine := Manufacturer || &quot; &quot; || Type
+&quot;SONY Laptop&quot; ?? Machine
+</code></pre>
+<p>
+The pattern matching will succeed. However we would also like to determine which of the pattern alternatives actually matched. For this we use the conditional binary operator 
+<code>-&gt;</code>
+. The operator is called conditional, because assignment occurs only if the pattern match is successful. It assigns the matching substring on its left to the variable on its right. Note that the direction of assignment is just the opposite of the assignment operator 
+<code>:=</code>
+. Changing the above example to use conditional assignment.
+</p>
+<pre><code class="language-unicon">
+
+Manufacturer := (&quot;SONY&quot; .| &quot;DELL&quot;) -&gt; Corporation
+Type := (&quot;Desktop&quot; .| &quot;Laptop&quot;) -&gt; SysType
+Machine := Manufacturer || &quot; &quot; || Type
+&quot;SONY Laptop&quot; ?? Machine
+write(Corporation)
+write(SysType)
+</code></pre>
+<p>
+   OUTPUT            SONY            Laptop
+</p>
+<p>
+The immediate assignment operator 
+<code>=&gt;</code>
+ allows us to capture intermediate results during the pattern match. Immediate assignment occurs whenever a subpattern matches, even if the entire pattern match ultimately fails. Like conditional assignment, the matching substring on its left is assigned to the variable on its right. Immediate assignment is often used as a debugging tool to observe the pattern matching process. When used with unevaluated expressions immediate assignment allows creation of a powerful class of patterns as we will see later.
+</p>
+<p>
+During a pattern match, the cursor is Unicon's pointer into the subject string. It is integer valued, and points between two subject characters. It may also may be positioned before the first subject character, or after the final subject character. Its value may never exceed the size of the subject string by more than 1. An example of the index numbering system for the subject string UNICON can be found in below, in the discussion of the function 
+<code>Pos()</code>
+.
+</p>
+<p>
+The cursor is set to 1 when a pattern match begins, corresponding to a position immediately to the left of the first subject character. As the pattern match proceeds, the cursor moves right and left across the subject to indicate where Unicon is attempting a match. The value of the cursor is assigned by the unary cursor position operator 
+<code>.&gt;</code>
+ to a variable. It appears within a pattern, preceding the name of a variable. For example,
+</p>
+<pre><code class="language-unicon">
+
+p := (&quot;b&quot; .| &quot;r&quot;) || (&quot;e&quot; .|&quot;ea&quot;) || (&quot;d&quot; .| &quot;ds&quot;)
+pattern :=.&gt;x || p ||.&gt;y
+write(&quot;the beads are red&quot;)
+if &quot;the beads are red&quot; ?? pattern then 
+        write(repl(&quot; &quot;,x - 1), repl(&quot;_&quot;, y - x))
+</code></pre>
+<p>
+The above code will underline the part of the substring that is matched by the pattern. The output is
+</p>
+<pre><code class="language-text">
+
+the beads are red
+    -----
+</code></pre>
+<p>
+Table 1 summarizes the Unicon pattern matching operators.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Operator
+</th>
+<th>
+Operation
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>||</code>
+</td>
+<td>
+Pattern concatenate
+</td>
+</tr>
+<tr>
+<td>
+<code>.|</code>
+</td>
+<td>
+Pattern alternation
+</td>
+</tr>
+<tr>
+<td>
+<code>-&gt;</code>
+</td>
+<td>
+Conditional assignment
+</td>
+</tr>
+<tr>
+<td>
+<code>=&gt;</code>
+</td>
+<td>
+Immediate assignment
+</td>
+</tr>
+<tr>
+<td>
+<code>.&gt;</code>
+</td>
+<td>
+Cursor position assignment
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+The previous examples used patterns created from literal strings. Instead of specific characters, qualities of the string to be matched can also be specified. The ability to specify these qualities makes patterns powerful at recognizing more abstract patterns. There are 3 different types of pattern construction functions that allow specification of pattern qualities:
+</p>
+<ul>
+<li>
+Integer pattern functions
+</li>
+<li>
+Character pattern functions
+</li>
+<li>
+Pattern primitives
+</li>
+</ul>
+<h3 id="integer-pattern-functions">
+Integer Pattern Functions
+</h3>
+<p>
+These pattern construction functions take an integer as a parameter and return a pattern as result. The integer pattern functions are:
+</p>
+<h5 id="len-i-match-fixed-length-string">
+Len(i): Match fixed-length string
+</h5>
+<p>
+<code>Len(i)</code>
+ produces a pattern which matches a string exactly i characters long. i must be an integer greater than or equal to zero. Any character may appear in the matched string. For example, 
+<code>Len(5)</code>
+ matches any 5-character string, and 
+<code>Len(0)</code>
+ matches the empty string. 
+<code>Len()</code>
+ may be constrained to certain portions of the subject by other adjacent patterns:
+</p>
+<pre><code class="language-unicon">
+
+s := &quot;abcda&quot;
+write(s ?? Len(3) -&gt; out)
+s ?? Len(2) -&gt; out || &quot;a&quot;
+write(out)
+</code></pre>
+<p>
+   OUTPUT    abc    cd
+</p>
+<p>
+The first pattern match had only one constraint: the subject had to be at least three characters long. Thus 
+<code>Len(3)</code>
+ matched its first three characters. The second case imposes the additional restriction that 
+<code>Len(2)</code>
+'s match be followed immediately by the letter 
+<code>&quot;a&quot;</code>
+. This disqualifies the intermediate match attempts 
+<code>&quot;ab&quot;</code>
+ and 
+<code>&quot;bc&quot;</code>
+.
+</p>
+<p>
+Using 
+<code>Len()</code>
+ with keyword 
+<code>&amp;ascii</code>
+ as the subject provides a simple way to obtain a string of unprintable characters. For example, the ASCII control characters occupy positions 0 through 31 in the 256-character ASCII set. To obtain a 32-character string containing these control codes, use:
+</p>
+<pre><code class="language-unicon">
+
+&amp;ascii ?? Len(32) -&gt; controls
+</code></pre>
+<h5 id="pos-i-rpos-i-verify-cursor-position">
+Pos(i), Rpos(i): Verify cursor position
+</h5>
+<p>
+The 
+<code>Pos(i)</code>
+ and 
+<code>Rpos(i)</code>
+ patterns do not match subject characters. Instead, they succeed only if the current cursor position is a specified value. They often are used to tie points of the pattern to specific character positions in the subject. The following shows the cursor positions as used by 
+<code>Pos()</code>
+:
+</p>
+<img class="figure" src="assets/utr18/poscurs.png" alt="">
+<p>
+The following are the cursor positions used by Rpos().
+</p>
+<img class="figure" src="assets/utr18/rposcurs.png" alt="">
+<p>
+<code>Pos(I)</code>
+ counts from the left end of the subject string, succeeding if the current cursor position is equal to I. 
+<code>Rpos(I)</code>
+ is similar, but counts from the right end of the subject. If the subject length is N characters, 
+<code>Rpos(I)</code>
+ requires the cursor be (N - I). If the cursor is not the correct value, these functions fail, and the pattern matcher tries other pattern alternatives.
+</p>
+<pre><code class="language-unicon">
+
+s := &quot;abcda&quot;
+if s ?? Pos(1) || &quot;b&quot; then
+        write(&quot;Match succeeded&quot;)
+else
+        write(&quot;Match failed&quot;)
+s ?? Len(3) -&gt; out || Rpos(0) 
+</code></pre>
+<p>
+   	write(out)            s ?? Pos(4) || Len(1) -&gt; out    	write(out)            if s ?? Pos(1) || &quot;abcd&quot; || Rpos(0) then                    write(&quot;Match succeeded&quot;)            else                    write(&quot;Match failed&quot;)    OUTPUT    Match failed    cda    d    Match failed
+</p>
+<p>
+The first example requires a 
+<code>&quot;b&quot;</code>
+ at cursor position 1, and fails for this subject. 
+<code>Pos(1)</code>
+ anchors the match, forcing it to begin with the first subject character. Similarly, 
+<code>Rpos(0)</code>
+ anchors the end of the pattern to the tail of the subject. The next example matches at a specific mid-string character position, 
+<code>Pos(3)</code>
+. Finally, enclosing a pattern between 
+<code>Pos(1)</code>
+ and 
+<code>Rpos(0)</code>
+ forces the match to use the entire subject string. At first glance these functions appear to be setting the cursor to a specified value. Actually, they never alter the cursor, but instead wait for the cursor to come to them as various match alternatives are attempted.
+</p>
+<h5 id="rtab-i-tab-i-match-to-fixed-position">
+Rtab(i), Tab(i): Match to fixed position
+</h5>
+<p>
+These patterns are hybrids of 
+<code>Arb()</code>
+, 
+<code>Pos()</code>
+, and 
+<code>Rpos()</code>
+. They use specific cursor positions, like 
+<code>Pos()</code>
+ and 
+<code>Rpos()</code>
+, but match subject characters, like 
+<code>Arb()</code>
+ (see section 4.4.2). 
+<code>Tab(i)</code>
+ matches any characters from the current cursor position up to the specified position 
+<code>i</code>
+. 
+<code>Rtab(i)</code>
+ does the same, except, as in 
+<code>Rpos()</code>
+, the target position is measured from the end of the subject. 
+<code>Tab()</code>
+ and 
+<code>Rtab()</code>
+ will match the empty string, but will fail if the current cursor is to the right of the target. They also fail if the target position is past the end of the subject string. These patterns are useful when working with tabular data. For example, if a data file contains name, street address, city and state in columns 1, 30, 60, and 75, this pattern will break out those elements from a line:
+</p>
+<pre><code class="language-unicon">
+
+P = Tab(30) -&gt; NAME || Tab(60) -&gt; STREET || 
+	Tab(75) -&gt; CITY || Rem() -&gt; ST
+</code></pre>
+<p>
+The pattern 
+<code>Rtab(0)</code>
+ is equivalent to primitive pattern 
+<code>Rem()</code>
+. It counts from the right end of the subject, but matches to the left of its target cursor. Example:
+</p>
+<pre><code class="language-unicon">
+
+s := &quot;abcde&quot;
+s ?? Tab(3) -&gt; out1 || Rtab(1) -&gt; out2
+</code></pre>
+<p>
+   	write(out1, &quot;\n&quot;, out2)    OUTPUT    ab    cd    Success
+</p>
+<p>
+<code>Tab(3)</code>
+ matches 
+<code>&quot;ab&quot;</code>
+, leaving the cursor at 2, between 
+<code>&quot;b&quot;</code>
+ and 
+<code>&quot;c&quot;</code>
+. The subject is 5 characters long, so 
+<code>Rtab(1)</code>
+ specifies a target cursor of 6 - 1, or 5, which is between the 
+<code>&quot;d&quot;</code>
+ and 
+<code>&quot;e&quot;</code>
+. 
+<code>Rtab()</code>
+ matches everything from the current cursor, 3, to the target, 5.
+</p>
+<h3 id="character-pattern-functions">
+Character Pattern Functions
+</h3>
+<p>
+These functions produce a pattern based on a character set argument. The argument passed to these functions is always converted to a character set
+</p>
+<h5 id="any-c-notany-c-match-one-character">
+Any(c), NotAny(c): Match one character
+</h5>
+<p>
+<code>Any(c)</code>
+ matches the next subject character if it appears in the cset 
+<code>c</code>
+, and fails otherwise. 
+<code>NotAny(c)</code>
+ matches a subject character only if it does not appear in 
+<code>c</code>
+. Here are some sample uses of each:
+</p>
+<pre><code class="language-unicon">
+
+vowel := Any(&quot;aeiou&quot;)
+dvowel := vowel || vowel
+notvowel := NotAny(&quot;aeiou&quot;)
+&quot;vacuum&quot; ?? vowel -&gt; out
+</code></pre>
+<p>
+   	write(out)            &quot;vacuum&quot; ?? dvowel -&gt; out    	write(out)            &quot;vacuum&quot; ?? (vowel || notvowel) -&gt; out    	write(out)    OUTPUT    a    uu    ac
+</p>
+<p>
+In a larger pattern context, and when many alternatives are being tried, you may search for the multi-letter vowel combinations before falling back on a single-letter vowel match. A pattern such as:
+</p>
+<pre><code class="language-unicon">
+
+vowel := &quot;oy&quot; .| &quot;ei&quot; .| &quot;ie&quot; .| Any('aieouy')
+</code></pre>
+<p>
+allows a few common digraphs in the definition of vowel. Of course, in a complex language such as English, the rabbit-hole is almost bottomless.
+</p>
+<h5 id="break-c-span-c-nspan-c-match-a-run-of-characters">
+Break(c), Span(c), Nspan(c): Match a run of characters
+</h5>
+<p>
+<code>Break(c)</code>
+ and 
+<code>Span(c)</code>
+ are multi-character versions of 
+<code>NotAny()</code>
+ and 
+<code>Any()</code>
+. These functions require a non-empty cset argument to specify a set of characters. 
+<code>Span(c)</code>
+ matches one or more subject characters from the set in 
+<code>c</code>
+. 
+<code>Span()</code>
+ must match at least one subject character, and will match the longest subject string possible. 
+<code>Nspan()</code>
+ matches zero or more subject characters from set 
+<code>c</code>
+; it is equivalent to 
+<code>(Span(c) .| &quot;&quot;)</code>
+.
+</p>
+<p>
+<code>Break(c)</code>
+ matches up to but not including any character in 
+<code>c</code>
+. The string matched must always be followed in the subject by a character in 
+<code>c</code>
+. Unlike 
+<code>Span()</code>
+ and 
+<code>NotAny()</code>
+, 
+<code>Break()</code>
+ will match the empty string. 
+<code>Break()</code>
+ and 
+<code>Span()</code>
+ are called stream functions because each streams by a series of subject characters. 
+<code>Span()</code>
+ is most useful for matching a group of characters with a common trait. For example, we can say an English word is composed of one or more alphabetic characters, apostrophes, and hyphens. A pattern for this is:
+</p>
+<pre><code class="language-unicon">
+
+word := Span(&amp;letter ++ &quot;'-&quot;)
+</code></pre>
+<p>
+Some patterns that can be formed by 
+<code>Span()</code>
+ and 
+<code>Break()</code>
+.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Pattern
+</th>
+<th>
+Function
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+a run of blanks
+</td>
+<td>
+<code>Span(' ')</code>
+</td>
+</tr>
+<tr>
+<td>
+a string of digits
+</td>
+<td>
+<code>Span(&amp;digits)</code>
+</td>
+</tr>
+<tr>
+<td>
+a run of letters
+</td>
+<td>
+<code>Span(&amp;letters)</code>
+</td>
+</tr>
+<tr>
+<td>
+everything up to the next blank
+</td>
+<td>
+<code>Break(' ')</code>
+</td>
+</tr>
+<tr>
+<td>
+everything up to the next punctuation mark
+</td>
+<td>
+<code>Break(',.;:!?')</code>
+</td>
+</tr>
+</tbody>
+</table>
+<h5 id="breakx-extended-break-function">
+Breakx(): Extended Break() function
+</h5>
+<p>
+Like SPITBOL, Unicon provides an extended version of 
+<code>Break()</code>
+ called 
+<code>Breakx()</code>
+. If necessary, 
+<code>Breakx()</code>
+ will look past the place where it stopped to see if a longer match is possible. It will do this if some subsequent pattern element fails to match. The pattern matcher checks to see if extending 
+<code>Breakx()</code>
+ might allow the subsequent pattern element match. If so, the operation succeeds. If not, other pattern alternatives (if any) prior to Breakx() are attempted. Suppose the pattern needs to match everything before the first 
+<code>&quot;e&quot;</code>
+ in a subject string, as with:
+</p>
+<pre><code class="language-unicon">
+
+&quot;integers&quot; ?? Break(&quot;e&quot;) -&gt; out
+</code></pre>
+<p>
+   	write(out)    OUTPUT    int
+</p>
+<p>
+<code>Break()</code>
+ works fine in this scenario, however if whatever comes before the first occurrence of a two-letter pattern 
+<code>&quot;er&quot;</code>
+ is to be matched, then 
+<code>Breakx()</code>
+ is more appropriate.
+</p>
+<pre><code class="language-unicon">
+
+&quot;integers&quot; ?? Breakx(&quot;e&quot;) -&gt; out || &quot;er&quot;
+</code></pre>
+<p>
+   	write(out)    OUTPUT    integ
+</p>
+<p>
+<code>Breakx()</code>
+ stopped at the first 
+<code>e</code>
+ in 
+<code>&quot;integer&quot;</code>
+, and tried to match the next pattern element, the two letters 
+<code>&quot;er&quot;</code>
+. But the next subject characters were 
+<code>&quot;eg&quot;</code>
+, a mismatch, so 
+<code>Breakx()</code>
+ was instructed to try again. 
+<code>Breakx()</code>
+ extended itself to the next 
+<code>&quot;e&quot;</code>
+, where 
+<code>&quot;er&quot;</code>
+ in the subject matches 
+<code>&quot;er&quot;</code>
+ in the pattern. The above example illustrates that 
+<code>Break(c)</code>
+ will never return a string containing any characters in c, while 
+<code>Breakx(c)</code>
+ might, if a subsequent pattern requires it. 
+<code>Breakx(c)</code>
+ provides a more selective, and more efficient version of the 
+<code>Arb()</code>
+ pattern. For example the following construction could have been used:
+</p>
+<pre><code class="language-unicon">
+
+&quot;integers&quot; ?? Arb() -&gt; out || &quot;er&quot;
+</code></pre>
+<p>
+   	write(out)    OUTPUT    integ
+</p>
+<p>
+but 
+<code>Arb()</code>
+ pokes along one character at time, matching 
+<code>&quot;i&quot;</code>
+, 
+<code>&quot;in&quot;</code>
+, 
+<code>&quot;int&quot;</code>
+, and 
+<code>&quot;inte&quot;</code>
+, before finding the desired match, 
+<code>&quot;integ&quot;</code>
+. In contrast, 
+<code>Breakx()</code>
+ gets the right answer after only two attempts: 
+<code>&quot;int&quot;</code>
+ and 
+<code>&quot;integ&quot;</code>
+. The increased efficiency is even more pronounced with a long subject.
+</p>
+<h3 id="primitives">
+Primitives
+</h3>
+<p>
+There are eight primitives built into the Unicon pattern matching system, of which seven have known uses. They are:
+</p>
+<h5 id="rem-match-remainder-of-the-subject">
+Rem(): Match remainder of the subject
+</h5>
+<p>
+<code>Rem()</code>
+ will match zero or more characters at the end of the subject string. For example
+</p>
+<pre><code class="language-unicon">
+
+&quot;NMSU Aggies&quot; ?? &quot;NMSU&quot; || Rem() -&gt; out
+write(out)
+</code></pre>
+<p>
+   OUTPUT     Aggies
+</p>
+<p>
+The subpattern 
+<code>&quot;NMSU&quot;</code>
+ is matched at its first occurrence in the subject. 
+<code>Rem()</code>
+ is matched from there to the end of the subject. If the example is changed to
+</p>
+<pre><code class="language-unicon">
+
+&quot;NMSU Aggies&quot; ?? &quot;Aggies&quot; || Rem() -&gt; out
+</code></pre>
+<p>
+   	write(out)    OUTPUT
+</p>
+<p>
+the 
+<code>&quot;Aggies&quot;</code>
+ matches at the end of the string leaving an empty remainder for 
+<code>Rem()</code>
+. 
+<code>Rem()</code>
+ then matches the empty string and the assignment to the out causes just a newline to be written to the standard output.
+</p>
+<p>
+The pattern components to the left of 
+<code>Rem()</code>
+ must successfully match some portion of the subject string. 
+<code>Rem()</code>
+ begins after the last character matched by the earlier pattern component and matches all subject characters till the end of the string. There is no restriction on the particular characters matched.
+</p>
+<h5 id="arb-match-arbitrary-characters">
+Arb(): Match arbitrary characters
+</h5>
+<p>
+<code>Arb()</code>
+ matches an arbitrary number of characters from the subject string. It matches the shortest possible substring, including the empty string. The pattern components on either side of 
+<code>Arb()</code>
+ determine what is matched. Example:
+</p>
+<pre><code class="language-unicon">
+
+&quot;Pragmatic Programmer&quot; ?? &quot;a&quot; || Arb() -&gt; out || &quot;a&quot;
+</code></pre>
+<p>
+   	write(out)    OUTPUT    gm            &quot;Pragmatic Programmer&quot; ?? &quot;a&quot; || Arb() -&gt; out || &quot;g&quot;    	write(out)    OUTPUT
+</p>
+<p>
+In the first statement, the 
+<code>Arb()</code>
+ pattern is constrained on either side by the known patterns 
+<code>&quot;a&quot;</code>
+ and 
+<code>&quot;a&quot;</code>
+. 
+<code>Arb()</code>
+ expands to match the subject characters between, 
+<code>&quot;gm&quot;</code>
+. Note the smaller substring between two occurrences of 
+<code>&quot;a&quot;</code>
+ is matched. In the second statement, there is nothing between 
+<code>&quot;a&quot;</code>
+ and 
+<code>&quot;g&quot;</code>
+, so 
+<code>Arb()</code>
+ matches the empty string. 
+<code>Arb()</code>
+ behaves like a spring, expanding as needed to fill the gap defined by neighboring patterns.
+</p>
+<h5 id="arbno-match-zero-or-more-consecutive-occurrences-of-pattern">
+Arbno(): Match zero or more consecutive occurrences of pattern
+</h5>
+<p>
+This function produces a pattern which will match zero or more consecutive occurrences of the pattern specified by its argument. 
+<code>Arbno()</code>
+ is useful when an arbitrary number of instances of a pattern may occur. For example, 
+<code>Arbno(Len(3))</code>
+ matches strings of length 0, 3, 6, 9,... There is no restriction on the complexity of the pattern argument. Like the 
+<code>Arb()</code>
+ pattern, 
+<code>Arbno()</code>
+ tries to match the shortest possible string. Initially, it simply matches the empty string. If a subsequent pattern component fails to match, Unicon backs up, and asks 
+<code>Arbno()</code>
+ to try again. Each time 
+<code>Arbno()</code>
+ is retried, it supplies another instance of its argument pattern. In other words, 
+<code>Arbno(PAT)</code>
+ behaves like
+</p>
+<pre><code class="language-text">
+
+(&quot;&quot; | PAT | PAT PAT | PAT PAT PAT |...)
+</code></pre>
+<p>
+Also like 
+<code>Arb()</code>
+, 
+<code>Arbno()</code>
+ is usually used with adjacent patterns to draw it out. Consider the following example which tests for a list of one or more numbers separated by commas and enclosed by parentheses.
+</p>
+<pre><code class="language-unicon">
+
+item := Span(&amp;digits)
+list := Pos(1) || &quot;(&quot; || item || Arbno(&quot;,&quot; || item) ||
+        &quot;)&quot; || Rpos(0)
+if &quot;(12,345,6)&quot; ?? list then
+        write(&quot;Match succeeded&quot;)
+else
+        write(&quot;Match failed&quot;)
+if &quot;(12,,6)&quot; ?? list then
+        write(&quot;Match succeeded&quot;)
+else
+        write(&quot;Match failed&quot;)
+</code></pre>
+<p>
+   OUTPUT    Match succeeded    Match failed
+</p>
+<p>
+<code>Arbno()</code>
+ is retried and extended till the subsequent 
+<code>&quot;)&quot;</code>
+ matches. 
+<code>Pos(1)</code>
+ and 
+<code>Rpos(0)</code>
+ force the pattern to be applied to the entire subject string.
+</p>
+<h5 id="abort-end-pattern-match">
+Abort(): End pattern match
+</h5>
+<p>
+The 
+<code>Abort()</code>
+ pattern causes immediate failure of the entire pattern match, without seeking other alternatives. Usually a match succeeds when we find a subject sequence which satisfies the pattern. The 
+<code>Abort()</code>
+ pattern does the opposite: if we find a certain pattern, we will abort the match and fail immediately. For example suppose we are looking for an 
+<code>&quot;a&quot;</code>
+ or 
+<code>&quot;b&quot;</code>
+, but want to fail if 
+<code>&quot;1&quot;</code>
+ is encountered first:
+</p>
+<pre><code class="language-unicon">
+
+if &quot;ab1&quot; ?? Any(&quot;ab&quot;) .| &quot;1&quot; || Abort() then
+        write(&quot;Match succeeded&quot;)
+else
+        write(&quot;Match failed&quot;)
+if &quot;1ab&quot; ?? Any(&quot;ab&quot;) .| &quot;1&quot; || Abort() then
+        write(&quot;Match succeeded&quot;)
+else
+        write(&quot;Match failed&quot;)
+</code></pre>
+<p>
+   OUTPUT    Match succeeded    Match failed
+</p>
+<p>
+The second pattern matching expression deserves some elaboration as it shows how the pattern matching engine works. At each cursor position all pattern alternatives are tried. In the second pattern matching expression after the literal 
+<code>&quot;1&quot;</code>
+ matches 
+<code>Abort()</code>
+ matches causing the pattern to fail. The 
+<code>Any()</code>
+ pattern thus does not get a chance to match the character 
+<code>&quot;a&quot;</code>
+ at cursor position 2.
+</p>
+<h5 id="bal-match-balanced-string">
+Bal(): Match balanced string
+</h5>
+<p>
+The 
+<code>Bal()</code>
+ function produces a pattern that matches the shortest non-empty string in which parentheses are balanced. A string without parentheses is also considered to be balanced, so in the absence of parentheses, in unanchored mode 
+<code>Bal()</code>
+ simply matches each letter of the string one after another. According to 
+<code>Bal()</code>
+ the following strings are balanced:
+</p>
+<pre><code class="language-text">
+
+(X) Y (A!(C:D)) (AB)+(CD) 9395 (8+-9/2)
+</code></pre>
+<p>
+and these are not:
+</p>
+<pre><code class="language-text">
+
+)A+B (A*(B+) (X))
+</code></pre>
+<p>
+Unlike string scanning function 
+<code>bal()</code>
+, pattern 
+<code>Bal()</code>
+ is hardwired to only look for left and right parentheses. The matching string does not have to be a well-formed expression in the algebraic sense; it might just as easily be a Lisp S-expression or other parenthesis-based notation. Like 
+<code>Arb()</code>
+, 
+<code>Bal()</code>
+ is often useful when constrained by other pattern components. For example:
+</p>
+<pre><code class="language-unicon">
+
+&quot;ab+(14-2)*c&quot; ?? Any(&quot;+-*/&quot;) || Bal() -&gt; out || 
+                Any(&quot;+-*/&quot;) 
+</code></pre>
+<p>
+   OUTPUT    (14-2)
+</p>
+<p>
+Some additional examples of using 
+<code>Bal()</code>
+ are presented in the program below. Since 
+<code>Bal()</code>
+ happily matches spaces, these examples discard matches that consist only of a space character. In example 1, the pattern match applied to 
+<code>Bal()</code>
+ is used as a generator to drive an every loop; example 2 does the same, but also stores the matched string into a variable for convenient processing in a separate loop body. Example 3 uses the pattern from within a string scanning environment.
+</p>
+<pre><code class="language-unicon">
+
+procedure main()                                                                
+   s1 := &quot;(a + b) - (c - (d*e)) + (f/g)&quot;
+
+   # example 1
+   every write(&quot; &quot; ~== (s1 ?? Bal()))
+
+   # example 2
+   every (s1 ?? Bal() -&gt; z) ~== &quot; &quot; do
+      write(&quot;z: &quot;, image(z))                                                    
+
+   # example 3
+   s1 ? {                                                                       
+      repeat {                                                                  
+         if s2 := =Bal() then write(&quot;s2: &quot;, image(s2))                          
+         else {                                                                 
+            write(&quot;didn't balance at &quot;, &amp;pos)                                   
+            move(1)                                                             
+            }                                                                   
+         if pos(0) then break                                                   
+         }                                                                      
+      }                                                                         
+end
+</code></pre>
+<h5 id="fail-seek-other-alternatives">
+Fail(): Seek other alternatives
+</h5>
+<p>
+The 
+<code>Fail()</code>
+ pattern signals the failure of this portion of the pattern match, causing the pattern matcher to backtrack and seek other alternatives. 
+<code>Fail()</code>
+ will also suppress a successful match, which can be very useful when the match is being performed for its side effects, such as immediate assignment. For example this fragment will display the subject characters, one per line:
+</p>
+<pre><code class="language-unicon">
+
+out := &amp;output
+subject ? Len(1) =&gt; out =&gt; Fail()
+</code></pre>
+<p>
+<code>Len(1)</code>
+ matches the first subject character, and immediately assigns it to out. 
+<code>Fail()</code>
+ tells the pattern matcher to try again, and since there are no other alternatives, the entire match is retried at the next subject character. Forced failure and retries continue until the subject is exhausted. The difference between 
+<code>Abort()</code>
+ and 
+<code>Fail()</code>
+ is that 
+<code>Abort()</code>
+ stops all pattern matching, while 
+<code>Fail()</code>
+ tells the system to back up and try other alternatives or other subject starting positions.
+</p>
+<h5 id="fence-prevent-match-retries">
+Fence(): Prevent match retries
+</h5>
+<p>
+Pattern 
+<code>Fence()</code>
+ matches the empty string and has no effect when the pattern matcher is moving left to right in a pattern. However, if the pattern matcher is backing up to try other alternatives, and encounters 
+<code>Fence()</code>
+, the match fails. 
+<code>Fence()</code>
+ can be used to lock in an earlier success. Consider the following example: The pattern succeeds if the first 
+<code>&quot;a&quot;</code>
+ or 
+<code>&quot;b&quot;</code>
+ in the subject is immediately followed by a plus sign.
+</p>
+<pre><code class="language-unicon">
+
+&quot;1ab+&quot; ?? Any(&quot;ab&quot;) || Fence() || &quot;+&quot;
+</code></pre>
+<p>
+In the example above, the pattern matcher matches the 
+<code>&quot;a&quot;</code>
+ and goes through the 
+<code>Fence()</code>
+, only to find that 
+<code>&quot;+&quot;</code>
+ does not match the next subject character, 
+<code>&quot;b&quot;</code>
+. The pattern matcher then tries to backtrack, but is stopped by the 
+<code>Fence()</code>
+ and fails. If 
+<code>Fence()</code>
+ were omitted, backtracking would match 
+<code>Any()</code>
+ to 
+<code>&quot;b&quot;</code>
+, and then proceed forward again to match 
+<code>&quot;+&quot;</code>
+. If 
+<code>Fence()</code>
+ appears as the first component of a pattern, the pattern matcher cannot back up through it to try another subject starting position. This allows the unanchored pattern matching mode to simulate the anchored mode.
+</p>
+<h5 id="succeed-match-always">
+Succeed(): Match Always
+</h5>
+<p>
+This pattern was added to Unicon to match SNOBOL4 pattern for pattern. The authors do not know of any meaningful use of 
+<code>Succeed()</code>
+.
+</p>
+<h3 id="unevaluated-expressions">
+Unevaluated Expressions
+</h3>
+<p>
+Consider the following pattern construction example which captures the next 
+<code>i</code>
+ characters after a colon:
+</p>
+<pre><code class="language-unicon">
+
+npat := &quot;:&quot; || Len(i) -&gt; item
+</code></pre>
+<p>
+This pattern is static in the sense that the value of 
+<code>i</code>
+ at time of pattern construction is captured by the pattern. Even if 
+<code>i</code>
+ subsequently changes the pattern uses the original value of 
+<code>i</code>
+. One way to use the current value of 
+<code>i</code>
+ is to specify the pattern each time it is used.
+</p>
+<pre><code class="language-unicon">
+
+SUBJECT ?? &quot;:&quot; || Len(i) -&gt; item
+</code></pre>
+<p>
+However this is not only inefficient, but also a possible maintenance nightmare. The 
+<em>
+unevaluated expression
+</em>
+ facility allows us to obtain the efficiency of static pattern construction yet use the current value of variables. An unevaluated expression is constructed by enclosing it in a pair of backquotes. So we can construct the pattern 
+<code>npat</code>
+ as
+</p>
+<pre><code class="language-unicon">
+
+npat := &quot;:&quot; || Len(`i`) -&gt; item
+</code></pre>
+<p>
+The pattern is only constructed once, and assigned to 
+<code>npat</code>
+. 
+<code>i</code>
+'s current value is ignored at this time; the variable's name is stored in the pattern. Later, when 
+<code>npat</code>
+ is used in a pattern match, the deferred evaluation operator fetches the then current value of 
+<code>i</code>
+. Deferred evaluation may appear as the argument of the pattern functions 
+<code>Any()</code>
+, 
+<code>Break()</code>
+, 
+<code>Breakx()</code>
+, 
+<code>Len()</code>
+, 
+<code>NotAny()</code>
+, 
+<code>Pos()</code>
+, 
+<code>Rpos()</code>
+, 
+<code>Rtab()</code>
+, 
+<code>Span()</code>
+, or 
+<code>Tab()</code>
+.
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   pat := Tab(`i`) -&gt; out1 || Span(`s`) -&gt; out2
+   sub := &quot;123aabbcc&quot;
+   i := 5
+   s := &quot;ab&quot;
+   sub ?? pat
+   write(out1, &quot;:&quot;, out2)
+   i := 4
+   sub ?? pat
+   write(out1, &quot;:&quot;, out2)
+end
+</code></pre>
+<p>
+   OUTPUT
+</p>
+<p>
+   123a    abb    123    aabb
+</p>
+<p>
+Note that 
+<code>i</code>
+ and 
+<code>s</code>
+ were undefined when 
+<code>pat</code>
+ was first constructed.
+</p>
+<h5 id="immediate-assignment">
+Immediate Assignment
+</h5>
+<p>
+Immediate assignment can be used as a debugging aid to view the pattern matching process. However combined with unevaluated expressions immediate assignments give rise to a powerful class of patterns. In these patterns a variable that is assigned to during the pattern matching process is used later in the very same pattern match. Consider the following example where the first part of the subject contains the length of the field that is to be extracted. So the pattern first assigns the length to a variable 
+<code>n</code>
+ and uses that variable as a argument to Len().
+</p>
+<pre><code class="language-unicon">
+
+fpat := Span(&amp;digits) =&gt; n || Len(`n`) -&gt; field        
+&quot;12abcdefghijklmn&quot; ?? fpat
+write(field)
+</code></pre>
+<p>
+   OUTPUT    abcdefghijkl
+</p>
+<h5 id="lack-of-recursive-pattern-support">
+Lack of Recursive Pattern Support
+</h5>
+<p>
+At the present time, Unicon's pattern facilities do not support the use of an unevaluated expression to achieve 
+<em>
+recursive
+</em>
+ patterns. For example, in SNOBOL it was possible to write a recursion comparable to the following:
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   out := &amp;output
+   p := `p` || &quot;Z&quot; .| &quot;Y&quot;
+   po := p -&gt; out
+   L := [&quot;Y&quot;, &quot;YZZZ&quot;, &quot;XYZ&quot;, &quot;YZZX&quot;, &quot;AYZZZZB&quot;]
+   every !L ?? po
+end
+</code></pre>
+<p>
+On Unicon, this will result in a pattern stack overflow run-time error.
+</p>
+<h5 id="limitations-due-to-lack-of-eval">
+Limitations due to lack of eval()
+</h5>
+<p>
+A major difference between the SNOBOL4 and Icon families is that Icon lacks a general facility for evaluating string contents as expressions, the ability to introduce new code on the fly that is available in SNOBOL. To somewhat ameliorate this limitation, the pattern feature was augmented so that certain operations will be evaluated during the pattern matching phase instead of the pattern construction phase. Unicon supports the following language constructs in unevaluated expressions.
+</p>
+<ul>
+<li>
+function call
+</li>
+<li>
+method call
+</li>
+<li>
+variable reference
+</li>
+<li>
+field reference
+</li>
+</ul>
+<p>
+Note the function or method calls can only have identifiers or constants as parameters. Expressions as parameters are not allowed. Multiple field references of the form 
+<code>x.y.z</code>
+ are not yet supported. An unevaluated function or method call is used in two ways. The pattern matcher performs the call and if it fails, treats the failure as if a pattern subcomponent has failed and tries to backtrack in search of other alternatives. However if the pattern call succeeds then the pattern matcher can either ignore the result of the function or use the result in the pattern matching process. To specify that the result should be used in pattern matching the unevaluated function call is enclosed in backquotes. Unevaluated expressions can also include operators for example to check if a variable is non null
+</p>
+<pre><code class="language-unicon">
+
+`\x`
+</code></pre>
+<p>
+binary operators can be used using the prefix notation. Only one operator or function call can be used in an unevaluated expression. Unicon programs that use unevaluated expressions must be compiled with the 
+<code>&quot;-f s&quot;</code>
+ option which enables full string invocation.
+</p>
+<h3 id="pattern-expressions-and-unicon-control-structure">
+Pattern expressions and Unicon control structure
+</h3>
+<p>
+One of the goals while introducing pattern types in Unicon was to ensure that it integrated well with Unicon's syntax and features such as goal directed evaluation. Unicon's features such as generators and limiting generators can be used along side the pattern matching features to write concise and readable code. The following code changes all lines of the format
+</p>
+<p>
+<em>
+year month day &quot;unchanged portion&quot;
+</em>
+</p>
+<p>
+in the input file to
+</p>
+<p>
+<em>
+month day year &quot;unchanged portion&quot;
+</em>
+</p>
+<p>
+in the output file.
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+        p := Fence() || Len(4) -&gt; yr || &quot; &quot; || 
+                        Len(4) -&gt; mo || &quot; &quot; || Len(2) -&gt; day
+        in := open(&quot;leninput&quot;, &quot;r&quot;)
+        out := open(&quot;lenoutput&quot;, &quot;w&quot;)
+        every	write(out, (line := !in) ?? 
+                   p := mo || &quot; &quot; || day || &quot;, &quot; || yr || &quot; &quot;)
+end
+</code></pre>
+<p>
+The following code shows how the limiting generation control structure can be used to obtain the nth occurrence of a pattern. In this example the word 
+<code>red</code>
+ before the third occurrence of 
+<code>&quot;fish&quot;</code>
+ will be output
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   s := &quot;One fish two fish red fish blue fish&quot;
+   wrdpat := Break(&amp;letters) || Span(&amp;letters) -&gt; word
+   p := wrdpat || Span(&quot; &quot;) || &quot;fish&quot;
+   every (s ?? p) \ 3
+   write(word)
+end 
+</code></pre>
+<h2 id="conclusions">
+Conclusions
+</h2>
+<p>
+The pattern matching facilities are still rough around the edges, but nevertheless provide benefits in many text processing tasks. They allow Unicon programmers to write more succinct and efficient code to perform text processing.
+</p>
+<p>
+Since the new pattern facility closely follows the implementation of patterns in SNOBOL it also provides a path for programmers to migrate legacy SNOBOL code to Unicon. Translating SNOBOL pattern matching code to Unicon has been simplified because of the nearly one to one matching between SNOBOL operators and functions and Unicon operators and functions. The lack of an 
+<code>eval</code>
+ function in Unicon prevents the pattern data type from exhibiting all the power of SNOBOL patterns.
+</p>
+<h2 id="appendix-a-language-reference">
+APPENDIX A: Language Reference
+</h2>
+<h3 id="regular-expressions">
+Regular Expressions
+</h3>
+<p>
+Regular expressions in Unicon are pattern literals; evaluation constructs and produces a pattern value. Regular expressions are enclosed in tag-like 
+<code>&lt;</code>
+ and 
+<code>&gt;</code>
+ characters, within which the usual Unicon operator syntax does not apply and instead, the following elements are allowed. Unicon presently recognizes only the classic small core set of regular expression operators and a few common extensions. Regular expressions are extended incompatibly in myriad tools and if your favorite regular expression operator is not listed here, it is probably not in Unicon at present.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r
+</strong>
+ — ordinary symbol r is a regular expression that matches r.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r1 r2
+</strong>
+ — juxtaposition of two regular expressions is a concatenation.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r1
+</strong>
+ 
+<code>|</code>
+ 
+<strong>
+r2
+</strong>
+ — alternation of two regular expressions produces a regular expression that matches either r1 or r2. It is not a generator.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r
+</strong>
+ 
+<code>*</code>
+ — the asterisk is a postfix operator that produces a regular expression that matches zero or more occurrences of r.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r
+</strong>
+ 
+<code>+</code>
+ — the plus is a postfix operator that produces a regular expression that matches one or more occurrences of r.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r
+</strong>
+ 
+<code>?</code>
+ — the question mark is a postfix operator that produces a regular expression that matches zero or one occurrences of r.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+r{n}
+</strong>
+ — the curly braces are a postfix operator that produces a regular expression that matches n occurrences of r.
+</p>
+<p>
+----
+</p>
+<p>
+<code>&quot;lit&quot;</code>
+ — string literals produce a regular expression that matches the characters of the string, with the usual escapes.
+</p>
+<p>
+----
+</p>
+<p>
+<code>'lit'</code>
+ — cset literals produce a regular expression that matches any one character of the cset, with the usual escapes.
+</p>
+<p>
+----
+</p>
+<p>
+<code>[chars]</code>
+ — square brackets produce a regular expression that matches any one character of the cset, with minus interpreted as a range character. 
+<em>
+Not yet implemented: hex or octal escapes.
+</em>
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+.
+</strong>
+ — in a regular expression, the period matches any one character except the newline character.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+(r)
+</strong>
+ — parentheses are used for grouping and produce a regular expression that matches r.
+</p>
+<h3 id="pattern-variables">
+Pattern Variables
+</h3>
+<p>
+----
+</p>
+<p>
+<strong>
+variable
+</strong>
+ — a variable in a pattern definition that may not be changed during a pattern match operation.
+</p>
+<p>
+----
+</p>
+<p>
+Unevaluated 
+<code> `variable` </code>
+ — a backquoted variable in a pattern definition that can be changed in a pattern match operation.
+</p>
+<h2 id="pattern-operators">
+Pattern Operators
+</h2>
+<p>
+<strong>
+``pattern1 || pattern2``
+</strong>
+ — 
+<strong>
+pattern concatenation
+</strong>
+</p>
+<p>
+pattern concatenation operator produces a new pattern containing the left operand followed the right operand.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``pattern1 .| pattern2``
+</strong>
+ — 
+<strong>
+pattern alternation
+</strong>
+</p>
+<p>
+pattern alternation operator produces a pattern containing either the left operand or the right operand.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``substring -&gt; variable``
+</strong>
+ — 
+<strong>
+conditional assignment
+</strong>
+</p>
+<p>
+assigns the substring on the left to the variable on the right if the pattern match is successful.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``result =&gt; variable``
+</strong>
+ — 
+<strong>
+immediate assignment
+</strong>
+</p>
+<p>
+assigns the immediate result on the left to a variable on the right within a pattern.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``.&gt; variable``
+</strong>
+ — 
+<strong>
+cursor position assignment
+</strong>
+</p>
+<p>
+assigns the cursor position of the string to a variable on the right within a pattern.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``string ?? pattern``
+</strong>
+ — 
+<strong>
+comparison operator
+</strong>
+</p>
+<p>
+compares the string on the left to see if there are any matches of the pattern on the right in the un-anchored mode.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``=pattern``
+</strong>
+ — 
+<strong>
+comparison operator
+</strong>
+</p>
+<p>
+compares the current string in the string scanning environment to see if there is a match of the pattern on the right in the anchored mode.
+</p>
+<h2 id="pattern-built-in-functions">
+Pattern Built-In Functions
+</h2>
+<p>
+The new built-in functions in this section generally construct and produce a pattern as their return value. The resulting pattern may then be stored in a variable or composed with others to form more complex patterns, or used in the pattern match (??) or string scanning operators as described above.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Abort()``
+</strong>
+ — 
+<strong>
+pattern cancel
+</strong>
+</p>
+<p>
+causes an immediate failure of the entire pattern match.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Any(c)``
+</strong>
+ — 
+<strong>
+match any
+</strong>
+</p>
+<p>
+matches any single character contained in c appearing in the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Arb()``
+</strong>
+ — 
+<strong>
+arbitrary pattern
+</strong>
+</p>
+<p>
+matches zero or more characters in the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Arbno(p)``
+</strong>
+ — 
+<strong>
+repetitive arbitrary pattern
+</strong>
+</p>
+<p>
+matches repetitive sequences of p in the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Bal()``
+</strong>
+ — 
+<strong>
+balanced parentheses
+</strong>
+</p>
+<p>
+matches the shortest non-null string which parentheses are balanced in the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Break(c)``
+</strong>
+ — 
+<strong>
+pattern break
+</strong>
+</p>
+<p>
+matches any characters in the subject string up to but not including any of the characters in cset c.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Breakx(c)``
+</strong>
+ — 
+<strong>
+extended pattern break
+</strong>
+</p>
+<p>
+matches any characters up to any of the subject characters in c, and will search beyond the break position for a possible larger match.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Fail()``
+</strong>
+ — 
+<strong>
+pattern back
+</strong>
+</p>
+<p>
+signals a failure in the current portion of the pattern match and sends an instruction to go back and try a different alternative.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Fence()``
+</strong>
+ — 
+<strong>
+pattern fence
+</strong>
+</p>
+<p>
+signals a failure in the current portion of the pattern match if it is trying to backing up to try other alternatives.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Len(i)``
+</strong>
+ — 
+<strong>
+match fixed-length string
+</strong>
+</p>
+<p>
+matches a string of a length of 
+<code>i</code>
+ characters in the subject string. It fails if 
+<code>i</code>
+ is greater than the number of characters remaining in the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``NotAny(c)``
+</strong>
+ — 
+<strong>
+match anything but
+</strong>
+</p>
+<p>
+matches any single character not contained in character set 
+<code>c</code>
+ appearing in the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Nspan(c)``
+</strong>
+ — 
+<strong>
+optional pattern span
+</strong>
+</p>
+<p>
+matches the longest available sequence of zero or more characters from the subject string that are contained in 
+<code>c</code>
+.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Pos(i)``
+</strong>
+ — 
+<strong>
+cursor position
+</strong>
+</p>
+<p>
+sets the cursor or index position of the subject string to the position 
+<code>i</code>
+ according the Unicon index system shown below:
+</p>
+<pre><code class="language-text">
+
+-6  -5  -4  -3  -2  -1  0
+| U | n | i | c | o | n |
+1   2   3   4   5   6   7
+</code></pre>
+<p>
+----
+</p>
+<p>
+<strong>
+``Rem()``
+</strong>
+ — 
+<strong>
+remainder pattern
+</strong>
+</p>
+<p>
+matches the remainder of the subject string.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Span(c)``
+</strong>
+ — 
+<strong>
+pattern span
+</strong>
+</p>
+<p>
+matches one or more characters from the subject string that are contained in 
+<code>c</code>
+. It must match at least one character.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Succeed()``
+</strong>
+ — 
+<strong>
+pattern succeeds
+</strong>
+</p>
+<p>
+produces a pattern that, when matched, will cause the surrounding pattern match to succeed without further scrutiny.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Tab(n)``
+</strong>
+ — 
+<strong>
+pattern tab
+</strong>
+</p>
+<p>
+matches any characters from the current cursor or index position up to the specified position of the subject string. 
+<code>Tab()</code>
+ uses the Unicon index system shown in 
+<code>Pos()</code>
+ and position 
+<code>n</code>
+ must be to the right of the current position.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``Rpos(n)``
+</strong>
+ — 
+<strong>
+reverse cursor position
+</strong>
+</p>
+<p>
+sets the cursor or index position of the subject string to the position 
+<code>n</code>
+ back from the end of the string, equivalent to using Unicon's negative indices in 
+<code>Pos()</code>
+.
+</p>
+<pre><code class="language-text">
+
+6   5   4   3   2   1   0
+| S | N | O | B | O | L |
+</code></pre>
+<p>
+----
+</p>
+<p>
+<strong>
+``Rtab(i)``
+</strong>
+ — 
+<strong>
+pattern reverse tab
+</strong>
+</p>
+<p>
+matches any characters from the current cursor or index position up to the specified position (back from the end) of the subject string, equivalent to using a negative index in 
+<code>Tab()</code>
+. Position 
+<code>n</code>
+ must be to the right of the current position.
+</p>
+<p>
+----
+</p>
+<p>
+In addition to these new functions, the built-in function 
+<code>image(x)</code>
+ produces an interesting string when invoked with a pattern argument, including the pattern's serial number and number of elements along with an approximation of the pattern's components. For example, if p were the pattern
+</p>
+<pre><code class="language-unicon">
+
+p := Break(&amp;letters) || Span(&amp;letters) -&gt; word
+write(image(p))
+</code></pre>
+<p>
+writes out
+</p>
+<pre><code class="language-unicon">
+
+pattern_3(4) = Break(&amp;letters) || (Span(&amp;letters)) -&gt; word
+</code></pre>
+<h2 id="appendix-b-monitoring-pattern-matching">
+APPENDIX B: Monitoring Pattern Matching
+</h2>
+<p>
+Unicon's execution monitoring facilities have been extended to allow the observation of pattern matching execution that is otherwise internal to the runtime system. Pattern matching always occurs in a string scanning context, so the execution monitoring events related to string scanning environments, including 
+<code>E_Snew</code>
+, 
+<code>E_Sfail</code>
+, 
+<code>E_Ssusp</code>
+ and 
+<code>E_Sresum</code>
+, are typically monitored as part of a tool that is monitoring pattern matches. The pre-existing events 
+<code>E_Spos</code>
+, 
+<code>E_Assign</code>
+, 
+<code>E_Value</code>
+, and 
+<code>E_Deref</code>
+ also occur as side-effects of pattern matching evaluation.
+</p>
+<p>
+The following new events occur during pattern creation and pattern matching.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+String Scanning Event
+</th>
+<th>
+Event Value
+</th>
+<th>
+Meaning
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>E_Pattern</code>
+</td>
+<td>
+number of bytes allocated
+</td>
+<td>
+pattern (block) allocation
+</td>
+</tr>
+<tr>
+<td>
+<code>E_Pelem</code>
+</td>
+<td>
+number of bytes allocated
+</td>
+<td>
+pattern element (block) allocation
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatCode</code>
+</td>
+<td>
+integer
+</td>
+<td>
+pattern element code
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatAttempt</code>
+</td>
+<td>
+pattern
+</td>
+<td>
+attempt to match a pattern
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatMatch</code>
+</td>
+<td>
+string matched
+</td>
+<td>
+pattern match succeeded
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatFail</code>
+</td>
+<td>
+(none)
+</td>
+<td>
+pattern match failed
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PelemAttempt</code>
+</td>
+<td>
+integer pattern code
+</td>
+<td>
+attempt to match an element
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PelemMatch</code>
+</td>
+<td>
+integer pattern code
+</td>
+<td>
+element match succeeded
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PelemFail</code>
+</td>
+<td>
+integer pattern code
+</td>
+<td>
+element match failed
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatArg</code>
+</td>
+<td>
+value
+</td>
+<td>
+value being matched
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatVal</code>
+</td>
+<td>
+value
+</td>
+<td>
+result of deferred evaluation
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatPush</code>
+</td>
+<td>
+1 = Region Push
+</td>
+<td>
+pattern elements pushed
+</td>
+</tr>
+<tr>
+<td>
+<code>E_PatPop</code>
+</td>
+<td>
+(none)
+</td>
+<td>
+pattern elements popped
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-levine92" value="1">
+John R. Levine and Tony Mason and Doug Brown. &quot;Lex \&amp; Yacc&quot;. O'Reilly and Associates. 1992.
+</li>
+<li id="cite-ray03" value="2">
+K. Ray and Ray Pereda and Clinton Jeffery. &quot;Ulex -- A Lexical Analyzer Generator for Unicon&quot;. http://unicon.org/utr/utr2/utr2a.pdf. 2003.
+</li>
+<li id="cite-jeffery-1995-cs-tr" value="3">
+Clinton Jeffery. &quot;How to Write a UTSA CS Division Technical Report&quot;. 1995.
+</li>
+<li id="cite-griswold-newsletter" value="4">
+Ralph Griswold. &quot;Icon Benchmarks&quot;. The Icon Newsletter. 1989.
+</li>
+<li id="cite-jeffery-sesrit" value="5">
+Clinton Jeffery and David Rice. &quot;sesrit.icn&quot;. http://www2.cs.uidaho.edu/~jeffery/courses/game/sesrit.icn. 1999.
+</li>
+<li id="cite-shootout-2014" value="6">
+Brent Fulgham and Isaac Gouy. &quot;The Computer Language Benchmarks Game&quot;. http://benchmarksgame.alioth.debian.org/.
+</li>
+<li id="cite-merr" value="7">
+Clinton Jeffery. &quot;Merr: an LR Syntax Error Message Tool&quot;. http://unicon.org/merr.
+</li>
+<li id="cite-crawford" value="8">
+anonymous, but owing to Douglas Crawford. &quot;Introducing JSON&quot;. json.org.
+</li>
+<li id="cite-beck-sunit" value="9">
+Kent Beck. &quot;Simple Smalltalk Testing: With Patterns&quot;. Available at https://web.archive.org/web/20150315073817/http://www.xprogramming.com/testfram.htm [Verified 13 May 2024].
+</li>
+</ol></div>
+<div class="prevnext">
+<a href="utr17.html">&larr; UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a>
+<a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr18.pdf">pdf</a> | <a href="_sources/utr18.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li class="current">Markup Reference</li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+<li><a href="sphinx.html">uscribe and Sphinx</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="quickstart.html">&larr; Quick Start</a>
+<a href="themes.html">Themes &rarr;</a>
+</div>
+<h2 id="markup-reference">
+Markup Reference
+</h2>
+<p>
+uscribe accepts a 
+<strong>
+restricted RST-like
+</strong>
+ dialect. Unknown constructs are either ignored, treated as plain text, or left as raw directives.
+</p>
+<h3 id="headings">
+Headings
+</h3>
+<pre><code class="language-rst">
+
+Chapter Title
+=============
+
+Section
+-------
+
+Subsection
+~~~~~~~~~~
+</code></pre>
+<p>
+Characters 
+<code>= - ~ ^</code>
+ are recognized as underline styles. Heading level follows the underline character. The underline length must be greater than or equal to the title length.
+</p>
+<h3 id="paragraphs-and-lists">
+Paragraphs and lists
+</h3>
+<p>
+Blank lines separate paragraphs. Bullet lists use 
+<code>-</code>
+ or 
+<code>*</code>
+ with a following space. Numbered lists use 
+<code>1. </code>
+ / 
+<code>1) </code>
+ or auto-number 
+<code>#. </code>
+. Indented continuation lines belong to the current item.
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
+1. Install the ``uscribe`` binary (:doc:`install`)
+2. Write a tiny book (:doc:`quickstart`)
+#. Pick a theme (:doc:`themes`)
+</code></pre>
+<p>
+Rendered:
+</p>
+<ol start="1">
+<li>
+Install the 
+<code>uscribe</code>
+ binary (
+<a href="install.html#installation">Installation</a>
+)
+</li>
+<li>
+Write a tiny book (
+<a href="quickstart.html#quick-start">Quick Start</a>
+)
+</li>
+<li>
+Pick a theme (
+<a href="themes.html#themes">Themes</a>
+)
+</li>
+</ol>
+<h3 id="definition-lists">
+Definition lists
+</h3>
+<p>
+A term on its own line followed by an indented body. Blank lines inside the body start a new paragraph.
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
+format
+   Selects the builder.
+
+   Use ``html`` for a browsable book, or ``latex`` / ``pdf`` for print.
+
+theme
+   Names the HTML skin (``basic``, ``classic``, or ``dark``).
+</code></pre>
+<p>
+Rendered:
+</p>
+<dl>
+<dt>format</dt>
+<dd>
+<p>
+Selects the builder.
+</p>
+<p>
+Use 
+<code>html</code>
+ for a browsable book, or 
+<code>latex</code>
+ / 
+<code>pdf</code>
+ for print.
+</p>
+</dd>
+<dt>theme</dt>
+<dd>
+<p>
+Names the HTML skin (
+<code>basic</code>
+, 
+<code>classic</code>
+, or 
+<code>dark</code>
+).
+</p>
+</dd>
+</dl>
+<h3 id="tables">
+Tables
+</h3>
+<p>
+<strong>
+Simple
+</strong>
+ tables use 
+<code>=</code>
+ column separators. The first row is the header. PDF output uses 
+<code>longtable</code>
+ so tables can break across pages.
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
+=====  ==========
+Flag   Meaning
+=====  ==========
+html   HTML book
+latex  ``book.tex``
+pdf    run a TeX engine
+=====  ==========
+</code></pre>
+<p>
+Rendered:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Flag
+</th>
+<th>
+Meaning
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+HTML book
+</td>
+</tr>
+<tr>
+<td>
+latex
+</td>
+<td>
+``book.tex
+</td>
+</tr>
+<tr>
+<td>
+pdf
+</td>
+<td>
+run a TeX
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<strong>
+Grid
+</strong>
+ tables use 
+<code>+---+</code>
+ borders; a border with 
+<code>=</code>
+ marks the header. Omit an internal 
+<code>|</code>
+ to span columns:
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
++--------+--------+--------+
+| Left   | Mid    | Right  |
++========+========+========+
+| A      | B spanning two  |
++--------+-----------------+
+| C spanning two  | D      |
++-----------------+--------+
+</code></pre>
+<p>
+Rendered:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Left
+</th>
+<th>
+Mid
+</th>
+<th>
+Right
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+A
+</td>
+<td colspan="2">
+B spanning two
+</td>
+</tr>
+<tr>
+<td colspan="2">
+C spanning two
+</td>
+<td>
+D
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+A plain grid without spans:
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
++--------+------------+
+| Flag   | Meaning    |
++========+============+
+| html   | HTML book  |
++--------+------------+
+| latex  | book.tex   |
++--------+------------+
+</code></pre>
+<p>
+Rendered:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Flag
+</th>
+<th>
+Meaning
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+HTML book
+</td>
+</tr>
+<tr>
+<td>
+latex
+</td>
+<td>
+book.tex
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<strong>
+List tables
+</strong>
+ use the 
+<code>list-table</code>
+ directive:
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
+.. list-table::
+   :header-rows: 1
+
+   * - Flag
+     - Meaning
+   * - html
+     - HTML book
+   * - pdf
+     - run a TeX engine
+</code></pre>
+<p>
+Rendered:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Flag
+</th>
+<th>
+Meaning
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+HTML book
+</td>
+</tr>
+<tr>
+<td>
+pdf
+</td>
+<td>
+run a TeX engine
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="labels-and-cross-references">
+Labels and cross-references
+</h3>
+<p>
+Place 
+<code>.. _name:</code>
+ immediately before a heading, figure, or table. Pass 1 collects explicit labels and title slugs; pass 2 turns ref roles into 
+<code>chapter.html#anchor</code>
+ links.
+</p>
+<p>
+Source:
+</p>
+<pre><code class="language-rst">
+.. _stable-labels:
+
+Stable labels
+-------------
+
+A preceding ``.. _name:`` attaches to the next heading. Link with a
+ref role naming that label, optionally with display text in angle
+brackets.
+</code></pre>
+<p>
+Rendered:
+</p>
+<h3 id="stable-labels">
+Stable labels
+</h3>
+<p>
+A preceding 
+<code>.. _name:</code>
+ attaches to the next heading. Link with a ref role naming that label, optionally with display text in angle brackets.
+</p>
+<p>
+Live refs (explicit label and display-text form):
+</p>
+<ul>
+<li>
+plain: 
+<a href="markup.html#stable-labels">Stable labels</a>
+</li>
+<li>
+with display text: 
+<a href="markup.html#stable-labels">Jump here</a>
+</li>
+<li>
+chapter: 
+<a href="install.html#installation">Installation</a>
+</li>
+</ul>
+<p>
+Title-only refs (matching a heading exactly) still work. Full chapter sources are linked from each HTML footer as 
+<strong>
+source
+</strong>
+ (and 
+<strong>
+txt
+</strong>
+ in the report index Formats column).
+</p>
+<h3 id="inline-markup">
+Inline markup
+</h3>
+<ul>
+<li>
+single asterisks for 
+<em>
+emphasis
+</em>
+</li>
+<li>
+double asterisks for 
+<strong>
+strong
+</strong>
+</li>
+<li>
+backticks for 
+<code>inline literals</code>
+</li>
+</ul>
+<h3 id="directives">
+Directives
+</h3>
+<p>
+Admonition bodies are re-parsed as nested blocks (lists, code, nested directives). Source then rendered:
+</p>
+<pre><code class="language-rst">
+.. note::
+
+   Admonition bodies can hold nested blocks:
+
+   - a bullet list
+   - and even a nested tip
+
+   .. tip::
+
+      Nested directives are parsed, not flattened.
+</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>
+Admonition bodies can hold nested blocks:
+</p>
+<ul>
+<li>
+a bullet list
+</li>
+<li>
+and even a nested tip
+</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>
+Nested directives are parsed, not flattened.
+</p>
+</div>
+</div>
+<p>
+Also: 
+<code>warning</code>
+, 
+<code>tip</code>
+, 
+<code>important</code>
+, 
+<code>caution</code>
+, 
+<code>attention</code>
+, 
+<code>danger</code>
+, 
+<code>error</code>
+, 
+<code>hint</code>
+.
+</p>
+<p>
+Figures take a caption (numbered in HTML/LaTeX) and optional 
+<code>:name:</code>
+ / preceding 
+<code>.. _label:</code>
+:
+</p>
+<pre><code class="language-rst">
+
+.. _logo-figure:
+
+.. figure:: images/uscribe-logo.png
+
+   :alt: uscribe logo
+
+   The uscribe mark.
+</code></pre>
+<figure class="figure logo" id="logo-figure">
+<img src="images/uscribe-logo.png" alt="uscribe logo">
+<figcaption>Figure 1
+: The uscribe mark.
+</figcaption>
+</figure>
+<p>
+See 
+<a href="markup.html#logo-figure">The uscribe mark.</a>
+.
+</p>
+<p>
+Other authoring forms (shown literally):
+</p>
+<pre><code class="language-rst">
+
+.. code-block:: unicon
+
+   procedure main()
+      write(&quot;ok&quot;)
+   end
+
+.. image:: images/diagram.svg
+
+   Optional alt text
+
+.. include:: path/to/fragment.rst
+
+.. literalinclude:: path/to/file.icn
+
+   :language: unicon
+   :lines: 1-10
+   :start-after: marker
+   :end-before: marker
+   :dedent: 3
+</code></pre>
+<p>
+Paths are resolved next to the including chapter, then under the process cwd. Nested 
+<code>include</code>
+ is allowed; circular includes warn and are skipped.
+</p>
+<h3 id="include-literalinclude">
+Include / literalinclude
+</h3>
+<p>
+<code>literalinclude</code>
+ shows a file as a listing; 
+<code>include</code>
+ parses it as markup. The tip below is the same fragment both ways.
+</p>
+<p>
+Source (
+<code>includes/shared-tip.rst</code>
+):
+</p>
+<pre><code class="language-rst">
+.. tip::
+
+   Snippets under ``includes/`` can be pulled into any chapter with
+   ``.. include::`` so the same advice is not copy-pasted.
+</code></pre>
+<p>
+Rendered:
+</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>
+Snippets under 
+<code>includes/</code>
+ can be pulled into any chapter with 
+<code>.. include::</code>
+ so the same advice is not copy-pasted.
+</p>
+</div>
+<p>
+Pull a real 
+<code>.icn</code>
+ file as a listing. Language defaults from the extension (
+<code>.icn</code>
+ → 
+<code>unicon</code>
+); override with 
+<code>:language:</code>
+:
+</p>
+<pre><code class="language-unicon">
+# Shared sample for literalinclude demos
+procedure main()
+   write(&quot;hello from includes/hello.icn&quot;)
+   write(&amp;version)
+end
+</code></pre>
+<p>
+The same file, only the body between markers:
+</p>
+<pre><code class="language-unicon">
+   write(&quot;hello from includes/hello.icn&quot;)
+   write(&amp;version)
+</code></pre>
+<h3 id="unicon-listings">
+Unicon listings
+</h3>
+<p>
+<code>code-block</code>
+ languages 
+<code>unicon</code>
+, 
+<code>icon</code>
+, and 
+<code>icn</code>
+ get Unicon syntax highlighting in HTML (via 
+<code>highlight-unicon.js</code>
+). Other languages are emitted as plain 
+<code>&lt;pre&gt;&lt;code class=&quot;language-…&quot;&gt;</code>
+ without Unicon highlighting — use 
+<code>sh</code>
+ for shell, 
+<code>rst</code>
+ or 
+<code>text</code>
+ for markup samples. 
+<code>literalinclude</code>
+ of 
+<code>.icn</code>
+ files uses the same highlighting.
+</p>
+<p>
+Example Unicon program as it appears in the built book:
+</p>
+<pre><code class="language-unicon">
+
+# Hello from a uscribe listing
+procedure main()
+   every i := 1 to 3 do
+      write(&quot;tick &quot;, i)
+   write(&amp;version)
+end
+</code></pre>
+<p>
+A line ending in 
+<code>::</code>
+ (RST literal-block introducer) followed by an indented block is also treated as a code listing. 
+<code>Unicon::</code>
+ becomes the label 
+<code>Unicon:</code>
+ plus the indented tree; a lone 
+<code>::</code>
+ introduces a block with no label.
+</p>
+<p>
+Unknown 
+<code>.. name::</code>
+ directives become HTML comments so content is not silently dropped.
+</p>
+<p>
+See also 
+<a href="quickstart.html#quick-start">Quick Start</a>
+ and 
+<a href="cli.html#command-line">Command Line</a>
+.
+</p>
+<div class="prevnext">
+<a href="quickstart.html">&larr; Quick Start</a>
+<a href="themes.html">Themes &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="markup.pdf">pdf</a> | <a href="_sources/markup.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

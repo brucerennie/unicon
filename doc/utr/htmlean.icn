@@ -1,0 +1,222 @@
+#
+# Clean html output from pdftohtml
+#
+# pdftohtml does not preserve the position of images in a usable form,
+# so manual cleanup will generally be required following this program.
+#
+procedure main(av)
+    f := open(av[1],"r") | stop("can't open ", av[1]|", no filename given")
+    L := []
+    while put(L, read(f))
+    close(f)
+
+    # ... do the in-line computation
+    every i := 1 to *L do {
+	L[i] := line_clean(L[i])
+    }
+
+    # do the multi-line computation
+    L := multiline_clean(L)
+
+    # create title page and move table of contents
+    L := maketitle(L)
+
+    if match("utr9", av[1]) then {
+       L := fixUtr9Table1(L)
+       L := fixUtr9Table2(L)
+       }
+
+    system("cp " || av[1] || " " || av[1] || ".bak")
+
+    if f2 := open(av[1],"w") then {
+       while write(f2, pop(L))
+       close(f2)
+       }
+end
+
+procedure maketitle(L)
+   i := 1
+   # title starts after <body> tag
+   while L[i] & (not match("<body bgcolor=", L[i])) do
+      i +:= 1
+   if match("body bgcolor=", L[i]) then
+      i +:= 1 # skip over "<body>"
+   ii := i
+   while L[ii] & (not integer(L[ii][-9:-5])) do ii +:= 1
+   j := ii + 1
+   # end of title page is an <hr> by itself
+   while L[j] ~== "<hr/>" do j +:= 1
+
+   # table of contents starts near the end, at link for "outline"
+   k := j+1
+   while L[k] & (not match("<a name=\"outline\">", L[k])) do k +:= 1
+   if L[k] then
+      L[k] := "<a name=\"outline\"></a><h3>Contents</h3>"
+
+   if match("<a name=\"outline\">", L[k]) then {
+      L[k] := "<a name=\"outline\"></a><h3>Contents</h3>"
+
+      L := L[1:i] ||| ["<br><br><br><br><br><center><h3>"] |||
+         L[i:ii-2] ||| ["</h3><br><br><br>"] |||         L[ii-2:ii+1] |||
+         ["<br><br><br>"] |||L[ii+1:j] |||
+         ["</center><br><br><br><br><br>", L[j]] |||
+	 L[k:-2] ||| L[j+1:k] ||| L[-2:0]
+      }
+   else write("no table of contents found, you may want to check it")
+
+   L := pumpup_sectionheadings(L)
+   L := strip_pagenumbers(L)
+
+   return L
+end
+
+procedure pumpup_sectionheadings(L)
+local oa # optional <a ...> anchor
+   every i := 1 to *L do {
+      L[i] ? {
+	 oa := (="<a name=" || tab(many(&digits)) || ="></a>") | ""
+	 if secnum := tab(any(&digits)) || ="." || (tab(many(&digits))|"") ||
+                       =" " & title := tab(find("<br/>")) & secnum~=="0.0 " then {
+	    L[i] := oa || "<h3>" || secnum || title || "</h3>" || tab(0)
+	    }
+	 else if secnum := tab(any(&digits)) || ="." || tab(any(&digits)) ||
+			   ="." || tab(any(&digits)) ||
+                           =" " & title := tab(find("<br/>")) & secnum~=="0.0 " then {
+	    L[i] := oa || "<h4>" || secnum || title || "</h4>" || tab(0)
+	    }
+	 }
+      }
+   return L
+end
+
+procedure strip_pagenumbers(L)
+   i := 1
+   while i < *L do {
+      if (L[i] ? (tab(many(&digits)) & ="<br/>")) & (L[i+1] == "<hr/>") then {
+	    L[i] := "<br>"
+	    L[i+1] := ""
+	    i +:= 1
+	    }
+      i +:= 1
+      }
+   return L
+end
+
+# total special-case hacks, non-portable, needs generalization
+procedure multiline_clean(L)
+   i := 1
+   while i <= *L do {
+      if L[ i ] == "\xef\xa3\xae<br/>" &  # starting upper bracket
+         L[i+1] == "\xef\xa3\xb9<br/>" &  # more starting upper bracket
+         L[i+2] == "dif f use<br/>" &  #
+         L[i+3] == "\xef\xa3\xaf<br/>" &  #
+         L[i+4] == "\xef\xa3\xba color name<br/>" &  #
+         L[i+5] == "\xef\xa3\xaf<br/>" &  #
+         L[i+6] == "ambient \xef\xa3\xba<br/>" &  #
+         L[i+7] == "\xef\xa3\xb0<br/>" &  #
+         L[i+8] == "\xef\xa3\xbb<br/>" &  #
+         L[i+9] == "specular<br/>" then {
+	    # wow, what do I output for this?
+	    L := L[1:i] |||
+	       ["<table><tr><td>"] |||
+	       ["<table border><tr><td>diffuse<br>ambient<br>specular</table>"] |||
+	       ["<td>color name</table>"] |||
+	       L[i+10:0] | stop("listconcat failed")
+	    }
+	 else
+      if L[ i ] == "\xef\xa3\xae<br/>" &  # starting upper bracket
+         L[i+1] == "\xef\xa3\xb9<br/>" &  # more starting upper bracket
+         L[i+2] == "dif f use<br/>" &  #
+         L[i+3] == "\xef\xa3\xaf<br/>" &  #
+         L[i+4] == "ambient<br/>" &  #
+         L[i+5] == "\xef\xa3\xba<br/>" &  #
+         L[i+6] == "\xef\xa3\xaf<br/>" &  #
+         L[i+7] == "\xef\xa3\xba color name or \"shininess n\", where n is between 0 and 128.<br/>" &  #
+         L[i+8] == "\xef\xa3\xaf<br/>" &  #
+         L[i+9] == "\xef\xa3\xba<br/>" &  #
+         L[i+10] == "\xef\xa3\xaf<br/>" &  #
+         L[i+11] == "specular \xef\xa3\xba<br/>" &
+         L[i+12] == "\xef\xa3\xb0<br/>" &
+         L[i+13] == "\xef\xa3\xbb<br/>" &
+         L[i+14] == "emission<br/>" then {
+	    # wow, what do I output for this?
+	    L := L[1:i] |||
+	       ["<table><tr><td>"] |||
+	       ["<table border><tr><td>diffuse<br>ambient<br>specular<br>emission</table>"] |||
+	       ["<td>color name or \"shininess n\", where n is between 0 and 128</table>"] |||
+	       L[i+15:0] | stop("listconcat failed")
+	    }
+      i +:= 1
+      }
+   return L
+end
+
+procedure line_clean(s)
+   s[find("<body bgcolor=\"#A0A0A0\"",s) +: 23] := "<body bgcolor=\"#FFFFFF\""
+   while s[find("&#160;",s) +: 6] := " "
+   while s[find("\e",s)] := "ff"
+   while s[find("\x1c",s)] := "fi"
+   while s[find("\x1e",s)] := "ffi"
+   while s[find("\x16",s)] := "\""
+   while s[find("\x17",s)] := "\""
+   while s[find("\^p",s)] := "\""
+   while s[find("\^q",s)] := "\""
+   while s[find("-<br/>",s) +: 6] := ""
+   return s
+end
+
+#
+# This spectacularly brittle/fragile code patches up Table 1 in UTR 9.
+#
+procedure fixUtr9Table1(L)
+   local i, j
+   L := copy(L)
+   i := 1
+   while i<=*L & not (match("Table 1", L[i]) & find("types of primitives",L[i])) do i +:= 1
+   if i < *L then {
+      j := i
+      while j>1 & not match("<a name=4>", L[j]) do j -:= 1
+
+      L[i] := "<center>" || L[i]
+      # replace i+1 ... i+4 with a table header
+      L[i+3] := "<th>"||L[i+1][1:-5]||"<th>"||L[i+2][1:-5]||"<th>"||L[i+3][1:-5]||"<th>"||L[i+4][1:-5]
+      L[i+1] := "<table border>"
+      L[i+2] := "<tr>"
+      L[i+4] := "<tr><td>move here</table></center>"
+
+      }
+   return L
+end
+
+#
+# This spectacularly brittle/fragile code patches up Table 2 in UTR 9.
+#
+procedure fixUtr9Table2(L)
+   local i, j
+   L := copy(L)
+   i := 1
+   while i<=*L & not (match("Table 2", L[i]) & find("texture coordinates and primitives",L[i])) do i +:= 1
+   if i < *L then {
+      j := i
+      while j>1 & not match("<a name=4>", L[j]) do j -:= 1
+
+      L[i] := "<center>" || L[i]
+      # replace i+1 ... i+4 with a table header
+      L[i+3] := "<th>"||dbr(L[i+4])||
+	        "<th>"||dbr(L[i+2])||"<br>"||dbr(L[i+6])||
+	        "<th>"||dbr(L[i+1])||" "||dbr(L[i+3])||" "||dbr(L[i+7])||" "||dbr(L[i+8])||"<th>"||dbr(L[i+5])
+      L[i+1] := "<table border>"
+      L[i+2] := "<tr>"
+      L[i+4] := "<tr>"
+      L[i+5] := "<td>move here"
+      L[i+6] := "</table>"
+      L[i+7] := "</center>"
+      }
+   return L
+end
+
+# remove optional trailing <br/> tag
+procedure dbr(s)
+   if s[-5:0] == "<br/>" then s[-5:0] := ""
+   return s
+end

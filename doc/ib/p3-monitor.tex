@@ -1,0 +1,393 @@
+\chapter{Execution Monitoring}
+
+This chapter describes the implementation of program execution
+monitoring facilities in Unicon. Prior to these facilities, some
+simple monitors of Icon programs had been written in C, using
+instrumentation that was added to generate log files from the C
+implementation of Icon's virtual machine, iconx. Development of these
+tools in C was too labor intensive for experimental research work. The
+primary goal of the monitoring facilities is to allow monitors for
+Icon and Unicon to be written in Unicon instead of C.
+
+The monitoring facilities were added by writing a dynamic loader for
+Icon icode and extending the co-expression data type to allow the
+loading and execution of programs as co-expressions within the same
+virtual machine. This was considered viable to achieve high
+performance, since the co-expression switch was frequently and
+publically extolled by Ralph Griswold as being very high performance
+(comparable to a procedure call in Icon), while transmitting
+monitoring information to a separate process via pipes, sockets or
+any other means that would require operating system synchronization
+was considered too expensive.
+
+Since that time, the co-expression type has gotten much slower in
+Icon, whose current implementation has eliminated native assembler
+co-expressions in favor of a portable pthreads implementation and
+removed the monitoring facilities entirely. In Unicon, the monitoring
+facilities remain a compelling reason to retain native co-expressions
+indefinitely, since they constitute the core of the Unicon debugger
+udb, and the profiler uprof.
+
+\section{Dynamic Loading and the Program State}
+
+Several major changes were required in order to support multiple
+programs in the virtual machine. Loading the icode into a separate
+malloced area was the easy part.  Numerous global and/or static C
+variables contained program-specific state -- on a abstract level
+they could be considered ``registers'' of the Icon virtual machine.
+In practice, they must be saved/restored whenever switching between
+programs, and it was quickly found that they were too numerous to
+easily save and restore: switching time would be too slow. Instead,
+these variables were all moved into a new structure, and a pointer
+to this structure became the one variable that needed to be
+saved/restored whenever switching between programs. The variable
+was named {\tt curpstate} and the structure in src/h/rstructs.h
+looks like:
+
+\begin{iconcode}
+/* \\
+ * Program state encapsulation.  This consists \\
+ * of the VARIABLE parts of many global structures. \\
+ */ \\
+struct progstate \{ \\
+   long hsize;				/* size of icode */ \\
+	/* hsize is a constant defined at load time, MT safe */ \\
+   struct progstate *parent; \\
+	/* parent is a constant defined at load time, MT safe */ \\
+   struct progstate *next; \\
+	/* next is a link list, seldom used, needs mutex */ \\
+   struct descrip parentdesc;		/* implicit \&parent */ \\
+	/* parentdesc is a constant defined at load time, MT safe */ \\
+   struct descrip eventmask;		/* implicit \&eventmask */ \\
+	/* eventmask is read-only (to me), MT safe */ \\
+   struct descrip eventcount;		/* implicit \&eventcount */ \\
+   struct descrip valuemask; \\
+   struct descrip eventcode;		/* \&eventcode */ \\
+   struct descrip eventval;		/* \&eventval */ \\
+   struct descrip eventsource;		/* \&eventsource */ \\
+\ \\
+   /* Systems don't have more than, oh, about 50 signals, eh? \\
+    * Currently in the system there is 40 of them            */ \\
+   struct descrip Handlers[41]; \\
+   /*int Inited; not used anymore */ \\
+   int signal; \\
+   /* \\
+    * trapped variable keywords' values \\
+    */ \\
+   struct descrip Kywd\_err;          /* Probably mutex. not important now */ \\
+   struct descrip Kywd\_prog; \\
+\ \\
+   struct descrip Kywd\_trc;         /* leave global for now   */ \\
+   struct b\_coexpr *Mainhead; \\
+   char *Code; \\
+   char *Ecode; \\
+   word *Records; \\
+   int *Ftabp; \\
+   \#ifdef FieldTableCompression \\
+      short Ftabwidth, Foffwidth; \\
+      unsigned char *Ftabcp, *Focp; \\
+      short *Ftabsp, *Fosp; \\
+      int *Fo; \\
+      char *Bm; \\
+   \#endif				/* FieldTableCompression */ \\
+   dptr Fnames, Efnames; \\
+   dptr Globals, Eglobals; \\
+   dptr Gnames, Egnames; \\
+   dptr Statics, Estatics; \\
+   int NGlobals, NStatics; \\
+   char *Strcons; \\
+   struct ipc\_fname *Filenms, *Efilenms; \\
+   struct ipc\_line *Ilines, *Elines; \\
+  struct ipc\_line * Current\_line\_ptr;  /* not used or what ?*/ \\
+\ \\
+   \#ifdef Graphics \\
+      struct descrip AmperX, AmperY, AmperRow, AmperCol; \\
+      struct descrip AmperInterval;			/* \&interval */ \\
+      struct descrip LastEventWin;			/* last Event() win */\\
+      int LastEvFWidth; \\
+      int LastEvLeading; \\
+      int LastEvAscent; \\
+      uword PrevTimeStamp;				/* previous timestamp */ \\
+      uword Xmod\_Control, Xmod\_Shift, Xmod\_Meta;	/* control,shift,meta */ \\
+      struct descrip Kywd\_xwin[2];			/* \&window + ... */\\
+\ \\
+   \#ifdef Graphics3D \\
+      struct descrip AmperPick;				/* \&pick */ \\
+   \#endif				/* Graphics3D */ \\
+   \#endif				/* Graphics */ \\
+\ \\   
+   word Coexp\_ser;			/* this program's serial numbers */\\
+   word List\_ser; \\
+   word Intern\_list\_ser; \\
+\#ifdef PatternType \\
+   word Pat\_ser; \\
+\#endif					/* PatternType */\\
+   word Set\_ser; \\
+   word Table\_ser; \\
+\ \\
+   word Kywd\_time\_elsewhere;		/* ???? TLS vs global \&time spent in other programs */ \\
+   word Kywd\_time\_out;			/* ????  TLS vs global \&time at last program switch out */ \\
+\ \\
+\#ifdef Concurrent \\
+   word mutexid\_stringtotal; \\
+   word mutexid\_blocktotal; \\
+   word mutexid\_coll;\\
+\ \\
+   struct region *Public\_stringregion;         /*  separate regions vs shared */ \\
+   struct region *Public\_blockregion;          /*     same above   */ \\
+\#endif					/* Concurrent */
+\ \\
+   struct region *stringregion;         /*  separate regions vs shared      */\\
+   struct region *blockregion;          /*     same above     */ \\
+\ \\
+  /* in case we have separate heaps, i.e ThreadHeap is defined\\
+   * total here will be only for "dead" threads */\\
+   uword stringtotal;			/* cumulative total allocation */\\
+   uword blocktotal;			/* cumulative total allocation */\\
+\ \\
+   word colltot;			/*  m      total number of collections */\\
+   word collstat;			/*  u      number of static collect requests */\\
+   word collstr;			/*  t      number of string collect requests */\\
+   word collblk;			/*  ex     number of block collect requests */\\
+\ \\
+   struct descrip K\_main;\\
+   struct b\_file K\_errout;\\
+   struct b\_file K\_input;\\
+   struct b\_file K\_output;\\
+\ \\
+   /* dynamic record types */\\
+  int yyy;\\
+  int Longest\_dr;\\
+  struct b\_proc\_list **Dr\_arrays;\\
+\ \\
+   /*\\
+    * Function Instrumentation Fields.\\
+    */\\
+\#ifdef Arrays \\
+   int (*Cprealarray)(dptr, dptr, word, word);\\
+   int (*Cpintarray)(dptr, dptr, word, word);\\
+\#endif					/* Arrays */\\
+   int (*Cplist)(dptr, dptr, word, word);\\
+   int (*Cpset)(dptr, dptr, word);\\
+   int (*Cptable)(dptr, dptr, word);\\
+   void (*EVstralc)(word);\\
+\#ifdef TSTATARG\\
+   int (*Interp)(int,dptr, struct threadstate*);\\
+\#else 		 	   	  	 /* TSTATARG */\\
+   int (*Interp)(int,dptr);\\
+\#endif 		 	   	  	 /* TSTATARG */\\
+   int (*Cnvcset)(dptr,dptr);\\
+   int (*Cnvint)(dptr,dptr);\\
+   int (*Cnvreal)(dptr,dptr);\\
+   int (*Cnvstr)(dptr,dptr);\\
+   int (*Cnvtcset)(struct b\_cset *,dptr,dptr);\\
+   int (*Cnvtstr)(char *,dptr,dptr);\\
+   void (*Deref)(dptr,dptr);\\
+   struct b\_bignum * (*Alcbignum)(word);\\
+   struct b\_cset * (*Alccset)();\\
+   struct b\_file * (*Alcfile)(FILE*,int,dptr);\\
+   union block * (*Alchash)(int);\\
+   struct b\_slots * (*Alcsegment)(word);\\
+\#ifdef PatternType\\
+   struct b\_pattern * (*Alcpattern)(word);\\
+   struct b\_pelem * (*Alcpelem)(word, word *);\\
+   int (*Cnvpattern)(dptr,dptr);\\
+   int (*Internalmatch)(char*,int,int,struct b\_pelem*,int*,int*,int,int);\\
+\#endif					/* PatternType */\\
+   struct b\_list *(*Alclist\_raw)(uword,uword);\\
+   struct b\_list *(*Alclist)(uword,uword);\\
+   struct b\_lelem *(*Alclstb)(uword,uword,uword);\\
+\#ifndef DescriptorDouble\\
+   struct b\_real *(*Alcreal)(double);\\
+\#endif					/* DescriptorDouble */\\
+   struct b\_record *(*Alcrecd)(int, union block *);\\
+   struct b\_refresh *(*Alcrefresh)(word *, int, int);\\
+   struct b\_selem *(*Alcselem)(dptr, uword);\\
+   char *(*Alcstr)(char *, word);\\
+   struct b\_tvsubs *(*Alcsubs)(word, word, dptr);\\
+   struct b\_telem *(*Alctelem)(void);\\
+   struct b\_tvtbl *(*Alctvtbl)(dptr, dptr, uword);\\
+   struct b\_tvmonitored *(*Alctvmonitored) (dptr);\\
+   void (*Deallocate)(union block *);\\
+   char * (*Reserve)(int, word);\\
+\ \\
+  struct threadstate *tstate, maintstate;\\
+   \};
+\end{iconcode}
+
+
+\section{Event Instrumentation, Filtering and Reporting}
+
+Interesting behavior within the Unicon virtual machine is instrumented
+using macros. Originally the macros were defined as no-ops or as
+output statements that would write to logfiles. In the monitoring
+facilities, the macro can instead be defined to check whether that
+event has been requested by a monitor, and if so, to report that
+event.
+
+The monitoring macros began with clean and simple form. They have been
+elaborated many times and are now more subtle. Originally the macros
+consisted of
+
+\begin{iconcode}
+\#define EVVal(value,event) ... \\
+\#define EVValD(dp,event) ...
+\end{iconcode}
+
+\noindent
+where EVVal() reported an integer event value while EVValD() took a
+descriptor pointer and reported an arbitrary value. The second
+argument in both cases was the event code, an integer indicating what
+was happening.  These macros live in src/h/grttin.h where they are
+automatically included in every compile by the rtt program.
+
+\subsection{Filtering: Event Masks and Value Masks}
+
+If all events were reported to the monitor, it would have complete
+information but be overwhelmed. Filtering of desired events was
+essential from the beginning, and was refined over time from a single
+level to a two-level process.
+
+Event codes of interest are specified by monitors using an event
+set. Since the event codes are all in the range 0-255, the most
+efficient representation of these sets is by means of a bit vector,
+and the most convenient bit vector implementation already available
+was the cset data type.  Initially, then, the definitions of EVVal()
+and EVValD() looked something like
+
+\begin{iconcode}
+\#define EVVal(value,event) {\textbackslash} \\
+\>   if (Testb((word)ToAscii(event)), curpstate-$>$eventmask) \{ {\textbackslash} \\
+\>\>      MakeInt(value, *(curpstate-$>$parent-$>$eventval)); actparent(event); \}
+\end{iconcode}
+
+Event masks are csets, with individual characters ASCII values
+indicating which event they denote. \texttt{Testb()} is the internal
+cset membership test operation.  If the event is of interest (i.e. in
+the program's event mask, set by a monitor), it is reported by placing
+its value in the parent (monitor) \texttt{\&eventvalue} and calling
+\texttt{actparent()} to activate and switch control to the parent,
+thus accomplishing an event report.
+
+Many of the event codes started with mnemonics, such as P for
+``procedure call''.  Over time, mnemonics proved unhelpful and all
+events were in fact re-ordered at some point for efficiency purposes,
+such that events must be referred to by symbolic names associated with
+their unsigned char integer codes.  These names are in src/h/monitor.h
+and all begin with the prefex E\_, as in \texttt{E\_Pcall} for
+``procedure call event''.
+
+Event masks were essential in creating run-time monitoring facilities,
+but in certain cases, even more filtering is needed.  For example, the
+event for virtual machine instructions is extremely frequent.  An
+additional layer of filtering was introduced in the form of value
+masks, such that for each event code in the event mask, a (Unicon) set
+of values of interest could be specified. The macro became so long
+that it was preferable to use rtt's multi-line macro syntax
+(\#begdef...\#enddef).    With value mask tests in
+place the EVVal() macros look more like:
+
+\begin{iconcode}
+\#begdef RealEVVal(value,event,exint,entint) \\
+\>   do \{ \\
+\>\>    if (is:null(mycurpstate-$>$eventmask)) break; \\
+\>\>    else if (!Testb((word)ToAscii(event), mycurpstate-$>$eventmask)) break; \\
+\>\>    MakeInt(value, \&(mycurpstate-$>$parent-$>$eventval)); \\
+\>\>      if (!is:null(mycurpstate-$>$valuemask) \&\& \\
+\>\>	  (invaluemask(mycurpstate, event, \&(mycurpstate-$>$parent-$>$eventval)) \\
+\>\>\>\>\>\>\>\>\>\> != Succeeded)) \\
+\>\>\>	 break; \\
+\>\>      exint; \\
+\>      actparent(event); \\
+\>      entint; \\
+\>   \} while (0) \\
+\#enddef					/* RealEVVal */
+\end{iconcode}
+
+The reason that these macro definitions are prefixed ``Real'' is that
+they can in turn enabled or disabled on a per-eventcode basis via
+
+\begin{iconcode}
+\#begdef EVVal(value,event) \\
+\#if event \\
+\>   RealEVVal(value,event,/*noop*/,/*noop*/) \\
+\#endif \\
+\#enddef					/* EVVal */
+\end{iconcode}
+
+This is probably overkill.
+
+\section{Instrumented vs. Uninstrumented Run-time Functions}
+
+In Icon, the pervasive instrumentation of run-time events was seen to
+cost about 50\% performance, even when not in use. For
+this reason a separate copy of the iconx virtual machine was built
+specifically for monitoring, an miconx.  It was workable but
+inconvenient to be shipping an extra copy of the VM executable for
+monitoring purposes; it took up extra space, and complicated the build
+makefile.
+
+For Unicon, a scheme was devised to compile both the instrumented and
+full-speed uninstrumented versions of the 30 runtime functions that
+had events in them.  For each such function, say cnv\_str() for
+example, the body of the function is placed in a macro that is
+instantiated twice, once with events and once without.  The macro is
+parameterized by the event codes that that function has instrumented
+within it and is capable of producing:
+
+\begin{iconcode}
+\#begdef cnv\_str\_macro(f, e\_aconv, e\_tconv, e\_nconv, e\_sconf, e\_fconv) \\
+/* \\
+ * cnv\_str - cnv:string(*s, *d), convert to a string \\
+ */ \\
+int f(dptr s, dptr d) \\
+\>   \{ \\
+\> ... \\
+\> \#enddef
+\ \\
+\#ifdef MultiProgram \\
+\#passthru \#undef cnv\_str \\
+cnv\_str\_macro(cnv\_str,0,0,0,0,0) \\
+cnv\_str\_macro(cnv\_str\_1,E\_Aconv,E\_Tconv,E\_Nconv,E\_Sconv,E\_Fconv) \\
+\#else					/* MultiProgram */ \\
+cnv\_str\_macro(cnv\_str,0,0,0,0,0) \\
+\#endif					/* MultiProgram */
+\end{iconcode}
+
+So the definition of \texttt{cnv\_str} accomplishes the definition of
+an instrumented \texttt{cnv\_str\_1} as a by-product.  In the current
+implementation, instrumentation of a given function is an
+all-or-nothing decision. The macros are capable of supporting
+multiple, finer-grained instantiations with partial instrumentation,
+if desired.
+
+Whether to use the instrumented or uninstrumented version of each of
+these functions is decided at runtime on a per-program basis and can
+change over time. Which functions are in use are specified by a set of
+function pointers in the current program state structure.  These
+function pointers are calculated based on the program's event mask.
+Whenever the event mask changes, the set of instrumented functions is
+recalculated; this is normally during EvGet() and lives in a function
+named \texttt{assign\_event\_functions()}.
+
+\begin{iconcode}
+void assign\_event\_functions(struct progstate *p, struct descrip cs) \\
+\{ \\
+\>   p-$>$eventmask = cs; \\
+\ \\
+\>   /* \\
+\>    * Most instrumentation functions depend on a single event. \\
+\>    */ \\
+\>   p-$>$Cplist = \\
+\>\>      ((Testb((word)ToAscii(E\_Lcreate), cs)) ? cplist\_1 : cplist\_0);
+\> ... \\
+\end{iconcode}
+
+Using function pointers in the program state instead of direct
+function calls for these 30 common functions in the Unicon virtual
+machine imposes a cost on runtime performance due to added indirect
+memory references performed during those calls. The cost was measured
+and believed to be under 5\% at the time it was introduced, which was
+considered acceptable for the added capabilities and convenience of
+having monitoring available and standard within the regular Unicon
+virtual machine.

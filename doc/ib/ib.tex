@@ -1,0 +1,275 @@
+%
+% ib.tex - main module for the (Icon and Unicon) Implementation book.
+%
+% goal: update style to match the Unicon Book.
+%
+
+% This file was converted to LaTeX by Writer2LaTeX ver. 1.5.2
+% see http://writer2latex.sourceforge.net for more info
+
+\documentclass[letterpaper,twoside,12pt]{book}
+\usepackage[english]{babel}
+\usepackage[inner=1.3in,outer=0.8in,textheight=8.9in]{geometry}
+\usepackage{color,array,xtab,hhline}
+\usepackage{makeidx}
+\usepackage[ascii]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb,amsfonts,textcomp}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{lmodern}
+% \usepackage{epsf}
+\usepackage{times}
+\usepackage{anysize}
+\usepackage{multirow}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue, urlcolor=blue, pdftitle=The Implementation of Icon and Unicon, pdfauthor=Clinton Jeffery, pdfsubject=, pdfkeywords=}
+% tikZ loads graphicx automatically (and gets upset if it's already loaded).
+%\usepackage[pdftex]{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.misc,shapes.geometric,shapes.arrows}
+\usetikzlibrary{positioning}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{shadows}
+\newcommand\TextSubscript[1]{\ensuremath{{}_{\text{#1}}}}
+% Text styles
+\newcommand\textstyleSourceText[1]{\texttt{#1}}
+\newcommand\textstyleEmphasis[1]{\textit{#1}}
+% Outline numbering
+\setcounter{secnumdepth}{4}
+\input ../icon.sty
+%\usepackage{showidx}
+\makeindex
+\makeatletter
+\newcommand\arraybslash{\let\\\@arraycr}
+\makeatother
+% Page layout (geometry)
+%\setlength\voffset{-1in}
+%\setlength\hoffset{-1in}
+%\setlength\topmargin{1in}
+%\setlength\oddsidemargin{1.25in}
+%\setlength\textheight{8.2925005in}
+%\setlength\textwidth{6.0in}
+%\setlength\footskip{0.0cm}
+%\setlength\headheight{0.5075in}
+%\setlength\headsep{0.2in}
+%
+%Grey
+\definecolor{lightgrey}{RGB}{180,180,180}%
+\newcommand{\gr}[1]{\color{lightgrey}#1}%
+%Figures
+\setlength{\abovecaptionskip}{0pt plus 2pt minus 20pt}% [DonW] May need to tweak these
+\setlength{\belowcaptionskip}{0pt plus 2pt minus 20pt}%        values.
+% Title Font Size
+\newcommand*{\TitleFont}{%
+      \usefont{T1}{ptm}{b}{n}%
+      \fontsize{50}{56}%
+      \selectfont}
+% Footnote rule
+\setlength{\skip\footins}{0.0469in}
+\renewcommand\footnoterule{\vspace*{-0.0071in}\setlength\leftskip{0pt}\setlength\rightskip{0pt plus 1fil}\noindent\textcolor{black}{\rule{0.25\columnwidth}{0.0071in}}\vspace*{0.0398in}}
+
+\include{writerdefs}
+\include{ibpicture}
+
+\selectlanguage{english}
+\title{The Implementation of Icon and Unicon}
+\author{Clinton Jeffery and Don Ward}
+\date{2017-01-24}
+\begin{document}
+\clearpage\clearpage\setcounter{page}{1}\pagestyle{KonvertFolgeii}
+\thispagestyle{Konverti}
+\begin{center}
+\includegraphics[width=5.9992in,height=5.3402in]{ib-img/ib-img001.jpg}
+\end{center}
+{\selectlanguage{english}\color{black}
+\bfseries\Huge
+The \vspace{0.05in}
+
+\noindent \TitleFont
+\begin{center}
+\colorbox{blue}{\makebox[6.2in][r]{\parbox{6.2in}{\center\textcolor{white}{Implementation of\\ Icon and Unicon} \vspace{0.05in}}}}
+\end{center}
+}
+
+\vspace{0.05in}
+
+{\raggedleft\itshape\huge
+a Compendium
+\par}
+
+\bigskip
+
+{\raggedleft\LARGE
+Clinton Jeffery and Don Ward, editors
+\par}
+
+\clearpage\setcounter{page}{1}\pagestyle{UnnumberedKonvertFolgeii}
+\parbox{1in}{}
+
+\clearpage
+
+\bigskip
+\bigskip
+\bigskip
+
+{\centering\bfseries\Huge
+The Implementation\\
+of Icon and Unicon
+\par}
+
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+
+{\raggedleft\bfseries\Large
+Ralph and Madge T. Griswold
+\par
+Kenneth W. Walker
+\par
+Clinton L. Jeffery 
+\par
+Michael D. Wilder
+\par
+Anthony T. Jones
+\par
+Jafar Al Gharaibeh
+\par}
+
+\bigskip
+\bigskip
+\bigskip
+
+\clearpage\setcounter{page}{1}\pagestyle{KonvertFolgeii}
+\frontmatter
+\bigskip
+\bigskip
+\noindent Copyright {\textcopyright} 2017 -- 2020 Clinton Jeffery
+
+
+\noindent Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License,
+Version 1.2 or any later version published by the Free Software
+Foundation; with no Invariant Sections, no Front-Cover Texts, and no
+Back-Cover Texts. A copy of the license is included in the section
+entitled {\textquotedbl}GNU Free Documentation License{\textquotedbl}.
+
+
+Portions of this document ({\textquotedbl}The Implementation of the
+Icon Programming Language{\textquotedbl}) are in the public domain and
+not subject to the above copyright or license. Other portions of this
+document ({\textquotedbl}An Optimizing Compiler for
+Icon{\textquotedbl}) are copyrighted by Kenneth Walker and appear in
+edited form in this document with the express permission of the
+author.
+
+
+\bigskip
+\raggedbottom
+
+\noindent This is a draft manuscript dated \today.
+
+\noindent Send comments and errata to
+\href{mailto:jeffery@cs.uidaho.edu}{jeffery@cs.uidaho.edu}.
+
+\bigskip
+
+\noindent This document was prepared using \LaTeX. Special thanks to Don Ward
+for assistance with the conversion to \LaTeX.
+
+\setcounter{tocdepth}{4}
+\tableofcontents
+\include{preface}
+
+\mainmatter
+\include {intro}
+
+% If you have trouble because of the optional parameter to \part
+% you might like to reinstate the previous version of the code
+% as a ``get out of jail free'' card. You will also need to make
+% a corresponding edit to the other two parts below.
+%
+%% \part{The Implementation of the Icon Programming Language}
+%% \bigskip
+%% by Ralph E. Griswold and Madge T. Griswold
+\part[The Implementation of the Icon Programming Language]%
+{The Implementation of the Icon Programming Language\\
+{\large by Ralph E. Griswold and Madge T. Griswold}}
+
+\include{p1-intro}
+\include{p1-iconOverview}
+\include{p1-organization}
+\include{p1-values}
+\include{p1-strings-csets}
+\include{p1-lists}
+\include{p1-sets-tables}
+\include{p1-interpreter}
+\include{p1-exprEval}
+\include{p1-procs-coexprs}
+\include{p1-records-classes}
+\include{p1-storage}
+\include{p1-runTime}
+
+\part[An Optimizing Compiler for Icon]%
+{An Optimizing Compiler for Icon\\{\large by Kenneth W. Walker}}
+
+\include{p2-preface}
+\include{p2-compiler}
+\include{p2-transModel}
+\include{p2-typeTheory}
+\include{p2-liveness}
+\include{p2-overview}
+\include{p2-iconcOrg}
+\include{p2-typeInfer}
+\include{p2-codeGen}
+\include{p2-ctrlflow}
+\include{p2-invoke}
+\include{p2-codePerform}
+\include{p2-space}
+\include{p2-iconcOpt}
+\include{p2-futureWork}
+
+\part[The Implementation of Unicon]%
+{The Implementation of Unicon\\
+{\large by Clinton L. Jeffery, Michael D. Wilder, and Jafar Al Gharaibeh}}
+
+\include{p3-unicon}
+\include{p3-network-posix}
+\include{p3-database}
+\include{p3-2D3D}
+\include{p3-uniconc}
+\include{p3-concur}
+\include{p3-monitor}
+
+\part{Appendices}
+\appendix
+
+\include{appA}
+\include{appB}
+\include{appC}
+\include{appD}
+
+\include{app-projects}
+\include{app-solutions}
+\include{app-rtl}
+\include{appH}
+\include{appI}
+
+\include{gnudoclicence}
+
+\clearpage
+\bigskip
+\backmatter
+\include{references}
+\cleardoublepage
+\include{index-xref}
+\addcontentsline{toc}{chapter}{Index}
+\printindex
+
+\bigskip
+\end{document}

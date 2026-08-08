@@ -1,0 +1,91 @@
+\chapter{ODBC Database Facilities}
+
+Unicon's ODBC facilities were initially implemented by Federico Balbi
+for Microsoft Windows platforms.  Happily, ODBC has been widely ported
+and is one of Microsoft's more open and successful technical contributions.
+
+\section{Organization}
+
+The seven functions introduced for the ODBC interface are located
+in \texttt{fdb.r}. Over time it was discovered that the only function
+that matters very much is \texttt{sql()}, and the others are somewhat
+vestigial.
+
+The underlying runtime system support functionality
+is in \texttt{rdb.r}.  Initially, the runtime system support consisted
+primarily of an ODBC-specific error message function, \texttt{odbcerror()},
+along with functions for opening and closing database connections.
+Early uses of the facilities led to the revelation that
+the vast majority of the interface consists of type
+conversion and packaging of the results of SQL queries in Unicon format,
+as records to be produced by calls to \texttt{fetch()}. Consequently,
+the longest and most interesting function in \texttt{rdb.r} turns out to
+be the function \texttt{dbfetch()} that helps the Unicon function
+\texttt{fetch()} to do its job.
+
+In addition to the new files \texttt{fdb.r} and \texttt{rdb.r}, which
+together come to around 1000 lines of RTL code, the database facilities
+introduced changes to several existing source files, under
+\texttt{\#ifdef ISQL} directives.
+
+\begin{itemize}
+\item \texttt{fdefs.h}: ODBC function definitions.
+\item \texttt{grttin.h}: fake type definitions for ODBC data types.
+\item \texttt{rexterns.h}: ISQLEnv extern definition.
+\item \texttt{rmacros.h}: Fs\_ODBC file status flag and ODBC error codes.
+\item \texttt{rproto.h}: contains odbcerror function definition.
+\item \texttt{rstructs.h}: ISQLFile definition (ODBC connection type).
+\item \texttt{sys.h}: ODBC header files inclusion (windows.h and sqlext.h).
+\item \texttt{fxposix.ri}: contains fetch(), defined also under Dbm
+\item \texttt{init.r}: ODBC Environment structure release.
+\item \texttt{omisc.r}: size operator (unary *) for ODBC file type.
+\item \texttt{data.r}: runerr error code for ODBC file mismatch.
+\end{itemize}
+
+\section{ISQLFile type}
+
+In Unicon an ODBC connection to a database is treated as though similar
+to an open file.  This tired metaphor, borrowed from UNIX and Plan 9 for
+all forms of I/O, is fundamentally flawed, since ODBC connections are not
+byte streams, nor are they text- or line-oriented. However, to the extent
+that the ``file'' abstraction is really a generic reference to all types
+of operating system data sources and sinks that must be opened and
+interacted with via read and write operations, the metaphor is apt.
+
+Internally an OBDBC connection is represented by the following C
+structure:
+
+\begin{iconcode}
+\#ifdef ISQL\>\>\>\>\>\>\>\>\>\>             /* ODBC support */ \\
+\>  struct ISQLFile \{\>\>\>\>\>\>\>\>\>     /* SQL file     */ \\
+\>\>    SQLHDBC hdbc;\>\>\>\>\>\>\>\>        /* connection handle */ \\
+\>\>    SQLHSTMT hstmt;\>\>\>\>\>\>\>\>      /* statement handle  */ \\
+\>\>    char *query;\>\>\>\>\>\>\>\>         /* SQL query buffer */ \\
+\>\>    long qsize;\>\>\>\>\>\>\>\>          /* SQL query buffer size */ \\
+\>\>    char *tablename; \\
+\>\>    struct b\_proc *proc;\>\>\>\>\>\>\>\>/* record constructor for current query */ \\
+\>\>    int refcount; \\
+\>\>    struct ISQLFile *previous, *next; \\
+\>\>    \}; \\
+\#endif
+\end{iconcode}
+
+The field \texttt{hdbc} is used to keep the connection information associated
+to a particular ISQLFile file. \texttt{hstmt} is the statement structure that
+saves the results or dataset returned by an ODBC operation. The design
+of the interface is table oriented, which means that for each table we
+open a new connection.
+
+In the future we will consider the possibility to associate a file to
+a database. This would let us open a connection for each database and
+share the same connection for each table within the same database. In
+this way we can open a file and use more than a table.
+
+Actually when open(DSN,"o",user,password) is called Unicon allocates
+an ISQLFile object and initializes the structure fields in the
+following way:
+
+\begin{itemize}
+\item    hdbc is related to the DSN specified in open()
+\item    hstmt is related to hdbc
+\end{itemize}

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Unicon Messaging Facilities</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li class="current">UTR 13a: The Unicon Messaging Facilities</li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr12.html">&larr; UTR 12a: Ui: a Unicon Development Environment</a>
+<a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">The Unicon Messaging Facilities</h1>
+<p class="report-authors">Steven E. Lumos and Clinton L. Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 13a</p>
+<p class="report-date">2015-06-24</p>
+<p class="report-pdf"><a href="utr13.pdf">pdf</a> · <a href="_sources/utr13.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>A messaging language provides highly-integrated connectivity (networking) along with context sensitivity. This work explores the implementation of messaging in a more traditional language by adding messaging language features to the Unicon programming language. The resulting system makes it easy to write Unicon programs that take advantage of Internet resources by leveraging programmer intuition.</p>
+</div>
+</header>
+<h2 id="1-introduction">
+1.   Introduction
+</h2>
+<p>
+The Unicon messaging facilities are a part of the system interface that support high-level Internet programming by hiding Internet protocols and servers behind an expanded version of the standard file abstraction. The messaging facilities do not add any functions or operators to Unicon. Instead, a new form of the file type is introduced, and existing functions and operators for dealing with files are extended to operate on the new subtype. Additionally, certain non-file operators have been extended to operate on messaging files in cases where it is appropriate or natural to do so.
+</p>
+<p>
+This report was prepared by the first author as user documentation. It was then edited and later amended by Clint Jeffery. The editor apologizes for lost formatting and any other errors contained within. The interested reader is referred to the first author's M.S. Thesis and the book Programming with Unicon for more extended discussions and examples of the use of these facilities.
+</p>
+<h2 id="2-a-short-example">
+2.   A Short Example
+</h2>
+<p>
+A major goal of the messaging facility is to leverage the intuition of Unicon programmers. A Messaging program can be as simple as:
+</p>
+<pre><code class="language-unicon">
+
+procedure main(args)
+
+f := open(args [1], &quot;m&quot;)
+
+every write (! f )
+
+close ( f )
+
+end
+</code></pre>
+<p>
+This program is completely familiar to a Unicon programmer with the exception of ”m” being passed as the mode argument to open(). This causes open() to interpret the filename argument as an URL instead of a file name. Differentiating between URLs and filenames in this way is necessary for correctness, since it is possible for a URL to also be a legal filename and there is no other behavior that will avoid unwelcome surprises in certain (admittedly pathological) cases.
+</p>
+<p>
+The Messaging Facility also attempts to remain general whenever possible. The above code will work equally well for HTTP and Finger, and any future protocol which operates in a similar open-and- read mode. Unfortunately, we cannot say that this code works for all protocols, since there are protocols where choosing semantics for the above code is either impossible or inconvenient (i.e. a clear and intuitive interpretation could not be found).
+</p>
+<h2 id="3-the-importance-of-explicit-close">
+3.    The Importance of Explicit Close
+</h2>
+<p>
+Usually, a very high level language like Unicon is expected to automatically manage resources such as file handles. In particular, many programmers are accustomed to opening files and relying on the runtime system (which may actually be relying on the operating system) to properly flush and close the files when variables go out of scope or at program termination. Unicon currently does the latter, implicitly closing files only at program termination, which can be a problem for certain protocols. A POP connection for example caches delete requests and only performs the actual deletions following a clean disconnect. In the current SMTP implementation, messages are only sent when a close request is made (we use close to signal the end of the message). Another problem that arises is certain protocols which are designed to handle only a single client at a time. When a POP connection is made, the mailbox being requested is locked, and other requests for the same mailbox are refused until the current connection is closed. If the program waits until exit to close a POP connection, the user will not be able to connect with any other program (or even the same program if it causes a POP connection to be made more than once during a single execution).
+</p>
+<p>
+For these reasons it is recommended that all Messaging files be explicitly closed when they are no longer needed. Even for protocols such as HTTP where the server automatically closes its side of a connection after sending the response, the TCP layer underlying the protocol requires action from the client before the connection is truly closed.
+</p>
+<h2 id="4-messaging-direction">
+4.    Messaging Direction
+</h2>
+<p>
+One of the attributes held by a messaging file is direction, which is primarily dependent on the type of resource (protocol) being used. The possible directions are read-only, write-only, read-write, write-read, and none. The first three directions have the obvious meaning, the last is used for cases where all message data is accessed without using any of Unicon's read or write operations. Since Unicon presents a POP mailbox as a list of messages accessed via the list operations, it has a direction of none. Write-read specifies that the the program is expected to do a number of writes followed by a number of reads, but never interleaving writes and reads. Certain cases of HTTP have write-read direction.
+</p>
+<p>
+In the write-read case, the runtime has to be told when all writing has been completed so that it can notify the server. Instead of adding an explicit operation for this, any operation which would require a response from the server (e.g. read(F) or even F[” Status −Code”]) implicitly causes the runtime to finish the request and transition into the reading stage.
+</p>
+<p>
+Direction specifies the operations allowed on a given messaging file. Attempting to apply any other operation results in a runtime error.
+</p>
+<h2 id="5-protocols">
+5.    Protocols
+</h2>
+<p>
+The current implementation supports the most popular Internet protocols: HTTP, HTTPS, POP, and SMTP, as well as Finger, which was implemented as a simple test case for the protocol library architecture. Although the following sections include some information about these protocols, the relevant RFC (Request for Comments) documents referenced should be consulted for complete and authoritative descriptions. It is also a good idea to at least scan the RFCs for a protocol you intend to use with the Messaging extensions, to get an idea of what to expect.
+</p>
+<p>
+5.1. Finger
+</p>
+<dl>
+<dt>open(&quot;finger://&lt;host&gt;[:&lt;port &gt;][/[/w]&lt;username&gt;]&quot;, &quot;m&quot;)</dt>
+<dd>
+<p>
+Finger is a simple user information protocol. A typical Finger server will report the real name of a user, whether they are currently logged in, and optionally append the contents of a file that the user creates (known as a “dot-plan” file). Since there is no standard URL for Finger requests, the messaging facilities uses the form described in a draft standard [Hoffman], which is unfortunately expired but currently the closest thing to an authoritative description available. The optional /w component of the URL requests a “higher level of verbosity” from the server, but the exact meaning is not specified by the standard and varies among implementations. Finger queries are read-only operations. Examples:
+</p>
+</dd>
+</dl>
+<pre><code class="language-unicon">
+
+open(&quot;finger://nevada.edu/slumos&quot;, &quot;m&quot;)
+
+open(&quot;finger://nevada.edu//w slumos&quot;, &quot;m&quot;)
+
+open(&quot;finger://nevada.edu:79&quot;)
+</code></pre>
+<p>
+5.2. HTTP
+</p>
+<p>
+open(”http://&lt;host&gt;[:&lt;port&gt;][/[&lt;path&gt;]]”, ”m[s]”)
+</p>
+<dl>
+<dt>open(&quot;https://&lt;host&gt;[:&lt;port&gt;][/[&lt;path&gt;]]&quot;, &quot;m[s]&quot;)</dt>
+<dd>
+<p>
+The Hypertext Transfer Protocol (HTTP) is the protocol of the World Wide Web. Using HTTP, a Unicon program can access a wide range of resources: static data files, online databases, and applications. HTTP messaging files can have any of the possible directions, although there is no specific support for write-only in the current implementation. The most common case is a read-only request initiated by a call to open() such as M := open(”http://unicon.org/index.html”, ”m”). The contents of the index.html file can be read using any of the normal read operations, and the header of the response may be retrieved by using the Unicon table operations on the messaging file (e.g. M[”Date”]).
+</p>
+<p>
+The secure encrypted variant of HTTP is specified by URLs beginning with https. This URI prefix uses the OpenSSL secure sockets library in place of regular TCP sockets. Security certificates are important in order to that a program is connected to the remote server with which it intends to communicate. In addition, https pages frequently require username and password authentication in the form of an Authorization header line. The following example takes three required arguments: the URI to open in either http or https format, the user name, and the password.
+</p>
+</dd>
+</dl>
+<p>
+..
+</p>
+<p>
+   link base64
+</p>
+<p>
+   procedure main(av)
+</p>
+<p>
+..
+</p>
+<p>
+   f := open(av[1],&quot;m&quot;,
+</p>
+<p>
+   &quot;Authorization: Basic &quot; \|\| base64encode(av[2]|\|&quot;:&quot;\||av[3])) \|
+</p>
+<p>
+..
+</p>
+<p>
+   stop(&quot;can't open&quot;)
+</p>
+<p>
+   while write(read(f))
+</p>
+<p>
+..
+</p>
+<p>
+   end
+</p>
+<p>
+A Unicon program may simulate a user filling out an HTML form in two ways. The first is to encode the values of the fields in the URL (see [W3C]). The second is to send the fields to the web server as a request body, and is an example of write-read direction. To select write-read mode, the program must include a “Content-Type” header when the URL is opened. If the value of Content-Type contains the string “form” (e.g. “multipart/form-data”) then the HTTP POST method is used, otherwise PUT is used. The POST method is usually used for processing HTML forms, although it is sometimes used for file upload as well, while PUT is intended specifically for file uploading. In either case, the programmer is responsible for any necessary encoding (see mutils.icn).
+</p>
+<p>
+If an opening mode of “ms” is given instead of “m”, a 
+<em>
+short
+</em>
+ request is performed. In this case the HTTP HEAD method is used, which causes the server to return only the header part of its response. In this case the connection has direction none, since the header fields are queried as table values.
+</p>
+<p>
+One interesting feature of HTTP is that a server can notify the client when a resource has been moved to some other location. When this is done, the server will set the Status-Code to 301, 302, 303, or 307, and put the URL of the new location into the “Location” header field. The following program shows how to use this information to automatically fetch the URL at it’s new location:
+</p>
+<pre><code class="language-unicon">
+
+procedure main(args)
+
+if ∗args &lt; 1 then stop(&quot;usage: &quot;, &amp;progname, &quot; url &quot;)
+
+# Connect to the host specified in the URL, sending some custom
+
+# header fields .
+
+f := open(args [1], &quot;m&quot;,
+
+&quot;User−Agent: Unicon Grab 0.0&quot;,
+
+&quot;X−Unicon: http :// icon . cs . unlv . edu /&quot;) \|
+
+stop(args [1], &quot;: can' t open&quot;)
+
+repeat {
+
+if f [&quot; Status −Code&quot;] &lt; 300 then {
+
+# If the server returns a successful status code, read in the
+
+# result 64k at a time and write it out .
+
+while writes (reads(f , 65535))
+
+exit (0)
+
+}
+
+else if f [&quot; Status −Code&quot;] &lt; 400 &amp; \\f[&quot;Location&quot;] then {
+
+# If the server returns a 3xx error , check for a Location:
+
+# header and follow if found.
+
+newloc := f [&quot;Location&quot;]
+
+close ( f )
+
+f := open(newloc, &quot;m&quot;,
+
+&quot;User−Agent: Unicon Grab 0.0&quot;,
+
+&quot;X−Unicon: http :// icon . cs . unlv .edu /&quot;) \|
+
+stop(newloc, &quot;: can' t open&quot;)
+
+}
+
+else {
+
+# Some other error , so tell the user what the server told us .
+
+stop( f [&quot; Status −Code&quot;], &quot; &quot;, \\f[&quot;Reason−Phrase&quot;] \| &quot;&quot;)
+
+}
+
+}
+
+end
+
+5.3. POP
+</code></pre>
+<dl>
+<dt>open(&quot;pop://&lt;user&gt;:&lt;pass&gt;@&lt;domain&gt;[:port]&quot;, &quot;m&quot;)</dt>
+<dd>
+<p>
+The POP post office protocol allows Unicon programs to retrieve messages from a common class of Internet email servers. The source email address is given as e.g. pop://clint:tiger@cs.happy.edu. A POP connection is viewed as a list where each complete message is a list element. Operators ! and [ ] as well as function pop() work on this list; read() does not work because no definition of it would make sense. Function pop() effectively removes the e-mail from the server; a POP connection must be closed properly for any deletions performed on the connection to take place.
+</p>
+</dd>
+</dl>
+<p>
+# DANGER: This program deletes all messages from your server!
+</p>
+<pre><code class="language-unicon">
+
+procedure main(av)
+
+if ∗av ˜= 1 then stop(&quot;usage: popmail url&quot;)
+
+if not match(&quot;pop://&quot;, av[1]) then stop(av[1], &quot; is not a POP url&quot;)
+
+mailbox := open(av[1], &quot;m&quot;) \| stop(&quot;can't open &quot;, av[1])
+
+while write(pop(mailbox))
+
+close(mailbox)
+
+end
+</code></pre>
+<p>
+5.4. SMTP
+</p>
+<dl>
+<dt>open(&quot;mailto:&lt;user&gt;@&lt;domain&gt;&quot;, &quot;m&quot;)</dt>
+<dd>
+<p>
+SMTP support allows Unicon programs to send messages to Internet email addresses. The destination email address is given as e.g. mailto:unicon-group@cs.unlv.edu. Extensions to the mailto: URL to specify header fields such as subject are not supported, this is better done using the header mechanism already in place.
+</p>
+</dd>
+</dl>
+<p>
+In order to construct and send an email message, the runtime must know the address of the user sending the message, and the name of a SMTP server to connect to. Since both of these would be inconvenient to specify in the program, they are taken from two environment values, both of which have default values. UNICON SMTPSERVER should be set to the user’s SMTP relay (SMTP without a relay is not supported) and defaults to the local host where where program is running. UNICON USERADDRESS should be set to a valid email address for the user sending the message, and defaults to user@host where user is the name of the user running the program and host is the name of the host the program is running on. 
+<strong>
+Do not allow the default values to be used unless they are actually valid.
+</strong>
+</p>
+<p>
+The following program shows how to send a webpage to someone via email. An example use could be to have it run periodically to send current stock quotes to yourself throughout the day.
+</p>
+<pre><code class="language-unicon">
+
+procedure main(args)
+
+if *args ~= 2 then stop(&quot;usage: &quot;, &amp;progname, &quot; url mailto &quot;)
+
+web := open(args [1], &quot;m&quot;) \| stop(args[1] \|\| &quot;: can' t open&quot;)
+
+if web[&quot;Status−Code&quot;] &lt; 300 then {
+
+mail := open(args [2], &quot;m&quot;, &quot;Subject : &quot; \|\| args [1], &quot;X−Note:
+automatically send by Unicon&quot;) \|
+
+stop(args[2] \|\| &quot;: can' t open&quot;)
+
+every write(mail , !web)
+
+close (web)
+
+close (mail)
+
+}
+
+else {
+
+write(&quot;ERROR: &quot;, web[&quot;Status−Code&quot;], &quot; &quot;, \\web[&quot;Reason−Phrase&quot;] \| &quot;&quot;)
+
+}
+
+end
+</code></pre>
+<h2 id="references">
+References
+</h2>
+<ol start="1">
+<li>
+Paul E. Hoffman. Finger URL specification. https://tools.ietf.org/html/draft-ietf-uri-url-finger-02. Note: This is an expired IETF draft, but there does not appear to have ever been an update.
+</li>
+<li>
+W3C (World Wide Web Consortium). HTML 4.01 Specification. Section 17.13. http://www.w3.org/TR/html401/interact/forms.html#h-17.13
+</li>
+</ol>
+<h4 id="a-function-and-operator-reference">
+A.     Function and Operator Reference
+</h4>
+<p>
+This section documents the new behavior of functions and operators which act on messaging files.
+</p>
+<dl>
+<dt>!M : string* generate messages from POP</dt>
+<dd>
+<p>
+Generate messages from a POP mailbox (one message per result).
+</p>
+</dd>
+<dt>!M : string* generate lines from a messaging file</dt>
+<dd>
+<p>
+The action of the generate operator depends on the type of the server the messaging file M refers to. A POP connection is treated as a list of messages, so !M will generate messages from the specified mailbox producing each message as a single string. For any other type of connection, !M generates lines of output from the server as strings.
+</p>
+</dd>
+</dl>
+<p>
+Examples:
+</p>
+<pre><code class="language-unicon">
+
+M := open(&quot;http://icon.cs.unlv.edu/&quot;, &quot;m&quot;)
+
+every write (! M) # Writes the contents of a web page by lines
+
+M := open(&quot;pop:// user :password@pop.myisp.net&quot;, &quot;m&quot;)
+
+every write (! M) # Writes messages one message at a time
+</code></pre>
+<dl>
+<dt>M[string] : string results header reference</dt>
+<dd>
+<p>
+HTTP-style response header field reference.
+</p>
+</dd>
+<dt>M[number] : string POP message reference</dt>
+<dd>
+<p>
+For protocols such as HTTP where responses consist of a header and body, M[”S”] will evaluate to the value of the field named ‘S’. In addition, two special fields are allowed:
+</p>
+</dd>
+</dl>
+<p>
+• M[”Status−Code”] evaluates to the integer code for the status of the request, and
+</p>
+<p>
+• M[”Reason−Phrase”] evaluates to the string containing a human-readable description of the status.
+</p>
+<p>
+The familiar HTTP “404 Not found” result is an example of a Status-Code and Reason-Phrase. Most of the standard Internet protocols use this form of status reporting. For those protocols that don’t (currently just Finger), a success or error code is faked by the protocol handling code. The Reason-Phrase however is not, and so Unicon programs should be written to handle the case when M[”Reason−Phrase”] === &amp;null.
+</p>
+<p>
+Status codes follow a convention where a value less than 300 means success, 300–399 means an error occurred which may be correctable, and 400+ means that a fatal error occurred.
+</p>
+<p>
+The second form (M[n]) is only valid for POP connections. The expression returns the n-th message in a POP mailbox. Examples:
+</p>
+<pre><code class="language-unicon">
+
+M := open(&quot;http :// icon . cs . unlv . edu /&quot;, &quot;m&quot;)
+
+if (M[”Status−Code”] &gt;= 300) then
+
+# Note: Must handle null Reason−Phrase
+
+stop(M[”Status−Code”], ” ”, (\\M[”Reason−Phrase”] \| ””))
+</code></pre>
+<pre><code class="language-unicon">
+
+M := open(&quot;pop:// user :password@pop.myisp.net&quot;, &quot;m&quot;)
+
+write(M[3]) # Writes the 3rd message in the mailbox
+</code></pre>
+<dl>
+<dt>close(file) : file close a messaging file</dt>
+<dd>
+<p>
+close (M) complete any pending request, closes any open connections to the server and returns resources associated with the file to the operating system. It returns the closed file.
+</p>
+</dd>
+<dt>delete(file, integer [, integer . . . ]) : file delete a message</dt>
+<dd>
+<p>
+delete (M, N\ 
+<sub>1</sub>
+, ..., N\ 
+<sub>n</sub>
+) deletes all messages numbered Nx from a Post-office Protocol (POP) server and returns M. It always succeeds. As a feature of POP, messages are not irreversibly deleted until a successful close (M) is done. If the connection is lost (e.g. because the program exited) without an explicit close, no messages are actually deleted. Examples:
+</p>
+</dd>
+</dl>
+<pre><code class="language-unicon">
+
+M := open(&quot;pop:// user :password@pop.myisp.net&quot;, &quot;m&quot;)
+
+delete (M, 1, 3, 5)
+</code></pre>
+<dl>
+<dt>open(string, ”m”, . . . ) : file? open messaging file</dt>
+<dd>
+<p>
+open(U, ”m”, H1, ..., Hn) connects to the Internet server specified by the URL U and sends H1 through Hn as headers for the request part of the translation. If the connection cannot be made, a runtime error results.
+</p>
+</dd>
+</dl>
+<p>
+Some protocols specify default headers if they are not supplied by the program. For HTTP, the User-Agent field is automatically given the value “Unicon Messaging/10.0”, and the Host field is give the host and port parts of the URL. The Host field is required by the standard and most programs should use the default value. For SMTP, the From field is automatically copied from the UNICON USERADDRESS environment variable if it is defined, or built from the username of the user running the program and the hostname of the host it is running on. Examples:
+</p>
+<pre><code class="language-unicon">
+
+M := open(&quot;http :// icon . cs . unlv . edu /&quot;, &quot;m&quot;, &quot;User−Agent:
+Unicon”)
+</code></pre>
+<pre><code class="language-unicon">
+
+M := open(&quot;mailto:unicon−group@cs.unlv.edu&quot;, &quot;m&quot;,
+
+”From: Steve Lumos &lt;slumos@cs.unlv.edu&gt;”,
+
+”To: Unicon Group &lt;unicon−group@cs.unlv.edu&gt;”,
+
+”Subject : Unicon Messaging Works!”,
+
+”X−Unicon: Sent with Unicon!”)
+</code></pre>
+<dl>
+<dt>pop(file) : string? ‘pop’ message</dt>
+<dd>
+<p>
+A POP connection is seen in Unicon as a list of messages, so pop(M) will remove the first message in the POP mailbox specified by M and return it as a single string. No messages are actually deleted from the server until a successful close(M) is performed. Examples:
+</p>
+</dd>
+</dl>
+<pre><code class="language-unicon">
+
+M := open(&quot;pop:// user :password@pop.myisp.net&quot;, &quot;m&quot;)
+
+while write(pop(M))
+</code></pre>
+<dl>
+<dt>read(file) : string? read a line</dt>
+<dd>
+<p>
+read(M) completes any pending request and reads a line from the server. The end of line marker is discarded. Examples:
+</p>
+</dd>
+</dl>
+<pre><code class="language-unicon">
+
+M := open(&quot;finger://nevada.edu&quot;, &quot;m&quot;)
+
+while (s := read(M)) do {
+</code></pre>
+<pre><code class="language-unicon">
+
+write(s)
+
+}
+</code></pre>
+<dl>
+<dt>reads(file, integer:1) : string? read characters</dt>
+<dd>
+<p>
+reads(M, n) completes any pending request and reads n characters from the server. If n = −1, the maximum number of characters possible are returned, which usually means the entire file. Examples:
+</p>
+</dd>
+</dl>
+<pre><code class="language-unicon">
+
+M := open(&quot;http :// icon . cs . unlv . edu/ data &quot;, &quot;m&quot;)
+
+data := reads(M, −1)
+
+M := open(&quot;http :// www.files.com/ big file . dat &quot;, &quot;m&quot;)
+
+while ( writes (reads(M, 4096))) # 4k buffer
+</code></pre>
+<dl>
+<dt>write(x, . . . ) : x write line</dt>
+<dd>
+<p>
+write (...) writes out its arguments, each followed by a newline. If any argument is a messaging file, subsequent arguments are written as the body part of a request to the server.
+</p>
+</dd>
+<dt>writes(x, . . . ) : x write strings</dt>
+<dd>
+<p>
+writes (...) writes out its arguments. If any argument is a messaging file, subsequent arguments are written as the body part of a request to the server.
+</p>
+</dd>
+</dl>
+<div class="prevnext">
+<a href="utr12.html">&larr; UTR 12a: Ui: a Unicon Development Environment</a>
+<a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr13.pdf">pdf</a> | <a href="_sources/utr13.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

@@ -1,0 +1,1927 @@
+% Make sure we don't inherit an xtabular definition from a previous chapter
+\tablehead{}
+\tablefirsthead{}
+\tabletail{}
+\tablelasttail{}
+
+\chapter{Adding Functions and Data Types}
+
+Icon is designed so that new functions and data types can be added
+with comparative ease.  This appendix provides some guidelines for
+modifying the Icon run-time system and lists useful macro definitions
+and support routines. It is designed to be read in conjunction with
+the source code for the implementation. The material included here
+only touches on the possibilities. There is no substitute for actually
+implementing new features and spending time studying the more
+intricate parts of the Icon system.
+
+This appendix provides an action summary of how to extend the language
+implementation. For non-trivial additions, the reader should consult
+Appendix G which contains a detailed description of the RTL language
+in which the run-time system is written.
+
+
+\section{File Organization}
+
+The Icon system is organized in a hierarchy. Under UNIX, the root of
+the Icon hierarchy is called icon.git/trunk {\color{blue} (the Unicon
+root directory is called unicon)} and may be located anywhere.
+Neither Icon nor Unicon depends on the name of the root directory and,
+for other operating systems, it may be named differently.
+
+The {\it root} directory has several subdirectories that contain
+source code, test programs, documents, and so forth. The source code
+is in {\it root}/src.  The subdirectories of src are shown below.
+
+The subdirectory h holds header files that are included by files in
+the other subdirectories. The file \textfn{h/rt.h} contains most of
+the definitions and declarations used in the run-time system.
+
+The rest of the code related to the run-time system is in the
+subdirectory \textfn{runtime}. Source file extensions in this
+directory are \texttt{.r} and \texttt{.ri} for ``run-time'' and
+``run-time include'' files which are processed by rtt.
+First letters of files in this
+subdirectory indicate the nature of their contents. Files that begin
+with the letter f contain code for functions, while files that begin
+with o contain code for operators. Code related directly to the
+interpretive process is in files that begin with the letter
+i. ``Library'' routines for operations such as list construction that
+correspond to virtual machine instructions are in files that begin
+with the letter l. Finally, files that begin with the letter r hold
+run-time support routines.
+
+Within each category, routines are grouped by functionality. For
+example, string construction functions such as map are in \textfn{fstr.r},
+while storage allocation and garbage collection routines are in
+\textfn{rmemmgt.r}.
+
+A simplified file structure is shown below. The emphasis is on
+directories that contain source or documentation. Directories that are
+common to both Icon and Unicon are in black; Icon specific directories are
+shown in grey; Unicon specific directories are shown in blue.
+In some cases there is additional sub-structure not shown here.
+
+\noindent\index{Icon Directory structure}\index{Unicon Directory structure}
+\begin{picture}(450,370)(0,40)
+%\put(0,40){\graphpaper{45}{37}}
+  {\thicklines
+  \put(0,205){\makebox(80,20){Icon.git/trunk}}
+  \put(0,185){\color{blue}\makebox(80,20){unicon}}
+  \put(0,205){\line(1,0){80}}
+  \put(80,100){\line(0,1){280}}
+  \put(110,370){\makebox(0,20)[l]{bin}}
+  \put(150,370){\makebox(0,20)[l]
+    {\parbox{100pt}{\em Executable binaries and support files}}}
+  \put(110,330){\makebox(0,20)[l]{config}}
+  \put(150,330){\makebox(0,20)[l]{\parbox{70pt}{\em Configuration directories}}}
+  \put(110,290){\makebox(0,20)[l]{doc}}
+  \put(150,290){\makebox(0,20)[l]{\parbox{100pt}{\em Documents}}}
+  \put(110,250){\makebox(0,20)[l]{ipl}}
+  \put(150,250){\makebox(0,20)[l]{\parbox{70pt}{\em Icon program library}}}
+  {\color[rgb]{0.5,0.5,0.5}
+    \put(110,210){\makebox(0,20)[l]{man}}
+    \put(150,210){\makebox(0,20)[l]{\parbox{100pt}{\em Man pages}}}
+  }%grey
+  \put(110,170){\makebox(0,20)[l]{src}}
+  \put(130,180){\line(1,0){130}}
+  \put(110,130){\makebox(0,20)[l]{tests}}
+  \put(150,130){\parbox[l]{80pt}
+    {\em benchmarks, C~interface~tests, general~tests etc.}}
+  {\color{blue}
+    \put(110,90){\makebox(0,20)[l]{uni}}
+    \put(150,90){\makebox(0,20)[l]{\parbox{80pt}{Unicon library}}}
+  }%blue
+  \multiput(80,100)(0,40){8}{\line(1,0){20}}
+  %src tree
+  \begin{picture}(0,0)(0,30)
+  \put(260,80){\line(0,1){300}}
+  \multiput(260,80)(0,30){11}{\line(1,0){20}}
+  \put(290,370){\makebox(0,20)[l]{common}}
+  \put(350,370){\makebox(0,20)[l]{\em common source}}
+  \put(290,340){\makebox(0,20)[l]{h}}
+  \put(350,340){\makebox(0,20)[l]{\em header files}}
+  \put(290,310){\makebox(0,20)[l]{\color{blue}iconc}}
+  \put(350,310){\makebox(0,20)[l]{\color{blue}\em Icon compiler source}}
+  \put(290,280){\makebox(0,20)[l]{icont}}
+  \put(350,280){\makebox(0,20)[l]{\em Icon translator source}}
+  {\color{blue}
+    \put(290,250){\makebox(0,20)[l]{lib}}
+    \put(350,250){\makebox(0,20)[l]{
+        \parbox{100pt}{\em Additional libraries for some platforms}}}
+    \put(290,220){\makebox(0,20)[l]{libtp}}
+    \put(350,220){\makebox(0,20)[l]{
+        \parbox{120pt}{\em transfer protocol library}}}
+  }%blue
+  \put(290,190){\makebox(0,20)[l]{preproc}}
+  \put(350,190){\makebox(0,20)[l]{\em preprocessor source}}
+  \put(290,160){\makebox(0,20)[l]{rtt}}
+  \put(350,160){\makebox(0,20)[l]{\em run-time translator source}}
+  \put(290,130){\makebox(0,20)[l]{runtime}}
+  \put(350,130){\makebox(0,20)[l]{\em run-time source}}
+  {\color[rgb]{0.5,0.5,0.5}
+    \put(290,100){\makebox(0,20)[l]{wincap}}
+    \put(350,100){\makebox(0,20)[l]{\em Wincap library source}}
+  }%grey
+  \put(290,70){\makebox(0,20)[l]{xpm}}
+  \put(350,70){\makebox(0,20)[l]{\em xpm library source}}
+  \end{picture}% src tree
+  }% thicklines
+\end{picture}
+
+{\color{blue}
+With one exception -- the files used to build the Windows installer program --
+Unicon has replaced the platform-specific configuration files in config with an
+automated configuration system based on GNU autoconf.
+}
+
+\section{Adding Functions}
+
+There are several conventions and rules of protocol that must be followed
+in writing a new function. The situations that arise most frequently are
+covered in the following sections. The existing functions in f files in
+\textfn{runtime} provide many examples to supplement the information given
+here.
+
+\subsection{Function Declarations}
+
+A function begins with the RTL header \texttt{function\{...\} name(args)},
+where
+name is the name of the function as it is called in a source-language
+program. For example,
+\iconline{ function\{1\} map(s1,s2,s3) }
+\noindent
+appears at the beginning of the function map. This header declares the
+procedure block for the function and includes information about its
+number of results (in curly brackets) and the number and names of its
+parameters. See Appendix G.
+
+A \texttt{Z} is prepended to the name given to avoid a collision with the
+names of other C routines in the run-time system.  Thus, the C function
+that implements map is named \texttt{Zmap}. Although the Icon function map
+has three arguments, the corresponding C function has only one:
+\texttt{r\_args}, which is a pointer to an array of descriptors on the
+interpreter stack.  For example, \texttt{function \{1\} map(s1,s2,s3)} generates
+\goodbreak
+\begin{iconcode}
+\ \ int Zmap(r\_args)\\
+\ \ dptr r\_args;
+\end{iconcode}
+\noindent
+
+A new function must also be listed via a one-line macro in
+\texttt{src/h/fdefs.h}. For a fixed number of arguments the macro is
+\texttt{FncDef(name,nargs)} and for a variable number of arguments
+the macro is \texttt{FncDefV(name)}.
+
+\subsection{Returning from a Function}
+
+A function returns control to the interpreter by use of one of three
+reserved words
+\texttt{return}, \texttt{suspend}, or \texttt{fail}, depending on whether the
+function returns, suspends, or fails, respectively. \texttt{return} and
+\texttt{fail} return codes that the interpreter uses to differentiate between
+the two situations. \texttt{suspend} returns control to the interpreter by
+calling it recursively, as described in Sec. 9.3.
+
+The use of \texttt{return} is illustrated by the following trivial function
+that simply returns its argument:
+\goodbreak
+\begin{iconcode}
+function\{1\} idem(x)\\
+abstract \{ return type(x) \} \\
+body \{\\
+\>return x;\\
+\> \} \\
+end
+\end{iconcode}
+\noindent
+For example,
+\iconline{ \ \ write(idem("hello")) }
+\noindent writes \texttt{hello}.
+
+The use of \texttt{suspend} and \texttt{fail} is illustrated by the
+following function, which generates its first and second arguments in
+succession:
+\goodbreak
+\begin{iconcode}
+function\{2\} gen2(x,y)\\
+abstract \{ return type(x) ++ type(y) \} \\
+body \{\\
+\>suspend x;\\
+\>suspend y;\\
+\>fail;\\
+\}
+\end{iconcode}
+\noindent
+For example,
+\iconline{every write(gen2("hello", "there"))}
+\noindent
+writes
+\goodbreak
+\begin{iconcode}
+\ \ hello\\
+\ \ there
+\end{iconcode}
+
+\noindent
+As illustrated previously, \texttt{fail} is used when there is not another
+result to produce. It is safe to assume that arguments
+are intact when the function is resumed to produce another result.
+
+Most functions have a fixed number of arguments. A number of
+functions such as \texttt{write}, \texttt{writes},
+and \texttt{stop} in the standard Icon repertoire can be called with an
+arbitrary number of arguments. For a function that can be called with
+an arbitrary number of arguments, the final RTL argument is given a
+square brackets enclosing a number of arguments, as in
+\texttt{function{1} name(x[nargs])}. When this format is used, the function is
+called with two arguments: the number of arguments in the call and a
+pointer to the corresponding array of descriptors. For example,
+\texttt{function{1} write(x[nargs])} generates
+
+\goodbreak
+\begin{iconcode}
+Zwrite(r\_nargs, r\_args)\\
+int r\_nargs;\\
+dptr r\_args;
+\end{iconcode}
+
+Within such a function,
+the arguments are referenced using array syntax. For example, a
+function that takes an arbitrary number of arguments and suspends with
+them as values in succession is
+
+\goodbreak
+\begin{iconcode}
+function\{*\} gen(x[n])\\
+{\color{red} abstract \{ return type(x[]) \} /* probably doesn't work */ } \\
+body \{\\
+\>register int i;\\
+\>for (i = 0; i < n; i++) \{\\
+\>\>suspend x[i];\\
+\>\}\\
+\>fail;\\
+\}
+\end{iconcode}
+
+\noindent
+For example,
+\iconline{
+\ \ every write(gen("hello","there","!"))
+}
+
+\noindent
+writes
+
+\goodbreak
+\begin{iconcode}
+\ \ hello\\
+\ \ there\\
+\ \ !
+\end{iconcode}
+
+\noindent
+Note the use of \texttt{fail} at the end of the function; the omission of
+\texttt{fail} would be an error, since returning by flowing off the end of the
+function would not provide the return code that the interpreter expects.
+
+\subsection{Type Checking and Conversion}
+
+Some functions need to perform different operations, depending on the
+types of their arguments. An example is \texttt{type(x)}:
+
+\goodbreak
+\begin{iconcode}
+function\{1\} type(x)\\
+abstract \{ return string \} \\
+body \{\\
+\>type\_case x of  \{\\
+\>\>      string:   inline \{ return C\_string "string";    \} \\
+\>\>      null:     inline \{ return C\_string "null";      \} \\
+\>\>      integer:  inline \{ return C\_string "integer";   \} \\
+\>\>      real:     inline \{ return C\_string "real";      \} \\
+\>\>      cset:     inline \{ return C\_string "cset";      \} \\
+\>\>      \vdots \\
+\>\} \\
+\end{iconcode}
+
+\noindent
+Icon values are stored in descriptors, wherein the d-word serves to
+differentiate between types. Strings require a separate test prior
+to examining the d-word's type code, but this is abstracted by the
+RTL \texttt{type\_case} construct.
+
+For most functions, arguments must be of a specific type. As described in
+Sec. 12.1, type conversion routines are used for this purpose. For example,
+the function \texttt{pos(i)} requires that \texttt{i} be an integer.
+It begins as follows:
+
+\goodbreak
+\begin{iconcode}
+function\{0,1\} pos(i)\\
+\>   if !cnv:C\_integer(i) then runerr(101, i); \\
+\>   abstract \{ return integer \} \\
+body \{\\
+\> \vdots
+\end{iconcode}
+
+\noindent
+The RTL syntax for type conversion and defaulting turns around and
+calls underlying C functions such as \texttt{cnv\_int()} which are
+defined in \texttt{src/runtime/cnv.r}.
+If the conversion is successful, the resulting integer is assigned
+to \texttt{i}. As indicated by this example, it is the responsibility of a
+function to terminate execution by calling \texttt{runerr} if a required
+conversion cannot be made.
+
+Two string conversion functions are available. cnv\_str() allocates
+space for the converted string from the heap, while cnv\_tstr()
+requires a buffer, which is supplied by the routine that calls it.
+See Sec. 4.4.4. This buffer must be large enough to hold the longest
+string that can be produced by the conversion of any value. This size
+is given by the defined constant \texttt{MaxCvtLen}. For example, the
+function to reverse a string begins as follows:
+
+\goodbreak
+\begin{iconcode}
+function\{0,1\} match(s1,s2,i,j)\\
+\>   \vdots \\
+\>   if !cnv:tmp\_string(s1) then runerr(103,s1)
+\end{iconcode}
+
+for which the generated C code looks like
+
+\begin{iconcode}
+int Zmatch(dptr r\_args)\\
+\>   \vdots \\
+\>   char r\_sbuf[1][MaxCvtLen]; \\
+\>   \vdots \\
+\>   if (!cnv\_tstr(r\_sbuf[0], \&(r\_args[1]), \&(r\_args[1]))) \{ \\
+      \{ err\_msg(103, \&(r\_args[1])); \} \}
+\end{iconcode}
+
+\noindent
+The buffer is used only if a nonstring value is converted to a string. In this
+case, \texttt{r\_args[1]} is changed to a qualifier whose v-word points to the
+converted string in \texttt{r\_sbuf[0]}. This string does not
+necessarily begin at the beginning of \texttt{r\_sbuf[0]}. In any
+event, after a successful call to \texttt{cnv\_tstr}, the argument
+is an appropriate qualifier, regardless of whether
+a conversion actually was performed.
+
+\subsection{Constructing New Descriptors}
+
+Some functions need to construct new descriptors to return.  RTL is
+aware that functions return descriptors and given type information,
+its return statement will construct a descriptor for you. As given
+in the function \texttt{type()} previously, for example, to return
+a qualifier for the string \texttt{"integer"}, the following code suffices:
+
+\begin{iconcode}
+return C\_string "integer";
+\end{iconcode}
+
+Sometimes it is convenient to explicitly construct a descriptor by
+assignment to its d- and v-words. Various macros are provided to
+simplify these assignments.  \texttt{StrLen()} and \texttt{StrLoc()} can
+be used to construct a qualifier.
+\goodbreak
+\begin{iconcode}
+StrLen(result) = 7;\\
+StrLoc(result) = "integer";\\
+return result;
+\end{iconcode}
+\noindent
+In these last two examples, the returned qualifier points to a
+statically allocated C string.
+
+There also are macros and support routines for constructing certain
+kinds of descriptors. For example, the macro
+
+\iconline{MakeStr("integer", 7, \&result); }
+
+accomplishes the sames as the two assignments to StrLoc() and StrLen()
+in the preceding example, and
+
+\iconline{MakeInt(i, \&result); }
+
+\noindent
+constructs an integer descriptor containing the integer \texttt{i} in the
+descriptor \texttt{result}.
+
+
+\subsection{Default Values}
+
+Many functions specify default values for null-valued arguments. There
+are RTL constructs for providing default values. For example,
+
+\iconline{ def:tmp\_string(arg, q) }
+
+
+\noindent
+changes \texttt{arg} to the string given by the qualifier \texttt{q} in
+case \texttt{arg} is null-valued. If \texttt{arg} is not null-valued,
+however, its value is converted to a string, if possible, by
+\texttt{def\_tstr}. If this is not possible, the function should terminate
+execution with an error message.
+
+\subsection{Storage Allocation}
+
+Functions that construct new data objects often need to allocate
+storage. Allocation is done in the allocated string region or the
+allocated block region, depending on the nature of the object. Support
+routines are provided to perform the actual allocation.
+
+As mentioned in Sec. 11.4, under certain circumstances such as to
+guarantee that multiple string allocations are adjacent during a
+concatenation, predictive need requests may be required before storage
+is actually allocated.  The function \texttt{reserve(r, i)} requests
+\texttt{i} bytes of contiguous storage in region \texttt{r}.
+
+Such a request generally should be made as soon as an upper bound on the
+amount of storage needed is known. It is not necessary to know the exact
+amount, but the amount requested must be at least as large as the amount
+that actually will be allocated. For example, the function
+\texttt{reads(f, i)} requests \texttt{i} bytes of string storage, although
+the string actually read may be shorter.
+
+\textbf{String Allocation}. The function \texttt{alcstr(s, i)} copies
+\texttt{i} bytes starting at \texttt{s} into the allocated string region
+and returns a pointer to the beginning of the copy. For example, a function
+\texttt{double(s)} that produces the concatenation of \texttt{s} with
+itself is written as follows:
+\goodbreak
+\begin{iconcode}
+function{1} double(s)\\
+abstract \{ return string \} \\
+if !cnv:str(s) then runerr(103, s) \\
+body \{\\
+\>register int slen = StrLen(s);\\
+\>reserve(Strings, 2 * slen);\\
+\>StrLen(result) = 2 * slen;\\
+\>StrLoc(result) = alcstr(StrLoc(s), slen);\\
+\>alcstr(StrLoc(s), slen);\\
+\>return result;\\
+\}
+\end{iconcode}
+
+If the first argument of \texttt{alcstr} is \texttt{NULL}, instead of being
+a pointer to a string, the space is allocated and a pointer to the
+beginning of it is returned, but nothing is copied into the space. This
+allows a function to construct a string directly in the allocated string
+region.
+
+If a string to be returned is in a buffer as a result of conversion
+from another type, care must be taken to copy this string into the
+allocated string region --- otherwise the string in the buffer will
+be overwritten on subsequent calls. Copying such strings is
+illustrated by the function \texttt{string(x)} given in Sec. 12.1.
+
+\textbf{Block Allocation}. The block allocation code all lives in
+src/runtime/ralc.r. Macros \texttt{AlcFixBlk(var,structname,typecode)}
+and \texttt{AlcVarBlk(var,structname,typecode,numdescriptors)}
+allocate fixed and variable-sized blocks, respectively. They are
+generally used internally by run-time support routines for allocating
+each kind of blocks.
+Such support routines generally initialize block as well. For
+example, \texttt{alccset()} allocates a block for a cset, fills in the
+title and size words, and zeroes the bits for the cset:
+\goodbreak
+\begin{iconcode}
+struct b\_cset *alccset()\\
+\{\\
+\>register struct b\_cset *blk;\\
+\>register i;\\
+\> \vdots \\
+\>AlcFixBlk(blk, b\_cset, T\_Cset); \\
+\>blk->size = -1; /* flag size as not yet computed */ \\
+\\
+\>/*\\
+\>\ * Zero the bit array.\\
+\>\ */\\
+\>for (i = 0; i < CsetSize; i++)\\
+\>\>blk->bits[i] = 0; return blk;\\
+\}
+\end{iconcode}
+
+\noindent
+See Sec. D.5.5 for a complete list of block-allocation functions.
+
+\subsection%
+           {D.2.7 Storage Management Considerations}
+
+In addition to assuring that predictive need requests are made before
+storage is allocated, it is essential to assure that all descriptors
+contain valid data at any time a garbage collection may occur, that
+all descriptors are accessible to the garbage collector, and that all
+pointers to allocated data are in the v-words of descriptors.
+
+Normally, all the descriptors that a function uses are on the interpreter
+stack.  Such
+descriptors are processed by the garbage collector. Occasionally,
+additional descriptors are needed for intermediate computations. If such
+descriptors contain pointers in their v-words, and if a function body
+allocates storage or suspends control to code that may allocate
+storage (potentially triggering a garbage collection), it is
+\textit{not} correct to declare local descriptors, as in
+\goodbreak
+\begin{iconcode}
+function\{1\} mesh(x,y)\\
+\> \vdots \\
+body \{\\
+\>struct descrip d1, d2; \\
+\> \vdots \\
+\> subsequent code that may allocate memory, or suspend
+\end{iconcode}
+
+\noindent
+The problem with this approach is that \texttt{d1} and \texttt{d2} are on
+the C stack and the garbage collector has no way of knowing about them.
+
+RTL syntax provides the \texttt{tended} keyword for this situation:
+
+\begin{iconcode}
+function\{1\} mesh(x,y)
+\> \vdots \\
+body \{\\
+\>  tended struct descrip d1, d2; \\
+\>  \vdots \\
+\>  subsequent code that may allocate memory, or suspend
+\end{iconcode}
+
+Garbage collection can occur only during an allocation or predictive need
+request. However, this can occur between the time
+a function suspends and the time it is resumed to produce another
+result. Consequently, if a pointer is kept in a C variable in a loop
+that is producing results by suspending, the pointer may be invalid
+when the function is resumed. Instead, the pointer should be kept in
+the v-word of a descriptor that is tended, i.e. accessible to the garbage
+collector.
+
+\subsection{Error Termination}
+
+An Icon program may terminate abnormally for two reasons: as the
+result of a source-language programming error (such as an invalid type
+in a function call), or as a result of an error detected in the Icon
+system itself (such as a descriptor that should have been dereferenced
+but was not).
+
+In case a source-language error is detected, execution is terminated
+by a call of the form
+
+\iconline{runerr(i, \&d); }
+
+\noindent where \texttt{i} is an error message number and \texttt{d} is the
+descriptor for the offending value. If there is no specific offending
+value, the second argument is 0.
+
+The array of error message numbers and corresponding messages is
+contained in \textfn{runtime/data.r}. If there is no appropriate existing error
+message, a new one can be added, following the guidelines given in
+Appendix G of Griswold and Griswold 1990.
+
+In theory, there should be no errors in the Icon system itself, but no
+large, complex software system is totally free of errors. Some situations
+are recognizable as being potential sources of problems in case data does
+not have the expected values. In such situations, especially during program
+development, it is advisable to insert calls of the function
+\texttt{syserr}, which terminates execution, indicating that an error was
+detected in the Icon system, and prints its argument as an indication of
+the nature of the error. It is traditional to use calls of the form
+
+\iconline{syserr("mesh: can't happen"); }
+
+\noindent so that when, in fact, the ``impossible'' does happen, there is a
+reminder of human frailty.  More informative messages are desirable, of
+course.
+
+\subsection{Header Files}
+
+For RTL .r files, the necessary header files normally will be included
+automatically.  Several of them are processed by rtt itself; its input
+automatically includes src/h/grttin.h which includes several of the
+header files, special macros, and a bunch of {\em ersatz\/} typedef's
+to fool rtt into parsing successfully without the system includes.
+
+The rest of the includes actually happen during the C compile on rtt's
+output since system includes may use compiler-specific extensions that
+rtt would not know about.  rtt writes an include to src/h/rt.h to its
+output files to be processed by the C preprocessor.
+
+% The redefinition of arraystretch works as a way of reducing inter-row
+% spacing in the table, but maybe we should find a more elegant solution.
+{\renewcommand{\arraystretch}{0.9}%
+\noindent
+The header file rt.h includes the full suite of header files:\\[1ex]
+
+\noindent\hspace{0.5cm}% Indent the entire table
+% The magic spell ">{\textfn\bgroup} ... <{\egroup}" sets the font
+% for the first column.  Just showing off for a three row table,
+% but it will come in handy later on in the chapter.
+\begin{xtabular}{>{\textfn\bgroup}l<{\egroup}@{\hspace{1cm}}p{11cm}}
+../h/define.h    & platform specific definitions\\
+../h/arch.h      & (Icon only) automatically generated word size definitions\\
+../h/config.h    & general configuration information\\ 
+../h/sys.h	 & system include files (\textfn{stdio.h} etc.)\\ 
+../h/typedefs.h  & type definitions for the run-time system\\
+../h/cstructs.h  & structure definitions and constants for the
+                   functions in the \textfn{src/common} directory\\
+%
+../h/mproto.h	 & (Icon only) prototypes for functions common to several modules\\
+%
+{\color{blue}../h/proto.h} &%
+% Without the \hspace{0cm} we get extra _vertical_ space between columns: go figure.
+% It only happens when the \color{blue} is added.
+    {\hspace{0cm}\color{blue}(Unicon only) prototypes for library functions}\\
+%
+../h/cpuconf.h   & definitions that depend on the computer word size\\
+{\color{blue}../h/monitor.h} &%
+    {\hspace{0cm}\color{blue}  (Unicon only) event code definitions}\\
+../h/rmacros.h   & macros and manifest constants\\ 
+../h/rstructs.h  & runtime data structures\\
+../h/graphics.h  & graphics facilities (if configured) \\
+../h/audio.h     & audio facilities (Unicon only; if configured) \\
+../h/posix.h     & posix facilities (Unicon only) \\
+../h/messagin.h  & messaging facilities (Unicon only) \\
+../h/rexterns.h  & extern declarations for global variables \\
+../h/rproto.h    & runtime system function prototypes
+\end{xtabular}
+}\\[1ex]
+% arraystretch is now back to normal
+
+\noindent
+All of these files contain appropriate information for the local
+installation, and no changes in them should be needed.
+
+
+\subsection{Installing a New Function}
+
+Both the linker and the run-time system must know the names of all
+functions. This information is provided in the header file \textfn{h/fdefs.h}.
+
+
+In order to add a function, a line of the form
+\iconline{FncDef(name) }
+
+\noindent must be inserted in \textfn{h/fdefs.h} in proper alphabetical order.
+
+Once this insertion is made, the Icon system must be recompiled to
+take into account the code for the new function. The steps involved in
+recompilation vary from system to system. Information concerning
+recompilation is available in system-specific installation documents.
+
+\section{Adding Data Types}
+
+Adding a new data type is comparatively simple, although there are
+several places where changes need to be made. Failure to make all the
+required changes can produce mysterious bugs.
+
+\subsection{Type Codes}
+
+At present, type codes range from 0 to 25 {\color{blue} (31 for
+Unicon)}. Every type must have a distinct type code and corresponding
+definitions.  These additions are made in \textfn{h/rmacros.h}. First, a
+\texttt{T\_}definition is needed. For example, if a Boolean type is added,
+a definition such as
+
+\iconline{\#define T\_Boolean\ \ \ 26 }
+
+\noindent is needed. The value of \texttt{MaxType}, which immediately follows
+the type code definitions, must be increased to 26 accordingly.
+Failure to set \texttt{MaxType} to the maximum type code may result in
+program malfunction during garbage collection. See Sec. 11.3.2.
+
+Next a \texttt{D\_} definition is needed for the d-word of the new type.
+For a Boolean type, this definition might be
+
+\iconline{\#define D\_Boolean\ \ (T\_Boolean | F\_Nqual) }
+
+\noindent
+All nonstring types have the \texttt{F\_Nqual} flag and their \texttt{T\_}
+type code. Types whose v-words contain pointers also have the
+\texttt{F\_Ptr} flag.
+
+\subsection{Structures}
+
+A value of a Boolean type such as the one suggested previously can be
+stored in the d-word of its descriptor. However, most types contain
+pointers to blocks in their v-words. In this case, a declaration of a
+structure corresponding to the block must be added to \textfn{h/rstructs.h}.
+For example, a new rational number data type, with the type code
+\texttt{T\_Rational}, might be represented by a block containing two
+descriptors, one for the numerator and one for the denominator. An
+appropriate structure declaration for such a block is
+
+\goodbreak
+\begin{iconcode}
+struct b\_rational \{\\
+\>int title;\\
+\>struct descrip numerator;\\
+\>struct descrip denominator;\\
+\};
+\end{iconcode}
+
+Since rational blocks are fixed in size, no size field is needed. However,
+a vector type with code \texttt{T\_Vector} in which different vectors have
+different lengths needs a size field. The declaration for such a block
+might be
+
+\goodbreak
+\begin{iconcode}
+struct b\_vector \{\\
+\>int title;\\
+\>int blksize;\\
+\>struct descrip velems[1];\\
+\};
+\end{iconcode}
+
+\noindent
+As mentioned in Sec. 4.4.2, the size of one for the array of
+descriptors is needed to avoid problems with C compilers.  In
+practice, this structure conceptually overlays the allocated block
+region, and the number of elements varies from block to block.
+
+Any new structure declaration for a block must be added to the declaration
+union \texttt{block} in \textfn{h/rstructs.h}. The order of the fields in a
+new structure must follow the rules (discussed next) imposed by the garbage
+collector.
+
+\subsection%
+           {D.3.3 Information Needed for Storage Management}
+
+In Icon version 8 and later, allocated data may be referred to in two ways:
+either (as before) in the v-word of a descriptor, or in one of the pointers
+in a structure.  All pointers to allocated data must be contained either in
+the v-words of descriptors or in pointers, since this is the only way the
+garbage collector can locate them. Furthermore, all non-descriptor data
+(including pointers) must precede any descriptors in a block. The amount of
+non-descriptor data, and hence the location of the first descriptor in a
+block, must be the same for all blocks of a given type. Pointers add new
+constraints: If any pointers are present, they must be in one contiguous
+group and must precede the first descriptor in the block although they need
+not be placed immediately before the descriptors.  If any block has a
+variable number of pointers they must be placed at the end of the block
+(and there can be no descriptors in the block).
+
+As described in Sec. 11.3.2, the garbage collector uses the array
+\texttt{bsizes} to determine the size of a block and the array
+\texttt{firstd} to determine the offset of the first descriptor in the
+block. These arrays are in \textfn{rmemmgt.r}. When a new data type is
+added, appropriate entries must be made in these arrays. Failure to do so
+may result in serious bugs that occur only in programs that perform garbage
+collection, and the symptoms may be mysterious.
+
+There is an entry in \texttt{bsizes} for each type code. If the type has no
+block, the entry is -1. If the type has a block of constant size, the entry
+is the size of the block. Otherwise, the entry is 0, indicating that the
+size is in the second word of the block. Thus, the entry for
+\texttt{T\_Boolean} would be -1, the entry for \texttt{T\_Rational} would
+be \texttt{sizeof(struct b\_rational)}, and the size for \texttt{T\_Vector}
+would be 0.
+
+There is a corresponding entry in \texttt{firstd} for each type code that
+gives the offset of the first descriptor in its corresponding block. If
+there is no block, the entry is -1. If the block contains no descriptors,
+the entry is 0. For example, the entry for \texttt{T\_Boolean} would be -1,
+the entry for \texttt{T\_Rational} would be \texttt{WordSize}, and the
+entry for \texttt{T\_Vector} would be \texttt{2*WordSize}, where
+\texttt{WordSize} is a defined constant that is the number of bytes in a
+word.
+
+Two further arrays are used to determine the placement of pointers.
+\texttt{firstp} is analogous to \texttt{firstd}: there is one entry per
+type. If there is no block, the entry is -1. If the type has no pointers
+the value is 0, otherwise it is the offset of the first pointer in the
+block.  It is possible to infer the number of descriptors from the position
+of the first and the size of the block, but this inference is not always
+possible for pointers so an array \texttt{ptrno} is used to indicate how
+many pointers there are for each type. If there are no pointers, the value
+is -1. A value of 0 means that the pointers occupy the rest of the block
+(and the block has no descriptors). Otherwise the entry contains the number
+of pointers in the block. As with \texttt{firstd} and \texttt{bsizes}, a
+failure to initialize \texttt{firstp} and \texttt{ptrno} correctly may
+result in serious (and mysterious) bugs.
+
+A fifth array, \texttt{blknames}, provides string names for all block
+types. These names are only used for debugging, and an entry should be
+made in \texttt{blknames} for each new data type.
+
+\subsection{Changes to Existing Code}
+
+In addition to any functions that may be needed for operating on
+values of a new data type, there are several functions and operators
+that apply to all data types and which may, therefore, need to be
+changed for any new data type.
+
+\noindent
+These are\\[1ex]
+{\renewcommand{\arraystretch}{0.9}%
+\begin{xtabular}{>{\hspace{1cm}\texttt\bgroup}l<{\egroup}@{\hspace{1cm}}p{11cm}}
+ *x      & size of x (in \textfn{runtime/omisc.r})\\
+copy(x)  & copy of x (in \textfn{runtime/fmisc.r})\\
+image(x) & string image of x (in \textfn{runtime/fmisc.r})\\
+type(x)  & string name of type of x (in \textfn{runtime/fmisc.r})\\
+\end{xtabular}
+}\\[1ex]
+
+There is not a concept of size for all data types. For example, a
+Boolean value presumably does not have a size, but the size of a
+vector presumably is the number of elements it contains. The size of a
+rational number is problematical.  Modifications to \texttt{*x} are easy; see
+Sec. 4.4.4.
+
+There must be some provision for copying any value. For structures,
+such as vectors, physical copies should be made so that they are
+treated consonantly with other Icon structures. For other data types,
+the ``copy'' consists of simply returning
+the value and not making a physically distinct copy.  This should be
+done for data types, such as Boolean, for which there are only
+descriptors and no associated blocks.  Whether or not a copy of a
+block for a rational value should be made is a more difficult decision
+and depends on how such values are treated conceptually, at the
+source-language level. It is, of course, easiest not to make a
+physical copy.
+
+Some image must be provided for every value. This image should contain
+enough information to distinguish values of different types and, where
+possible, to provide some useful additional information about the
+specific value. The amount of detail that it is practical to provide
+in the image of a value is limited by the fact that the image is a
+string that must be placed in the allocated string region.
+
+
+The type must be provided for all values and should consist of a simple
+string name. For example, if \texttt{x} is a Boolean value, \texttt{type(x)}
+should produce \texttt{"boolean"}. The coding for type is trivial; see
+Sec. D.2.3.
+
+There also are several run-time support routines that must be modified
+for any new type:\\[1ex]
+{\renewcommand{\arraystretch}{0.9}%
+\begin{xtabular}{>{\hspace{1cm}\texttt\bgroup}l<{\egroup}@{\hspace{1cm}}p{11cm}}
+outimage & image for tracing (in \textfn{runtime/rmisc.r)}\\
+order    & order for sorting (in \textfn{runtime/rcomp.r)}\\
+anycmp   & comparison for sorting (in \textfn{runtime/rcomp.r)}\\
+equiv    & equivalence comparison (in \textfn{runtime/rcomp.r)}\\
+\end{xtabular}
+}\\[1ex]
+
+The image produced for tracing purposes is similar to that produced by
+image and must be provided for all data types.  However, outimage
+produces output and is not restricted to constructing a string in
+allocated storage. It therefore can be more elaborate and informative.
+
+There must be some concept of sorting order for every Icon
+value. There are two aspects to sorting: the relative order of
+different data types and the ordering among values of the same
+type. The routine order produces an integer that corresponds to the
+order of the type. If the order of a type is important with respect to
+other types, this matter must be given some consideration. For
+example, a rational number probably belongs among the numeric types,
+which, in Icon, sort before structure types. On the other hand, it
+probably is not important whether vectors come before or after lists.
+
+
+The routine \texttt{anycmp} compares two values; if they have the same
+order, as defined previously, \texttt{anycmp} determines which is the
+``smaller.''  For example, Boolean ``false'' might (or might not) come
+before ``true,'' but some ordering between the two should be provided.
+On the other hand, order among vectors probably is not important (or
+well-defined), and they can be lumped with the other structures in
+\texttt{anycmp}, for which ordering is arbitrary. Sometimes ordering can be
+quite complicated; a correct ordering of rational numbers is nontrivial.
+
+
+The routine \texttt{equiv} is used in situations, such as table
+subscripting and case expressions, to determine whether two values are
+equivalent in the Icon sense. Generally speaking, two structure values are
+considered to be equivalent if and only if they are identical. This
+comparison is included in \texttt{equiv} in a general way. For example,
+\texttt{equiv} need not be modified for vectors. Similarly, for data types
+that have no corresponding blocks, descriptor comparison suffices;
+\texttt{equiv} need not be modified for Boolean values either. However,
+determining the equivalence of numeric values, such as rational numbers,
+requires some thought.
+
+Although not strictly part of the language proper, there are several
+routines in the Icon Programming Library and the Unicon class libraries
+that operate on all types. The addition of new type may require that some
+of these be modified. A good start to locating code that potentially
+requires modification is to search for expressions of the form
+\iconline{case \ldots type( \ldots ) \ldots of}
+
+\section{Defined Constants and Macros}
+
+Defined constants and macros are used heavily in Icon to parameterize
+its code for different operating systems and computer architectures
+and to provide simple, high-level constructions for commonly occurring
+code sequences that otherwise would be complex and obscure.
+
+These defined constants and macros should be used consistently when
+making additions to Icon instead of using \textit{ad hoc}
+constructions. This improves portability, readability, and
+consistency.
+
+Learning the meanings and appropriate use of the existing defined
+constants and macro definitions requires investment of time and
+energy. Once learned, however, coding is faster, simpler, and less
+prone to error.
+
+\subsection{Defined Constants}
+
+The following defined constants are used frequently in the run-time
+system. This list is by no means exhaustive; for specialized
+constants, see existing functions.\\[1ex]
+
+{\renewcommand{\arraystretch}{0.9}%
+\begin{xtabular}{>{\hspace{1cm}\texttt\bgroup}l<{\egroup}@{\hspace{1cm}}p{11cm}}
+CsetSize     & number of words needed for 256 bits\\
+LogHuge      & one plus the maximum base-1O exponent of a C \texttt{double}\\
+LogIntSize   & base-2 logarithm of number of bits in a C \texttt{int}\\
+MaxCvtLen    & length of the longest possible string obtained by conversion\\
+MaxLong      & largest C \texttt{long}\\
+MaxShort     & largest C \texttt{short}\\
+MaxStrLen    & longest possible string\\
+MinListSlots & minimum number of slots in a list-element block\\
+MinLong      & smallest C \texttt{long}\\
+MinShort     & smallest C \texttt{short}\\
+WordSize     & number of bytes in a \texttt{word}\\
+\end{xtabular}
+}\\[1ex]
+
+\subsection{Macros}
+\PrimaryIndexBegin{Macro}
+
+The following macros are used frequently in the run-time system.  See
+\textfn{h/rmacros.h} for most of the definitions and the files included by
+\textfn{h/rt.h} for the others; see existing routines for examples of
+usages.\\[0.5cm]
+{\renewcommand{\arraystretch}{0.9}%
+\begin{xtabular}{>{\hspace{1cm}\texttt\bgroup}l<{\egroup}@{\hspace{1cm}}p{11cm}}
+Arg(n)            & \hspace{0cm}\texttt{n}th argument to function\\
+ArgType(n)        & d-word of \texttt{n}th argument to function\\
+ArgVal(n)         & integer value of v-word of nth argument to function\\
+BlkLoc(d)         & pointer to block from v-word of \texttt{d}\\
+BlkSize(cp)       & size of block pointed to by \texttt{cp}\\
+BlkType(cp)       & type code of block pointed to by \texttt{cp}\\
+ChkNull(d)        & true if \texttt{d} is a null-valued descriptor\\
+CsetOff(b)        & offset in a word of cset bit \texttt{b}\\
+CsetPtr(b, c)     & address of word \texttt{c} containing cset bit \texttt{b}\\
+DeRef( d)         & dereference \texttt{d}\\
+EqlDesc(d1, d2)   & true if \texttt{d1} and \texttt{d2} are identical descriptors\\
+GetReal(dp, r)    & get real number into \texttt{r} from
+                    descriptor pointed to by \texttt{dp}\\
+IntVal(d)         & integer value of v-word of \texttt{d}\\
+Max(i, j)         & maximum of \texttt{i} and \texttt{j}\\
+Min(i. j)         & minimum of \texttt{i} and \texttt{j}\\
+Mkint(i, dp)      & make integer from \texttt{i} in descriptor
+                    pointed to by \texttt{dp}\\
+Offset(d)         & offset from d-word of variable descriptor \texttt{d}\\
+Pointer(d)        & true if v-word of \texttt{d} is a pointer\\
+Qual(d)           & true if \texttt{d} is a qualifier\\
+Setb(b, c)        & set bit \texttt{b} in cset \texttt{c}\\
+SlotNum(i, j)     & Slot for hash number \texttt{i} given \texttt{j} total slots\\
+StrLen(q)         & length of string referenced by \texttt{q}\\
+StrLoc(q)         & location of string referenced by \texttt{q}\\
+Testb(b, c)       & true if bit \texttt{b} in cset \texttt{c} is one\\
+Tvar(d)           & true if \texttt{d} is a trapped variable\\
+TvarLoc(d)        & pointer to trapped variable from v-word of \texttt{d}\\
+Type(d)           & type code in d-word of \texttt{d}\\
+Var(d)            & true if \texttt{d} is a variable descriptor\\
+VarLoc(d)         & pointer to value descriptor from v-word of \texttt{d}\\
+Vsizeof(x)        & size of structure \texttt{x} less variable array at end\\
+Vwsizeof(x)       & size of structure \texttt{x} in words less variable array at end\\
+Wsizeof(x)        & size of structure \texttt{x} in words\\
+\end{xtabular}
+}\\[1ex]
+\PrimaryIndexEnd{Macro}
+
+\section{Support Routines}
+
+There are many support routines for performing tasks that occur frequently in
+the Icon run-time system. Most of these routines are in files in \textfn{runtime}
+that begin with the letter r. The uses of many of these support routines have
+been illustrated earlier; what follows is a catalog for reference.
+
+\subsection{Comparison}
+
+The following routines in \textfn{runtime/rcomp.r} perform comparisons:
+
+\begin{xtabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{anycmp(dp1, dp2)} &
+Compare the descriptors pointed to by \texttt{dp1} and \texttt{dp2} as Icon
+values in sorting order, returning a value greater than 0, 0, or less than 0
+depending on whether the descriptor pointed to by \texttt{dp1} is respectively greater
+than, equal to, or less than the descriptor pointed to by \texttt{dp2}.\\
+
+\texttt{equiv(dp1, dp2)} &
+Test for equivalence of descriptors pointed to by \texttt{dp1} and \texttt{dp2},
+returning 1 if equivalent and 0 otherwise\\
+
+\texttt{lexcmp(dp1,dp2)} &
+Compare string qualifiers pointed to by \texttt{dp1} and \texttt{dp2} returning
+a value greater than 0, 0 or less than 0 depending on whether the string
+referenced by \texttt{dp1} is respectively greater than, equal to or less than
+the string referenced by \texttt{dp2}\\
+
+\texttt{numcmp(dp1, dp2, dp3)} &
+Compare the descriptors pointed to by \texttt{dp1} and \texttt{dp2} as numbers,
+putting the converted value of the number referenced by \texttt{dp2} in the
+descriptor pointed to by \texttt{dp3} and returning 0, 0 or less than 0
+depending on whether the number referenced by \texttt{dp1} is respectively
+greater than, equal to or less than the number referenced by \texttt{dp2}\\
+
+\end{xtabular}
+
+\subsection{Type Conversion}
+
+The following routines in \textfn{src/runtime/cnv.r} perform type conversions:
+
+\begin{xtabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{cnv\_cset(s,d)} &
+Convert the descriptor pointed to by \texttt{s} to a cset and point
+\texttt{d} to it. Return 1 if the conversion can be performed (or is
+not needed) and 0 otherwise.\\
+
+\texttt{cnv\_int(s,d)} &
+Convert the descriptor pointed to by \texttt{s} to an integer and store the
+value in the location pointed to by \texttt{d}, returning 1 if the
+conversion can be performed, but \texttt{0} otherwise.\\
+
+\texttt{ston(dp,union numeric *result)} &
+Convert the string descriptor pointed to by \texttt{dp} to a numeric
+value and store the value in the location pointed to by
+\texttt{result}, returning the type if the
+conversion can be performed, but \texttt{CvtFail} otherwise.\\
+
+\texttt{cvpos(i1, i2)} &
+Convert \texttt{i1} to a positive value with respect to the length \texttt{i2},
+returning 0 if the conversion is not possible.\\
+
+\texttt{cnv\_real(sp,dp)} &
+Convert the descriptor pointed to by \texttt{sp} to a real number and store
+the value in the location pointed to by \texttt{dp}, returning 1 if the
+conversion can be performed, but \texttt{0} otherwise.\\
+
+\texttt{cnv\_str(sp, dp)} &
+Convert the descriptor pointed to \texttt{sp} to a string,
+returning \texttt{1} if a resulting string was produced,
+but \texttt{0} otherwise.\\
+
+\texttt{strprc(dp, i)} &
+Convert the qualifier pointed to by \texttt{dp} to a procedure descriptor if
+possible, using \texttt{i} as the number of arguments in the case of a string
+that represents an operator, returning 0 if the conversion cannot be performed.\\
+
+\end{xtabular}
+
+\subsection{Defaults}
+
+The following routines in \textfn{src/runtime/def.r} produce default values for
+omitted arguments. They are generally called internally by RTL constructs.
+
+\begin{xtabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{def\_cset(sp, df, dp)} &
+If the descriptor pointed to by \texttt{sp} is null, store the cset pointed at
+by \texttt{df} at the place pointed to by \texttt{dp} and return 1; otherwise
+convert the descriptor pointed to by \texttt{dp} and return 1 if successful.
+Return 0 if the conversion cannot be performed.\\
+
+\texttt{def\_int(sp, df, dp)} &
+If the descriptor pointed to by \texttt{sp} is null, store \texttt{df} at the
+location pointed to by \texttt{dp} and return 1. Otherwise convert the
+descriptor pointed to by \texttt{sp} to an integer, store it at the
+location pointed to by \texttt{dp}, and return 1. Return 0 if the
+conversion cannot be performed.\\
+
+\texttt{def\_str(sp, df, dp)} &
+If the descriptor pointed to by \texttt{sp} is null, replace it by the
+descriptor pointed to by \texttt{df} and return 1. Otherwise convert the
+descriptor pointed by \texttt{sp} to a string and return 1, but return
+0 if the conversion cannot be performed.\\
+
+\end{xtabular}
+
+
+\subsection{Allocation}
+
+The following routines in \textfn{runtime/ralc.r} all return pointers to the
+objects they allocate:
+
+{\renewcommand{\arraystretch}{1}%
+\begin{xtabular}{>{\hspace{1cm}\texttt\bgroup}l<{\egroup}@{\hspace{1cm}}p{11cm}}
+
+alcblk(i,j) &
+Allocate a block of \texttt{i} bytes with title \texttt{j} in the allocated
+block region.\\
+
+alccoexp() &
+Allocate a co-expression block.\\
+
+alccset(i) &
+Allocate a cset block for a cset, setting its size to \texttt{i}.\\
+
+alcfile(fp, i, dp) &
+Allocate a file block. setting its file pointer to \texttt{fp}, its status to
+i, and its name to the qualifier pointed to by \texttt{dp}.\\
+
+alclint(i) &
+Allocate a long-integer block and place \texttt{i} in it.\\
+
+alclist(i) &
+Allocate a list-header block and set its size field to \texttt{i}.\\
+
+alclstb(i1, i2, i3) &
+Allocate a list element block for \texttt{i1} elements,setting its first field
+to \texttt{i2} and its \texttt{nused} field to \texttt{i3}.\\
+
+alcreal(r) &
+Allocate a real-number block and place \texttt{r} in it.\\
+
+alcrecd(i,dp) &
+Allocate a record block with \texttt{i} fields setting its procedure descriptor
+to the descriptor pointed to by \texttt{dp}.\\
+
+alcrefresh(ip, i, j) &
+Allocate a refresh block for a procedure with \texttt{i} arguments, \texttt{j}
+local identifiers, and entry point \texttt{ip}.\\
+
+alcselem(dp, i) &
+Allocate a set-element block, setting its \texttt{member} field to the descriptor
+pointed to by \texttt{dp} and its hash number field to \texttt{i}.\\
+
+alcset() &
+Allocate a set-header block.\\
+
+alcstr(sbuf,i) &
+Allocate a string of length \texttt{i}, and copy the string in \texttt{sbuf} into
+it, provided \texttt{sbuf} is not \texttt{NULL}.\\
+
+alcsubs(i, j, dp) &
+Allocate a substring trapped-variable block, setting its length field to
+i, its offset field to \texttt{j}, and its variable decriptor to the
+descriptor pointed to by \texttt{dp}.\\
+
+alctable(dp) &
+Allocate a table-header block, setting its default descriptor to the descriptor
+pointed to by \texttt{dp}.\\
+
+alctelem() &
+Allocate a table-element block.\\
+
+alctvtbl(dp1, dp2, i) &
+Allocate a table-element trapped-variable block, setting its link field to the
+descriptor pointed to by \texttt{dp1}, its entry field to the descriptor pointed
+to by \texttt{dp2}, and its hash number field to \texttt{i}.\\
+
+blkreq(i) &
+Request \texttt{i} bytes of free space in the allocated block region.\\
+
+\texttt{strreq(i)} &
+Request \texttt{i} bytes of space in the allocated string region.\\
+
+\end{xtabular}
+}
+
+\subsection{Operations on Structures}
+
+The following routines in \textfn{runtime/rstruct.r} perform operations on structures:
+
+\begin{xtabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{addmem(sp, ep, dp)} &
+Add the set-element block pointed to by \texttt{ep} to the set pointed to by
+\texttt{sp} at the place pointed to by \texttt{dp}.\\
+
+\texttt{cplist(dp1, dp2, i, j)} &
+Copy the sublist from \texttt{i} to \texttt{j} of the list referenced by the
+descriptor pointed to by \texttt{dp1}, and place the result in the descriptor
+pointed to by \texttt{dp2}.\\
+
+\texttt{memb(sp, dp, i, ip)} &
+Set the value pointed to by \texttt{ip} to 1 if the descriptor pointed to by
+\texttt{dp} is a member of the set pointed to by \texttt{dp} is a member of the
+set pointed to by \texttt{sp} using \texttt{i} as the hash number but to 0
+otherwise.\\
+
+\end{xtabular}
+
+\subsection{Input and Output}
+
+The following routines in \textfn{runtime/rsys.r} perform input and output
+operations:
+
+\begin{xtabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{getstr(sbuf, i, fp)} &
+Read a line of at most \texttt{i} characters from the file specified by
+\texttt{fp}, putting the result in \texttt{sbuf}, returning the number of
+characters read, but returning -1 on an end of file.\\
+
+\texttt{putstr(fp, sbuf, i)} &
+Write \texttt{i} characters from \texttt{sbuf} on the file specified by \texttt{fp}.\\
+
+\end{xtabular}
+
+\subsection{Error Termination}
+
+The RTL construct runerr() can appear appear outside the C code of a
+body or an inline block, reporting errors in parameters, or it may
+appear in a block of C code. Authors of new runtime system code
+generally use runerr() and may invent new run-time error codes if
+needed. Very rarely an internal error may warrant a syserr().
+
+Interestingly, \texttt{runerr()} only works in top-level RTL functions
+and operators, not in underlying C functions. If an underlying runtime
+system function has a problem
+that should result in a runtime error, the C function will have to
+return an error code of some kind to the top-level RTL function or
+operator that called it, asking it to produce a runtime error.
+
+\begin{tabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{runerr(i, dp)} &
+Terminate execution with error message \texttt{i} showing the offending value in
+the descriptor pointed to by \texttt{dp} (optional).
+\\
+
+\texttt{syserr(sbuf)} &
+Terminate execution with system error message \texttt{sbuf}.\\
+
+\end{tabular}
+
+\subsection{Miscellaneous Operations}
+
+The following miscellaneous operations are in \textfn{h/rmacros.h} or \textfn{runtime/rmisc.r}:
+
+\begin{xtabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{deref(dp)} &
+Dereference the descriptor pointed to by \texttt{dp}.\\
+
+\texttt{hash(dp)} &
+Return a hash value for the descriptor pointed to by \texttt{dp}.\\
+
+\texttt{outimage(fp, dp, i)} &
+Write an image for the value of the descriptor pointed to by \texttt{dp} on the
+file to by \texttt{fp}, but not callling recursively if \texttt{i} is nonzero.\\
+
+\texttt{qtos(qp, sbuf)} &
+Convert the string represented by the qualifier pointed to by \texttt{qp} to a
+null-terminated C-style string in \texttt{sbuf}.\\
+
+\end{xtabular}
+
+\subsection{Diagnostics}
+
+There are two routines in \textfn{runtime/rmemmgt.r} for producing
+diagnostic output. They are not included in the runtime system unless
+you build it with DeBugIconx defined in your define.h.
+
+%xtabular produces a really stupid page break
+\begin{tabular}{l@{\hspace{1cm}}p{11cm}}
+
+\texttt{descr(dp)} &
+Write a diagnostic diagram of the descriptor pointed to by \texttt{dp} to
+standard error output.\\
+
+\texttt{blkdump} &
+Write a diagnostic diagram of the allocated block region to standard error output.\\
+
+\end{tabular}
+
+
+\section{Debugging}
+
+Debugging a modification to Icon can be difficult unless the overall structure of
+the Icon system is understood. It is especially important to understand the way
+Icon's data is organized and how storage management works. If an addition to
+Icon does not work properly, or if Icon itself no longer functions correctly
+after a modification, it is generally advisable to {\em think} about the
+possible sources of problems, instead of immediately resorting to a debugger.
+
+Print statements are a crude but often effective means of locating the source of
+an error. When adding diagnostic output use
+\iconline{fprintf(stderr, " \ldots ",\ \ldots );}
+\noindent
+instead of the corresponding \texttt{printf}. On some systems it may be useful
+to follow such calls by \texttt{fflush(stderr)} to ensure that the diagnostic
+output appears as soon as it is produced.
+
+Icon normally traps floating-point exception and illegal addressing
+(segmentation violations) since these errors can result from source-language
+programming errors, such as division by real zero and excessive recursion
+resulting in C stack overflow. For example, Icon normally produces
+\texttt{Error 302 ("C stack overflow")} in case of a segmentation violation.
+This method of handling such an error is appropriate if Icon itself is free of
+bugs, but it interferes with debugging in situations where there are likely to
+be bugs in new code.
+
+Assigning a value to the environment variable \texttt{ICONCORE} turns off the
+trapping of such errors. In this case most systems produce meaningful diagnostic
+messages and a core dump in the case of an exception.  If \texttt{ICONCORE} has
+a value, a core dump is produced if an Icon program terminates as a result of
+\texttt{runerr} or \texttt{syserr}.  It is therefore good practice to set
+\texttt{ICONCORE} when making modifications to Icon. For an extended debugging
+session, it may be convenient to set \texttt{dodump} in \textfn{runtime/init.r} to 1.
+
+\subsection{Extra help in \texttt{DEVELOPMODE} (Unicon)}
+When Unicon is built with \texttt{DEVELOPMODE} enabled there are some extra
+facilities that are provided to help with debugging.
+\subsubsection{Breakpoints in the Unicon program}
+It is difficult (when debugging the runtime system) to arrange for a breakpoint
+to occur at a particular location in the Unicon program. In \texttt{DEVELOPMODE}
+there is a new standard function, which is callable from Unicon, named
+\texttt{dbgbrk}. Writing something like the code fragment below will
+cause a debugger breakpoint at the desired moment -- provided the debugger is
+instructed to place a break point at the function called \texttt{Zdbgbrk}.
+\begin{iconcode}
+\$ifdef \_DEVMODE\\
+\>if check\_for\_condition() then \{ dbgbrk() \}\\
+\$endif\\
+\end{iconcode}
+Note that use of \texttt{dbgbrk} should always be protected by
+\texttt{\$ifdef \_DEVMODE} because the function is only defined when
+\texttt{DEVELOPMODE} is enabled. \texttt{DEVELOPMODE} used to be called \texttt{DEVMODE}
+but it was renamed because it clashed with the use of the same identifier in the Windows
+UCRT runtime library.
+\subsubsection{Identifying the current Unicon line}
+The position in the Unicon program can always be established by looking into the
+runtime system with the debugger. A couple of functions make this process
+easier. The functions may be invoked directly from \texttt{gdb} or \texttt{lldb}.
+Both functions are parameterless.
+\begin{quote}
+\begin{description}
+\item[\texttt{dbgUFL}] Print the current Unicon file and line number.
+\item[\texttt{dbgUTrace}] Print a Unicon stack trace.
+\end{description}
+\end{quote}
+
+\subsection{Heap Verification (Unicon)}
+\label{HeapVerifier}
+Icon may be built with optional extra heap checking code that is enabled by
+defining \texttt{DebugHeap} in \textfn{h/define.h} or by giving the
+\texttt{--enable-verifyheap} argument to \texttt{configure}.
+The extra checking is defined in \textfn{h/rmacros.h} and may be summarized by
+\begin{iconcode}
+/* Debug Heap macros.  These add runtime checks to catch (most)\\
+ * illegal block references resulting from untended pointers.\\
+ * Use during new code development, when gdb and valgrind fail to help.\\
+ */
+\end{iconcode}
+If the use of these macros fails to pinpoint a suspected heap problem, Unicon
+has an extra level of checking that is enabled by defining \texttt{VerifyHeap}
+in \textfn{h/define.h}. Most of the extra verification is performed inside
+the \texttt{collect} function, just before and just after garbage collection
+takes place, although some more limited checks are also made during the normal
+running of the program.
+
+The philosophy of the heap verification code is to ``crash early'', as soon as a
+problem is detected, in the hope that the sooner the debugger is involved after
+a problem is found, the easier it will be to establish the cause. In the worst
+case, this ``crash early'' approach can lead to the Unicon compilation system
+itself crashing (which makes it a bit harder to fix any problems). To mitigate
+this, the heap verification code is controlled by an environment
+variable \texttt{VRFY}. The variable is bit-significant, and the bits control
+which verifications are undertaken. A value of zero means that no verifications
+are made at all. In general, if the bit corresponding to the typecode of a
+structure is set, that block type will be verified (e.g. if bit \texttt{(1 <{}<
+T\_Table)} is set then table header blocks will be verified). The bit test is made
+on each verification so, in principle, the verification flags could be changed
+during the execution of the program.
+
+The verifier contains a circular log buffer where messages placed by the
+verification code are stored. The buffer may be displayed in the debugger by
+calling the routine \texttt{vrfyPrintLog}. If \texttt{VRFY} is set to -1, all
+checks are enabled, which can lead to a lot of logging output. It may be better
+to set \texttt{VRFY} to -2 in some cases: this suppresses the most common log
+message, which can overwrite useful evidence in the (limited capacity) circular
+log.
+
+The verification checks are made by making a pass over the current heap in a
+similar fashion to the location phase of garbage collection (see
+section \ref{GC-Location-Phase}). Each block between \texttt{blkbase}
+and \texttt{blkfree} is examined. In the checking that takes place {\em before}
+garbage collection, it is unknown whether the block being checked is live or
+whether it will be collected. Thus pre-GC checking must necessarily be more
+conservative because it cannot be guaranteed that other blocks pointed to by the
+present one contain valid information -- they may have already been reused.
+After the collection has been made it is guaranteed that all the blocks in the
+current heap are live, or potentially so, and therefore a more extensive set of
+checks may be performed. For example, after GC it is possible to verify the
+entire structure of a table -- all the buckets point to valid slots; all the
+slots point to valid table elements; there are no duplicate elements etc.:
+before GC, none of these checks is safe because the components of the table (and
+even the table header block itself) may not be valid.
+
+The checking enabled by \texttt{DebugHeap} and \texttt{VerifyHeap} are
+independent: each may be active without the other although, in practice, it is
+likely they will be enabled together.
+
+\section{Adding new types to the compiler}
+\newcommand{\toklbra}{\texttt{~~(~~}}%
+\newcommand{\tokrbra}{\texttt{~~)~~}}%
+\newcommand{\toklcbra}{\texttt{~~\{~~}}%
+\newcommand{\tokrcbra}{\texttt{~~\}~~}}%
+\newcommand{\toklsbra}{\texttt{~~[~~}}%
+\newcommand{\tokrsbra}{\texttt{~~]~~}}%
+\newcommand{\tokcolon}{\texttt{~~:~~}}%
+\newcommand{\cceq}{{\normalfont~~::=~~}}%
+\newenvironment{ebnf}%
+{\begin{specialcode}{\itshape}}%
+{\end{specialcode}}%
+
+\begin{quote}
+Editorial Note: This section is derived from Appendix F of the RTL
+reference document [.ipd261.]. The RTL manual is reproduced here as
+appendix G.
+\end{quote}
+
+This section describes how to add new types to Icon. It deals with simple
+types, aggregate types whose values contain other Icon values, and keywords
+that are variables. These are the kinds of types that are most likely to be
+added to the language. Executable types such as procedures and
+co-expressions are beyond the scope of this section, as are types that
+require special representations and variable types that have special
+dereferencing semantics.
+
+\subsection{The implementation of Icon Types (reprise)}
+
+As discussed in part 1 and Appendix A of this compendium, an Icon value is
+implemented as a two-word \textit{descriptor} containing type information
+and value information. The first word of a descriptor is the {\em d-word}.
+For the types discussed here, the d-word contains a unique code that
+identifies the type. The second word of the descriptor is the {\em v-word};
+it contains the actual value or a reference to the value.  Actual values
+that are too large to fit in one word are usually put in the block
+region. This region is controlled by a storage management system that
+includes a garbage collector. The garbage collector is driven by
+information in arrays indexed using the type codes associated with the
+blocks. The block region contains values for both simple and aggregate
+types.
+
+There are several other parts of the run-time system besides the
+garbage collector that need information about Icon types. Some are Icon
+operations such as the \texttt{type()} function, while others are
+automatically invoked features such as error trace back. These are
+described in more detail below. Types, of course, typically have operations
+associated with them that create and use values of the type.
+
+
+\subsection{The Type Specification System}
+
+Icon types are used in several places in RTL and new types must be added to
+this language. These uses include type checking constructs,
+\texttt{return}/\texttt{suspend} statements, and abstract type computations.
+In addition, the Icon compiler needs information about types in order to
+perform type inferencing. These requirements are satisfied with a type
+specification system.
+
+This system is a simple declarative language for naming types and
+describing some of their properties. Information from the type
+specification system is incorporated in \texttt{rtt} and in \texttt{iconc}
+when they are built.
+
+All types specified by the system may be used in the RTL \texttt{is} and
+\texttt{type\_case} constructs. They may also be used in abstract type
+computations. Aggregate types may be used in a \texttt{new} type expression
+in an abstract type computation. A type specification may optionally
+indicate that RTL supports a special form of
+\texttt{return}/\texttt{suspend} statement that constructs a return value,
+in the form of a full descriptor, from a C value for the v-word of the
+descriptor.
+
+Type specifications are in the file \textfn{common/typespec.txt}.  Comments
+in the file start with \texttt{\#} and continue to the end of the line.
+
+This file is translated into a C header file by the program \texttt{typespec}.
+This is not part of the normal Icon build process; entries at the end of
+\textfn{common/Makefile} must be uncommented if \textfn{typespec.txt} is
+updated.
+
+A type definition in the specification system has the form:
+
+\begin{ebnf}
+type-def \cceq identifier opt-abrv \tokcolon kind opt-return
+\end{ebnf}
+
+\noindent
+where \textit{identifier} is the name of the type and \textit{opt-abrv} is an optional abbreviation for the type name. The abbreviation
+has the form:
+
+\begin{ebnf}
+opt-abrv \cceq nil |\\
+\>\>\>\> \toklcbra identifier \tokrcbra
+\end{ebnf}
+
+\noindent
+The abbreviation is used in tracing type inferencing and other places where
+a compact notation is desired. If no abbreviation is given, the full type
+name is used.
+
+There are three kinds of types: \texttt{simple}, \texttt{aggregate}, and
+\texttt{variable}. Their syntax and usage are described in separate
+sections below. \textit{opt-return} indicates optional RTL
+\texttt{return}/\texttt{suspend} support for the type. The four types of
+v-words supported by this construct are introduced below as needed. A
+complete grammar for the specification language is given near the end of
+this appendix.
+
+\subsection{Simple Value Types}
+Types with a kind clause of \texttt{simple} are simple in the sense that
+values of the type do not have components that contain other Icon
+values. These types may otherwise have sophisticated semantics.
+
+There are three ways to implement the values of a type: encode them as C
+integers (these are guaranteed to be at least 32 bits long), implement them
+as blocks in the block region, or implement them in storage allocated using
+\texttt{malloc()} (in theory values can also be put in the string region, but it is
+only well suited for Icon strings; descriptors pointing into this region
+must have a special form --- described in A.1.1). The choice of
+implementation determines the type of C value stored in the v-word of the
+descriptor representing the Icon value.
+
+The d-word of a descriptor for one of these types contains a fixed code. It
+consists of a small integer type code along with flags describing
+characteristics of the descriptor. The necessary changes to
+\textfn{rmacros.h} have been covered earlier in section D.3.1.
+
+
+
+Three of the \textit{opt-return} type specification clauses are useful
+for implementing value types (the fourth is used for variable types;
+see below). These clauses add \texttt{return}/\texttt{suspend}
+statements to RTL of the form
+\begin{ebnf}
+\>\texttt{return} \>\>\> type-name \toklbra expr \tokrbra\\
+\>\texttt{suspend}\>\>\> type-name \toklbra expr \tokrbra
+\end{ebnf}
+
+\noindent
+
+\textit{type-name} is the identifier naming the type. It determines
+the \texttt{D\_} constant used for the d-word of the operation's
+result descriptor. \textit{expr} is a C expression whose value is
+placed in the v-word of the result. The particular \textit{opt-return}
+clause chosen determines how the C value is stored in the v-word. The
+clauses are
+
+\begin{tabular}{>{\texttt\bgroup}l<{\egroup}%
+@{\hspace{1cm}}p{11cm}}
+return C\_integer     &%
+indicates that the value is cast to a C integer; see the definition of
+word in \textfn{h/typedefs.h} for the exact C type used.\\
+
+return block\_pointer &%
+indicates that the value is cast to \texttt{(union block *)}; this is
+usually used for pointers to blocks in the block region.\\
+
+return char\_pointer  &%
+indicates that the value is cast to \texttt{(char *)}. Note, only
+descriptors of a special form may point into the string region; the
+storage used with \texttt{return char\_pointer} must reside elsewhere.\\
+\end{tabular}
+ 
+As an example, the type specification for the cset type is
+\begin{iconcode}
+cset\{c\}:\>\>\> simple\\
+\>\>\>           return block\_pointer
+\end{iconcode}
+
+\noindent
+Suppose a variable \texttt{cp} within an Icon operation written in RTL
+points to a cset block. Then the statement
+\iconline{return cset(cp);}
+\noindent
+constructs a result descriptor for the cset and returns it.
+
+For a type with an associated block, a declaration for the block
+structure must be added to \textfn{h/rstructs.h}. By convention, the
+structure name is created by prepending \texttt{b\_} to the type name.
+The first word of a block must contain its \texttt{T\_} type code. If
+different instances of the block may vary in size, the second word of
+the block must contain this size in bytes. The structure name of the
+new block must be added to the \texttt{union block} declaration
+in \textfn{h/rstructs.h}. An allocation routine for the block must be
+added to \textfn{runtime/ralc.r}. The macros \texttt{AlcFixBlk()} and
+\texttt{AlcVarBlk()} are useful in such routines; see other allocation
+routines for guidelines.
+
+
+There are five arrays in \textfn{runtime/rmemmgt.r} that must be
+updated for all types (the details have been covered in section D.3.3).
+
+Storage for the values of a type usually should be allocated in the
+block region. However, for interfaces to packages written in C, it may
+be necessary to use storage that is not relocated by garbage
+collection. While it is possible to place types allocated with
+\texttt{malloc()} under control of garbage collection, this is
+complicated and beyond the scope of this appendix. See the
+implementation of co-expressions for an example of how this can be
+done. Short of modifying the garbage collector to handle a new type's
+allocated storage, the best practice for any storage allocated with
+\texttt{malloc()} is to provide an Icon function, along the lines of
+\texttt{close()}, that explicitly frees storage associated with a
+value when the program is finished using it.
+
+The necessary changes to built-in functions and support routines have
+been covered earlier in section D.3.4.
+
+At the end of this appendix is a check list of files that must be
+updated when a type is added to Icon.
+
+\subsection{Aggregate Types}
+
+Aggregate types have values with components that are other Icon values.
+The aggregate type specification provides more sophisticated RTL abstract
+type computations for the type. These in turn allow \texttt{iconc} to
+produce code that is better optimized.
+
+For interpreter-only implementations, abstract type computations are not
+used and are optional in RTL code; the \texttt{simple} type specification
+may be used in that case. However, the discussion later in this section on
+block layout and on the storage management arrays still applies.
+
+
+The \textit{kind} clause of an \texttt{aggregate} type specification
+establishes and names abstract components for the type. The clause is of
+the form
+
+\begin{ebnf}
+kind \cceq \texttt{aggregate} \toklbra component, \ldots \tokrbra\\
+\\
+component \cceq identifier |\\
+\>\>\>\>\>       \texttt{var} identifier opt-abrv
+\end{ebnf}
+
+\noindent
+Note, the opt-return clauses discussed in the previous section may be
+also used with \texttt{aggregate} types.
+
+The \texttt{aggregate} specification can be thought of as establishing a
+sort of ``abstract type record'' whose fields, the abstract components,
+summarize the type information of the actual components of values in the
+type. Most types are given one abstract component. For example, the set
+type has the specification
+\begin{iconcode}
+set\{S\}: \>\>\> aggregate(set\_elem)\\
+\>\>\>           return block\_pointer
+\end{iconcode}
+\noindent
+where \texttt{set\_elem} represents all the elements of a set.
+
+
+Abstract components can be accessed using dot notation, and the
+\texttt{new} abstract type computation can be used to establish a
+new subtype of the type (subtypes only exist internally in the
+compiler and have no existence at the Icon language level). A subtype
+can be returned by the operation and has its own component types
+independent of subtypes created elsewhere. The abstract type
+computation for Icon set intersection, the \texttt{**} operator, uses
+both dot notation and a \texttt{new} expression. It performs
+intersection in the abstract type realm. \texttt{x} and \texttt{y} are
+the parameters of the operation and may contain different subtypes of
+the set type:
+
+\iconline{
+return new set(store[type(x).set\_elem] ** store[type(y).set\_elem])
+}
+\noindent
+(Note that the components can be thought of as references to
+information contained in a \textit{type store} --- thus the indexing notation.)
+
+Components that represent Icon variables are preceded by \texttt{var} and may
+be given abbreviations for use in tracing type inferencing. For
+example, the list type has the specification
+\begin{iconcode}
+list\{L\}: \>\>\> aggregate(var lst\_elem\{LE\})\\
+\>\>\>            return block\_pointer
+\end{iconcode}
+
+\noindent
+
+These components may be returned from operations and represent the
+component as a variable. For example, the abstract type computation
+for element generation operator when applied to a list is
+
+\iconline{
+return type(dx).lst\_elem
+}
+
+\noindent
+where \texttt{dx} is the parameter of the operation. When a value rather
+than a variable is returned, the component must be ``dereferenced'' by
+indexing into the store, as in the abstract type computations of
+\texttt{get()}:
+
+\iconline{
+return store[type(x).lst\_elem]
+}
+
+\noindent
+Non-variable components must always be dereferenced.
+
+For types, such as tables, that contain Icon values serving different
+purposes, it may be effective to establish several abstract components.
+
+Aggregate types are implemented using blocks that contain descriptors, and
+they may be implemented using several kinds of blocks, with some blocks
+having pointers to others. When there are multiple blocks, there is always
+a \textit{header} block that uses the \texttt{T\_} code of the type. Other
+blocks are given internal type codes; these codes must be added to
+\textfn{h/rmacros.h} and entries must be made in the storage management
+arrays.
+
+Any descriptors in a block must be at the end. The type's entry in the
+\texttt{firstd} array is the location of the first descriptor. Any block
+pointers in the block must be contiguous. The type's entry in the
+\texttt{firstp} array is the location of the first pointer and its
+entry in the \texttt{ptrno} array is the number of pointers.
+
+\subsection{Keyword Variable Types}
+
+Keyword variable types have a type specification with a \textit{kind}
+clause of the form
+\begin{ebnf}
+kind \cceq \texttt{variable} var-type-spec\\
+\\
+var-type-spec \cceq \texttt{initially} type |\\
+\>\>\>\>\>\>        \texttt{always} type\\
+\\
+type \cceq type-name |\\
+\>\>\>     type \texttt{~~++~~} type-name\\
+\\
+type-name \cceq identifier
+\end{ebnf}
+
+The compiler must be able to infer the types of values stored in a
+keyword variable. The \texttt{initially} option causes the keyword
+variable type to be treated as a set of global variables, each
+initialized to the given type specified by the \textit{type}
+clause. The \texttt{always} option indicates that the keyword always
+contains values of the given type and the compiler does no actual
+inference on it. \textit{type} may be the union of several types; this
+indicates that the type is uncertain and may be any of the ones
+specified. A special \textit{type-name}, \texttt{any\_value},
+indicates complete uncertainty.
+
+\noindent The clause
+\iconline{
+always any-value
+}
+\noindent
+is a correct, although entirely imprecise, description of any keyword variable.
+
+This appendix assumes that keyword variables are implemented by global
+descriptors (though other techniques are possible). The \textit{opt-return}
+clause of the form
+\iconline{
+return descriptor\_pointer
+}
+\noindent
+is useful for implementing keyword variables. The v-word of a result
+descriptor from a corresponding \texttt{return}/\texttt{suspend}
+expression is of \texttt{type struct descrip *}.
+
+
+Some of the same files must be updated for variable types as for value
+types. Type codes must be added to \textfn{h/rmacros.h}.
+The \texttt{D\_} code must have the \texttt{F\_Var} flag set, for example:
+\iconline{
+\#define D\_Kywdint (T\_Kywdint | D\_Typecode | F\_Ptr | F\_Var)
+}
+\noindent
+The storage management tables and the \texttt{outimage()} routine also must be
+updated.
+
+
+Other updates are unique to variable types. The global descriptor must be
+established. \textfn{runtime/data.r} contains its declaration.
+\texttt{icon\_init()} in \textfn{runtime/init.r} initializes the descriptor,
+and \textfn{h/rexterns.h} contains an \texttt{extern} for it. Dereferencing
+must be updated; it is performed by \texttt{deref()} in \textfn{runtime/cnv.r}.
+Assignment must be updated; it is handled by the macro \texttt{GeneralAsgn()}
+in \textfn{runtime/oasgn.r}. The \texttt{name()} function is updated by
+changing the support routine \texttt{get\_name()} in \textfn{runtime/rdebug.r.}
+The \texttt{variable()} function is updated by changing the support
+routine \texttt{getvar()} in \textfn{runtime/rmisc.r}.
+
+The keyword itself goes in \textfn{runtime/keyword.r}. For example,
+\texttt{\&random} is of type \texttt{kywdint} and is implemented by the descriptor
+\texttt{kywd\_ran}; its definition is
+\begin{iconcode}
+keyword\{1\} random\\
+\>abstract \{\\
+\>\>return kywdint\\
+\>\}\\
+\>inline \{\\
+\>\>return kywdint(\&kywd\_ran);\\
+\>\}\\
+end
+\end{iconcode}
+\noindent
+For the interpreter, the keyword name must be added to
+\texttt{icont/key\_text.c}. These names are in alphabetical order.
+{\color{blue} Unicon generates the keyword names automatically
+from \texttt{runtime/keyword.r} using the \texttt{mkkwd} program
+--- \texttt{icont/key\_text.c} no longer exists.}
+
+If the descriptor may contain a value under control of garbage collection,
+the support routine \texttt{collect()} in \textfn{runtime/rmemmgt.r} must be
+updated. \texttt{postqual()} preserves references to the string region;
+the macro \texttt{Qual()} is used to check for such references.
+\texttt{markblock()} preserves references to blocks; the macro \texttt{Pointer()}
+is used to check for such references.
+
+\clearpage
+\newpage
+\subsection{The Complete Grammar for the Type Specification System}
+\begin{ebnf}
+type-def \>\>\>\> \cceq \>\> identifier opt-abrv \tokcolon kind opt-return\\
+\\
+kind \>\>\>\>     \cceq \>\> \texttt{simple} |\\
+\>\>\>\>\>\>      \texttt{aggregate} \toklbra component, \ldots \tokrbra |\\
+\>\>\>\>\>\>      \texttt{variable} var-type-spec\\
+\\
+component \>\>\>\> \cceq \>\> identifier |\\
+\>\>\>\>\>\>                  \texttt{var} identifier opt-abrv\\
+\\
+var-type-spec \>\>\>\>\cceq \>\> \texttt{initially} type |\\
+\>\>\>\>\>\>                     \texttt{always} type\\
+\\
+type \>\>\>\> \cceq \>\> type-name |\\
+\>\>\>\>\>\>             type \texttt{~~++~~} type-name\\
+\\
+type-name \>\>\>\> \cceq \>\> identifier\\
+\\
+opt-abrv \>\>\>\>  \cceq \>\> nil |\\
+\>\>\>\>\>\>                    \toklcbra identifier \tokrcbra\\
+\\
+opt-return \>\>\>\>  \cceq \>\>nil |\\
+\>\>\>\>\>\>      \texttt{return  block\_pointer} |\\
+\>\>\>\>\>\>      \texttt{return  descriptor\_pointer} |\\
+\>\>\>\>\>\>      \texttt{return  char\_pointer} |\\
+\>\>\>\>\>\>      \texttt{return  C\_integer}\\
+\end{ebnf}
+
+\clearpage
+\newpage
+\section%
+        {A check list for adding types%
+        {\hfill\small\textit{(on one page for easy photocopying)}}}
+%
+{\renewcommand{\arraystretch}{0.8}% Squeeze the lines together
+\begin{noIndex}
+\begin{tabular}{%
+@{$\square$\hspace{0.5cm}}>{\textfn\bgroup}l<{\egroup}%
+@{\hspace{0.5cm}--\hspace{0.5cm}}l%
+}
+\multicolumn{2}{l}{\bf All Types}\\
+\multicolumn{2}{l}{}\\
+  common/typespec.txt & add type specification\\
+  common/Makefile   & uncomment entries near the end of the file\\
+  h/rmacros.h       & add T\_\textit{Type} macro\\
+  h/rmacros.h       & add D\_\textit{Type} macro\\
+  runtime/rmemmgt.r & \texttt{bsizes} table\\
+  runtime/rmemmgt.r & \texttt{firstd} table\\
+  runtime/rmemmgt.r & \texttt{firstp} table\\
+  runtime/rmemmgt.r & \texttt{ptrno} table\\
+  runtime/rmemmgt.r & \texttt{blkname} table\\
+  runtime/rmisc.r   & update \texttt{outimage()}\\
+\multicolumn{2}{l}{}\\
+\multicolumn{2}{l}{\bf All Value Types\vspace{2ex}}\\
+  runtime/fmisc.r   & update \texttt{copy()}\\
+  runtime/fmisc.r   & update \texttt{type()}\\
+  runtime/rcomp.r   & update \texttt{anycmp()}\\
+  runtime/rcomp.r   & update \texttt{order()}\\
+  runtime/rcomp.r   & update \texttt{equiv()}\\
+  runtime/rmisc.r   & update \texttt{getimage()}\\
+\multicolumn{2}{l}{}\\  
+\multicolumn{2}{l}{\bf Types Implemented In The Block Region\vspace{2ex}}\\
+  h/rstructs.h      & add declaration for the block structure\\
+  h/rstructs.h      & update the \texttt{union block} declaration\\
+  runtime/ralc.r    & add an allocation routine\\
+\multicolumn{2}{l}{}\\  
+\multicolumn{2}{l}{\bf Types With Sizes\vspace{2ex}}\\
+  runtime/omisc.r   & update size operator\\
+\multicolumn{2}{l}{}\\  
+\multicolumn{2}{l}{\bf  All Keyword Variable Types\vspace{2ex}}\\
+  h/rexterns.h      & extern for keyword descriptor\\
+  runtime/cnv.r     & update \texttt{deref()}\\
+  runtime/data.r    & declaration for keyword descriptor\\
+  runtime/init.r    & initialize keyword descriptor\\
+  runtime/keyword.r & add keyword declaration\\
+  runtime/oasgn.r   & update \texttt{GeneralAsgn()} macro\\
+  runtime/rdebug.r  & update \texttt{get\_name()}\\
+  runtime/rmisc.r   & update \texttt{getvar()}\\
+\multicolumn{2}{l}{}\\  
+\multicolumn{2}{l}{\bf Keyword Variables That Must Be Garbage Collected\vspace{2ex}}\\
+  runtime/rmemmgt.r & update \texttt{collect()}\\
+\end{tabular}
+\end{noIndex}
+}
+\bigskip

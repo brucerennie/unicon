@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unicon OpenGL 2D and 2D/3D Graphics User's Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li class="current">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr21.html">&larr; UTR 21: Configuring and Building Version 13 of Unicon</a>
+<a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Unicon OpenGL 2D and 2D/3D Graphics User's Guide</h1>
+<p class="report-authors">Gigi Young and Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 22</p>
+<p class="report-date">2021-04-19</p>
+<p class="report-pdf"><a href="utr22.pdf">pdf</a> · <a href="_sources/utr22.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon version 13.3 adds a new graphics implementation that extends the language's 2D capabilities. This guide is a gentle introduction to the new graphics features introduced by the OpenGL-based implementation of Unicon's 2D and integrated 2D/3D facilities.</p>
+</div>
+</header>
+<p>
+Unicon OpenGL 2D and 2D/3D
+</p>
+<p>
+Graphics User’s Guide
+</p>
+<p>
+Gigi Young and Clinton Jeffery
+</p>
+<p>
+Unicon Technical Report: 22
+</p>
+<p>
+April 19, 2021
+</p>
+<p>
+Abstract
+</p>
+<p>
+| Unicon version 13.3 adds a new graphics implementation that extends | the language’s 2D capabilities. This guide is a gentle introduction to the | new graphics features introduced by the OpenGL-based implementation | of Unicon’s 2D and integrated 2D/3D facilities.
+</p>
+<p>
+Unicon Project
+</p>
+<p>
+http://unicon.org
+</p>
+<p>
+University of Idaho
+</p>
+<p>
+Department of Computer Science
+</p>
+<p>
+Moscow, ID, 83844, USA
+</p>
+<p>
+New Mexico Institute of Mines and Technology
+</p>
+<p>
+Department of Computer Science and Engineering
+</p>
+<p>
+Socorro, NM, 87801, USA
+</p>
+<p>
+1
+</p>
+<p>
+Introduction
+</p>
+<p>
+| A new OpenGL-based implementation of 2D graphics facilities in Version 13.3 of | Unicon introduces new features, such as a display list architecture inherited from | the 3D facilities and an integrated 2D/3D graphics mode. This report describes the | new features provided by the OpenGL-based implementation of Unicon’s graphics | facilities. This report supplements IPD268a [1] for Unicon’s 2D facilities and UTR9d | [2] for Unicon’s 3D facilities. The reader should consult [3] for additional details on | this implementation.
+</p>
+<p>
+The OpenGL-based 2D facilities described in this report have thusfar only been
+</p>
+<p>
+| implemented and tested on Linux systems. The OpenGL 2D and 2D/3D facilities are | enabled by installing the OpenGL and FreeType development headers and libraries | prior to configuring and building Unicon. Additionally, Linux systems require the | installation of X11 development headers and libraries. The source code is configured | when OpenGL graphics appears in the unicon -features listing.
+</p>
+<p>
+The OpenGL graphics implementation is toggled on/off by setting/unsetting the
+</p>
+<p>
+| environment variable UNICONGL2D. Use mode &quot;g&quot; with function open() to open a | 2D-only window and mode &quot;gl&quot; to open an integrated 2D/3D window.
+</p>
+<p>
+2
+</p>
+<p>
+2D Features
+</p>
+<p>
+| The OpenGL implementation of the 2D facilities introduces a display list achitecture | and transparency that will be familiar to users of Unicon’s 3D facilities. These two | primary added features and a number of smaller items augment Unicon’s previous | 2D graphics feature set. While great effort has been made to preserve compatibility | with Unicon’s other 2D graphics implementations, a few changes can be observed.
+</p>
+<p>
+2.1
+</p>
+<p>
+Display List
+</p>
+<p>
+| The display list of the 2D facilities is a list of records. Every record on the display | list possesses the field name which contains the string literal identifying its record | type. Most Unicon 2D graphics functions create and append corresponding graphics | records to the display list. See Section 4 in this report for details on display list | records and their corresponding graphics functions.
+</p>
+<p>
+Graphics function WindowContents() returns a reference to the display list. The
+</p>
+<p>
+| reference to the most recently generated display list record can be obtained by grab- | bing the last element of the display list after returning from a successful call to a | Unicon graphics procedure that creates a display list record.
+</p>
+<p>
+1
+</p>
+<p>
+| DrawRectangle(0,0,100,100) | drawrect := WindowContents()[-1]
+</p>
+<p>
+The display list can be modified by the user. It may contain only records in the
+</p>
+<p>
+format specified in Section 4. Failure to comply will result in a run-time error.
+</p>
+<p>
+2.1.1
+</p>
+<p>
+Animation
+</p>
+<p>
+| The display list allows for intuitive animation. References to primitives on the display | list can be used to modify position, color, text, font, and more without needed to | write specialized drawing procedures for changing these attributes. See Section 4 | in this report (Modifiable Display List Record Fields) for details on which fields of | display list records are modifiable. Changes to display list record fields only become | visible when the runtime system redraws the screen, such as when the program calls | the function Refresh().
+</p>
+<p>
+All graphical primitives except FillPolygon, DrawPolygon, DrawLine,
+</p>
+<p>
+| DrawSegment, and DrawPoint have x and y (positional) fields to be used for modi- | fying the position of a particular primitive.
+</p>
+<p>
+| drawrect.x +:= 5 | drawrect.y +:= 5 | Refresh()
+</p>
+<p>
+For graphical primitives that do not possess positional fields, the translational
+</p>
+<p>
+| coordinates dx and dy can be used instead. Display list records Dx and Dy affect | the translational coordinates of all subsequent graphical primitives until another | translational display list record of the same type is encountered. Thus, Dx and Dy | can be used to translate groups of primitives. This is more efficient than modifying | each x and y for each graphical primitive that possesses those fields.
+</p>
+<p>
+Context attribute display list records are created and appended to the display
+</p>
+<p>
+| list by WAttrib() in order of the argument list given. Only assignments create | display list records. However, all records are created before the first suspension of | WAttrib().
+</p>
+<p>
+| dl := WindowContents() | WAttrib(&quot;dx=0&quot;,&quot;dy=0&quot;) | dx := dl[-2] | dy := dl[-1] | DrawPolygon(0,0,0,100,100,100,100,0)
+</p>
+<p>
+2
+</p>
+<p>
+| DrawLine(0,0,100,100) | DrawLine(0,100,100,0)
+</p>
+<p>
+| dx.val +:= 5 | dy.val +:= 5 | Refresh()
+</p>
+<p>
+Another technique is to build a list of references to display list records that need
+</p>
+<p>
+| to be modified in a render loop. A case expression can be used on the name field | of the records to differentiate between the types of records. The following program | uses an animation loop which results in a color-shifting, filled circle that bounces off | the walls of the window.
+</p>
+<p>
+| link graphics | $include &quot;keysyms.icn&quot;
+</p>
+<p>
+procedure main()
+</p>
+<p>
+| width := height := 400 | L := [] | &amp;window := open(&quot;simple animation&quot;, &quot;g&quot;, &quot;size=&quot;\||width|\|&quot;,&quot;\||height) | dl := WindowContents()
+</p>
+<p>
+| WAttrib(&quot;fg=red&quot;) | put(L, dl[-1]) | FillCircle(10,200,10) | put(L, dl[-1])
+</p>
+<p>
+| dirx := diry := 1 | speed := .1 | repeat {
+</p>
+<p>
+if \*Pending() &gt; 0 then {
+</p>
+<p>
+case Event() of {
+</p>
+<p>
+| &quot;q&quot;: exit(0) | }
+</p>
+<p>
+}
+</p>
+<p>
+else every obj := !L do {
+</p>
+<p>
+case obj.name of {
+</p>
+<p>
+&quot;FillCircle&quot;: {
+</p>
+<p>
+if (obj.x + dirx*(obj.r + speed) &gt; width) then
+</p>
+<p>
+3
+</p>
+<p>
+dirx := -1
+</p>
+<p>
+else if (obj.x + dirx*(obj.r + speed) &lt; 0) then
+</p>
+<p>
+dirx := 1
+</p>
+<p>
+if (obj.y + diry*(obj.r + speed) &gt; height) then
+</p>
+<p>
+diry := -1
+</p>
+<p>
+else if (obj.y + diry*(obj.r + speed) &lt; 0) then
+</p>
+<p>
+diry := 1
+</p>
+<p>
+| obj.x +:= speed
+<em>
+dirx | obj.y +:= speed
+</em>
+diry | }
+</p>
+<p>
+&quot;Fg&quot;: {
+</p>
+<p>
+| tmp := obj.r | obj.r := obj.g | obj.g := obj.b | obj.b := tmp | }
+</p>
+<p>
+}
+</p>
+<p>
+}
+</p>
+<p>
+| WDelay(1) | Refresh() | }
+</p>
+<p>
+end
+</p>
+<p>
+2.1.2
+</p>
+<p>
+Optimizing Performance
+</p>
+<p>
+| Graphics facilities that utilize a display list should provide a mechanism by which to | manage the list size. For Unicon, graphics functions CopyArea() and EraseArea() | may be used to truncate the display list, preventing the display list from growing | indefinitely.
+</p>
+<p>
+Calling CopyArea() with positional and dimensional arguments to cover the en-
+</p>
+<p>
+| tire destination window will delete the destination window’s display list and add a | CopyArea display list record. Calling EraseArea() with positional and dimensional | arguments to cover the entire window will cause the display list to be deleted without | appending a new display list record. These uses of CopyArea() and EraseArea() are | useful when previous rendering operations are fully obscured and no longer needed.
+</p>
+<p>
+EraseArea() is useful when previous rendering operations are fully obscured and
+</p>
+<p>
+| no longer needed. On the other hand, CopyArea() can be used to condense multiple | rendering operations into one display list record as long as animation is no longer
+</p>
+<p>
+4
+</p>
+<p>
+| needed for any part of the area copied. CopyArea() can also be used to reduce the | number of items on the display list for any portion of the window smaller than its | maximum dimensions if the obscured items are removed manually.
+</p>
+<p>
+2.2
+</p>
+<p>
+Transparency
+</p>
+<p>
+| Transparency is denoted by the alpha value, which ranges from 0 (fully transparent) | to 1 (fully opaque). To ensure proper transparency blending, any transparent objects | should be drawn in the correct order, i.e. objects that appear farther away should | be drawn first. Once drawn in the correct order, the display list will preserve the | order, unless the ordering list is modified by the user.
+</p>
+<p>
+2.2.1
+</p>
+<p>
+Color Specification
+</p>
+<p>
+| Transparency can be specified explicitly within a color specification in a few different | ways. The first of which is a transparency modifier that prepends the usual Unicon | color name string. The available transparency modifiers are in the following table | taken from [2].
+</p>
+<p>
+Transparency name
+</p>
+<p>
+percent visible
+</p>
+<p>
+opaque
+</p>
+<p>
+100
+</p>
+<p>
+dull, a.k.a. subtranslucent
+</p>
+<p>
+75
+</p>
+<p>
+translucent
+</p>
+<p>
+50
+</p>
+<p>
+subtransparent
+</p>
+<p>
+25
+</p>
+<p>
+transparent
+</p>
+<p>
+5
+</p>
+<p>
+| Alternatively, the transparency modifier can be a floating-point number from (0, 1]. | If the transparency modifier is 0, then the value of context attribute alpha is | used. If the transparency modifier is greater than 1, then an alpha of 1 is used. | Thus, Fg(&quot;translucent red&quot;) is equivalent to Fg(&quot;0.5 red&quot;). The alpha value | can also be set by defining RGBA values directly, such as Fg(&quot;#FF000080&quot;) or | Fg(&quot;#65535,0,0,32768&quot;).
+</p>
+<p>
+2.2.2
+</p>
+<p>
+Context Attribute
+</p>
+<p>
+| The OpenGL implementation introduces a new context attribute, alpha, which has | a default value of 1 (fully opaque). alpha denotes the alpha value of a color spec- | ification which does not explicitly assign transparency, i.e. &quot;red&quot; or &quot;#FF0000&quot;. | Thus,
+</p>
+<p>
+5
+</p>
+<p>
+WAttrib(&quot;alpha=0.5&quot;,&quot;fg=red&quot;,&quot;bg=black&quot;)
+</p>
+<p>
+| would assign an alpha value of 0.5 to both the fg and bg colors. However, if alpha | values are specified in the color phrase
+</p>
+<p>
+WAttrib(&quot;alpha=0.5&quot;,&quot;fg=0.4 red&quot;,&quot;bg=0.7 black&quot;)
+</p>
+<p>
+then the value of alpha is ignored.
+</p>
+<p>
+2.2.3
+</p>
+<p>
+Modifying Display List Record Fields
+</p>
+<p>
+| The third way is by modifying the alpha field, a, of a Fg or Bg display list record | (see Section 4 in this report for more details).
+</p>
+<p>
+| Fg(&quot;red&quot;) | fg := WindowContents()[-1] | fg.a := 32768 | Refresh()
+</p>
+<p>
+| It should be noted that the RGBA fields of Fg and Bg display list records are 16-bit | integers ranging from 0 to 65535 opposed to the alpha values ranging from 0.0 to | 1.0. To apply the alpha (or color) change, simply use the library function Refresh(). | This is also an alternative to using native mutable colors.
+</p>
+<p>
+2.2.4
+</p>
+<p>
+A Simple Program
+</p>
+<p>
+| To bring everything together, the following program phases three colored rectangles | in and out in a loop.
+</p>
+<p>
+| link graphics | $include &quot;keysyms.icn&quot;
+</p>
+<p>
+procedure main()
+</p>
+<p>
+local const := 0.01, incr1, incr2, incr3, alpha1, alpha2, alpha3,
+</p>
+<p>
+fg1, fg2, fg3
+</p>
+<p>
+| incr1 := incr2 := incr3 := const | &amp;window := open(&quot;&quot;,&quot;g&quot;,&quot;size=200,200&quot;,&quot;bg=black&quot;) | Fg(&quot;blue&quot;) | fg1 := WindowContents()[-1] | alpha1 := fg1.a/65535.0
+</p>
+<p>
+6
+</p>
+<p>
+FillRectangle(25,25,150,150)
+</p>
+<p>
+| Fg(&quot;0.67 green&quot;) | fg2 := WindowContents()[-1] | alpha2 := fg2.a/65535.0 | FillRectangle(50,50,100,100)
+</p>
+<p>
+| Fg(&quot;0.33 red&quot;) | fg3 := WindowContents()[-1] | alpha3 := fg3.a/65535.0 | FillRectangle(75,75,50,50) | Refresh()
+</p>
+<p>
+repeat {
+</p>
+<p>
+if \*Pending() &gt; 0 then
+</p>
+<p>
+case Event() of {
+</p>
+<p>
+| &quot;q&quot;: exit() | }
+</p>
+<p>
+else {
+</p>
+<p>
+WDelay(10)
+</p>
+<p>
+| if alpha1 &gt;= 1.0 then incr1 := -const | else if alpha1 &lt;= 0 then incr1 := const | alpha1 +:= incr1
+</p>
+<p>
+| if alpha2 &gt;= 1.0 then incr2 := -const | else if alpha2 &lt;= 0 then incr2 := const | alpha2 +:= incr2
+</p>
+<p>
+| if alpha3 &gt;= 1.0 then incr3 := -const | else if alpha3 &lt;= 0 then incr3 := const | alpha3 +:= incr3
+</p>
+<p>
+| fg1.a := alpha1
+<em>
+65535 | fg2.a := alpha2
+</em>
+65535 | fg3.a := alpha3*65535 | Refresh() | }
+</p>
+<p>
+7
+</p>
+<p>
+}
+</p>
+<p>
+end
+</p>
+<p>
+2.3
+</p>
+<p>
+Fonts
+</p>
+<p>
+| The OpenGL-based implementation uses FreeType for font rasterization, which now | allows for family in the font string format family[,styles],size to specify a | TrueType or OpenType font file. Both library functions WAttrib() and Font() can | be used to select a user-specified font file with
+</p>
+<p>
+WAttrib(&quot;font=mymonofont.ttf,18&quot;)
+</p>
+<p>
+or
+</p>
+<p>
+Font(&quot;mymonofont.ttf,18&quot;)
+</p>
+<p>
+The semantics of font specification remains otherwise unchanged.
+</p>
+<p>
+8
+</p>
+<p>
+3
+</p>
+<p>
+Integrated 2D/3D Features
+</p>
+<p>
+| The integrated 2D/3D facilities are an optional extension to Unicon’s 3D mode, the | mode obtained by passing &quot;gl&quot; to open(). The semantics of the integrated graphics | mode can be imagined by looking through the lens of a camera. The lens (near plane), | contains all 2D rendering, while the rest of the space (viewing volume) contains all | 3D rendering. Effectively, 3D windows now have an additional display list for 2D | primitives, and an integrated 2D/3D window is a 3D window in which the 2D display | list is non-empty.
+</p>
+<p>
+Figure 1: Orthogonal viewing volume
+</p>
+<p>
+Figure 2: Perspective viewing volume
+</p>
+<p>
+3.1
+</p>
+<p>
+Canvas Attribute projection
+</p>
+<p>
+| The canvas attribute projection was added to give the option of selecting an orthog- | onal (one-to-one) or perspective (foreshortening) projection for the viewing volume. | The call WAttrib(&quot;projection=ortho&quot;) selects an orthogonal projection while the | call WAttrib(&quot;projection=perspec&quot;) selects a perspective projection. The default | value of attribute projection is &quot;projection=perspec&quot;. Changes to viewing vol- | ume projection can be applied by calling Refresh().
+</p>
+<p>
+3.2
+</p>
+<p>
+Canvas Attribute camwidth
+</p>
+<p>
+| To give more control over the camera (viewing volume) dimensions, an additional can- | vas attribute camwidth was added. By adjusting the camera width with camwidth, | the camera height is implicitly calculated based on the ratio of window width to | height. camwidth cannot be given a value less than or equal to 0. Assigning 0 to | camwidth causes WAttrib() to fail, while assigning a negative value to camwidth | causes its absolute value to be assigned. Changes to camera dimensions can be | applied by calling Refresh().
+</p>
+<p>
+9
+</p>
+<p>
+3.3
+</p>
+<p>
+Context Attribute rendermode
+</p>
+<p>
+| The new context attribute rendermode dictates whether 2D or 3D rendering is ac- | tive. The semantics of the 2D and 3D graphics facilities remain unaffected by the | integrated graphics mode. WAttrib(&quot;rendermode=2d&quot;) activates 2D rendering and | WAttrib(&quot;rendermode=3d&quot;) activates 3D rendering. By default, &quot;rendermode=3d&quot; | for mode &quot;gl&quot;. If a graphics function is used in the incorrect render mode, a run-time | error will occur.
+</p>
+<p>
+WAttrib(&quot;rendermode=2d&quot;)
+</p>
+<p>
+# Activate 2D rendering
+</p>
+<p>
+| DrawPolygon(...) | WAttrib(&quot;rendermode=3d&quot;)
+</p>
+<p>
+# Activate 3D rendering
+</p>
+<p>
+DrawPolygon(...)
+</p>
+<p>
+For graphics function Clone(), rendermode defaults to the value of the source
+</p>
+<p>
+| context unless specified by the passed argument list. Clone() can be used to bind a | new context to the canvas to alleviate the need to call WAttrib() to switch render | modes. The following example designates a window each for 2D and 3D rendering.
+</p>
+<p>
+| w3d := open(&quot;&quot;, &quot;gl&quot;, ...) | w2d := Clone(w3d, &quot;rendermode=2d&quot;, ...) | DrawPolygon(w2d, ...) # Draw in 2D mode | DrawPolygon(w3d, ...)
+</p>
+<p>
+# Draw in 3D mode
+</p>
+<p>
+WindowContents() returns the display list of the corresponding rendermode. Both
+</p>
+<p>
+| w3d := open(&quot;&quot;, &quot;gl&quot;, ...) | w2d := Clone(w3d, &quot;rendermode=2d&quot;, ...) | ... | dl := WindowContents(w2d)
+</p>
+<p>
+and
+</p>
+<p>
+| &amp;window := open(&quot;&quot;, &quot;gl&quot;, ...) | ... | WAttrib(&quot;rendermode=2d&quot;) | dl := WindowContents()
+</p>
+<p>
+| return the 2D display list. Graphics function Refresh() redraws both (2D and | 3D) display lists, if available. If a display list is empty, it is ignored. Eye(), a | 3D graphics function, performs an implicit Refresh() in addition to changing the | camera attributes.
+</p>
+<p>
+10
+</p>
+<p>
+4
+</p>
+<p>
+Modifiable Display List Record Fields
+</p>
+<p>
+| The display list records with their modifiable fields are shown as Unicon record | declarations.
+</p>
+<p>
+Every display list record has the field name, containing the string
+</p>
+<p>
+| literal which identifies it. name should not be modified. It is shown here as useful | information rather than a modifiable field. If no fields other than name are shown, | it means that no modifiable fields are available. It is possible to query the fields of | these records at runtime, but modifying any fields other than the ones shown in this | section will result in undefined behavior.
+</p>
+<p>
+4.1
+</p>
+<p>
+Primitives
+</p>
+<p>
+gl2d blimage: record
+</p>
+<p>
+DrawImage()
+</p>
+<p>
+| name: &quot;BilevelImage&quot;, | x: Real, y: Real, width: Int, height: Int,
+</p>
+<p>
+gl2d readimage: record
+</p>
+<p>
+ReadImage()
+</p>
+<p>
+| name: &quot;ReadImage&quot;, | x: Real, y: Real, width: Int, height: Int,
+</p>
+<p>
+gl2d strimage: record
+</p>
+<p>
+DrawImage()/ReadImage()
+</p>
+<p>
+| name: &quot;StringImage&quot;, | x: Real, y: Real, width: Int, height: Int,
+</p>
+<p>
+gl2d drawstring: record
+</p>
+<p>
+DrawString()
+</p>
+<p>
+| name: &quot;DrawString&quot;, | x: Real, y: Real, s: Int
+</p>
+<p>
+gl2d wwrite: record
+</p>
+<p>
+WWrite*()
+</p>
+<p>
+| name: &quot;WWrite&quot;, | x: Real, y: Real, s: Int
+</p>
+<p>
+gl2d copyarea: record
+</p>
+<p>
+CopyArea()
+</p>
+<p>
+| name: &quot;CopyArea&quot;, | x: Real, y: Real,
+</p>
+<p>
+x and y define the coordinates of the destination window.
+</p>
+<p>
+11
+</p>
+<p>
+gl2d erasearea: record
+</p>
+<p>
+EraseArea()
+</p>
+<p>
+| name: &quot;EraseArea&quot;, | x: Real, y: Real, width: Real, height: Real
+</p>
+<p>
+gl2d fillpolygon: record
+</p>
+<p>
+FillPolygon()
+</p>
+<p>
+name: &quot;FillPolygon&quot;
+</p>
+<p>
+gl2d drawpolygon: record
+</p>
+<p>
+DrawPolygon()
+</p>
+<p>
+name: &quot;DrawPolygon&quot;
+</p>
+<p>
+gl2d drawline: record
+</p>
+<p>
+DrawCurve()/DrawLine()
+</p>
+<p>
+name: &quot;DrawLine&quot;
+</p>
+<p>
+gl2d drawsegment: record
+</p>
+<p>
+DrawSegment()
+</p>
+<p>
+name: &quot;DrawSegment&quot;
+</p>
+<p>
+gl2d drawpoint: record
+</p>
+<p>
+DrawPoint()
+</p>
+<p>
+name: &quot;DrawPoint&quot;
+</p>
+<p>
+gl2d drawcircle: record
+</p>
+<p>
+DrawCircle()
+</p>
+<p>
+| name: &quot;DrawCircle&quot;, | x: Real, y: Real, r: Real, theta: Real, alpha: Real
+</p>
+<p>
+gl2d fillcircle: record
+</p>
+<p>
+FillCircle()
+</p>
+<p>
+| name: &quot;FillCircle&quot;, | x: Real, y: Real, r: Real, theta: Real, alpha: Real
+</p>
+<p>
+gl2d drawarc: record
+</p>
+<p>
+DrawArc()
+</p>
+<p>
+| name: &quot;DrawArc&quot;, | x: Real, y: Real, width: Real, height: Real, theta: Real, alpha: Real
+</p>
+<p>
+gl2d fillarc: record
+</p>
+<p>
+FillArc()
+</p>
+<p>
+| name: &quot;FillArc&quot;, | x: Real, y: Real, width: Real, height: Real, theta: Real, alpha: Real
+</p>
+<p>
+gl2d drawrectangle: record
+</p>
+<p>
+DrawRectangle()
+</p>
+<p>
+| name: &quot;DrawRectangle&quot;, | x: Real, y: Real, width: Real, height: Real
+</p>
+<p>
+gl2d fillrectangle: record
+</p>
+<p>
+FillRectangle()
+</p>
+<p>
+| name: &quot;FillRectangle&quot;, | x: Real, y: Real, width: Real, height: Real
+</p>
+<p>
+12
+</p>
+<p>
+4.2
+</p>
+<p>
+Context Attributes
+</p>
+<p>
+gl2d fg: record
+</p>
+<p>
+WAttrib()/Fg()
+</p>
+<p>
+| name: &quot;Fg&quot;, | r: Int, g: Int, b: Int, a: Int
+</p>
+<p>
+gl2d bg: record
+</p>
+<p>
+WAttrib()/Bg()
+</p>
+<p>
+| name: &quot;Bg&quot;, | r: Int, g: Int, b: Int, a: Int
+</p>
+<p>
+gl2d reverse: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+name: &quot;Reverse&quot;
+</p>
+<p>
+gl2d gamma: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Gamma&quot;, | val: Real
+</p>
+<p>
+gl2d drawop: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Drawop&quot;, | s: String
+</p>
+<p>
+gl2d font: record
+</p>
+<p>
+WAttrib()/Font()
+</p>
+<p>
+| name: &quot;Font&quot;, | s: String
+</p>
+<p>
+gl2d leading: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Leading&quot;, | val: Int
+</p>
+<p>
+gl2d linewidth: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Linewidth&quot;, | val: Int
+</p>
+<p>
+gl2d linestyle: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Linestyle&quot;, | s: String
+</p>
+<p>
+gl2d fillstyle: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Fillstyle&quot;, | s: String
+</p>
+<p>
+13
+</p>
+<p>
+gl2d pattern: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Pattern&quot;, | s: String
+</p>
+<p>
+gl2d clip: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Clip&quot;, | x: Int, y: Int, width: Int, height: Int
+</p>
+<p>
+gl2d dx: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Dx&quot;, | val: Int
+</p>
+<p>
+gl2d dy: record
+</p>
+<p>
+WAttrib()
+</p>
+<p>
+| name: &quot;Dy&quot;, | val: Int
+</p>
+<p>
+14
+</p>
+<p>
+5
+</p>
+<p>
+References
+</p>
+<p>
+| [1] Gregg M. Townsend, Ralph E. Griswold, Clinton L. Jeffery (1995) Graphic Fa- | cilities for the Icon Programming Language. IPD268a, Department of Computer | Science, The University of Arizona. Available at 
+<a href="https://www2.cs.arizona.edu/icon/ftp/doc/ipd268.pdf" rel="noopener">https://www2.cs.arizona.edu/   icon/ftp/doc/ipd268.pdf</a>
+_\ [Verified 21 Oct 2020]
+</p>
+<p>
+| [2] Naomi Martinez, Clinton Jeffery, Jafar Al Gharaibeh (2017) Unicon 3D Graphics | User’s Guide and Reference Manual. UTR9d, University of Idaho, Moscow, ID 83844. | Available at 
+<a href="http://unicon.org/utr/utr9.pdf" rel="noopener">http://unicon.org/utr/utr9.pdf</a>
+_\ [Verified 21 Oct 2020]
+</p>
+<p>
+| [3] Kevin Z. Young (2020) Unicon’s OpenGL 2D and Integrated 2D/3D Graphics | Implementation. University of Idaho, Moscow Idaho. Available at 
+<a href="http://unicon.org/reports/young.pdf" rel="noopener">http://unicon.   org/reports/young.pdf</a>
+_\ [Verified 30 Oct 2020]
+</p>
+<p>
+| [4] Ralph Griswold, Clinton Jeffery, and Gregg Townsend (1998) Graphics Program- | ming in Icon.
+</p>
+<p>
+Peer to Peer Communications, San Jose CA. Available at 
+<a href="http://www2.cs.arizona.edu/icon/ftp/doc/gb1up.pdf" rel="noopener">http:</a>
+_
+</p>
+<p>
+<a href="http://www2.cs.arizona.edu/icon/ftp/doc/gb1up.pdf" rel="noopener">//www2.cs.arizona.edu/icon/ftp/doc/gb1up.pdf</a>
+_\ [Verified 24 Nov 2020]
+</p>
+<p>
+15
+</p>
+<p>
+A
+</p>
+<p>
+Platform Differences
+</p>
+<p>
+| Unicon’s OpenGL-based 2D implementation strives to be backwards-compatible with | its X11-based predecessor and run existing Unicon 2D graphics applications as-is. | Platform differences between Unicon 2D implementations do exist but great effort is | made to minimize them; see Appendix N of [4]. The OpenGL 2D implementation | achieves compatibility that is as good or better than most other ports of Unicon’s | 2D graphics, such as the MS Windows port.
+</p>
+<p>
+This appendix summarizes the most relevant information to the Unicon program-
+</p>
+<p>
+| mer from [3]. See Section 5 from [3] for a more detailed evaluation of the OpenGL | 2D implementation.
+</p>
+<p>
+A.1
+</p>
+<p>
+Graphical Accuracy
+</p>
+<p>
+| Due to semantic differences between OpenGL and platform-native APIs, there are | minor differences in the appearance of some primitives, especially fonts and lines. | Additional graphical differences occur on different OpenGL implementations, such | as Nvidia hardware-based rendering versus Mesa software rendering.
+</p>
+<p>
+The following figures depict the differences in rendering between the X11 imple-
+</p>
+<p>
+| mentation and the OpenGL implementation with Mesa and Nvidia OpenGL drivers | through the Unicon program gpxtest.
+</p>
+<p>
+Figure 3: gpxtest (Xlib)
+</p>
+<p>
+Figure 4: gpxtest (Mesa)
+</p>
+<p>
+Figure 5: gpxtest (Nvidia)
+</p>
+<p>
+A.1.1
+</p>
+<p>
+Fonts
+</p>
+<p>
+| The migration to FreeType for font rasterization requires the use of font files which | differ from native X11 fonts. Consequently, the four supported Unicon font names— | mono, typewriter, sans, and serif—use different base fonts. It is possible for users | to load a specific font if needed by providing their own TrueType or OpenType font | files. See Section 2.3 (Fonts) for more details.
+</p>
+<p>
+16
+</p>
+<p>
+Figure 6:
+</p>
+<p>
+gpxtest dialog
+</p>
+<p>
+(Xlib)
+</p>
+<p>
+Figure 7:
+</p>
+<p>
+gpxtest dialog
+</p>
+<p>
+(Mesa)
+</p>
+<p>
+Figure 8:
+</p>
+<p>
+gpxtest dialog
+</p>
+<p>
+(Nvidia)
+</p>
+<p>
+A.1.2
+</p>
+<p>
+Lines
+</p>
+<p>
+| The OpenGL implementation currently lacks a quality algorithm for rendering thick | lines (linewidth greater than 1) in addition to capping and joining thick lines. Minor | differences in arcs and circles should be expected due to differences the algorithm | between the OpenGL and X11 implementations.
+</p>
+<p>
+A.2
+</p>
+<p>
+Performance
+</p>
+<p>
+| The OpenGL 2D implementation’s performance is different than the X11 implemen- | tation. The OpenGL implementation is faster on some operations such as rendering | dashed lines of any type, while the X11 implementation excels at rendering normal | filled and unfilled geometric primitives, text strings, and copyareas.
+</p>
+<p>
+Depending on the OpenGL driver used (e.g. Mesa vs. Nvidia), the X11 implemen-
+</p>
+<p>
+| tation is anywhere from 3-5x faster than the OpenGL implementation on programs | that use a majority of filled and unfilled primitives (rectangles, arcs, circles, poly- | gons, and copyareas) with linestyle=solid and fillstyle=solid. This type of | primitive composition is most likely to reflect the average 2D graphics program.
+</p>
+<p>
+A.3
+</p>
+<p>
+What to Expect
+</p>
+<p>
+| This is the beta-test release of the OpenGL-based implementation for the 2D and | integrated 2D/3D graphics facilities. The majority of existing Unicon 2D programs | should work as expected under the OpenGL-based implementation. However, pro- | grams that periodically draw new graphics without erasing the window are likely | to run into performance issues over time due to display list growth. To improve | performance of legacy programs, see Section 2.1.2 (Optimizing Performance) in this | report.
+</p>
+<p>
+17
+</p>
+<h2 id="document-outline">
+Document Outline
+</h2>
+<ul>
+<li>
+<a href="utr22-remote.html#2" rel="noopener">Introduction</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#2" rel="noopener">2D Features</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#2" rel="noopener">Display List</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#3" rel="noopener">Animation</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#5" rel="noopener">Optimizing Performance</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#6" rel="noopener">Transparency</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#6" rel="noopener">Color Specification</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#6" rel="noopener">Context Attribute</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#7" rel="noopener">Modifying Display List Record Fields</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#7" rel="noopener">A Simple Program</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#9" rel="noopener">Fonts</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#10" rel="noopener">Integrated 2D/3D Features</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#10" rel="noopener">Canvas Attribute projection</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#10" rel="noopener">Canvas Attribute camwidth</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#11" rel="noopener">Context Attribute rendermode</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#12" rel="noopener">Modifiable Display List Record Fields</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#12" rel="noopener">Primitives</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#14" rel="noopener">Context Attributes</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#16" rel="noopener">References</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#17" rel="noopener">Platform Differences</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#17" rel="noopener">Graphical Accuracy</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#17" rel="noopener">Fonts</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#18" rel="noopener">Lines</a>
+_
+</li>
+</ul>
+<ul>
+<li>
+<a href="utr22-remote.html#18" rel="noopener">Performance</a>
+_
+</li>
+<li>
+<a href="utr22-remote.html#18" rel="noopener">What to Expect</a>
+_
+</li>
+</ul>
+<p>
+--------------
+</p>
+<div class="prevnext">
+<a href="utr21.html">&larr; UTR 21: Configuring and Building Version 13 of Unicon</a>
+<a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr22.pdf">pdf</a> | <a href="_sources/utr22.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

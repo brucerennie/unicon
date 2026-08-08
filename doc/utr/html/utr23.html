@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unicon Unit Testing Framework User's Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li class="current">UTR 23: Unicon Unit Testing Framework User's Guide</li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr22.html">&larr; UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a>
+<a href="utf8.html">UTF-8 Support Notes &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Unicon Unit Testing Framework User's Guide</h1>
+<p class="report-authors">Ian Trudel</p>
+<p class="report-tr">Unicon Technical Report: 23</p>
+<p class="report-date">2024-05-08</p>
+<p class="report-pdf"><a href="utr23.pdf">pdf</a> · <a href="_sources/utr23.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>This technical report introduces a unit testing framework for Unicon, inspired from Kent Beck's SUnit [1]. The framework aims to provide a robust testing environment for Unicon applications, simplifiying the process of writing and executing tests.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+Unit testing is a critical part of the development process, ensuring that individual units of source code function correctly. This new framework brings structured and repeatable testing to Unicon programs and libraries whilst leveraging Unicon's Object Oriented Programming features 
+[<a class="cite" href="#cite-beck-sunit">9</a>].
+</p>
+<h2 id="components-of-the-framework">
+Components of the Framework
+</h2>
+<h3 id="testsuite">
+TestSuite
+</h3>
+<p>
+A test suite allows to aggregate multiple test cases in order to facilitate their collective execution.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``add(testCase)``
+</strong>
+ — 
+<strong>
+adding a test case
+</strong>
+</p>
+<p>
+<code>add(testCase)</code>
+ adds a TestCase instance to the suite.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``run()``
+</strong>
+ — 
+<strong>
+run a test suite
+</strong>
+</p>
+<p>
+<code>run()</code>
+ executes all tests in a suite and returns an exit status.
+</p>
+<h3 id="testreporter">
+TestReporter
+</h3>
+<p>
+<code>TestReporter</code>
+ collects and displays test results in a readable format. A TestReporter can be subclassed and passed onto a TestSuite for a custom reporting format.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``result(cname, mname, passed)``
+</strong>
+ — 
+<strong>
+adding a result
+</strong>
+</p>
+<p>
+<code>result(cname, mname, passed)</code>
+ adds the result of a test including the classname, method name and whether it passed or not.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``results()``
+</strong>
+ — 
+<strong>
+returns the test results
+</strong>
+</p>
+<p>
+<code>results()</code>
+ returns the test results including the number of tests that have passed, failed and the total runtime, as a record 
+<code>total(passed, failed, runtime)</code>
+.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``runtime(time)``
+</strong>
+ — 
+<strong>
+sets the total runtime
+</strong>
+</p>
+<p>
+<code>runtime(time)</code>
+ sets the total runtime for the entire TestSuite.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``summary()``
+</strong>
+ — 
+<strong>
+display the tests summary
+</strong>
+</p>
+<p>
+<code>summary()</code>
+ reports the test results including the number of tests that have passed, failed and the total runtime in a human-readable format. It also returns a record 
+<code>total(passed, failed, runtime)</code>
+.
+</p>
+<h3 id="testcase">
+TestCase
+</h3>
+<p>
+<code>TestCase</code>
+ serves as the base class for all tests. It is necessary to subclass 
+<code>TestCase</code>
+ in order to write individual tests. It provides methods for set up and tear down the test environment both on a per-class and per-test basis. Every method starting with 
+<code>test</code>
+ in the subclass will be automatically recognized and run by the test suite.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``setupClass()``
+</strong>
+ — 
+<strong>
+setting up a class
+</strong>
+</p>
+<p>
+<code>setupClass()</code>
+ initializes resources before any tests in the class run. It is used to allocate or initialize resources shared across all tests in a test class, ensuring they are available before any tests are executed.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``teardownClass()``
+</strong>
+ — 
+<strong>
+tearing down a class
+</strong>
+</p>
+<p>
+<code>teardownClass()</code>
+ cleans up resources after all tests in the class have run. It ensures that all allocated resources in setupClass() are properly released or cleaned up after all tests have completed.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``setup()``
+</strong>
+ — 
+<strong>
+setting up a test
+</strong>
+</p>
+<p>
+<code>setup()</code>
+ initializes resources before each individual test runs, ensuring a consistent starting point for all tests.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``teardown()``
+</strong>
+ — 
+<strong>
+tearing down a test
+</strong>
+</p>
+<p>
+<code>teardown()</code>
+ cleans up resources after each test individual test runs, maintaining isolation between tests.
+</p>
+<h3 id="assertions">
+Assertions
+</h3>
+<p>
+<strong>
+``assertEqual(expected, actual)``
+</strong>
+ — 
+<strong>
+assert equal values
+</strong>
+</p>
+<p>
+<code>assertEqual(expected, actual)</code>
+ verifies that the actual value generated is equal to the expected value.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``assertNotEqual(unexpected, actual)``
+</strong>
+ — 
+<strong>
+assert unequal values
+</strong>
+</p>
+<p>
+<code>assertNotEqual(unexpected, actual)</code>
+ verifies that the actual value generated is not equal to the unexpected value.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``assert { expression }``
+</strong>
+ — 
+<strong>
+assert expression
+</strong>
+</p>
+<p>
+<code>assert { expression }</code>
+ evaluates an expression, and if true, the test will pass, otherwise will fail.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``assertFail { expression }``
+</strong>
+ — 
+<strong>
+assert fail expression
+</strong>
+</p>
+<p>
+<code>assertFail { expression }</code>
+ evaluates an expression, and if false, the test will pass, otherwise will fail.
+</p>
+<h3 id="mock">
+Mock
+</h3>
+<p>
+<strong>
+``expect(mname, retval)``
+</strong>
+ — 
+<strong>
+set an expectation for a method call
+</strong>
+</p>
+<p>
+<code>expect(mname, retval)</code>
+ sets an expectation for the method call 
+<code>mname</code>
+ and returns the value 
+<code>retval</code>
+.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``verify(mname, args)``
+</strong>
+ — 
+<strong>
+verify a given method exists
+</strong>
+</p>
+<p>
+<code>verify(mname, args)</code>
+ verifies whether a method exists or not, will return the name of the method or fail.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``invoke(mname, args)``
+</strong>
+ — 
+<strong>
+invoke a method
+</strong>
+</p>
+<p>
+<code>invoke(mname, args)</code>
+ simulates the invocation of a method 
+<code>mname</code>
+ with the arguments 
+<code>args</code>
+. It checks whether the call matches the expectations or not and returns the expected value, otherwise will fail.
+</p>
+<h2 id="example-usage">
+Example Usage
+</h2>
+<h3 id="a-simple-calculator">
+A simple Calculator
+</h3>
+<p>
+This example demonstrates the basic functionality of the unit testing framework using a simple Calculator class. The tests cover the basic addition and substraction methods, ensuring that the calculator performs these operations correctly. This example serves as an introduction to creating test cases, setting up the test environment, and validating the outcomes using assertions.
+</p>
+<p>
+<strong>
+calculator.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+class Calculator()
+   method add(n, m)
+      return n + m
+   end
+
+   method sub(n, m)
+      return n - m
+   end
+end
+</code></pre>
+<p>
+<strong>
+test_calculator.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+link calculator
+
+import unittest
+
+class TestCalculator : TestCase(calc)
+   method setup()
+      calc := Calculator()
+   end
+
+   method testAdd()
+      assertEqual(10, calc.add(6, 4))
+   end
+
+   method testSub()
+      assertEqual(3, calc.sub(8, 5))
+   end
+end
+
+procedure main()
+   ts := TestSuite()
+   ts.add(TestCalculator())
+   exit(ts.run())
+end
+</code></pre>
+<p>
+<strong>
+Output
+</strong>
+</p>
+<pre><code class="language-text">
+
+TestCalculator_testAdd
+
+TestCalculator_testSub
+
+=== TEST SUMMARY ===
+passed: 2, failed: 0
+ran 2 tests in 0.000062s
+</code></pre>
+<p>
+<strong>
+Highlights
+</strong>
+</p>
+<ul>
+<li>
+<code>setup()</code>
+ initializes a new instance of Calculator() before each test.
+</li>
+<li>
+<code>testAdd()</code>
+ asserts that the add method works correctly.
+</li>
+<li>
+<code>testSub()</code>
+ asserts that the sub method works correctly.
+</li>
+<li>
+The test summary reports the two (2) tests have passed.
+</li>
+</ul>
+<h3 id="logger">
+Logger
+</h3>
+<p>
+The logger example demonstrates the framework's ability to handle more complex objects and interactions, such as file operations. The Logger class includes methods for opening a log file, writing messages, rotating logs and closing the log file. This example illustrates the use of 
+<code>setup()</code>
+ and 
+<code>teardown()</code>
+ methods to manage file system side effects, ensuring each test runs in a clean environment. The tests validate the logger's ability to handle maximum file size constraints, correctly write log messages, and perform log rotation.
+</p>
+<p>
+<strong>
+logger.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+class Logger(__filename, __filehandle, __max_size)
+   method open(filename)
+      self.__filename := filename
+      self.__filehandle := ::open(self.__filename, &quot;a&quot;) |
+         fail(&quot;Unable to open log file&quot;)
+   end
+
+   method maxsize(size)
+      return self.__max_size := \size | self.__max_size
+   end
+
+   method write(message)
+      stats := stat(self.__filename)
+      if stats.size &gt; self.__max_size then
+         self.rotate()
+      ::write(self.__filehandle, message || &quot;\n&quot;)
+   end
+
+   method close()
+      ::close(self.__filehandle)
+   end
+
+   method rotate()
+      ::close(self.__filehandle)
+      rename(self.__filename, self.__filename || &quot;.old&quot;)
+      open(self.__filename)
+   end
+
+initially
+   self.__max_size := 1024
+end
+</code></pre>
+<p>
+<strong>
+test_logger.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+link logger, io
+
+import unittest
+
+class TestLogger : TestCase(logger, filename)
+   method setup()
+      filename := &quot;logfile.log&quot;
+
+      logger := Logger()
+      logger.open(filename)
+   end
+
+   method teardown()
+      remove(filename)
+      exists(filename || &quot;.old&quot;) &amp; remove(filename || &quot;.old&quot;)
+   end
+
+   method testMaxSize()
+      assertEqual(1024, logger.maxsize())
+      assertEqual(888, logger.maxsize(888))
+      assert { -1 ~= logger.maxsize(-1) }
+   end
+
+   method testWriteLog()
+      s := &quot;Welcome to Unicon&quot;
+
+      logger.write(s)
+
+      file := open(filename, &quot;r&quot;)
+      contents := reads(file)
+      assert { find(contents, s) &gt; 0 }
+      close(file)
+   end
+
+   method testLogRotation()
+      assertEqual(10, logger.maxsize(10))
+
+      every 1 to 20 do logger.write(&quot;rotate&quot;)
+
+      assert { exists(filename || &quot;.old&quot;) }
+   end
+end
+
+procedure main()
+   ts := TestSuite()
+   ts.add(TestLogger())
+   exit(ts.run())
+end
+</code></pre>
+<p>
+<strong>
+Output
+</strong>
+</p>
+<pre><code class="language-text">
+
+TestLogger_testMaxSize
+Assertion failed.
+
+TestLogger_testWriteLog
+
+TestLogger_testLogRotation
+
+=== TEST SUMMARY ===
+passed: 2, failed: 1
+ran 3 tests in 0.002208s
+</code></pre>
+<p>
+An assertion fails in 
+<code>testMaxSize()</code>
+ because the method 
+<code>maxsize()</code>
+ does not handle negative size properly. Here's a revised implementation:
+</p>
+<p>
+<strong>
+logger.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+method maxsize(size)
+   return self.__max_size := ((\size &gt; 0) &amp; \size) | self.__max_size
+end
+</code></pre>
+<p>
+<strong>
+Output
+</strong>
+</p>
+<pre><code class="language-text">
+
+TestLogger_testMaxSize
+
+TestLogger_testWriteLog
+
+TestLogger_testLogRotation
+
+=== TEST SUMMARY ===
+passed: 3, failed: 0
+ran 3 tests in 0.002033s
+</code></pre>
+<p>
+<strong>
+Highlights
+</strong>
+</p>
+<ul>
+<li>
+<code>setup()</code>
+ initializes a Logger instance and opens a log file before each test, ensuring that each test starts with a new log file.
+</li>
+<li>
+<code>teardown()</code>
+ cleans up by removing the log file and any old log file after each test, maintaining a clean test environment.
+</li>
+<li>
+<code>testMaxSize()</code>
+ tests the maxsize method to ensure it correctly sets and returns the maximum log file size.
+</li>
+<li>
+<code>testWriteLog()</code>
+ validates that the write method correctly writes messages to the log file.
+</li>
+<li>
+<code>testLogRotation()</code>
+ ensures that log rotation is triggered when the log file exceeds the specified maximum size, and that the old log file is correctly renamed.
+</li>
+</ul>
+<h3 id="fixtures">
+Fixtures
+</h3>
+<p>
+Fixtures are pre-defined data that are used as a foundation for running tests. They help ensure consistency and reliability across tests by providing a known environment. This is particularly useful when testing code that interacts with external resources such as a databases, files or network connections. Fixtures are set up before the tests are run and are torn down afterwards to clean up any changes made during testing.
+</p>
+<p>
+<strong>
+fixtures_bank_account.sql
+</strong>
+</p>
+<pre><code class="language-sql">
+
+CREATE TABLE IF NOT EXISTS accounts (
+   account TEXT PRIMARY KEY,
+   holder TEXT NOT NULL,
+   balance REAL DEFAULT 0.0
+);
+
+INSERT INTO accounts (account, holder, balance) VALUES
+   ('123456789', 'Ada Lovelace', 10000.00),
+   ('987654321', 'Alan C. Kay', 99801.28),
+   ('123454321', 'Ralph Griswold', 48000.00);
+
+CREATE TABLE IF NOT EXISTS transactions (
+   transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+   account TEXT,
+   type TEXT CHECK(type IN ('deposit', 'withdrawal')),
+   amount REAL,
+   FOREIGN KEY (account) REFERENCES accounts(account)
+);
+
+INSERT INTO transactions (account, type, amount) VALUES
+   ('123456789', 'deposit', 200.00),
+   ('987654321', 'withdrawal', 1500.00),
+   ('123454321', 'deposit', 100.00),
+   ('987654321', 'deposit', 75.00),
+   ('123456789', 'withdrawal', 3456.75);
+</code></pre>
+<p>
+Use SQLite to create 
+<code>bank.db</code>
+:
+</p>
+<pre><code class="language-text">
+
+sqlite3 bank.db &lt; fixtures_bank_account.sql
+</code></pre>
+<p>
+<strong>
+bank_account.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+class BankAccount(account, holder, balance)
+   method deposit(amount)
+      if amount &gt; 0 then balance +:= amount
+   end
+
+   method withdraw(amount)
+      if 0 &lt; amount &lt;= balance then balance -:= amount else fail(&quot;overdraft&quot;)
+   end
+
+initially
+   /balance := 0.0
+end
+</code></pre>
+<p>
+<strong>
+test_bank_account.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+link bank_account
+
+import unittest
+import sqLite
+
+record transaction(id, account, type, amount)
+
+class TestBankAccount : TestCase(db, accounts)
+   method setupClass()
+      db := SQLite(&quot;bank.db&quot;)
+   end
+
+   method teardownClass()
+      db.Close()
+   end
+
+   method setup()
+      accounts := []
+      db_accounts := db.SQL_As_List(&quot;SELECT * FROM accounts&quot;)
+      every db_account := !db_accounts do {
+         put(accounts, BankAccount ! db_account)
+      }
+   end
+
+   method findAccount(account)
+      every __account := !accounts do {
+         if __account.account == account then suspend __account
+      }
+   end
+
+   method testValidAccount()
+      assert { 0 &lt; *accounts }
+      every account := !accounts do {
+         assert { 0 &lt; *account.account }
+         assert { 0 &lt; *account.holder }
+         assert { 0.0 &lt;= account.balance }
+      }
+   end
+
+   method testTransactions()
+      transactions := []
+      db_transactions := db.SQL_As_List(&quot;SELECT * FROM transactions&quot;)
+      every db_transaction := !db_transactions do {
+         put(transactions, transaction ! db_transaction)
+      }
+
+      every transaction := !transactions do {
+         account := findAccount(transaction.account)
+         case transaction.type of {
+            &quot;deposit&quot;: {
+               balance := account.balance
+               account.deposit(transaction.amount)
+               assertEqual(balance + transaction.amount, account.balance)
+            }
+            &quot;withdrawal&quot;: {
+               balance := account.balance
+               account.withdraw(transaction.amount)
+               assertEqual(balance - transaction.amount, account.balance)
+            }
+         }
+      }
+   end
+
+   method testOverdraft()
+      every account := !accounts do {
+         balance := account.balance
+         assertFail { account.withdraw(balance * 10) }
+         assertEqual(balance, account.balance)
+      }
+   end
+end
+
+procedure main()
+   ts := TestSuite()
+   ts.add(TestBankAccount())
+   exit(ts.run())
+end
+</code></pre>
+<p>
+<strong>
+Output
+</strong>
+</p>
+<pre><code class="language-text">
+
+TestBankAccount_testValidAccount
+
+TestBankAccount_testTransactions
+
+TestBankAccount_testOverdraft
+
+=== TEST SUMMARY ===
+passed: 3, failed: 0
+ran 3 tests in 0.004026s
+</code></pre>
+<p>
+<strong>
+Highlights
+</strong>
+</p>
+<ul>
+<li>
+<code>setupClass()</code>
+ initializes the SQLite database connection before any tests run, ensuring that the database is ready for operations.
+</li>
+<li>
+<code>teardownClass()</code>
+ closes the database connection after all tests have run, ensuring that resources are properly released.
+</li>
+<li>
+<code>setup()</code>
+ loads bank accounts from the database into the accounts list before each test, providing a fresh set of data.
+</li>
+<li>
+<code>findAccount(account)</code>
+ is a utility method to locate an account by account number.
+</li>
+<li>
+<code>testValidAccount()</code>
+ validates that each account has an account number, account holder and a balance.
+</li>
+<li>
+<code>testTransactions()</code>
+ validates deposit and withdrawal transactions against the database.
+</li>
+<li>
+<code>testOverdraft()</code>
+ tests that overdraft attempts fail correctly, ensuring no account balance goes negative.
+</li>
+<li>
+The test summary reports the three (3) tests have passed.
+</li>
+</ul>
+<h3 id="mock-objects">
+Mock objects
+</h3>
+<p>
+Test-driven development (TDD) encourages the use of mock objects as a test-first strategy. Mock objects aim to replicate the behaviour of actual objects without their actual implementation, thus allowing tests to be written nonetheless. The following example demonstrates how to implement tests for temperature sensors that are not yet implemented (or physically unavailable).
+</p>
+<p>
+<strong>
+temperature_sensor.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+class TemperatureSensor()
+   method read()
+      stop(&quot;TemperatureSensor: not yet implemented.&quot;)
+   end
+end
+
+class TemperatureMonitor(sensors, threshold, callback)
+   method check()
+      retval := 0
+
+      every sensor := !self.sensors do {
+         temperature := sensor.read()
+         if temperature &gt; self.threshold then {
+            self.callback(sensor, temperature)
+            retval +:= 1
+         }
+      }
+
+      return (retval == 0 &amp; 1) | (retval &gt; 0 &amp; fail)
+   end
+end
+</code></pre>
+<p>
+<strong>
+test_temperature_sensor.icn
+</strong>
+</p>
+<pre><code class="language-unicon">
+
+link temperature_sensor
+
+import unittest
+
+class MockTemperatureSensor : TemperatureSensor : Mock()
+   method read()
+      return self.invoke(&quot;read&quot;)
+   end
+end
+
+procedure alert(sensor, temperature)
+   write(&quot;Sensor &quot; || image(sensor) || &quot; temperature &quot; ||
+      temperature || &quot; exceeds threshold&quot;)
+end
+
+class TestTemperatureMonitor : TestCase(monitor, sensors)
+   method setup()
+      self.sensors := [
+         MockTemperatureSensor(),
+         MockTemperatureSensor(),
+         MockTemperatureSensor()
+      ]
+
+      self.monitor := TemperatureMonitor(self.sensors, 115, alert)
+   end
+
+   method testCheckTemperature()
+      every sensor := !self.sensors do {
+         sensor.expect(&quot;read&quot;, ?40)
+      }
+
+      assert { self.monitor.check() }
+   end
+
+   method testCheckTemperatureThreshold()
+      every sensor := !self.sensors do {
+         sensor.expect(&quot;read&quot;, 115 + ?100)
+      }
+
+      assertFail { self.monitor.check() }
+   end
+end
+
+procedure main()
+   ts := TestSuite()
+   ts.add(TestTemperatureMonitor())
+   exit(ts.run())
+end
+</code></pre>
+<p>
+<strong>
+Output
+</strong>
+</p>
+<pre><code class="language-text">
+
+TestTemperatureMonitor_testCheckTemperature
+
+TestTemperatureMonitor_testCheckTemperatureThreshold
+Sensor object MockTemperatureSensor_4(1) temperature 136 exceeds threshold
+Sensor object MockTemperatureSensor_5(1) temperature 199 exceeds threshold
+Sensor object MockTemperatureSensor_6(1) temperature 215 exceeds threshold
+
+=== TEST SUMMARY ===
+passed: 2, failed: 0
+ran 2 tests in 0.000807s
+</code></pre>
+<p>
+<strong>
+Highlights
+</strong>
+</p>
+<ul>
+<li>
+<code>MockTemperatureSensor</code>
+ class inherits from both TemperatureSensor and Mock, thus allowing to mock the read() method.
+</li>
+<li>
+<code>setup()</code>
+ defines a series of sensors to be monitored along with a threshold temperature and a callback method.
+</li>
+<li>
+<code>testCheckTemperature()</code>
+ checks that the temperature reported by the sensors are within an acceptable threshold.
+</li>
+<li>
+<code>testCheckTemperatureThreshold()</code>
+ checks that the temperature reported by the sensors are not within an acceptable threshold.
+</li>
+<li>
+The test summary reports the two (2) tests have passed.
+</li>
+</ul>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-levine92" value="1">
+John R. Levine and Tony Mason and Doug Brown. &quot;Lex \&amp; Yacc&quot;. O'Reilly and Associates. 1992.
+</li>
+<li id="cite-ray03" value="2">
+K. Ray and Ray Pereda and Clinton Jeffery. &quot;Ulex -- A Lexical Analyzer Generator for Unicon&quot;. http://unicon.org/utr/utr2/utr2a.pdf. 2003.
+</li>
+<li id="cite-jeffery-1995-cs-tr" value="3">
+Clinton Jeffery. &quot;How to Write a UTSA CS Division Technical Report&quot;. 1995.
+</li>
+<li id="cite-griswold-newsletter" value="4">
+Ralph Griswold. &quot;Icon Benchmarks&quot;. The Icon Newsletter. 1989.
+</li>
+<li id="cite-jeffery-sesrit" value="5">
+Clinton Jeffery and David Rice. &quot;sesrit.icn&quot;. http://www2.cs.uidaho.edu/~jeffery/courses/game/sesrit.icn. 1999.
+</li>
+<li id="cite-shootout-2014" value="6">
+Brent Fulgham and Isaac Gouy. &quot;The Computer Language Benchmarks Game&quot;. http://benchmarksgame.alioth.debian.org/.
+</li>
+<li id="cite-merr" value="7">
+Clinton Jeffery. &quot;Merr: an LR Syntax Error Message Tool&quot;. http://unicon.org/merr.
+</li>
+<li id="cite-crawford" value="8">
+anonymous, but owing to Douglas Crawford. &quot;Introducing JSON&quot;. json.org.
+</li>
+<li id="cite-beck-sunit" value="9">
+Kent Beck. &quot;Simple Smalltalk Testing: With Patterns&quot;. Available at https://web.archive.org/web/20150315073817/http://www.xprogramming.com/testfram.htm [Verified 13 May 2024].
+</li>
+</ol></div>
+<div class="prevnext">
+<a href="utr22.html">&larr; UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a>
+<a href="utf8.html">UTF-8 Support Notes &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr23.pdf">pdf</a> | <a href="_sources/utr23.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

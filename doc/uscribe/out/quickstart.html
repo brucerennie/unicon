@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li class="current">Quick Start</li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+<li><a href="sphinx.html">uscribe and Sphinx</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="install.html">&larr; Installation</a>
+<a href="markup.html">Markup Reference &rarr;</a>
+</div>
+<h2 id="quick-start">
+Quick Start
+</h2>
+<p>
+A uscribe project is a directory of chapter 
+<code>.rst</code>
+ files plus a manifest that lists them in reading order.
+</p>
+<h3 id="1-create-a-manifest">
+1. Create a manifest
+</h3>
+<p>
+<code>book.manifest</code>
+ (name is conventional; any path works):
+</p>
+<pre><code class="language-text">
+
+# comments and blank lines are ignored
+preface.rst
+chapter1.rst
+chapter2.rst
+</code></pre>
+<h3 id="2-write-chapters">
+2. Write chapters
+</h3>
+<p>
+Underline-style headings, paragraphs, lists, and directives. Example 
+<code>chapter1.rst</code>
+:
+</p>
+<pre><code class="language-rst">
+
+First Chapter
+=============
+
+Hello from uscribe. See :ref:`Second Chapter` later.
+
+Second Section
+--------------
+
+- alpha
+- beta
+
+.. note::
+
+   Indented body of a note.
+
+.. code-block:: unicon
+
+   procedure main()
+      write(&quot;hi&quot;)
+   end
+</code></pre>
+<p>
+<strong>
+Underline rule:
+</strong>
+ the underline must be at least as long as the title. Shorter underlines are not treated as headings.
+</p>
+<p>
+Here is that Unicon listing as it appears when built (syntax highlighted in HTML):
+</p>
+<pre><code class="language-unicon">
+
+procedure main()
+   write(&quot;hi&quot;)
+end
+</code></pre>
+<h3 id="3-build-html">
+3. Build HTML
+</h3>
+<pre><code class="language-sh">
+
+uscribe --manifest=book.manifest \
+         --title=&quot;My Book&quot; \
+         --targetDir=./out \
+         --theme=basic \
+         --themePath=/path/to/uni/uscribe/themes
+</code></pre>
+<p>
+Or from a project 
+<code>Makefile</code>
+ patterned on 
+<code>doc/uscribe/Makefile</code>
+.
+</p>
+<p>
+Open 
+<code>out/index.html</code>
+. Use the sidebar for chapters, search, and theme switching.
+</p>
+<h3 id="4-build-pdf-optional">
+4. Build PDF (optional)
+</h3>
+<p>
+Install a TeX engine first — see the 
+<em>
+TeX / PDF dependencies by platform
+</em>
+ section under 
+<a href="install.html#installation">Installation</a>
+. Then:
+</p>
+<pre><code class="language-sh">
+
+uscribe --format=pdf --manifest=book.manifest \
+         --title=&quot;My Book&quot; --targetDir=./out
+</code></pre>
+<p>
+Or 
+<code>make pdf</code>
+. Output is 
+<code>out/book.pdf</code>
+ (and 
+<code>out/book.tex</code>
+). SVG figures are not embedded; convert them to PDF or PNG for TeX.
+</p>
+<h3 id="where-files-go">
+Where files go
+</h3>
+<ul>
+<li>
+<code>*.rst</code>
+ — chapter sources
+</li>
+<li>
+<code>*.manifest</code>
+ — manifest (chapter order)
+</li>
+<li>
+<code>images/</code>
+ — figures (copied into 
+<code>out/images/</code>
+)
+</li>
+<li>
+<code>out/</code>
+ — generated HTML and/or 
+<code>book.tex</code>
+ / 
+<code>book.pdf</code>
+</li>
+<li>
+<code>themes/</code>
+ — built-in skins shared across projects (HTML)
+</li>
+</ul>
+<div class="prevnext">
+<a href="install.html">&larr; Installation</a>
+<a href="markup.html">Markup Reference &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="quickstart.pdf">pdf</a> | <a href="_sources/quickstart.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

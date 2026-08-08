@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li class="current">Themes</li>
+<li><a href="cli.html">Command Line</a></li>
+<li><a href="sphinx.html">uscribe and Sphinx</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="markup.html">&larr; Markup Reference</a>
+<a href="cli.html">Command Line &rarr;</a>
+</div>
+<h2 id="themes">
+Themes
+</h2>
+<p>
+HTML chrome (sidebar, search, prev/next) is fixed in the generator. A 
+<em>
+theme
+</em>
+ is a CSS skin plus shared JavaScript.
+</p>
+<h3 id="built-in-themes">
+Built-in themes
+</h3>
+<ul>
+<li>
+<strong>
+basic
+</strong>
+ — light sidebar (default)
+</li>
+<li>
+<strong>
+classic
+</strong>
+ — serif / warm-gray documentation look
+</li>
+<li>
+<strong>
+dark
+</strong>
+ — dark background
+</li>
+</ul>
+<p>
+All three are installed into 
+<code>out/_static/</code>
+ as 
+<code>theme-NAME.css</code>
+. Readers pick a theme from the 
+<strong>
+Theme
+</strong>
+ dropdown in the sidebar; the choice is stored in the browser (
+<code>localStorage</code>
+ key 
+<code>uscribe-theme</code>
+).
+</p>
+<h3 id="build-time-default">
+Build-time default
+</h3>
+<pre><code class="language-sh">
+
+uscribe ... --theme=classic --themePath=../themes
+</code></pre>
+<p>
+Or with the sample Makefiles:
+</p>
+<pre><code class="language-sh">
+
+make          # THEME=basic
+make classic
+make dark
+</code></pre>
+<p>
+<code>--theme</code>
+ only sets the 
+<em>
+initial
+</em>
+ stylesheet until the reader selects another in the UI.
+</p>
+<h3 id="theme-layout-on-disk">
+Theme layout on disk
+</h3>
+<pre><code class="language-text">
+
+themes/
+  basic/static/book.css
+  classic/static/book.css
+  dark/static/book.css
+  _shared/search.js
+  _shared/highlight.css
+  _shared/highlight-unicon.js
+  _shared/theme-switcher.js
+</code></pre>
+<p>
+To add a custom theme, create 
+<code>themes/mytheme/static/book.css</code>
+ and pass 
+<code>--theme=mytheme</code>
+. Keep the same HTML class names (
+<code>.sidebar</code>
+, 
+<code>.main</code>
+, 
+<code>.tok-keyword</code>
+, …) so shared scripts keep working.
+</p>
+<p>
+See 
+<code>themes/README.md</code>
+ in the source tree for layout details.
+</p>
+<div class="prevnext">
+<a href="markup.html">&larr; Markup Reference</a>
+<a href="cli.html">Command Line &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="themes.pdf">pdf</a> | <a href="_sources/themes.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

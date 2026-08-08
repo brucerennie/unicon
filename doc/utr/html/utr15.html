@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Write a Unicon Technical Report</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li class="current">UTR 15: How to Write a Unicon Technical Report</li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr14.html">&larr; UTR 14: Unicon Threads: User's Guide and Reference Manual</a>
+<a href="utr16.html">UTR 16a: A Unicon Benchmark Suite &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">How to Write a Unicon Technical Report</h1>
+<p class="report-authors">Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 15</p>
+<p class="report-date">2013-07-04</p>
+<p class="report-pdf"><a href="utr15.pdf">pdf</a> · <a href="_sources/utr15.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Technical reports are an essential means by which technology and ideas are disseminated. This report is for Unicon contributors and students who are asked by their community or their research advisors to produce a technical report that describes their work.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+This technical report serves as a template and guide to how to produce a Unicon technical report. It is based on an earlier &quot;How to Write a CS Technical Report&quot; document 
+[<a class="cite" href="#cite-jeffery-1995-cs-tr">3</a>].
+</p>
+<p>
+Unicon technical reports are the primary and permanent archival technical documentation for an open-source software project. As such, it is important that they are open documents (for example, public domain or GNU Free Documentation License). The preferred formats are human-readable ASCII-based text, because it is amenable to long-term archival survivability and revision control repository difference analysis.
+</p>
+<p>
+The preferred source format is reStructuredText built with 
+<code>uscribe</code>
+ (this file is the RST template). If you use LaTeX, you can still use 
+<code>utr.sty</code>
+ and the older 
+<code>utr15.tex</code>
+ sources in 
+<code>doc/utr</code>
+. In any case, the Unicon Project reserves the right to reformat any document submitted for consideration as a Unicon Technical Report into an open ASCII text-based format.
+</p>
+<p>
+The only hard formatting requirement is that your cover page follow the general format that this report observes, so that its title, author(s), date, and technical report # appear in the window on the report cover. An abstract and the institutional address, if any, should appear lower on the title page. Unicon Citizens without an institutional address may use &quot;Unicon Project&quot; in that location.
+</p>
+<h2 id="who-writes-unicon-technical-reports">
+Who Writes Unicon Technical Reports
+</h2>
+<p>
+Unicon Technical Reports describe core contributions to the Unicon Programming Language, its supporting tools, and/or its libraries. Typically faculty members, thesis and dissertation students, research assistants, and independent study students write technical reports when they have a substantial piece of work of relevance to the Unicon community. Many reports serve as a mechanism to make research results available quickly, before they see publication in a conference or journal. Other reports present smaller results or material that may not warrant external publication, such as reference materials that accompany software developed during the course of Unicon-related research and development. Basically, any document that a Unicon Citizen feels should be a technical report can be made into one.
+</p>
+<h2 id="the-tr-production-process">
+The TR Production Process
+</h2>
+<p>
+Once you have written the essential technical content of your report, follow the steps below to introduce it electronically to the Unicon Project files. A sponsoring Unicon Citizen should either be a coauthor or should approve the content of the report before you start this process. If you have made a contribution that warrants a Unicon TR, you may well have become a Unicon Citizen yourself by the time you are finished with the report.
+</p>
+<ol start="1">
+<li>
+<strong>
+TR Number Assignment.
+</strong>
+ Request a TR number only after you have a finished copy ready to go. In your request for a number, send the UTR Tzar (currently jeffery@uidaho.edu) a draft electronic copy of the report.
+</li>
+</ol>
+<ol start="2">
+<li>
+You receive a number when the UTR czar updates the Unicon TR list.
+</li>
+</ol>
+<ol start="3">
+<li>
+You add the number to your cover page, and give the UTR czar electronic source code and letter-size PDF final copy of your document.
+</li>
+</ol>
+<ol start="4">
+<li>
+The UTR czar posts the UTR PDF to the Unicon web site, and enters the source code into the Unicon Project revision control system.
+</li>
+</ol>
+<h2 id="revisions">
+Revisions
+</h2>
+<p>
+Useful software has a long life during which it goes through many updates and revisions. The accompanying technical reports get revised, also. The steps to follow for a revision are similar to the steps for a new report, except that the previous TR number should be in the messages sent to the UTR czar. Typically an update does not require a new TR number; instead the UTR number is appended with a revision letter, and your revised TR should include the original date followed by the most recent revision date. Large changes to a technical report may warrant issuance of a new TR number.
+</p>
+<h2 id="advice-to-junior-authors">
+Advice to Junior Authors
+</h2>
+<p>
+The quality of technical writing is important. If you haven't written technical documentation before, allow yourself time for numerous draft revisions with your sponsor, and your committee members if you are writing a thesis. You will also need time to master the publishing software or formatting language. Most document preparation systems are full of quirks and obscure bugs. The best thing to do is find someone who is already an expert and seek advice; your faculty sponsor is such a person.
+</p>
+<p>
+The abstract is extremely important. Many people will read it who may never read the rest of your document, especially if the abstract is poor. The abstract should be to the point, and it must convey the central contributions of your work.
+</p>
+<h2 id="conclusions">
+Conclusions
+</h2>
+<p>
+Writing technical reports is a lot of work but it is an important form of participation in the local and global computer science community. Whether research or development, if an open source contribution is not understood and used by others its value is limited. The list of Unicon Project technical reports is located at 
+<a href="http://unicon.org/reports/html" rel="noopener">unicon.org/reports</a>
+.
+</p>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-levine92" value="1">
+John R. Levine and Tony Mason and Doug Brown. &quot;Lex \&amp; Yacc&quot;. O'Reilly and Associates. 1992.
+</li>
+<li id="cite-ray03" value="2">
+K. Ray and Ray Pereda and Clinton Jeffery. &quot;Ulex -- A Lexical Analyzer Generator for Unicon&quot;. http://unicon.org/utr/utr2/utr2a.pdf. 2003.
+</li>
+<li id="cite-jeffery-1995-cs-tr" value="3">
+Clinton Jeffery. &quot;How to Write a UTSA CS Division Technical Report&quot;. 1995.
+</li>
+<li id="cite-griswold-newsletter" value="4">
+Ralph Griswold. &quot;Icon Benchmarks&quot;. The Icon Newsletter. 1989.
+</li>
+<li id="cite-jeffery-sesrit" value="5">
+Clinton Jeffery and David Rice. &quot;sesrit.icn&quot;. http://www2.cs.uidaho.edu/~jeffery/courses/game/sesrit.icn. 1999.
+</li>
+<li id="cite-shootout-2014" value="6">
+Brent Fulgham and Isaac Gouy. &quot;The Computer Language Benchmarks Game&quot;. http://benchmarksgame.alioth.debian.org/.
+</li>
+<li id="cite-merr" value="7">
+Clinton Jeffery. &quot;Merr: an LR Syntax Error Message Tool&quot;. http://unicon.org/merr.
+</li>
+<li id="cite-crawford" value="8">
+anonymous, but owing to Douglas Crawford. &quot;Introducing JSON&quot;. json.org.
+</li>
+<li id="cite-beck-sunit" value="9">
+Kent Beck. &quot;Simple Smalltalk Testing: With Patterns&quot;. Available at https://web.archive.org/web/20150315073817/http://www.xprogramming.com/testfram.htm [Verified 13 May 2024].
+</li>
+</ol></div>
+<div class="prevnext">
+<a href="utr14.html">&larr; UTR 14: Unicon Threads: User's Guide and Reference Manual</a>
+<a href="utr16.html">UTR 16a: A Unicon Benchmark Suite &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr15.pdf">pdf</a> | <a href="_sources/utr15.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

@@ -1,0 +1,1916 @@
+\chapter{Portable 2D and 3D Graphics}
+
+Two-dimensional graphics were originally added to Icon version 8 out
+of a desire to use Icon for software visualization. Visualization
+research called for rapid graphics prototyping and Icon is a rapid
+prototyping language. The facilities were successful enough to warrant
+painstaking porting (to OS/2 and then MS Windows) and documentation
+(Griswold wrote a larger book for the Icon graphics facilities than
+the Icon book) efforts.  Two elaborate graphic user interface
+libraries (with interface builders) were developed, the first in Idol
+by Jon Lipp and Mary Cameron, and the second in Unicon by Robert
+Parlett.  Unicon Version 11 introduced a powerful set of 3D graphics
+facilities, increasing the footprint of the graphics in the overall
+implementation.
+
+This chapter describes the design and implementation internals of the
+2D and 3D graphics facilities and their window system
+implementation. It is intended for persons extending the graphics
+facilities or porting Unicon to a new window system. This chapter is
+derived from Unicon Technical Report \#5, by Clint Jeffery, Naomi
+Martinez and Jafar Al Gharaibeh.
+
+Much of the code is devoted to hiding specific features of C graphics
+interfaces that were deemed overly complex or not worth the coding
+effort they entail. Other implementation techniques are motivated by
+portability concerns. The graphics interface described below has been
+implemented to various levels of completeness on the X Window System,
+Microsoft Windows, OS/2 Presentation Manager, (pre OS X) Macintosh,
+and Borland Graphics Interface platforms. Most of this discussion is
+relevant also for Icon Version 9; Unicon's graphics facilities
+include minor improvements.
+
+\section{Graphics Source Files Summary}
+
+Unicon's window facilities consist of several source files, all in the
+src/runtime directory unless otherwise noted. They are discussed in more
+detail later in this document.
+
+\textbf{header files} -- \texttt{h/graphics.h} contains structures and
+macros common across platforms. Each platform adds platform-specific
+elements to the common window structures defined in this file. In
+addition, each platform gets its own header file, currently these
+consist of X Windows (\texttt{h/xwin.h}) and Microsoft Windows
+(\texttt{h/mswin.h}). Every platform defines several common macros in
+the window-system specific header file in addition to its window
+system specific structures and macros. The common macros are used to
+insert platform-dependent pieces into platform-independent code.
+
+\textbf{Unicon functions} -- \texttt{fwindow.r} contains the RTL
+(Run-Time Language) interface code used to define built-in graphics
+functions for the Unicon interpreter and compiler. For most functions,
+this consists of type checking and conversion code followed by calls
+to platform-dependent graphics functions. The platform dependent
+functions are described later in this document; \texttt{fwindow.r} is
+platform independent. You will generally modify it only if you are
+adding a new built-in function. For example, the Windows native
+functions are at the bottom of this file.
+
+\textbf{internal support routines} -- \texttt{rwindow.r, rwinrsc.r,
+rgfxsys.r} and \texttt{rwinsys.r} are basically C files with some
+window system dependencies but mostly consisting of code that is used
+on all systems. For example, \texttt{rwindow.r} is almost 100
+kilobytes of portable source code related to Unicon's event model,
+attribute/value system, portable color names, GIF and JPEG image file
+support, palettes, fonts, patterns, spline curves and so forth.
+
+\textbf{window-system specific files} -- Each window system gets its
+own source files for C code, included by the various \texttt{r*.r}
+files in the previous section. Currently these include
+\texttt{rxwin.ri} and \texttt{rxrsc.ri} for X Windows, and
+\texttt{rmswin.ri} for MS Windows. Each platform will implement
+one or more such \texttt{r*.ri} files. In addition,
+\texttt{common/xwindow.c} contains so many X Window includes that it
+won't even compile under UNIX Sys V/386 R 3.2 if all of the Unicon
+includes are also present -- so its a \texttt{.c} file instead of a
+\texttt{.r} file.
+
+\textbf{tainted {\textquotedbl}regular{\textquotedbl} Unicon sources}
+-- Many of the regular Unicon source files include code under
+\texttt{\#ifdef Graphics} and/or one or more specific window system
+definitions such as \texttt{\#ifdef XWindows} or \texttt{\#ifdef
+MSWindows}. The tainted files that typically have to be
+edited for a new window system include \texttt{h/grttin.h},
+\texttt{h/features.h}, \texttt{h/rexterns.h}, \texttt{h/rmacros.h},
+\texttt{h/rproto.h}, \texttt{h/rstructs.h}, and
+\texttt{h/sys.h}. Other files also contain \texttt{Graphics}
+code. This means that most of the system has to be recompiled with rtt
+and cc after \texttt{Graphics} is defined in \texttt{h/define.h}. You
+will also want to study the \texttt{Graphics} stuff in
+\texttt{h/grttin.h} since several profound macros are there. Also, any
+new types (such as structures) defined in your window system include
+files will need dummy declarations (of the form \texttt{typedef int
+foo;}) to be added there.
+
+Under UNIX the window facilities are turned on at configuration time by typing
+
+\texttt{make X-Configure name=system}
+
+\noindent instead of the usual \texttt{make Configure} invocation. The
+X configuration modifies makefiles and defines the symbolic constant
+\texttt{Graphics} in \texttt{h/define.h}. If OpenGL libraries are
+detected, configuration enables them automatically. Similar but less
+automatic configuration handling is performed for other systems; for
+example, an alternate .\texttt{bat} file is used in place of
+\texttt{os2.bat} or \texttt{turbo.bat}.
+
+{\sffamily
+\textbf{Graphics \#define{}-d symbols}}
+
+The primary, window-system-independent defined symbol that turns on
+window facilities is simply \texttt{Graphics}.  Underneath this parent
+\texttt{\#ifdef}, the symbol \texttt{XWindows} is meant to mark all X
+Window code. Other window systems have a definition comparable to
+\texttt{XWindows}: for Microsoft Windows it is \texttt{MSWindows}.
+Turning on any of the platform specific graphics
+\texttt{\#define} symbols turns on \texttt{Graphics} implicitly.
+
+\section{Structures Defined in graphics.h}
+
+The header file \texttt{graphics.h} defines a collection of C
+structures that contain pointers to other C structures from
+\texttt{graphics.h} as well as pointers into the window system library
+structures. \ The internals for the simplest Unicon window structure
+under X11 are depicted in Figure~\ref{fig:UniconWindowValue}.
+The picture is slightly simpler
+under MS Windows, with no display state or related color or font
+management; on the other hand MS Windows maps the Unicon context onto
+a large set of resources, including pens, brushes, fonts and bitmaps.
+
+%This figure is redrawn from utr5 figure 1.
+\noindent
+\begin{center}
+\begin{figure}[h]
+\begin{tikzpicture}[draw,very thick,font=\small\tt,
+    elps/.style={ellipse,ellipse,draw,minimum width=1.5cm, minimum height=1.25cm},
+]
+  %\draw[help lines] (0,0) grid (16,11);
+
+% draw the ellipses above the line (Iconx) solid
+  \node(binding)[elps]  at (8,10.5)   {Binding};
+  \node(Wstate)[elps]   at (4,9)      {Window State};
+  \node(context)[elps]  at (12,9)     {Context};
+  \node(Dstate)[elps]   at (8,7.5)    {Display State};
+  \node(colours)[elps]  at (6,5.5)    {Colors};
+  \node(fonts)[elps]    at (10,5.5)   {Fonts};
+% join up with solid lines
+  \draw (binding) -- (Wstate);
+  \draw (binding) -- (context);
+  \draw (Wstate)  -- (Dstate);
+  \draw (context) -- (Dstate);
+  \draw (Dstate)  -- (colours);
+  \draw (Dstate)  -- (fonts);
+
+% draw the ellipses below the line (Xlib) dashed
+  \begin{scope}[style=dashed]
+    \node(pixmap)[elps]   at (2,3)      {Pixmap};
+    \node(display)[elps]  at (8,3)      {Display};
+    \node(Gcontext)[elps] at (13.5,2.5) {Graphics Context};
+    \node(window)[elps]   at (4,1)      {Window};
+    \node(xfs)[elps]      at (11,1)     {XFontStruct *};
+    \node(long)[elps]     at (5.5,2.5)  {long};
+    % join up with dashed lines
+    \draw (Wstate)   -- (pixmap);
+    \draw (Wstate)   -- (window);
+    \draw (colours)  -- (long);
+    \draw (Dstate)   -- (display);
+    \draw (fonts)    -- (xfs);
+    \draw (context)  -- (Gcontext);
+  \end{scope}
+
+%labels and thick line
+  \node at (15,5) {Iconx};
+  \node at (15,4) {Xlib};
+  \draw[line width = 0.1cm] (0,4.5) -- (16,4.5);
+% make something at (0,0) to give a bit more space between the picture and the caption
+  \node at (0,0) {};
+
+\end{tikzpicture}
+\caption{Internal Structure of an Unicon Window Value}
+\label{fig:UniconWindowValue}
+\end{figure}
+\end{center}
+
+%% \bigskip
+
+
+%% \bigskip
+%% \begin{center}{\color{red} Missing figure}\end{center}
+
+
+%% \bigskip
+
+
+%%\ \  \ \ \ \ \ \ \ \ \ \ Figure 1: Internal Structure of an Unicon Window Value
+
+
+At the top, Unicon level, there is a simple structure called a
+\textit{binding} that contains a pointer to a window state and a
+window context. Pointers to bindings are stored in the \texttt{FILE *}
+variable of the Unicon file structure, and most routines that deal
+with a window take a pointer to a binding as their first
+argument. Beneath this facade, several structures are accessed to
+perform operations on each window.
+
+The window state holds the typical window information (size, text
+cursor location, an Unicon list of events waiting to be read) as well
+as a window system pointer to the actual window, a pointer to a
+backing pixmap (a {\textquotedbl}compatible device
+context{\textquotedbl} used to handle redraw requests), and a pointer
+to the display state.
+
+The window context contains the current font, foreground, and
+background colors used in drawing/writing to the window.  It also
+contains drawing style attributes such as the fill style. Contexts are
+separate from the window state so that they may be shared among
+windows. This is a big win, and Unicon programs tend to use it
+heavily, so in porting the window functions a central design issue
+must be the effective use of a comparable facility on other window
+systems, or emulating the context abstraction if
+necessary. Nevertheless, one might start out with \texttt{Couple()}
+and \texttt{Clone()} disabled and only allow one hardwired context
+associated with each window.
+
+The display state contains whatever system resources (typically
+pointers or handles) that are shared among all the windows on a given
+display in the running program. For example, in X this includes the
+fonts, the colors, and a window system pointer for an internal Display
+structure required by all X library calls to denote the connection to
+the X server.
+
+
+\section{Platform Macros and Coding Conventions}
+
+Since the above structure is many layers deep and sometimes confusing,
+Unicon's graphics interface routines employ coding conventions to
+simplify things. In order to avoid many extra memory references in
+accessing fields in the multi-level structure,
+{\textquotedbl}standard{\textquotedbl} local variables are declared in
+most of the platform dependent interface routines in \texttt{rxwin.ri}
+and \texttt{rmswin.ri}. \ The macro \texttt{STDLOCALS(w)} declares
+local variables pointing to the most commonly used pieces of the
+window binding, and initializes them from the supplied argument; each
+window system header should define an appropriate
+\texttt{STDLOCALS(w)} macro. Under some window systems, such as MS
+Windows, \texttt{STDLOCALS(w)} allocates resources which must be freed
+before execution continues, in which case a corresponding
+\texttt{FREE\_STDLOCALS(w)} macro is defined.
+
+Some common standard locals are \texttt{wc}, \texttt{ws},
+\texttt{stdwin}, and \texttt{stdpix}. While \texttt{wc}, and
+\texttt{ws} are pointers to structures copied from the window binding,
+\texttt{stdwin}, and \texttt{stdpix} are actual X (or MS Window)
+resources that are frequently supplied to the platform-dependent
+routines as arguments. Each window system will have its own standard
+locals. For example, MS Windows adds \texttt{stddc} and \texttt{pixdc}
+since it uses a device context concept not found in X11.
+
+In much of the platform-dependent source code, the window system calls
+are performed twice. This is because most platforms including X11 and MS
+Windows do not remember the contents of
+windows when they are reduced to iconic size or obscured behind other
+windows. When the window is once again exposed, it is sent a message
+to redraw itself. Unicon hides this entirely, and remembers the
+contents of the window explicitly in a window-sized bitmap of
+memory. The calling of platform graphics routines twice is so common
+that a set of macros is defined in \texttt{xwin.h} to facilitate it.
+The macros are named \texttt{RENDER2} through \texttt{RENDER6}, and
+each of them takes an Xlib function and then some number of arguments
+to pass that function, and then calls that function twice, once on the
+window and once on the bitmap.
+
+Platforms that provide backing store may avoid this duplicated
+effort. In practice however it seems most window systems have redraw
+events even if they implement retained windows (for example, MGR
+[Uhler88]).
+
+\section{Window Manipulation in rxwin.ri and rmswin.ri}
+
+The platform-dependent calls in the Unicon run-time system can be
+categorized into several major areas:
+
+\liststyleLxlv
+\begin{itemize}
+\item 
+\ Window creation and destruction
+\item 
+\ Low-level event processing
+\item 
+\ Low-level text output operations
+\item 
+\ Window and context attribute manipulation
+\end{itemize}
+
+\subsection{Window Creation and Destruction}
+
+A graphics window is created when the Unicon program calls
+\texttt{open()} with file attribute
+\texttt{{\textquotedbl}g{\textquotedbl}}. The window opening sequence
+consists of a call to \texttt{wopen()} to allocate appropriate Unicon
+structures for the window and evaluate any initial window attributes
+given in additional arguments to \texttt{open()}. After these
+attributes have been evaluated, platform resources such as fonts and
+colors are allocated and and the window itself is instantiated. Under
+X, \texttt{wopen()} busy-waits until the window has received its first
+expose event, ensuring that no subsequent window operation takes place
+before the window has appeared onscreen.
+
+A window is closed by a call to \texttt{wclose()}; this removes the
+on-screen window even if other bindings (Unicon window values) refer
+to it. A closed window remains in memory until all Unicon values that
+refer to it are closed. A call to \texttt{unbind()} removes a binding
+without necessarily closing the window.
+
+\subsection{Event Processing}
+
+The system software for each graphics platform has a huge number of
+different types of events. Unicon ignores most of them. Of the
+remainder, some are handled by the runtime system code in the
+\texttt{.ri} files implicitly, and some are explicitly passed on to
+the Unicon program.
+
+Most native graphic systems require that applications be event-driven;
+they must be tightly I/O bound around the user's actions. The
+interaction between user and program must be handled at every instant
+by the program. Unicon, on the other hand, considers this event-driven
+model optional.
+
+
+Making the event-driven model optional means that the Unicon interface
+must occasionally read and process events when the Unicon program
+itself is off in some other computation. In particular, keystrokes and
+mouse events must be stored until the user requests them, but exposure
+events and resizes must be processed immediately. The Unicon
+interpreter pauses at regular intervals in between its virtual machine
+instructions (the Unicon compiler emits polling code in its generated
+C code, so window system facilities are supported by the compiler as
+well) and polls the system for events that must be processed; this
+technique fails when no virtual machine instructions are executing,
+such as during garbage collections or when blocked on file I/O.
+
+On some platforms such as X, this probably could be done using the
+platform event queue manipulation routines.  Instead, the Unicon
+window interface maintains its own keystroke and mouse event queue
+from which the Unicon functions obtain their events. This additional
+queue makes the implementation more portable. Various window systems
+probably do not support queue manipulation to the extent or in the
+same way that X does. It also provides the programmer with a higher
+level event processing abstraction which has proven useful.
+
+Window resizing is partly handled by the interface. The old contents
+of the window are retained in their original positions, but the
+program is informed of the resize so it can handle the resize in a
+more reasonable manner. As has already been noted exposure events are
+hidden entirely via the use of a backing pixmap with identical
+contents for each window. The pixmap starts out the same size as the
+window. It is resized whenever the window grows beyond one of its
+dimensions. It could be reduced whenever the window shrinks, but then
+part of the window contents would be lost whenever the user
+accidentally made the window smaller than intended.
+
+The platform-dependent modules also contains tables of type
+\texttt{stringint}. These tables are supported by routines that map
+strings for various attributes and values to native window system
+integer constants. Binary search is employed. This approach is a crude
+but effective way to provide symbolic access
+{\textquotedbl}built-in{\textquotedbl} to the language without
+requiring include files. Additional tables mapping strings to
+integers are found in the platform independent source files.
+
+\subsection{Resource Management}
+
+One of the most important tasks performed by platform-specific
+graphics functions is the management of resources, both the on-screen
+resources (windows) and the drawing context elements used by the
+window system in performing output.
+
+\subsection{Memory Management and r*rsc.ri Files}
+
+Memory management for internal window structures is independent of
+Unicon's standard memory management system. Xlib memory is allocated
+using \texttt{malloc(2)}.
+
+Most internal Unicon window structures could be allocated in Unicon's
+block region, but since they are acyclic and cannot contain any
+pointers to Unicon values, this would serve little purpose (Actually,
+it is probably the right thing to do, and will probably happen some
+day, but its just not in the cards right now unless you feel like
+messing with the garbage collector.). In addition when an incoming
+event is being processed it has to be matched up with the appropriate
+window state structure, so some of the window structures must be
+easily reached, not lost in the block region. The window interface
+structures are reference counted and freed when the reference count
+reaches 0.
+
+\subsection{Color Management}
+
+Managing colors under X Windows is painful. In particular, if the same
+color is allocated twice the color table entry is shared (which is
+good) and that entry may only be freed once (which is bad). For this
+reason, every color allocated by Unicon is remembered and duplicate
+requests are identified and freed only once. In the general case it is
+impossible to detect when a particular color is no longer being
+displayed, and so colors are only freed on window closure or when a
+window is cleared.
+
+\subsection{Font Management}
+
+Unicon supports a portable font name syntax. Since the available fonts
+on systems vary widely, {\textquotedbl}interesting{\textquotedbl} code
+has been written to support these portable names on various X servers.
+Each window system may need to include heuristics to pick an
+appropriate font in the font allocation routine in the window system's
+\texttt{r*.ri} file.
+
+\section{External Image Files and Formats}
+
+Reading and writing window contents to external files is accomplished
+by the routines \texttt{loadimage()} and \texttt{dumpimage()},
+implemented in each platform's window system specific file, such as
+\texttt{rxwin.ri}. These routines take a window binding and a string
+filename and perform the I/O transfer. Presently, the file format is
+assumed to be indicated by the filename extension; this is likely to
+change. Ideally Unicon should tolerate different file formats more
+flexibly, inferring input file formats by reading the file header
+where possible, and running external conversion programs where
+appropriate.
+
+GIF and JPEG files are self-identifying, so they are always recognized
+independent of name. They are checked in system-independent code
+before platform-specific image reading code is invoked.
+
+
+\section{Implementation of 3D Facilities}
+
+In order to implement the 3D facilities, the Unicon runtime system was
+modified to support 2D and 3D windows. The Unicon runtime system is
+written in a custom superset dialect of C called RTL [Walker94]. The
+3D facilities use the existing 2D facilities code for window creation
+and destruction, as well as handling keyboard and mouse input.
+
+\subsection{3D Facilities Requirements}
+
+OpenGL 1.2 or later must be present on the system in order for
+Unicon's 3D graphics facilities to work. A check for this is performed
+in \texttt{wopengl()} which can be found in the file
+\texttt{ropengl.ri}. The requirement of OpenGL 1.2 is based on the
+fact that the function \texttt{glTexBind(),}\texttt{ }which make the
+implementation of textures more efficient, is only available in OpenGL
+1.2 and later.
+
+Also needed for the Unicon 3D graphics facilities is a system that
+supports a true color visual with a depth buffer of 16 and a double
+buffer. The requirement of a depth buffer is a necessity to implement
+lighting. For lighting to work properly in OpenGL, a depth test must
+be performed, hence the need of a depth buffer. A double buffer is
+needed to implement the list structure that is used to redraw a
+window. More information can be found on redrawing of windows in
+section 7.3.
+
+\subsection{Files}
+
+Several existing files contain extensions to support the Unicon 3D
+graphics facilities under \#ifdef Graphics3D, including data.r (new
+runtime error codes), fwindow.r (new 3D functions), rmemmgt.r (3D
+window display lists), rxwin.ri and rmswin.ri (modified wopen() and
+wmap() to support 3d mode), rwindow.r (new 3D attributes), and
+graphics.h (new 3D fields in canvas and context structures). Also a
+new file, ropengl.ri was added that contains the C helper functions
+for functions in \texttt{fwindow.r, rxwin.ri}, and \texttt{rwindow.r}.
+
+\subsection{Redrawing Windows}
+
+In the 2D graphics facilities, events that require the redrawing of a
+window are handled by using a pixmap. Instead of using a pixmap, for
+the Unicon 3D graphics facilities, a Unicon list of lists is created
+for each window opened in \texttt{{}``gl''} mode. This list of lists
+keeps track of all objects in a 3D graphics scene. This list is called
+\texttt{funclist} and is found in the wstate structure of a
+\texttt{{\textquotedbl}gl{\textquotedbl}} window. The individual lists
+of contain the function name and the parameters of that function. Also
+placed on the list are attributes that affect the scene. These include
+\texttt{dim}, \texttt{linewidth}, \texttt{texcoord}, \texttt{texture},
+\texttt{texmode}, and \texttt{fg}. When a window receives an event
+that requires redrawing, the window is cleared, all attributes are
+reset to the defaults, and the Unicon list of lists is traversed to
+redraw every object in the scene.
+
+There are some functions and attributes that are not placed in the
+list. Instead they much either modify the list or call the list to
+redraw the scene. The function \texttt{EraseArea()}, not only clears
+the screen but also clears the contents of the list. The attributes
+\texttt{light0-light7}, \texttt{eye}, \texttt{eyeup}, \texttt{eyedir},
+and \texttt{eyepos} use the list to redraw the window with the new
+attributes. So if the position of a light changes, the new lighting
+calculations are preformed and the scene is redraw. Besides these
+functions and attributes, every function or attribute available in the
+3D graphics facilities is placed on this list. In is important to note
+that functions and attributes that have no effect in the 3D graphics
+facilities are not placed in this list.
+
+\subsection{Textures}
+
+In OpenGL, textures can be one, two, or three-dimensional and are
+represented as multi-dimensional arrays. In the Unicon 3D graphics
+facilities all texture are 2D dimensional, and represented as
+three-dimensional arrays. This array keeps track of the position and
+red, green, and blue components of each pixel in the texture
+image. When a texture image is specified in a Unicon program, the
+texture is converted from the Unicon internal representation of the
+image to a three-dimensional array. For most cases, this does not take
+a long time, but as a texture image gets larger, the slower the
+application will run. Several measures have been taken in order to
+increase the efficiency of converting the texture image into an
+array. Since lighting and texturing are fairly expensive operations,
+especially if several lights are activated, these features are
+temporarily deactivated. Despite these efforts, converting a
+{\textquotedbl}\texttt{g{\textquotedbl}} window to a texture is still
+fairly expensive. Possible future work includes ways to speed up this
+process.
+
+Instead of adding a texture to the list of lists as described in
+section 7.3, OpenGL's internal texture resources are used. OpenGL
+assigns to each texture a name. The names assigned to each texture in
+a Unicon scene are stored in \texttt{texname[]}, which can be found in
+a \texttt{``gl''} window's context. To ensure that a texture name is
+not reused, a call to \texttt{glGenTextures()} made which produces
+unused texture names. When a texture is applied to the scene, only the
+index of the array \texttt{texname[]} is stored in the list. When the
+list is traversed, a call to \texttt{glBindTexture()} is made which
+binds the texture to the subsequent objects in the scene. One problem
+of using this representation of textures is that it places an upper
+bound on the number of texture used. This is because
+\texttt{glGenTextures()} requires the number of texture names to
+generate. Also by using \texttt{glBindTexture()}, never deletes a
+texture from the texture resources, possibly using up all texture
+resources. Future work might look into when to delete a texture an
+ways to check when the texture resources have been used up.
+
+\subsection{Texture Coordinates}
+
+The primitives as mentioned in previous sections are cubes, tori,
+cylinders, disks, partial disks, points, lines, polygons, spheres,
+line segments, and filled polygons. Some of these primitives are drawn
+using different aspect of the OpenGL library, with some using the glu
+library. Points, lines, line segments, polygons, and filled polygons
+are drawing using \texttt{glBegin()}, \texttt{glEnd()}, and vertices
+in between the function calls. Cylinders, disks, partial disks, and
+spheres are implemented using the glu library. They are considered to
+be\texttt{ gluQuadrics} objects. Finally cubes and tori are a
+composition of several polygons.
+
+The texturing method used is influenced by the how the primitive is
+composed. For the primitives built using the OpenGL library, default
+texture coordinates are obtain much differently than those primitives
+built using the glu library. For those primitives built using
+\texttt{glBegin()} and \texttt{glEnd()}, \texttt{glTexGen()} is used
+to determine the default parameters when
+\texttt{{\textquotedbl}texcoord=auto{\textquotedbl}}. In order to use
+this feature we must enable \texttt{GEN\_S} and \texttt{GEN\_T} with
+\texttt{glEnable().} This generates texture coordinates for a 2D
+textures. The texture coordinates for a torus are obtained in the same
+ways.
+
+Primitives built using the glu library, have texture coordinates
+associated with them. These texture coordinates can be obtained by
+calling \texttt{gluQuadricTexture()}.The use of the glu texture
+coordinates verses the OpenGL coordinates, is due to the fact that the
+glu texture coordinate look nicer. In order to use these texture
+coordinates instead of the ones specified by OpenGL, it is necessary
+to disable \texttt{GEN\_S} and \texttt{GEN\_T}. After the object has
+been drawn, \texttt{GEN\_S} and \texttt{GEN\_T} are turned back on.
+
+A cube uses default texture coordinates that map the texture onto each
+of the faces of a cube. In order to use these default coordinates, it
+is necessary to disable \texttt{GEN\_S} and \texttt{GEN\_T}, similar
+to glu objects.
+
+\section{Graphics Facilities Porting Reference}
+
+This section documents the window-system specific functions and macros
+that generally must be implemented in order to port Unicon's graphics
+facilities to a new window system. The list is compiled primarily by
+studying \texttt{fwindow.r}, \texttt{rwindow.r}, and the existing
+platforms.
+
+
+A note on types: \texttt{w} is a window binding pointer
+(\texttt{wbp}), the top level Unicon
+{\textquotedbl}window{\textquotedbl} value. \texttt{i} is an integer,
+\texttt{s} is a string. \texttt{wsp} is the window state
+(a.k.a. canvas) pointer, and \texttt{wcp} is the window context
+pointer. A \texttt{bool} return value returns one of the C macro
+values \texttt{Succeeded} or \texttt{Failed}, instead of the usual C
+booleans 1 and 0.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ANGLE(a)}
+
+
+Convert from radians into window system units. For example, under X
+these are 1/64 of a degree integer values.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ARCHEIGHT(arc)}
+
+
+The height component of an XArc.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ARCWIDTH(arc)}
+
+
+The width component of an XArc.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ASCENT(w)}
+
+
+Returns the number of pixels above the baseline for the current
+font. Note that when Unicon writes text, the (x,y) coordinate gives
+the left edge of the character at its baseline; some window systems
+may need to translate our coordinates.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int blimage(w, x, y, width, height, ch, s, len)}
+
+Draws a bi-level (i.e. monochrome, 1-bit-per-pixel) image; used in
+\texttt{DrawImage()} which draws bitmap data stored in Unicon strings.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wcp clone\_context(w)}
+
+
+Allocate a new context, cloning attributes from w's context.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+COLTOX(w, i)}
+
+
+Return integer conversion from a 1-based text column to a pixel coordinate.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+copyArea(w1, w2, x, y, width, height, x2, y2)}
+
+
+Copies a rectangular block of pixels from w1 to w2.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+DESCENT(w)}
+
+
+Returns the number of pixels below the baseline for the current font.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+DISPLAYHEIGHT(w)}
+
+
+Return w's display (screen) height in pixels.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+DISPLAYWIDTH(w)}
+
+
+Return w's display width in pixels.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+bool do\_config(w, i)}
+
+
+Performs move/resize operations after one or more attributes have been
+evaluated. Config is a word with two flags: the one bit indicates a
+move, the two bit indicates a resize. The desired sizes are in the
+window state pointer, e.g.
+w-{\textgreater}window-{\textgreater}width.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+drawarcs(w, thearcs, i)}
+
+
+Draw i arcs on w, given in an array of XArc structures. Define an
+appropriate XArc structure for your window system; it must include
+fields x, y and width and height fields accessible through macros
+\texttt{ARCWIDTH()} and \texttt{ARCHEIGHT()}. Also, a starting angle
+angle1 and arc extent angle2, assigned through macros
+\texttt{ANGLE()}, \texttt{EXTENT()}, and \texttt{FULLARC}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+drawlines(w, points, i)}
+
+
+Draw i-1 connected lines, connecting the dots given in points.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+drawpoints(w, points, i)}
+
+
+Draw i points.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+drawsegments(w, segs, i)}
+
+
+Draw i disconnected line segments; define an Xsegment structure appropriate do your window system, consisting of fields
+x1, y1, x2, y2. \ This type definition requirement should be cleaned up someday.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+drawstring(w, x, y, s, s\_len)}
+
+
+Draw string s at coordinate (x,y) on w. \ Note that y designates a baseline, not an upper-left corner, of the string.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+drawrectangles(w, rectangles, i)}
+
+
+Draw \texttt{i} rectangles. \ Define an XRectangle structure appropriate to your window system.
+
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+
+
+
+int dumpimage(w, s, x, y, width, height)
+
+
+Write an image of a rectangular area in w to file s. Returns \texttt{Succeeded}, \texttt{Failed}, or \texttt{NoCvt} if
+the platform doesn't support the requested format. \ Note that this is the {\textquotedbl}platform- dependent image
+writing function{\textquotedbl}; requests to write GIF \ or JPEG are handled outside of this function.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+eraseArea(w, x, y, width, height)}
+
+
+Erase a rectangular area, that is, set it to the current background color. \ Compare with \texttt{fillrectangles()}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+EXTENT(a)}
+
+
+Convert from radians into window system units. Under
+PresentationManager it had to convert to units of 1/65536 of a circle
+along with a weird type conversion.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+fillarcs(w, arcs, i)}
+
+
+Fill wedge-like arc sections (pie pieces). \ See \texttt{drawarcs()}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+fillrectangles(w, rectangles, i)}
+
+
+Fill i rectangles. \ See \texttt{drawrectangles()}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+fillpolygon(w, points, i)}
+
+
+Fill a polygon defined by i points. \ Connect first and last points if they are not the same.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+FHEIGHT(w)}
+
+
+Returns the pixel height of the current font, hopefully \texttt{ASCENT + DESCENT.}
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+free\_binding(w)}
+
+
+Free binding associated with \texttt{w}. \ This gets rid of a binding that refers to \texttt{w}, without necessarily
+closing the window itself (other bindings may point to that window).
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+free\_context(wc)}
+
+
+Free window context \texttt{wc}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+free\_mutable(w, i)}
+
+
+Free mutable color index \texttt{i}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+free\_window(ws)}
+
+
+Free window canvas \texttt{ws}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+freecolor(w, s)}
+
+
+Free a color allocated on \texttt{w}{}'s display.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+FS\_SOLID}
+
+
+Define this to be the window system's solid fill style symbol.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+FS\_STIPPLE}
+
+
+Define this to be the window system's stippled fill style symbol.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+FULLARC}
+
+
+Window-system value for a complete (360 degree) circle or arc.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+FWIDTH(w)}
+
+
+Returns the pixel width of the widest character in the current font.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wsp getactivewindow()}
+
+
+Return a window state pointer to an active window, blocking until a
+window is active. Probably will be generalized to include a
+non-blocking variant. Returns \texttt{NULL} if no windows are opened.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getbg(w, s)}
+
+
+Returns (writes into \texttt{s}) the current background color.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getcanvas(w, s)}
+
+
+Returns (writes into \texttt{s}) the current canvas state.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getdefault(w, s\_prog, s\_opt, s)}
+
+
+Get any window system defaults for a program named s\_prog resource
+named s\_opt, write result in s.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getdisplay(w, s)}
+
+
+Write a string to s with the current display name.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getdrawop(w, s)}
+
+
+Return current drawing operation, one of various logical combinations
+of source and destination bits.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getfg(w, s)}
+
+
+Returns (writes into s) the current foreground color.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getfntnam(w, s)}
+
+
+Returns (writes into s) the current font. This interface may get
+changed since a portable font naming mechanism is to be
+installed. Name is presently always prefixed by
+{\textquotedbl}font={\textquotedbl} (pretty stupid, huh); must be an
+artifact of merging window system ports, will be changed.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+geticonic(w, s)}
+
+
+Return current window iconic state in s, could
+{\textquotedbl}iconify{\textquotedbl} or whatever. Obsolete (subsumed
+by canvas attribute, getcanvas()).
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+geticonpos(w, s)}
+
+
+Return icon's position to \texttt{s}, an encoded
+{\textquotedbl}x,y{\textquotedbl} format string.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int getimstr(w, x, y, width, height, paltbl, data)}
+
+
+Gets an image as a string. Used in GIF code.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getlinestyle(w, s)}
+
+
+Return current line style, one of solid, dashed, or striped.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+get\_mutable\_name(w, i)}
+
+
+Returns the string color name currently associated with a mutable color.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getpattern(w, s)}
+
+
+Return current fill pattern in s.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getpixel(w, x, y, long *rv)}
+
+
+Assign RGB value for pixel (x,y) into *rv.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getpixel\_init(w, struct imgmem *imem)}
+
+
+Prepare to fetch pixel values from window, obtaining contents from
+server if necessary. This function does all the real work used by
+subsequent calls to getpixel().
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getpointername(w, s)}
+
+
+Write mouse pointer appearance, by name, to s.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getpos(w)}
+
+
+Update the window state's posx and posy fields with the current window position.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+getvisual(w, s)}
+
+
+Write a string to s that explains what type of display w is on,
+e.g. {\textquotedbl}visual=x,y,z{\textquotedbl}, where x is a class, y
+is the bits per pixel, and z is number of colormap entries
+available. This X-specific anachronism is likely to go away.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+HideCursor(wsp ws)}
+
+
+Hide the text cursor on window state ws.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ICONFILENAME(w)}
+
+
+Produce char * for window's icon image file name if there is one.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ICONLABEL(w)}
+
+
+Produce char * for icon's title if there is one.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+isetbg(w, i)}
+
+
+Set background color to mutable color table entry i. Mutable colors
+are not available on all display types.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+isetfg(w, i)}
+
+
+Set foreground color to mutable color table entry i. Mutable colors
+are not available on all display types.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ISICONIC(w)}
+
+
+Return 1 if the window is presently minimized/iconic, 0 otherwise.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ISFULLSCREEN(w)}
+
+
+Return 1 if the window is presently maximized/fullscreen, 0 otherwise.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ISNORMALWINDOW(w)}
+
+
+Return 1 if the window is neither minimized nor maximized, 0 otherwise.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+LEADING(w)}
+
+
+Return current integer leading, the number of pixels from line to line.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+LINEWIDTH(w)}
+
+
+Return current integer line width used during drawing.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+lowerWindow(w)}
+
+
+Lower the window to the bottom of the stack.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+mutable\_color(w, dptr dp, i, C\_integer *result)}
+
+
+Allocate a mutable color from color spec given by \texttt{dp} and
+\texttt{i}, placing result (a small negative integer) in
+\texttt{*result}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+nativecolor(w, s, r, g, b)}
+
+
+Interpret a platform-specific color name s (define appropriately for
+your window system). Under X, we can do this only if there is a
+window.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+pollevent()}
+
+
+Poll for available events on all opened displays. This is where the
+interpreter calls the window system interface. Return a -1 on an
+error, otherwise return count of how long before it should be polled
+(400).
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+query\_pointer(w, XPoint *xp)}
+
+
+Produce mouse pointer location relative to w.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+query\_rootpointer(XPoint *xp)}
+
+
+Produce mouse pointer location relative to root window on default screen.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+raiseWindow(w)}
+
+
+Raise the window to the top of the stack.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+bool readimage(w, s, x, y, int *status)}
+
+
+Read image from file s into w at (x,y). Status is 0 if everything was
+kosher, 1 if some colors weren't available but the image was read OK;
+if a major problem occurs it returns Failed. See loadimage() for the
+real action.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+rebind(w, w2)}
+
+
+Assign w's context to that of w2.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+RECHEIGHT(rec)}
+
+
+The height component of an XRectangle. Gets {\textquotedbl}fixed
+up{\textquotedbl} (converted) into a Y2 value if necessary, in window
+system specific code.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+RECWIDTH(rec)}
+
+
+The width component of an XRectangle. Gets {\textquotedbl}fixed
+up{\textquotedbl} (converted) into a X2 value if necessary, in window
+system specific code.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+RECX(rec)}
+
+
+The x component of an XRectangle.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+RECY(rec)}
+
+
+The y component of an XRectangle.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ROWTOY(w, i)}
+
+
+Return integer conversion from a 1-based text row to a pixel coordinate.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+SCREENDEPTH(w)}
+
+
+Returns the number of bits per pixel.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int setbg(w, s)}
+
+
+Set the context background color to \texttt{s}. Returns
+\texttt{Succeeded} or \texttt{Failed}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setcanvas(w, s)}
+
+
+Set canvas state to \texttt{s}, make it
+\texttt{{\textquotedbl}iconic{\textquotedbl}},
+\texttt{{\textquotedbl}hidden{\textquotedbl}} or whatever. A canvas
+value extension such as fullscreen would go here.  Changes in canvas
+state are tantamount to destroying the old window, creating a new
+window (with appropriate size and style) and adjusting the pixmap size
+correspondingly. Much of the associated logic, however, might be
+located in the event handlers for related window system events.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setclip(w)}
+
+
+Set (enable) clipping on \texttt{w} from its context.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setcursor(w, i)}
+
+
+Turn text cursor on or off. Text cursor is off (invisible) by default.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setdisplay(w, s)}
+
+
+Set the display to use for this window; fails if the window is already
+open somewhere.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setdrawop(w, s)}
+
+
+Set drawing operation to one of various logical combinations of source
+and destination bits.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int setfg(w, s)}
+
+
+Set the context foreground color to s. Returns Succeeded or Failed.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setfillstyle(w, s)}
+
+
+Set fill style to solid, masked, or textured.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+bool setfont(w, char **s)}
+
+
+Set the context font to \texttt{s}. This function first attempts to
+use the portable font naming mechanism; it resorts to the system font
+mechanism if the name is not in portable syntax.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setgamma(w, gamma)}
+
+
+Set the context's gamma correction factor.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setgeometry(w, s)}
+
+
+Set the window's size and/or position.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setheight(w, i)}
+
+
+Set window height to \texttt{i}, whether or not window is open yet.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+seticonicstate(w, s)}
+
+
+Set window iconic state to \texttt{s}, it could be
+\texttt{{\textquotedbl}iconify{\textquotedbl}} or whatever. Obsolete;
+\texttt{setcanvas()} is more important.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+seticonimage(w, dptr d)}
+
+
+Set window icon to \texttt{d}. Could be string filename or existing
+pixmap (i.e. another window's contents). Pixmap assignment no longer
+possible, so one could simplify this to just take a string parameter.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+seticonlabel(w, s)}
+
+
+Set icon's string title to \texttt{s}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+seticonpos(w, s)}
+
+
+Move icon's position to \texttt{s}, an encoded
+{\textquotedbl}x,y{\textquotedbl} format string.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setimage(w, s)}
+
+
+Set an initial image for the window from file \texttt{s}. Only valid
+during \texttt{open()}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setleading(w, i)}
+
+
+Set line spacing to \texttt{i} pixels from line to line. This includes
+font height and external leading, so \texttt{i~{\textless}~fontheight}
+means lines draw partly over preceding lines,
+\texttt{i~{\textgreater}~fontheight} means extra spacing.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setlinestyle(w, s)}
+
+
+Set line style to solid, dashed, or striped.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setlinewidth(w, i)}
+
+
+Set line width to \texttt{i}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+set\_mutable(w, i, s)}
+
+
+Set mutable color index \texttt{i} to color \texttt{s}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+SetPattern(w, s, s\_len)}
+
+
+Set fill pattern to bits given in \texttt{s}. Fill pattern is not used
+unless fillstyle attribute is changed to
+\texttt{{\textquotedbl}patterned{\textquotedbl}} or
+\texttt{{\textquotedbl}opaquepatterned{\textquotedbl}}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+SetPatternBits(w, width, bits, nbits)}
+
+
+Set fill pattern to bits given in the array of integers named
+\texttt{bits}. Fill pattern is not used unless fillstyle attribute is
+changed to \texttt{{\textquotedbl}patterned{\textquotedbl}} or
+\texttt{{\textquotedbl}opaquepatterned{\textquotedbl}}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setpointer(w, s)}
+
+
+Set mouse pointer appearance to shape named \texttt{s}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setpos(w, s)}
+
+
+Move window to \texttt{s}, a string encoded
+{\textquotedbl}(x,y){\textquotedbl} thing.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setwidth(w, i)}
+
+
+Set window width to \texttt{i}, whether or not window is open yet.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+setwindowlabel(w, s)}
+
+
+Set window's string title to \texttt{s}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+ShowCursor(wsp ws)}
+
+
+Show the text cursor on window state \texttt{ws}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int strimage(w, x, y, width, height, e, s, len)}
+
+
+Draws a character-per-pixel image, used in \texttt{DrawImage()}. See
+\texttt{blimage()}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+SysColor}
+
+
+Define this type to be the window system's RGB color structure.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+TEXTWIDTH(w, s, s\_len)}
+
+
+Returns the integer text width of \texttt{s} using \texttt{w}{}'s current font.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+toggle\_fgbg(w)}
+
+
+Swap the foreground and background on \texttt{w}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+unsetclip(w)}
+
+
+Disable clipping on \texttt{w} from its context.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+UpdateCursorPos(wsp ws, wcp wc)}
+
+
+Move the text cursor on window state \texttt{ws} and context \texttt{wc}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+walert(w, i)}
+
+
+Sounds an alert (beep). \texttt{i} is a volume; it can range between
+-100 and 100; 0 is normal.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+warpPointer(w, x, y)}
+
+
+Warp the mouse location to (x,y).
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wclose(w)}
+
+
+Closes window \texttt{w}. If there are other bindings that refer to
+the window, they are converted into pixmaps, i.e.  the window
+disappears but the canvas is still there and can be written on and
+copied from.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wflush(w)}
+
+
+Flush output to window w; a no-op on some systems.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wgetq(w, dptr result)}
+
+
+Get an event from \texttt{w}{}'s pending queue, put results in
+descriptor \texttt{*res}. Returns -1 for an error, 1 for success
+(should fix this).
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+WINDOWLABEL(w)}
+
+
+Produce \texttt{char *} for window's title if there is one.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+FILE *wopen(s, struct b\_list *lp, dptr attrs, i, int *err\_index, is\_3d)}
+
+
+Open window named s, with various attributes. This ought to be merged
+from various window system dependent files, but presently each one
+defines its own. Copy and modify from \texttt{rxwin.ri} or
+\texttt{rmswin.ri}. The return value is really a \texttt{wbp}, cast to
+a \texttt{FILE *}.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wputc(c, w)}
+
+
+Draw character \texttt{c} on window \texttt{w}, interpret newlines,
+carriage returns, tabs, deletes, backspaces, and the bell.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+wsync(w)}
+
+Synchronize server and client (a no-op on most systems).
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+xdis(w, s, s\_len)}
+
+
+Draw string s on window \texttt{w}, low-level.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+XTOCOL(w, i)}
+
+
+Return integer conversion from a 0-based pixel coordinate to text column.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+YTOROW(w, i)}
+
+
+Return integer conversion from a 0-based pixel coordinate to text row.
+
+\section{The X Implementation}
+
+The reference implementation of Unicon's graphics facilities is
+written in terms of Xlib, the lower-level X Window C interface
+[Nye88]. It does not use the X resource manager. The end result of
+these two facts is that the implementation is relatively visible: the
+semantics are expressed fairly directly in the source code. Although
+it is necessary to understand the semantics of the underlying X
+routines, hidden behavior has been minimized.
+
+Unicon does not rely on the X Toolkit Intrinsics (Xt) or any higher
+level widget set such as Motif. This guarantees that Unicon will
+compile and run on any X11 platform. Unicon programs implement their
+own look and feel, which may or may not be consistent with the other
+applications on a given X workstation. The Unicon Program Library
+includes routines that implement user interface components with an
+appearance that is similar to Motif.
+
+The X implementation employs the XPM X pixmap library if it is
+available; XPM is a file format and API for storing color
+images in external files [LeHors96]. XPM provides color facilities
+analogous to the built-in X black-and-white bitmap routines. In
+addition to the image formats native to each platform, Unicon also
+supports GIF and JPEG as portable image file formats.
+
+\section{The MS Windows Implementation}
+
+The Microsoft Windows implementation of Unicon is written using Win32,
+the lower-level 32-bit Windows API. It does not use the Microsoft
+Foundation Classes. This makes it easier to build with different C
+compilers, and easier to port to different Windows implementations,
+such as Windows CE.
+
+\subsection{Installing, Configuring, and Compiling the Source Code}
+
+Building Unicon for Windows requires Mingw32 GCC. We hope to add
+Cygwin GCC support in the future. The sources may also build with
+modest revision under MS Visual C++. You are encouraged to try
+building using other compilers, and send Unicon Project your
+configuration files. You will need a robust Win32 platform to compile
+these sources; the build scripts and ``make'' process tend to fail on
+older versions of Windows.
+
+{\sffamily 1. Unpack the sources.}
+
+Unpack uni.zip in such a way that it preserves its subdirectory
+structure. Unzip.exe is recommended rather than WinZip.  See Icon
+Project Document 243 [ipd243] for a picture of the directory
+hierarchy. In particular, there should be a BIN directory along with
+the SRC directory under the unicon/ directory.
+
+{\sffamily
+2. Configure the sources.}
+
+
+Run {\textquotedbl}make W-Configure-GCC{\textquotedbl} (or
+{\textquotedbl}make W-Configure{\textquotedbl} under MSVC) to
+configure your sources to build wiconx and wicont, the Unicon virtual
+machine interpreter, and the Unicon bytecode compiler, with graphics
+facilities enabled.
+
+{\sffamily
+3. Compile to make executables.}
+
+
+Run {\textquotedbl}make Unicon{\textquotedbl} to build the
+currently-configured binary set. It is worth discussing why I provide
+makefiles instead of a project file for use in the Visual C++ IDE.
+The reason is that the source files for the Unicon virtual machine
+interpreter (generically called iconx; wiconx.exe in this case) are
+written in an extended dialect of ANSI C called RTL [ipd261]. Files in
+this language have the extension .r instead of .c and .ri instead of
+.h. During compilation, a program called rtt (the run time translator)
+translates .r* files into .c files. If someone wants to show me how to
+insert this step into the Visual C++ IDE build process, I would be
+happy to use their IDE. You can write project files for the other C
+programs that make up the Unicon system, but most modifications to the
+language are changes to the interpreter.
+
+{\sffamily
+Notes on the MS Windows internal functions}
+
+
+The functions documented here are those most likely to be involved in
+projects to add features to Windows Unicon.
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+handle\_child(w, UINT msg, WPARAM wp, LPARAM lp)}
+
+
+This procedure handles messages from child window controls such as
+buttons. In many cases, this enqueues an event on the Unicon window.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int playmedia(w, char *s)}
+
+
+This crude function will call one of several multimedia functions
+depending on whether s is the name of a multimedia file (.wav, .mid,
+.rmi are supported) or an MCI command string.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int getselection(w, char *s)}
+
+
+Return the current contents of the clipboard text. The design of this
+and \texttt{setselection()} need to be broadened a bit to support
+images.
+
+
+{\sffamily\bfseries
+\bigskip\hrule\vspace{0.1cm}
+\noindent
+int setselection(w, char *s)}
+
+
+Set the clipboard text to \texttt{s}.
+

@@ -1,0 +1,744 @@
+\chapter{Advanced Language Features}
+
+The previous chapters described a wide range of built-in computational
+facilities that help to make Unicon a great language.
+This chapter delves into interesting features that make Unicon
+more than just the sum of its parts. This chapter demonstrates:
+
+\begin{itemize}\itemsep0pt
+\item Controlling expressions more precisely
+\item Using list structures and procedure parameter lists
+interchangeably
+\item Holding a \index{generator}generator expression in a value so that
+its results can be used in different locations throughout the program
+\item Defining your own \index{control structure}control structures
+\item Evaluating several generator expressions in parallel
+\item Permuting strings using sophisticated mappings
+\item Using a more efficient list representation
+\end{itemize}
+
+\section{Limiting or Negating an Expression}
+
+\index{limiting an expression}Chapter 1 described generators and the
+expression mechanism without mentioning many methods for using them,
+other than \texttt{every} loops. Suppose you wish to generate five
+elements from a table. If the table has thousands of elements, then you
+may want to generate just five elements precisely in a situation where
+generating all the table elements with \texttt{!T} is infeasible. You
+could write an \texttt{every} loop that breaks out after five
+iterations, but this solution isn't easy to use within
+some more complex expressions. The binary backslash operator
+\texttt{\textit{expr}}\texttt{ {\textbackslash} }\texttt{\textit{i}}
+limits \texttt{\textit{expr}} to at most \texttt{\textit{i}} results.
+If \texttt{expr} has fewer results, the limitation operator has no
+effect; once \texttt{\textit{i}} results have been obtained, limitation
+causes the expression to \index{expression failure}fail even if it
+could produce more results.
+
+Unicon does not have a boolean type, so
+Chapter 1 downplayed the standard logical operators. The
+\index{alternation operator ( {\textbar} )}alternation operator
+(\texttt{{\textbar}}) resembles a short-circuit \index{OR operator}OR
+operator, since it generates its left operand and only evaluates its
+right operand if the left operand or the surrounding expression fails.
+The conjunction operator (\texttt{\&}) resembles a short-circuit
+\index{AND operator}AND operator; it evaluates its left operand,
+and if that operand succeeds, the result of the conjunction is the
+result of its right operand. The reserved word \texttt{not} rounds out
+the boolean-like operators. If \texttt{\textit{expr}} produces no
+results, then \index{not}\texttt{not }\texttt{\textit{expr}} will
+succeed (and produce a null value); if \texttt{\textit{expr}} produces
+any results, then the \texttt{not} expression fails. The \texttt{not}
+operator can remedy certain forms of generator confusion. Compare the
+following two expressions:
+
+\iconcode{
+if not (s ==
+("good"{\textbar}"will"{\textbar}"hunting"))
+then write("nope") \\
+if (s \~{}==
+("good"{\textbar}"will"{\textbar}"hunting"))
+then write("uh huh")}
+
+The first expression uses \texttt{not} to ensure that string \texttt{s}
+is none of the three words. The second expression always writes
+\texttt{"uh huh"}, because any string
+\texttt{s} that you pick will be not equal (\texttt{\~{}==}) to at
+least one of the three strings in the alternation. The \texttt{then}
+part will always execute, which is probably not what was intended.
+
+{\sffamily\bfseries Note}
+
+{\sffamily
+Negating an == operator is not the same as using a \~{}== operator!}
+
+The \index{conjunction \&}conjunction operator
+\texttt{\textit{expr}}\texttt{\textit{\textsubscript{1}}}\texttt{ \&
+}\texttt{\textit{expr}}\texttt{\textit{\textsubscript{2}}} has an
+alternate syntax, a comma-separated list of expressions in parentheses:
+\texttt{(}\texttt{\textit{expr}}\texttt{\textit{\textsubscript{1}}}\texttt{
+, }\texttt{\textit{expr}}\texttt{\textit{\textsubscript{2}}}\texttt{)}.
+Any number of expressions may be present; the whole expression
+succeeds if they all succeed. This looks similar to procedure call syntax
+because it is similar: a procedure call mutually
+evaluates all the actual parameters before the procedure is invoked.
+Invocation allows a string or integer in the ``procedure'' slot
+in front of a parenthesized argument
+list. For a string, as in
+\texttt{s(x)}, a procedure by the name given in \texttt{s} is called;
+if \texttt{s} had the value \texttt{"foo"},
+then \texttt{s(x)} is the same as \texttt{foo(x)}. For an integer value
+\texttt{i}, after all arguments are evaluated, the value of the entire
+expression is the value of the \texttt{i}'th argument.
+
+\section{List Structures and Parameter Lists}
+
+The functions \texttt{write()} and \texttt{put()} take any number of
+arguments; this flexibility is powerful and convenient.
+You can write \index{variable!no. of arguments}variable argument
+procedures of your own by ending the last parameter in your procedure
+declaration with empty square brackets:
+
+\iconcode{
+procedure myfunc(x, y, z[])}
+
+\noindent
+In this case, instead of throwing away all arguments after the third,
+the third parameter and all parameters that follow are placed into a
+newly-constructed list. A call to the above procedure with
+\texttt{myfunc(1, 2, 3, 4, 5)} causes \texttt{z} to have the value
+\texttt{[3, 4, 5]}.
+
+It is also useful to do the opposite and construct a list
+of dynamic (or user-supplied) length, and then call a
+procedure with that list as its parameter list. The
+\index{list!invocation}\index{apply operator}apply operator, binary
+\texttt{!} performs this feat. If you call \texttt{write ! L}, then all
+the elements of \texttt{L} are written contiguously on a single line
+(unless they contain newline characters).
+
+\section{Co-expressions}
+
+A \index{co-expression}co-expression is an independent, encapsulated
+\index{thread}thread{}-like context, where the results of an expression
+(hopefully a generator!) can be picked off one at a time.
+Suppose you are writing a program that generates
+code, and you need something that will generate unique variable names.
+This expression will generate names:
+
+\iconcode{
+"name" {\textbar}{\textbar} seq()}
+
+\noindent
+Function \index{seq()}\texttt{seq()} produces a progressive sequence
+of integers, by default starting at 1, so the whole expression
+generates \texttt{"name1"},
+\texttt{"name2"},
+\texttt{"name3"}, ... You can
+use this expression anywhere in your code; but you may need
+it in several different places.
+
+There are times when you need to separate the {\em evaluation\/} of an
+expression from its location in the program. The normal
+way to do this would be a procedure. You can make separate calls
+to a procedure from different locations in your program, but there is
+no easy way to use the results from a single \index{instance}instance
+of a generator in multiple locations. You can put all the results in a
+list (not a good idea for generators with infinite result sequences) or
+rewrite the procedure to produce the sequence using separate calls, but
+this requires static or global variables, and is awkward at best:
+
+\iconcode{
+procedure nameseq() \\
+static i \\
+initial i := 0 \\
+\>   return "name" {\textbar}{\textbar} (i+:= 1) \\
+end
+}
+
+Now, consider the code generating program again. It may need not one
+name sequence, but two kinds of names: statement labels and
+temporary variables. It would be poor engineering to write a different
+procedure for each such sequence. The \texttt{nameseq()}
+procedure was already cumbersome for so simple a task, but generalizing
+it for multiple kinds of names makes it \textit{really} messy. By
+creating a pair of co-expressions, you can capture exactly what is
+needed with a lot less code:
+
+\iconcode{
+labelname := create ("\_L"
+{\textbar}{\textbar} seq()) \\
+varname := create("\_V" {\textbar}{\textbar}
+seq())
+}
+
+\noindent
+In both cases, \index{create}\texttt{create}\texttt{
+}\texttt{\textit{expr}} allocates and initializes an evaluation context
+plus the memory needed to evaluate expression \textit{expr}, but does
+not start to evaluate it. Since the co-expression value may be used
+outside the procedure call where it is created, the evaluation context
+includes a copy of the local variables and parameters used in the
+expression. When a co-expression is \textit{activated}, it produces the
+next value. A co-expression is activated by the \texttt{@} operator. Each
+activation of \texttt{labelname} produces the next string in the
+sequence \texttt{"\_L0"},
+\texttt{"\_L1"},
+\texttt{"\_L2"}, and so on. Similarly, each
+activation \texttt{@varname}\texttt{ }produces the next in the sequence
+\texttt{"\_V0"},
+\texttt{"\_V1"},
+\texttt{"\_V2"}, and so on. 
+
+\iconcode{
+loop\_name := @labelname \\
+tempvar\_name := @varname
+}
+
+After a co-expression has produced all its results, further evaluation
+with \texttt{@} will \index{fail!co-expression}fail. The \texttt{\^{}}
+operator produces a new co-expression with the same expression as its
+argument, but "rewound" to the beginning.
+
+\iconcode{
+\>   c := \^{}c}
+
+\section{User-Defined Control Structures}
+
+\index{control structure}\textit{Control structures} are language elements
+that determine in what order, and how many times, expressions
+are executed. Co-expressions are used to implement new
+control structures when procedures that take
+co-expression parameters control the order and number
+of times they are activated.
+Consider a control structure that selects values from the first
+expression at positions specified by the second. This could be
+called as:
+
+\iconcode{
+seqsel([create fibonacci(), create primes()])}
+
+Assuming that you have a pair of \index{generator}generator procedures
+that produce the Fibonacci numbers (1, 1, 2, 3, 5, 8, 13, \ ?) and the
+primes (2, 3, 5, 7, 11, ?), this expression produces the numbers 1, 2,
+5, 13, 89, .... Here is the implementation of \texttt{seqsel()}:
+
+\iconcode{
+procedure seqsel(a) \\
+\>   (*a = 2) {\textbar} stop("seqsel requires a list of
+two arguments") \\
+\>   e1 := a[1]; e2 := a[2] \\
+\ \ \ \# position in the first stream we are looking at \\
+\>   index := 1 \\
+\>   repeat \{ \\
+\>   \ \ \ \# Get the next index \\
+\>   \ \ \ (i := @e2 ) {\textbar} fail \\
+\ \ \ \ \ \ \# Keep getting values from the second expression until \\
+\ \ \ \ \ \ \# we get to the i'th one. If e1 cannot produce that \\
+\ \ \ \ \ \ \# many values, we fail. \\
+\>   \ \ \ every index to i do \\
+\>\>   \ \ \ (value := @e1) {\textbar} fail \\
+\>   \ \ \ suspend value \\
+\>   \ \ \ index := i+1 \\
+\>   \ \ \ \} \\
+end
+}
+
+\noindent
+Unicon provides a syntactic short-cut for this kind of usage:
+
+\iconcode{
+proc([create e1, create e2, ..., create en])
+}
+
+\noindent
+can also be written with curly brackets, as
+
+\iconcode{
+proc\{e1, e2, ..., en\}
+}
+
+\section{Parallel Evaluation}
+
+\index{parallel evaluation}Co-expressions can be used to evaluate
+expressions "in parallel".
+This program writes a table of \index{ASCII}ASCII characters with the
+hex, decimal, and octal equivalents:
+
+\iconcode{
+procedure main() \\
+\>   dec := create(0 to 255) \\
+\>   hex\_dig := "0123456789abcdef" \\
+\>   hex := create(!hex\_dig {\textbar}{\textbar} !hex\_dig) \\
+\>   oct := create((0 to 3) {\textbar}{\textbar} (0 to 7)
+{\textbar}{\textbar} (0 to 7)) \\
+\>   char := create image(!\&cset) \\
+\>   while write(@dec, "{\textbackslash}t",
+@oct, "{\textbackslash}t", @hex,
+"{\textbackslash}t", @char) \\
+end
+}
+
+Co-expression \texttt{dec} produces the sequence 0, 1, 2, ... 255;
+\texttt{hex} the sequence \texttt{"00"},
+\texttt{"01"},
+\texttt{"03"}, ...
+\texttt{"ff"}; \texttt{oct}\texttt{ }the
+sequence \texttt{"001"},
+\texttt{"002"}, ...
+\texttt{"377"}; and \texttt{char}\texttt{
+}the sequence ..., \texttt{" "},
+\texttt{"!"}, ...,
+\texttt{"A"}, ...
+\texttt{"Z"}, ...,
+\texttt{"a"}, ...
+\texttt{"z"}, and so forth.
+
+Every invocation of \texttt{write()} results in all the co-expressions
+being activated once, so they are all run in lock-step, producing this
+table:
+
+{\sffamily
+0 \ \ \ \ \ \ 000 \ \ \ \ 00
+\ \ \ \ \ "{\textbackslash}x00"}
+
+{\sffamily
+1 \ \ \ \ \ \ 001 \ \ \ \ 01
+\ \ \ \ \ "{\textbackslash}x01"}
+
+{\sffamily
+2 \ \ \ \ \ \ 002 \ \ \ \ 02
+\ \ \ \ \ "{\textbackslash}x02"}
+
+{\sffamily
+...}
+
+{\sffamily
+45 \ \ \ \ \ 055 \ \ \ \ 2d \ \ \ \ \ "-"}
+
+{\sffamily
+46 \ \ \ \ \ 056 \ \ \ \ 2e \ \ \ \ \ "."}
+
+{\sffamily
+47 \ \ \ \ \ 057 \ \ \ \ 2f \ \ \ \ \ "/"}
+
+{\sffamily
+48 \ \ \ \ \ 060 \ \ \ \ 30 \ \ \ \ \ "0"}
+
+{\sffamily
+49 \ \ \ \ \ 061 \ \ \ \ 31 \ \ \ \ \ "1"}
+
+{\sffamily
+50 \ \ \ \ \ 062 \ \ \ \ 32 \ \ \ \ \ "2"}
+
+{\sffamily
+...}
+
+{\sffamily
+90 \ \ \ \ \ 132 \ \ \ \ 5a \ \ \ \ \ "Z"}
+
+{\sffamily
+91 \ \ \ \ \ 133 \ \ \ \ 5b \ \ \ \ \ "["}
+
+{\sffamily
+92 \ \ \ \ \ 134 \ \ \ \ 5c
+\ \ \ \ \ "{\textbackslash}{\textbackslash}"}
+
+{\sffamily
+93 \ \ \ \ \ 135 \ \ \ \ 5d \ \ \ \ \ "]"}
+
+{\sffamily
+94 \ \ \ \ \ 136 \ \ \ \ 5e
+\ \ \ \ \ "\^{}"}
+
+{\sffamily
+95 \ \ \ \ \ 137 \ \ \ \ 5f \ \ \ \ \ "\_"}
+
+{\sffamily
+96 \ \ \ \ \ 140 \ \ \ \ 60
+\ \ \ \ \ "'"}
+
+{\sffamily
+97 \ \ \ \ \ 141 \ \ \ \ 61 \ \ \ \ \ "a"}
+
+{\sffamily
+...}
+
+{\sffamily
+255 \ \ \ \ 377 \ \ \ \ ff
+\ \ \ \ \ "{\textbackslash}xff"}
+
+\noindent
+Parallel evaluation can also be used to assign to a set of variables:
+
+\iconcode{
+ce := create !stat(f) \\
+every (dev {\textbar} ino {\textbar} mode {\textbar} lnk {\textbar} uid
+{\textbar} gid) := @ ce}
+
+{\sffamily\bfseries
+Note}
+
+{\sffamily
+\texttt{stat()} returns file information. It is presented in the next chapter.}
+
+\noindent
+Co-expressions can be expensive. This is probably not a
+good way to assign a series of values to a group of variables but it
+demonstrates an interesting technique.
+
+\section{Coroutines}
+
+In conventional invocation, procedures have an asymmetric
+relationship; when control is transferred from the caller to the
+callee, the callee procedure starts execution at the top. Coroutines
+have an equal relationship: when control is transferred from one
+coroutine to another, execution starts from the point that
+execution was suspended. This process is called resumption. The
+\index{producer/consumer}producer/consumer problem is a good example of
+procedures that have an equal relationship. Figure 4-1 shows how the
+control flow between coroutines is different from that of conventional
+procedures.
+
+{\centering \par}
+
+\begin{center}
+\includegraphics[width=3.9902in,height=3.1701in]{ub-img/ub-img8.png}
+\end{center}
+
+{\sffamily\bfseries Figure 4-1:}
+{\sffamily The Difference Between Procedures and Coroutines}
+
+\bigskip
+
+\noindent
+Can you tell what the next example computes from its integer
+command-line argument?
+
+\bigskip
+
+{\sffamily\bfseries
+Listing 4-1}
+
+{\sffamily\bfseries
+Producer and Consumer Coroutines}
+
+\iconcode{
+procedure main(args) \\
+\>   C1 := create consumer(args[1]) \\
+\>   C2 := create producer(C1) \\
+\>   @C2 \\
+end \\
+\ \\
+procedure producer(ce) \\
+\>   x := 1 \\
+\>   repeat \{ \\
+\>   \ \ \ val := x \^{} 2 \\
+\>   \ \ \ ret := val @ ce {\textbar} break \\
+\>   \ \ \ x +:= 1 \\
+\>   \ \ \ \} \\
+\>   @ \&main \\
+end \\
+\ \\
+procedure consumer(limit) \\
+\>   value := @ \&source \\
+\>   repeat \{ \\
+\>   \ \ \ \# process value \\
+\>   \ \ \ if value {\textgreater} limit then break \\
+\>   \ \ \ if value \% 2 = 0 then write(value) \\
+\>   \ \ \ value := retval @ \&source \\
+\>   \ \ \ \} \\
+end
+}
+
+When producer resumes consumer, it passes \texttt{value}; the consumer
+passes a return code (\texttt{retval}) back. \texttt{\&source} is the
+coexpression that activated the current co-expression.
+
+{\sffamily\bfseries
+Note}
+
+{\sffamily
+This example doesn't mean the producer/consumer problem
+should always be done with coroutines!}
+
+\section{Permutations}
+
+\index{permutations}We have seen one usage of
+\index{map()}\texttt{map()}, where it transformed mixed-case strings to
+all lowercase. In that type of usage, the first string \ is the one
+that we are manipulating, and the other two arguments tell it how the
+string is to be modified. Interesting results can be achieved by
+treating the \textit{third} argument as the string to manipulate.
+Consider this code:
+
+\iconcode{
+s := "abcde" \\
+write(map("01234",
+"43201", s))
+}
+
+What does this code example do? The transformation is:
+\texttt{"4"} should be mapped to
+\texttt{"a"},
+\texttt{"3"} to
+\texttt{"b"},
+\texttt{"2"} to
+\texttt{"c"},
+\texttt{"0"} to
+\texttt{"d"}, and
+\texttt{"1"} to
+\texttt{"e"}. When this mapping is applied
+to \texttt{"01234"}, we get
+\texttt{"decba"} - a permutation of the
+string \texttt{s}! It is exactly the permutation that is suggested by
+the first two arguments of \texttt{map()}. To arrange this sort of
+permutation, all three strings must be the same size, and there must be
+no repeated letters in the second string.
+
+
+\begin{center}
+\includegraphics[width=5.0in,height=1.8in]{ub-img/ub-img9.png}
+\end{center}
+{\sffamily\bfseries Figure 4-2:}
+{\sffamily Permuting a string with the map() function}
+
+\bigskip
+
+Here is an example: In the USA, dates are represented with the month
+coming first, as in 12/25/1998, but in many other places the day comes
+first: 25/12/1998. This conversion is, of course, just a permutation;
+we can do this with a simple map:
+
+\iconcode{
+map("Mm/Dd/XxYy",
+"Dd/Mm/XxYy", date)
+}
+
+Here is another example. Unicon has a built-in random facility, the
+\texttt{?} operator. Applied to a string or cset, it returns a random
+character from the argument; applied to a structure, a random member of
+that structure; and applied to an integer, a random integer between 1
+and that number. This is a very useful feature and allows us to write
+programs that shuffle cards or run simulations of things like rolling
+dice.
+
+By default in Unicon, the random sequence generated by \texttt{?} is
+different for each run of the program. This is one of the few areas
+where Unicon is deliberately different from Icon, which uses the same
+seed each run by default. Icon's semantics is good
+when debugging, because we want the program to behave predictably while
+it is broken! However, in most applications that use random numbers,
+such as games, different runs of the program should create different
+numbers. The \index{random!number seed}random number seed is keyword
+\texttt{\&random.} It can be assigned a value at the start of
+\texttt{main()} in order to get Icon-style repeatability. Here's how
+to assign it a number based on the current date and time.
+Unicon's default semantics do something similar.
+
+\iconcode{
+\&random := map("sSmMhH",
+"Hh:Mm:Ss", \&clock) + \\
+\> \> \> \> map("YyXxMmDd",
+"YyXx/Mm/Dd", \&date)
+}
+
+\noindent
+The calls to \texttt{map()} remove punctuation characters from the
+fixed-format strings produced by \texttt{\&clock} and \texttt{\&date}.
+The resulting strings of digits are converted to integers, added, and
+stored as a seed in \texttt{\&random}. Now every time the program is
+run, the random number facility will be initialized with a different
+number.
+
+\section{Simulation}
+
+A Galton Box demonstrates how balls falling through a
+lattice of pegs will end up distributed binomially. A simulation of a
+Galton box combines several of the techniques described previously.
+Figure 4-3 is an illustration of the program's
+screen.
+\begin{center}
+\includegraphics[width=1.75in,height=3.8201in]{ub-img/ub-img10.png}
+\end{center}
+
+{\sffamily\bfseries Figure 4-3:}
+{\sffamily A Galton Box Simulation}
+
+\bigskip
+
+The simulation's output window is a good example of
+Unicon's high-level graphics facilities. Graphics is a
+broad area, discussed in Chapter 7 of this book; the on-line references
+or the Icon graphics book (Griswold, Jeffery, Townsend 1998) contain
+substantial additional details. Graphics are part of the system
+interface. Some of the graphics functions used in this example include:
+
+\begin{itemize}\itemsep0pt
+\item \texttt{FillArc(x,y,width,height)} fills an ellipse defined by a
+bounding rectangle. The shape is filled by the current foreground color
+and/or fill pattern. The height defaults to be the same as the width,
+producing a circle. Given additional arguments, \texttt{FillArc()
+}fills parts of an ellipse similar to pieces of a pie in shape.
+\item \texttt{WAttrib("attr")} or
+\texttt{WAttrib("attr=value")}, the generic
+getter/setter for window attributes.
+In this case the attributes \texttt{fg} (foreground color) and
+\texttt{drawop} (raster drawing operation) are set to various colors
+and reversible output.
+\item \texttt{Window("attr=value", ...)}
+opens a window with characteristics specified by string
+attribute values. The \texttt{WDelay(t)} function waits until
+\texttt{t} milliseconds have passed. The \texttt{WDone()} function
+waits for the user to dismiss the output window by pressing
+\texttt{"q"} and then terminates the
+program and closes the window.
+\end{itemize}
+Listing 4-2 contains the code for a simplified version of the
+simulation. A couple elements of the image above are omitted in order
+to make the example easy to follow. (Both this program and the one that
+created the screen shot above are included on the
+book's web site, http://unicon.org/book/)
+
+{\sffamily\bfseries Listing 4-2}
+{\sffamily\bfseries A Simple Galton Box Simulation}
+
+\iconcode{
+link graphics \\
+global pegsize, height, width, pegsize2 \\
+\ \\
+procedure main(args) \\
+local n, steps := 10 \\
+\>   pegsize := 10 \\
+\>   pegsize2 := pegsize * 2 \\
+\>   n := integer(args[1]) {\textbar} 100 \\
+\>   setup\_window(steps) \\
+\>   every 1 to n do galton(steps) \\
+\>   WDone() \\
+end \\
+\ \\
+procedure setup\_window(n) \\
+\ \\
+local max, xpos, ypos, i, j \\
+\>   \# Draw the n levels of pegs \\
+\>   \# Pegboard size is 2n-1 square \\
+\>   \# Expected max value of histogram is (n, n/2)/2\^{}n  \\
+\>   \# ... approximate with something simpler? \\
+\>   max := n*n/pegsize \\
+\>   width := (2*n+1)*pegsize \\
+\>   height := width + n*n/2*pegsize \\
+\>   Window("size=" {\textbar}{\textbar}
+width {\textbar}{\textbar} ","
+{\textbar}{\textbar} height, "fg=grayish-white") \\
+\>   WAttrib("fg=dark-grey") \\
+\>   every i := 1 to n do \{ \\
+\>   \ \ \ ypos := i * pegsize2 \\
+\>   \ \ \ xpos := width/2 - (i - 1) * pegsize - pegsize/2 \\
+\>   \ \ \ every j := 1 to i do \{ \\
+\>   \ \ \ \ \ \ FillArc(xpos, ypos, pegsize, pegsize) \\
+\>   \ \ \ \ \ \ xpos +:= pegsize2 \\
+\>   \ \ \ \ \ \ \} \\
+\>   \ \ \ \} \\
+\>   \# Set up drawing mode to draw the falling balls \\
+\>   WAttrib("fg=black") \\
+\>   WAttrib("drawop=reverse") \\
+end
+\ \\
+\# Do it! \\
+procedure galton(n) \\
+local xpos, ypos, oldx, oldy \\
+\>   xpos := oldx := width/2 - pegsize/2 \\
+\>   ypos := oldy := pegsize \\
+\>   \# For every ball... \\
+\>   every 1 to n do \{ \\
+\>   \ \ \ if ?2 = 1 then xpos -:= pegsize \\
+\>   \ \ \ else xpos +:= pegsize \\
+\>   \ \ \ ypos +:= pegsize2 \\
+\>   \ \ \ animate(oldx, oldy, xpos, ypos) \\
+\>   \ \ \ oldx := xpos; oldy := ypos \\
+\>   \ \ \ \} \\
+\>   \# Now the ball falls to the floor \\
+\>   animate(xpos, ypos, xpos, ypos + 40) \\
+\>   animate(xpos, ypos+40, xpos, ypos + 200) \\
+\>   \# Record this ball \\
+\>   draw\_ball(xpos) \\
+end
+\ \\
+procedure animate(xfrom, yfrom, xto, yto) \\
+\>   animate\_actual(xfrom, yfrom, xto, yfrom, 4) \\
+\>   animate\_actual(xto, yfrom, xto, yto, 10) \\
+end
+\ \\
+\# Drawing op is already set to "reverse",
+and fg colour is black. \\
+procedure animate\_actual(xfrom, yfrom, xto, yto, steps) \\
+local x := xfrom, y := yfrom, xstep, ystep, i, lastx, lasty \\
+\>   xstep := (xto - xfrom)/steps \\
+\>   ystep := (yto - yfrom)/steps \\
+\>   every i := 1 to steps do \{ \\
+\>   \ \ \ lastx := x; lasty := y \\
+\>   \ \ \ FillArc(x, y, pegsize, pegsize) \\
+\>   \ \ \ WDelay(1) \\
+\>   \ \ \ FillArc(x, y, pegsize, pegsize) \\
+\>   \ \ \ x +:= xstep; y +:= ystep \\
+\>   \ \ \ \} \\
+end
+\ \\
+procedure draw\_ball(x) \\
+static ballcounts \\
+initial ballcounts := table(0) \\
+\>   ballcounts[x] +:= 1 \\
+\>   FillArc(x, height-ballcounts[x]*pegsize, pegsize, pegsize) \\
+end
+}
+
+\section{Arrays}
+\index{array}
+Unicon uses two different representations for a list: one of them, an
+{\em array}, is optimized for fast access to the list-elements or for
+interfacing with another language that expects a contiguous vector of
+values. The size of an array is fixed when it is first created and
+consists entirely of integer elements (or entirely of reals). If any
+of the array elements is assigned a value of a different type, or the
+size of the array changes (e.g. by using \texttt{delete} or
+\texttt{push} etc.), the array is automatically converted into the
+other form --- the more general representation of a list.
+
+The general list representation occupies approximately twice as much
+storage as an array of the same size and type on most implementations
+of Unicon.
+
+To create an array, call \texttt{list(n, x)}, where \texttt{x} is an
+integer or real value and \texttt{n > 0}. If you want to create a more
+general list, rather than an array (perhaps you know the list will
+change its size in the future and you wish to avoid the cost of
+converting the array when it does) then use list comprehension:
+i.e. instead of
+\iconcode{
+  l := list(20000, 0)
+}
+\noindent use
+\iconcode{
+  l := [: (| 0) {\textbackslash} 20000 :]
+}
+\noindent list comprehension never produces an array.
+
+Although the conversion from the array form to the more general
+representation is automatic, when it is required, the conversion in the
+other direction is not. To convert a general list into an array it may
+be supplied as the only parameter to the \texttt{list} function. If
+the list meets the requirements (either all the elements are integers
+or all of them are reals) the function will return a new array that
+consists of the values in the list. If the list does not meet the
+requirements, the function returns the list parameter unchanged.
+
+\section*{Summary}
+
+Unicon is particularly powerful when language features are
+combined. The ability to combine features in interesting ways is the
+result of its novel expression semantics. Co-expressions add
+substantial value to the concept of \index{generator}generators,
+although most programs use them only sparingly. They fit well into a
+philosophy that says that simple things should be easy to do \ldots and
+complex things should be easy to do as well.
+

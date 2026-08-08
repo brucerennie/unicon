@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An ODBC Interface for the Unicon Programming Language</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li class="current">UTR 1b: An ODBC Interface for the Unicon Programming Language</li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<span></span>
+<a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">An ODBC Interface for the Unicon Programming Language</h1>
+<p class="report-authors">Federico Balbi and Clinton L. Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 1b</p>
+<p class="report-date">2002-06-28</p>
+<p class="report-pdf"><a href="utr1.pdf">pdf</a> · <a href="_sources/utr1.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>The implementation of an ODBC interface for the Unicon language allows programmers to interface their applications to local and remote database management systems with a high level of interoperability and SQL language support.</p>
+</div>
+</header>
+<h2 id="1-introduction">
+1. Introduction
+</h2>
+<p>
+The Unicon ODBC interface consists of a data type and a set of new functions to enable Unicon programs to access database management systems (DBMS). The standard language to retrieve and manipulate data in a DBMS is the structured query language SQL.
+</p>
+<h3 id="1-1-overview">
+1.1 Overview
+</h3>
+<p>
+ODBC is a programming interface (API) to access local and remote database management systems. ODBC is a de facto industry standard and works on many different operating systems and programming languages. It shields programmers from the complexity of different databases and the communications software used to access the data. ODBC defines an object called a &quot;data source&quot; that is referenced by name and maps its name to the exact location of data (network software, server name, database name and user information if needed).
+</p>
+<h3 id="1-2-odbc-architecture">
+1.2 ODBC Architecture
+</h3>
+<p>
+ODBC allows multiple applications to access to multiple data sources using an architecture (Figure 1) that consists of several layers:
+</p>
+<ul>
+<li>
+A Driver Manager to add, configure and remove different DBMS drivers.
+</li>
+<li>
+A set of drivers that implement the ODBC API for a particular DBMS.
+</li>
+<li>
+Networking software to allow network access to the database.
+</li>
+<li>
+The DBMS.
+</li>
+</ul>
+<p>
+|
+</p>
+<figure class="figure" id="figure-1">
+<img src="assets/utr1/Image4.png" alt="">
+<figcaption>Figure 1
+</figcaption>
+</figure>
+<p>
+| 
+<em>
+Figure 1: ODBC Architecture
+</em>
+</p>
+<p>
+Applications call ODBC functions. The Driver Manager decides which driver is needed and loads it into memory. After this the Driver Manager routes ODBC calls to the driver.
+</p>
+<p>
+The minimum capability required from a driver is to be able to connect to a server, send SQL statements and retrieve the results. What is important is that the Driver Manager hides all the details related to the server so the application does not need to know if the data is on a local file, a network file server or a remote host.
+</p>
+<h3 id="1-3-client-server-model">
+1.3 Client/Server Model
+</h3>
+<p>
+ODBC was designed to work with the client/server model (Figure 2) in order to satisfy the following requirements:
+</p>
+<ul>
+<li>
+A standard application programming interface.
+</li>
+<li>
+Access to the particular features of any DBMS.
+</li>
+<li>
+Performance comparable to DBMS native API.
+</li>
+</ul>
+<p>
+|
+</p>
+<figure class="figure" id="figure-2">
+<img src="assets/utr1/Image5.png" alt="">
+<figcaption>Figure 2
+</figcaption>
+</figure>
+<p>
+| 
+<em>
+Figure 2: Client/Server Model
+</em>
+</p>
+<h3 id="1-4-odbc-installation">
+1.4 ODBC Installation
+</h3>
+<p>
+After deciding which DBMS an application is going to use it is necessary to install its related ODBC driver to let the application establish a connection with the DBMS.
+</p>
+<p>
+For our ODBC tests we decided to use MySQL. MySQL is a free SQL server downloadable at 
+<a href="http://www.mysql.org/" rel="noopener">www.mysql.org</a>
+_ and available for most popular platforms. We tested both Linux and Sun/Solaris version. MySQL comes with MyODBC, the ODBC driver for the server, and it can be downloaded at the same web site. There are driver versions both for Unix and Windows.
+</p>
+<p>
+MyODBC comes with a standard Windows setup.exe program. At one point during setup you have to physically click on MyODBC within a list-box to install successfully, but otherwise installation is uneventful. If installation is successful, when you are finished you will be able to see your MySQL data source(s) from the ODBC Data Sources control within the Windows Control Panel (Figure 3).
+</p>
+<p>
+|
+</p>
+<figure class="figure" id="figure-3">
+<img src="assets/utr1/Image6.png" alt="">
+<figcaption>Figure 3
+</figcaption>
+</figure>
+<p>
+| 
+<em>
+Figure 3: The Control Panel windows
+</em>
+</p>
+<p>
+|
+</p>
+<figure class="figure" id="figure-4">
+<img src="assets/utr1/Image7.png" alt="">
+<figcaption>Figure 4
+</figcaption>
+</figure>
+<p>
+| 
+<em>
+Figure 4: The Driver Manager
+</em>
+</p>
+<p>
+This control comprises the main interface of the ODBC Driver Manager (Figure 4). The ODBC Driver Manager lists the ODBC drivers installed for different DBMSes. We can add new drivers, remove or configure existing ones within this control. The MyODBC setup program automatically adds and configures the driver in the Driver Manager's driver list.
+</p>
+<p>
+After installing MyODBC we can open the Driver Manager and take a look at the different configuration parameters (Figure 5).
+</p>
+<p>
+|
+</p>
+<figure class="figure" id="figure-5">
+<img src="assets/utr1/Image8.png" alt="">
+<figcaption>Figure 5
+</figcaption>
+</figure>
+<p>
+| 
+<em>
+Figure 5: MyODBC configuration
+</em>
+</p>
+<p>
+The MyODBC configuration panel has the following fields:
+</p>
+<ul>
+<li>
+<strong>
+Windows DSN name
+</strong>
+: DSN stands for Data Source Name and it contains the alias that we will use in our applications to reference a particular database.
+</li>
+<li>
+<strong>
+MySQL host
+</strong>
+: is contains the Internet domain name or IP address of the server we want to connect to.
+</li>
+<li>
+<strong>
+MySQL database name
+</strong>
+: name of the database that this data source refers to.
+</li>
+<li>
+<strong>
+User
+</strong>
+: database user name. For better security this field can be left empty and specified within an application.
+</li>
+<li>
+<strong>
+Password
+</strong>
+: database user password. For security this field can be also left empty and specified during application runtime.
+</li>
+<li>
+<strong>
+Port
+</strong>
+: this field is the port where MySQL server listens for connection. If left empty the default value is 3306.
+</li>
+<li>
+<strong>
+SQL command on connect
+</strong>
+: this field can contain an SQL command that is executed when the application first connects to the server.
+</li>
+</ul>
+<p>
+All the other check-boxes are driver options. Of particular note are the following options:
+</p>
+<ul>
+<li>
+<strong>
+Trace MyODBC
+</strong>
+: traces the driver activity on a log file C:\\MYODBC.TXT. This is useful to find errors within an application.
+</li>
+<li>
+<strong>
+Use compressed protocol
+</strong>
+: this option enables data compression in order to speed up data transfer on slow connections. This is recommended on fast computers.
+</li>
+<li>
+<strong>
+Read options from C:\\my.cnf
+</strong>
+: this option lets the driver read a particular configuration from a file. This helps administrators to easily configure several client machines by including c:\\my.cnf in the application distribution.
+</li>
+</ul>
+<h3 id="1-5-unicon-odbc-interface">
+1.5 Unicon ODBC Interface
+</h3>
+<p>
+The Unicon ODBC interface is a set of built-in functions that allow an easy way to write SQL database applications.
+</p>
+<p>
+The function set can be divided in four main groups. A synopsis of these functions is given here. The reference section towards the end of this document describes them in detail.
+</p>
+<ul>
+<li>
+Connection: handle Unicon connection with a DBMS.
+</li>
+</ul>
+<ul>
+<li>
+open(dsn, &quot;o&quot;, username, password): opens a connection to the database server and the specified table.
+</li>
+<li>
+close(db): closes a table and the related database connection.
+</li>
+</ul>
+<ul>
+<li>
+Catalog or information: used to retrieve information about drivers, databases and tables (for example driver capabilities, database organization, tables description).
+</li>
+</ul>
+<ul>
+<li>
+dbcolumns: gets information about a specific table columns.
+</li>
+<li>
+dbdriver: gets information about a specific ODBC driver in use.
+</li>
+<li>
+dbkeys: gets information about a particular table primary keys.
+</li>
+<li>
+dbproduct: gets information about the DBMS product the in use.
+</li>
+<li>
+dbtables: get information about a tables that belong to a specified database.
+</li>
+</ul>
+<ul>
+<li>
+Data retrieval: to load data from a DBMS to Unicon data structures.
+</li>
+</ul>
+<ul>
+<li>
+<em>
+fetch
+</em>
+: fetches a row from a rowset.
+</li>
+</ul>
+<ul>
+<li>
+General: to interact directly with the DBMS using SQL commands. This can be used to send arbitrary SQL commands including extensions particular to a specific DBMS implementation.
+</li>
+</ul>
+<ul>
+<li>
+sql(db, s): sends an SQL command string to the server for execution.
+</li>
+</ul>
+<h2 id="2-an-example-phonebook-application">
+2. An Example Phonebook Application
+</h2>
+<p>
+A typical database application performs the following tasks:
+</p>
+<ul>
+<li>
+Connects to a database
+</li>
+<li>
+Processes database information
+</li>
+<li>
+Disconnects from the database
+</li>
+</ul>
+<p>
+This section presents a simple Unicon phonebook application that takes advantage of the ODBC interface and work with MySQL server. The example will show how to use the main Unicon ODBC functions in order to connect, read and write data on a DBMS.
+</p>
+<p>
+Our application will have the following menu:
+</p>
+<ul>
+<li>
+Insert a phone number
+</li>
+<li>
+Delete a phone number
+</li>
+<li>
+Modify a phone number
+</li>
+<li>
+List phone number in database
+</li>
+</ul>
+<p>
+Note that this application assumes a preexisting database server. a user account on that server, and a table on the server has been created to store the phone book information. Let's create a 
+<strong>
+phones
+</strong>
+ table on our server with the following columns:
+</p>
+<table>
+<tbody>
+<tr>
+<td>
+Column Name
+</td>
+<td>
+Type
+</td>
+</tr>
+<tr>
+<td>
+Name (KEY)
+</td>
+<td>
+VARCHAR(40)
+</td>
+</tr>
+<tr>
+<td>
+Phone
+</td>
+<td>
+VARCHAR(12)
+</td>
+</tr>
+<tr>
+<td>
+Address
+</td>
+<td>
+VARCHAR(60)
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+We could create such a table within the application by appropriate Unicon ODBC calls, but perhaps it is more typical for such database administration tasks to be performed separately by a database administrator. From our server machine we invoke the mysql client program to talk to the SQL server:
+</p>
+<p>
+| [fbalbi@icon bin]$ ./mysql -ufbalbi -p mysql | Enter password: | Reading table information for completion of table and column names | You can turn off this feature to get a quicker startup with -A | Welcome to the MySQL monitor. Commands end with ; or \\g. | Your MySQL connection id is 96 to server version: 3.22.15-gamma
+</p>
+<p>
+Type 'help' for help.
+</p>
+<p>
+Now let's create the example table with the column 
+<strong>
+Name
+</strong>
+ as primary key:
+</p>
+<p>
+mysql&gt;
+</p>
+<p>
+create table phones (name varchar(40) primary key, phone varchar(12), address varchar(60));
+</p>
+<p>
+Query OK, 0 rows affected (0.04 sec)
+</p>
+<p>
+mysql&gt;
+</p>
+<p>
+describe phones;
+</p>
+<pre><code class="language-text">
++---------+-------------+------+-----+---------+-------+
+| Field   | Type        | Null | Key | Default | Extra |
++---------+-------------+------+-----+---------+-------+
+| name    | varchar(40) |      | PRI |         |       |
+| phone   | varchar(12) | YES  |     | NULL    |       |
+| address | varchar(60) | YES  |     | NULL    |       |
++---------+-------------+------+-----+---------+-------+
+3 rows in set (0.01 sec)
+</code></pre>
+<p>
+Now the table is properly created and empty, in fact the following select commands returns an empty set:
+</p>
+<p>
+mysql&gt;
+</p>
+<p>
+select \* from phones;
+</p>
+<p>
+Empty set (0.00 sec)
+</p>
+<p>
+Here the full list of our phonebook application. As an exercise, you may wish to consider how you would extend this application to include the above table-creation task as another menu option. Hint: the function sql() may come in handy.
+</p>
+<pre><code class="language-unicon">
+# global variables
+
+global db
+global user, password
+
+record person(name, phone, address) # database row
+
+procedure main() # main program
+  write(&quot;*** Unicon ODBC phonebook ***\n\n&quot;)
+  login() # get user name and password
+  # connect to mysql data source and open table &quot;phones&quot;
+  db := open(&quot;mysql&quot;, &quot;o&quot;, user, password)
+
+  if &amp;errornumber~=0 then { # error during login
+    write(&amp;errortext)
+  }
+  else {
+    getdbinfo() # print database information
+    repeat {
+      menu() # print menu options
+      option := read()
+
+      case option of {
+        &quot;i&quot;: insertphone()
+        &quot;d&quot;: deletephone()
+        &quot;u&quot;: updatephone()
+        &quot;l&quot;: listphones()
+        &quot;q&quot;: break
+        default: write(&quot;*** wrong selection ***&quot;)
+      }
+    }
+    close(db) # close table and database connection
+  }
+  write(&quot;bye&quot;)
+end
+
+#
+# user information
+#
+procedure login()
+  writes(&quot;user: &quot;)
+  user := read()
+  writes(&quot;password: &quot;)
+  password := read()
+end
+
+
+#
+# get database name and version
+#
+procedure getdbinfo()
+  info := dbproduct(db)
+  write(&quot;\nDBMS: &quot;, info[&quot;name&quot;])
+  write(&quot;version: &quot;, info[&quot;ver&quot;])
+end
+
+#
+# display menu options
+#
+procedure menu()
+  write(&quot;\nI)nsert&quot;)
+  write(&quot;D)elete&quot;)
+  write(&quot;U)pdate&quot;)
+  write(&quot;L)ist&quot;)
+  write(&quot;Q)uit\n&quot;)
+end
+
+#
+# insert a new record
+#
+procedure insertphone()
+  writes(&quot;name: &quot;)
+  name := read()
+  writes(&quot;phone: &quot;)
+  ph := read()
+  writes(&quot;address: &quot;)
+  addr := read()
+  sql(db, &quot;INSERT INTO phones VALUES(&quot; ||
+           name || &quot;,&quot; || ph || &quot;,&quot; || addr || &quot;)&quot;)
+  if &amp;errornumber~= 0 then
+    write(&quot;*** couldn't insert person ***&quot;)
+end
+
+#
+# remove a record
+#
+procedure deletephone()
+   writes(&quot;name to remove: &quot;)
+   name := read()
+
+   # delete row with specified name column
+   sql(db, &quot;DELETE FROM phones WHERE name='&quot;||name||&quot;'&quot;)
+end
+
+#
+# update a record
+#
+procedure updatephone()
+  writes(&quot;name to update: &quot;)
+  name := read()
+
+  # select all columns of rows with specified name column
+  sql(db, &quot;SELECT * FROM phones WHERE name='&quot;||name||&quot;'&quot;)
+
+  if row := fetch(db) then { # data found
+    writes(&quot;phone (&quot;,row[&quot;phone&quot;],&quot;): &quot;)
+    row[&quot;phone&quot;]:=read()
+    writes(&quot;address (&quot;,row[&quot;address&quot;],&quot;): &quot;)
+    row[&quot;address&quot;]:=read()
+
+    # update row on server
+    sql(db, &quot;UPDATE phones SET &quot; ||
+                   &quot;phone='&quot; || row[&quot;phone&quot;] || &quot;'&quot; ||
+                   &quot;,address='&quot; || row[&quot;address&quot;] || &quot;'&quot; ||
+                   &quot; WHERE name='&quot; || row[&quot;name&quot;] || &quot;'&quot;)
+    )
+  }
+  else write(&quot;\n\n*** person not found ***&quot;)
+end
+
+#
+# list all people in the database
+#
+procedure listphones()
+   sql(db, &quot;SELECT * FROM phones&quot;) # select all columns and all rows
+
+   while row := fetch(db) do { # while data found
+      # write row fields
+      every i:=(1 to *row) do writes(&quot;[&quot;,row[i],&quot;]&quot;)
+      write()
+      }
+end
+</code></pre>
+<p>
+| |
+</p>
+<h2 id="3-unicon-odbc-function-reference">
+3. Unicon ODBC Function Reference
+</h2>
+<p>
+With the exception of 
+<code>open()</code>
+ which 
+<em>
+returns
+</em>
+ a file reference to an ODBC connection, all these functions generally take an initial parameter (designated by 
+<code>f</code>
+ which must be an ODBC file previously opened with 
+<code>open(...,&quot;o&quot;)</code>
+. Since it is used consistently everywhere, this initial parameter is not given in the detailed description of the rest of the function parameters.
+</p>
+<p>
+close(f) : closes an ODBC file
+</p>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+  db:=open(&quot;mydb&quot;,&quot;o&quot;,&quot;federico&quot;,&quot;mypassword&quot;)
+
+  #
+  # ...program body...
+  #
+
+  close(db) # close table and disconnect
+end
+</code></pre>
+<p>
+dbcolumns(f,t) : L : return column information related to table t in database f
+</p>
+<p>
+Parameters
+</p>
+<ul>
+<li>
+<strong>
+tablename
+</strong>
+: string name of the SQL table to examine
+</li>
+</ul>
+<p>
+Return Type: list of records with the following string fields:
+</p>
+<ul>
+<li>
+catalog: catalog name
+</li>
+<li>
+schema: schema name
+</li>
+<li>
+tablename: table name
+</li>
+<li>
+colname: column name
+</li>
+<li>
+datatype: SQL data type
+</li>
+<li>
+typename: data source-dependent data type name
+</li>
+<li>
+colsize: if 
+<strong>
+datatype
+</strong>
+ is SQL_CHAR or SQL_VARCHAR this columns contains the maximum length in characters of the column
+</li>
+<li>
+buflen: length in bytes of data transferred on a fetch operation
+</li>
+<li>
+decdigits: the total number of significant digits to the right of the decimal point
+</li>
+<li>
+numprecradix: for numeric data types either 10 or 2. If it is 10, the values in 
+<strong>
+columnsize
+</strong>
+ and 
+<strong>
+decimaldigits
+</strong>
+ give the number of decimal digits allowed for the column. If it is 2, the values in 
+<strong>
+columnsize
+</strong>
+ and decimal digits give the number of bits allowed in the column
+</li>
+<li>
+nullable: 0 if the column could not include NULL values; 1 if the columns accept NULL values; 2 if it is not known whether the column accepts NULL values.
+</li>
+<li>
+remarks: a description of the column
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mysql&quot;,&quot;o&quot;,&quot;federico&quot;,&quot;&quot;) # open table
+   colinfo := dbcolumns(f) # get columns information
+   write(&quot;column info\n&quot;)
+
+   every i := 1 to *colinfo do { # for each column
+      writes(&quot;col #&quot;,i,&quot;: &quot;)
+      every j := 1 to *colinfo[i] do # write column's info
+         writes(&quot;[&quot;,colinfo[i][j],&quot;]&quot;)
+      write()
+      }
+   write()
+   close(f) # close table and connection to the database
+end
+</code></pre>
+<p>
+dbdriver(f) : returns information about the driver being used
+</p>
+<p>
+Return Type: Record with the following string fields:
+</p>
+<ul>
+<li>
+&quot;name&quot;: filename of the driver used to access the data source.
+</li>
+<li>
+&quot;ver&quot;: version of the driver and, optionally a description of the driver.
+</li>
+<li>
+&quot;odbcver&quot;: version of ODBC that the driver supports.
+</li>
+<li>
+&quot;dsn&quot;: A caracter string with the data source name used during connection.
+</li>
+<li>
+connections: maximum number of active connections that the driver can support (zero for no specified limit or if the limit is unknown).
+</li>
+<li>
+statements: maximum number of statements that the driver can support for a connection (zero for no specified limit or if the limit is unknown).
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mydb&quot;,&quot;o&quot;,&quot;fbalbi&quot;,&quot;&quot;) # open mytable
+
+   dinfo := dbdriver(f) # get driver information record
+
+   write(&quot;driver name     : &quot;, dinfo[&quot;name&quot;])
+   write(&quot;driver version  : &quot;, dinfo[&quot;ver&quot;])
+   write(&quot;driver ODBC ver : &quot;, dinfo[&quot;odbcver&quot;])
+   write(&quot;connections     : &quot;, dinfo[&quot;connections&quot;])
+   write(&quot;statements      : &quot;, dinfo[&quot;statements&quot;])
+   write(&quot;data source name: &quot;, dinfo[&quot;dsn&quot;])
+
+   close(db)  # close database connection
+end
+</code></pre>
+<p>
+dbkeys(f) : returns information about the primary key columns
+</p>
+<p>
+Return Type: list of records with the following string fields:
+</p>
+<ul>
+<li>
+col: column name.
+</li>
+<li>
+seq: sequence number.
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mydb&quot;,&quot;o&quot;,&quot;fbalbi&quot;,&quot;passwd&quot;) # open table
+
+   write(*f, &quot; row(s) selected&quot;)
+   write(&quot;\ntable keys&quot;)
+
+   krec := dbkeys(f) # retrieve primary key information
+
+   every i := 1 to *krec do {
+      r := krec[i]
+      write(&quot;[&quot;, r[&quot;col&quot;], &quot;]&quot;) # print key name
+      }
+   close(f) # close table
+end
+</code></pre>
+<p>
+dblimits(f) : returns information about the limits applied for identifiers and clauses in SQL statements.
+</p>
+<p>
+Return Type: record with the following string fields:
+</p>
+<ul>
+<li>
+&quot;
+<strong>
+maxbinlitlen
+</strong>
+&quot;: maximum length of a binary literal in an SQL statement. if there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxcharlitlen
+</strong>
+&quot;: maximum length of a character literal in an SQL statement. if there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxcolnamelen
+</strong>
+&quot;: maximum length of a column name in the data source. if there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxgroupbycols
+</strong>
+&quot;: maximum number of columns allowed in a GROUP BY clause. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxorderbycols
+</strong>
+&quot;: maximum number of columns allowed in a ORDER BY clause. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxindexcols
+</strong>
+&quot;: maximum number of columns allowed in an index. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxselectcols
+</strong>
+&quot;: maximum number of columns allowed in a SELECT list. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxtblcols
+</strong>
+&quot;: maximum number of columns allowed in a table. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxcursnamelen
+</strong>
+&quot;: maximum name length of a cursor name in the data source. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxindexsize
+</strong>
+&quot;: maximum number of bytes allowed in the combined fields of an index. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxownnamelen
+</strong>
+&quot;: maximum length of an owner name in the data source. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxprocnamelen
+</strong>
+&quot;: maximum length of a procedure name in the data source. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxqualnamelen
+</strong>
+&quot;: maximum length of a qualifier name in the data source. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxrowsize
+</strong>
+&quot;: maximum length of a single row in a table. If there is no specified limit or the limit is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxrowsizelong
+</strong>
+&quot;: a character string: &quot;Y&quot; if the maximum row size returned for the &quot;maxrowize&quot; information type includes the length of all SQL_LONGVARCHAR and SQL_LONGVARBINARY columns in the row; &quot;N&quot; otherwise.
+</li>
+<li>
+&quot;
+<strong>
+maxstmtlen
+</strong>
+&quot;: maximum lenght (number of characters, including white space) of an SQL statement. If there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxtblnamelen
+</strong>
+&quot;: maximum length of a table name in the data source. If there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxselecttbls
+</strong>
+&quot;: maximum number of tables allowed in the FROM clause of a SELECT statement. If there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+<li>
+&quot;
+<strong>
+maxusernamelen
+</strong>
+&quot;: maximum length of a user name in the data source. If there is no maximum length or the length is unknown, this value is set to zero.
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mydb&quot;,&quot;o&quot;,&quot;fbalbi&quot;,&quot;&quot;) # open mytable
+
+   dbl:=dblimits(f) # get DBMS limits information
+
+   # print out all DBMS limits
+   every i := 1 to *dbl do write(dbl[i])
+
+   close(f) # close table
+end
+</code></pre>
+<p>
+dbproduct(f) : returns information about the DBMS accessed by the driver
+</p>
+<p>
+Return Type: record with the following string fields:
+</p>
+<ul>
+<li>
+name: DBMS product name
+</li>
+<li>
+ver: DBMS version
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mydb&quot;,&quot;o&quot;,&quot;fbalbi&quot;,&quot;mypasswd&quot;) # open table
+
+   p := dbproduct(f) # get DBMS product information
+
+   write(&quot;product name: &quot;, p[&quot;name&quot;]) # print product name
+   write(&quot;product ver : &quot;, p[&quot;ver&quot;])  # print product version
+
+   close(f) # close table
+end
+</code></pre>
+<p>
+dbtables(f): L : get information about tables stored in database f
+</p>
+<p>
+Return Type: list of records with the following string fields:
+</p>
+<ul>
+<li>
+qualifier: table qualifier
+</li>
+<li>
+owner: table owner
+</li>
+<li>
+name: table name
+</li>
+<li>
+type: table type
+</li>
+<li>
+remarks: table remarks
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mysql&quot;,&quot;o&quot;,&quot;fbalbi&quot;,&quot;xxxxxxxx&quot;)
+
+   # get current database tables information
+   tablelist := dbtables(f)
+
+   # write number of tables
+   write(&quot;size list = &quot;, *tablelist)
+
+   every i := 1 to *tablelist do { # for each table
+      r:=tablelist[i]
+
+      # print table information fields
+      every j := 1 to *r do writes(&quot;[&quot;,r[j],&quot;]&quot;)
+      write()
+      }
+
+  close(f) # close table
+end
+</code></pre>
+<p>
+fetch(f) : fetches and returns a row from a rowset
+</p>
+<p>
+Return Type: record with fields names equal to the selected table columns (use sql(db, &quot;SELECT...&quot;) for column selection)
+</p>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   f := open(&quot;mydb&quot;,&quot;o&quot;,&quot;fbalbi&quot;,&quot;mypass&quot;)
+
+   # select 3 existing columns from table mytable
+   sql(f, &quot;SELECT id, name, amt FROM mytable&quot;)
+
+   # *f = number of selected rows
+   # may not work with some DBMS
+   write(*f, &quot; row(s) selected&quot;)
+
+   write(&quot;\nrow values&quot;)
+
+   # fetch returns a record whose
+   # fieldnames are the column names selected with a SQL SELECT
+   # in this example we can reference fields using row[&quot;id&quot;],
+   # row[&quot;name&quot;] and row[&quot;amt&quot;]
+
+   while row := fetch(f) do { # while rows to retrieve
+      every col := 1 to *row do  # for each col of row
+         writes(&quot;[&quot;,row[col],&quot;]&quot;) # write row field
+      write()
+      }
+
+   close(f) # close table
+end
+</code></pre>
+<p>
+open(db, &quot;o&quot;, username, password) : connect to a database and returns the associated ODBC file.
+</p>
+<p>
+Parameters:
+</p>
+<ul>
+<li>
+db: Data Source Name string (defined in ODBC Manager)
+</li>
+<li>
+user: database user string
+</li>
+<li>
+password: user password string
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   # open &quot;mytable&quot; in mydb data source name defined in
+   # ODBC Data Sources (see Windows 9x Control Panel folder)
+   # using username &quot;federico&quot; and password &quot;mypassword&quot;
+
+   db := open(&quot;mydb&quot;,&quot;o&quot;,&quot;federico&quot;,&quot;password&quot;)
+
+   #
+   # ...program body...
+   #
+
+  close(db) # close table and disconnect
+end
+</code></pre>
+<p>
+sql(f, query) : submits an SQL query using the connection opened by f
+</p>
+<p>
+Parameters:
+</p>
+<ul>
+<li>
+query: SQL statement string
+</li>
+</ul>
+<p>
+Code Example
+</p>
+<pre><code class="language-unicon">
+procedure main()
+   # connect to DBMS and open table
+   db:=open(&quot;personnel_db&quot;,&quot;o&quot;,&quot;manager&quot;,&quot;passwd&quot;)
+
+   # prepare SQL query string to create an employees table
+   # of 5 columns
+
+   query := &quot;CREATE TABLE employees (id INTEGER PRIMARY KEY,_
+             name VARCHAR(40), phone VARCHAR(12), DOB DATE,_
+             pay FLOAT)&quot;
+
+   sql(db, query) # execute query
+   close(db) # close
+end
+</code></pre>
+<p>
+| |
+</p>
+<h2 id="4-conclusions">
+4. Conclusions
+</h2>
+<p>
+This interface is a successful, albeit low-level interface to SQL databases. It has been tested and proven effective on large real world data sets. SQL commands are constructed as strings, and Unicon excels at such text manipulation. This interface does 
+<em>
+not
+</em>
+ provide Unicon programmers with higher level abstractions of database capabilities. For example one original design goal was to allow programmers to interact with a database with minimum knowledge of SQL. For example, the built-in table data type does not match the SQL table abstraction exactly, but with proper operator support interactions with SQL tables could look very similar to interactions with Unicon tables.
+</p>
+<p>
+| |
+</p>
+<h2 id="appendix-unicon-odbc-implementation-notes">
+Appendix: Unicon ODBC Implementation Notes
+</h2>
+<p>
+The implementation of the ODBC interface includes changes to several files of the Unicon runtime system, as well as the addition of a new file for the new functions that were added.
+</p>
+<p>
+New files
+</p>
+<ul>
+<li>
+FDB.R: This is the main file of Unicon ODBC. It contains the Unicon ODBC function set implementation. It is written in standard C with RTT extensions.
+</li>
+<li>
+RDB.R: contains the C implementation of odbcerror function that is widely called in FDB.R.
+</li>
+</ul>
+<p>
+Modified files
+</p>
+<ul>
+<li>
+RPROTO.H: contains odbcerror function definition.
+</li>
+<li>
+OMISC.R: &quot;\*&quot; operator implementation for ODBC file type.
+</li>
+<li>
+FDEFS.H: ODBC function definitions.
+</li>
+<li>
+DATA.R: runerr error code for ODBC file mismatch.
+</li>
+<li>
+RSTRUCTS.H: ISQLFile definition (ODBC connection type).
+</li>
+<li>
+REXTERNS.H: ISQLEnv extern definition.
+</li>
+<li>
+RMACROS.H: Fs_ODBC file status flag and ODBC error codes.
+</li>
+<li>
+SYS.H: VisualC++ ODBC header files inclusion (windows.h and sqlext.h).
+</li>
+<li>
+INIT.R: ODBC Environment structure release.
+</li>
+<li>
+DEFINE.H: ISQL symbol definition for conditional compilation.
+</li>
+<li>
+GRTTIN.H: new ODBC types definitions.
+</li>
+<li>
+MAKEFILE.RUN: Runtime system makefile (FDB.R and RDB.R definitions added)
+</li>
+<li>
+ICONX.LNK: Link file (XFDB.OBJ and XRDB.OBJ definitions added)
+</li>
+</ul>
+<p>
+ISQLFile type
+</p>
+<p>
+In Unicon an ODBC connection to a database is similar to a file operation. Internally this is represented by the following C structure:
+</p>
+<pre><code class="language-text">
+#ifdef ISQL             /* ODBC support      */
+  struct ISQLFile {     /* SQL file          */
+    SQLHDBC hdbc;       /* connection handle */
+    SQLHSTMT hstmt;     /* statement handle  */
+  };
+#endif
+</code></pre>
+<p>
+The field 
+<em>
+hdbc
+</em>
+ is used to keep the connection information associated to a particular ISQLFile file. 
+<em>
+hstmt
+</em>
+ is the statement structure that saves the results or dataset returned by an ODBC operation. The design of the interface is table oriented, which means that for each table we open a new connection.
+</p>
+<p>
+In the future we will consider the possibility to associate a file to a database. This would let us open a connection for each database and share the same connection for each table within the same database. In this way we can open a file and use more than a table.
+</p>
+<p>
+Actually when 
+<em>
+open(DSN,&quot;o&quot;,user,password)
+</em>
+ is called Unicon allocates an ISQLFile object and initializes the structure fields in the following way:
+</p>
+<ul>
+<li>
+hdbc is related to the DSN specified in open()
+</li>
+<li>
+hstmt is related to 
+<em>
+hdbc
+</em>
+</li>
+</ul>
+<h2 id="references">
+References
+</h2>
+<ol start="1">
+<li>
+Kyle Geiger. Inside ODBC. Microsoft Press, Redmond, Washington, 1995.
+</li>
+<li>
+Roger E. Sanders. ODBC 3.5 Developer's Guide. McGraw-Hill, 1998.
+</li>
+<li>
+Microsoft ODBC 2.0 Programmer's Reference Guide. Microsoft Press, Redmond, Washington, 1994.
+</li>
+<li>
+Microsoft ODBC 3.0 Programmer's Reference. Microsoft Press, Redmond, Washington, 1997.
+</li>
+<li>
+Ralph E. Griswold, Madge T.Griswold. The Icon Programming Language, 3\ 
+<sup>rd</sup>
+ ed.. Peer-to-Peer Communications, San Jose, 1997.
+</li>
+<li>
+Ralph E. Griswold. The Implementation of the Icon Programming Language. Princeton University Press, 1986.
+</li>
+<li>
+Clinton Jeffery, Shamim Mohamed, Ray Pereda, and Robert Parlett. Programming with Unicon. Draft manuscript from http://unicon.sourceforge.net.
+</li>
+<li>
+MySQL Reference Manual for version 3.23.2-alpha. From http://www.mysql.org
+</li>
+</ol>
+<p>
+..
+</p>
+<p>
+ image:: Image4.gif    :width: 462px    :height: 202px ..
+</p>
+<p>
+ image:: Image5.gif    :width: 560px    :height: 491px ..
+</p>
+<p>
+ image:: Image6.gif    :width: 529px    :height: 211px ..
+</p>
+<p>
+ image:: Image7.gif    :width: 461px    :height: 377px ..
+</p>
+<p>
+ image:: Image8.gif    :width: 452px    :height: 482px
+</p>
+<div class="prevnext">
+<span></span>
+<a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr1.pdf">pdf</a> | <a href="_sources/utr1.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

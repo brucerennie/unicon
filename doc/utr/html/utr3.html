@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iyacc: A Parser Generator for Icon and Unicon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li class="current">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr2b.html">&larr; UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a>
+<a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">iyacc: A Parser Generator for Icon and Unicon</h1>
+<p class="report-authors">Ray Pereda and Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 3a</p>
+<p class="report-date">2018-02-21</p>
+<p class="report-pdf"><a href="utr3.pdf">pdf</a> · <a href="_sources/utr3.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>iyacc is software tool for building language processors. It is based on byacc, a well-known tool for the C programming language. This report describes how to use the tool.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+The iyacc program takes a context free grammar that you specify and generates a parser that recognizes whether an input conforms to that grammar. iyacc is a modified version of byacc (Berkeley YACC), modified to generate Icon code as an alternative to C. The name iyacc stands for Icon's yacc, where yacc stands for Yet Another Compiler Compiler.
+</p>
+<p>
+iyacc has been used in large production tools for quite some time, such as the Unicon translator itself. If this report is your first introduction to the yacc family of parser generator tools, you may wish to also read &quot;Lex &amp; Yacc&quot;, by John Levine 
+[<a class="cite" href="#cite-levine92">1</a>].
+</p>
+<h2 id="from-grammar-to-parse-tree">
+From Grammar to Parse Tree
+</h2>
+<p>
+A parser allows you to do more than just tell whether a sentence is valid according to the grammar; it also allows you to preserve the structure of the sentence for later use. This internal structure explains why the sentence is grammatical, and it is also the starting point for most translation tasks. The structure is often a tree called a parse tree. The language used by iyacc to express the grammar is based on a form of BNF, which stands for Backus-Naur Form. A grammar in BNF consists of a series of production rules, each one specifying how a component of the parse is constructed from simpler parts. For example, here is a grammar similar to the one used to build the calculator:
+</p>
+<pre><code class="language-text">
+
+assignment : NAME ASGN expression ;
+expression : NUMBER
+           | expression + NUMBER
+           | expression - NUMBER
+           ;
+</code></pre>
+<p>
+This grammar has rules for constructing two symbols to the left of a colon; these symbols are called non-terminal symbols. Such non-terminal symbols denote an abstraction for a logically related sequence of symbols, analogous to a phrase (in natural language) or some part of a syntax construct (in a programming language), such as a statement, or an expression.
+</p>
+<p>
+Each symbol to the right of the colon can be either another non-terminal or a terminal symbol. If it is a terminal, then the scanner will recognize the symbol. If it is not, then a rule will be used to match that non-terminal. It is not legal to write a rule with a terminal to the left of the colon. The vertical bar means there are different possible matches for the same non-terminal. For example, an expression can be a number, an expression plus a number, or an expression minus a number.
+</p>
+<p>
+The iyacc program's input files are structured into three sections, separated by double percent signs (
+<code>%%</code>
+): a definitions section, a rules section, and a procedures section. The definitions section includes code to be copied into the output file before the parser code, surrounded by 
+<code>%{</code>
+ and 
+<code>%}</code>
+. This section also includes the declarations of each of the tokens that are going to be returned by the scanner.
+</p>
+<p>
+The term &quot;token&quot; is just another name for a terminal symbol, or a word. Tokens can be given a left or right associativity, and they are declared from lowest precedence to highest precedence. You may want to consult a reference on yacc for details on how these features are used. The next section is the rules section. The left and right sides of a rule are separated by a colon. The right side of the rule can be embedded with semantic actions consisting of Icon code that is surrounded by curly braces. Semantic actions execute when the corresponding grammar rule is matched by the input. The last section is the procedures section. In the calculator, there is one procedure, main(), that calls the parser once for each line.
+</p>
+<h2 id="a-parser-for-a-desktop-calculator">
+A Parser for a Desktop Calculator
+</h2>
+<p>
+The following calculator program is a minimalist example of using iyacc. Iyacc's generated parser reads tokens by calling a function yylex(). yylex() can be written by hand, or generated by a lexical analyzer generator program such as ulex 
+[<a class="cite" href="#cite-ray03">2</a>]. In the example, a very crude hand-written lexical analyzer is provided for completeness.
+</p>
+<pre><code class="language-text">
+
+%{
+## add any special linking stuff here
+global vars
+%}
+/* YACC Declarations */
+%token NUM NAME ASSIGNMENT
+%left '-' '+'
+%left '*' '/'
+%left NEG /* negation -- unary minus */
+%right '^' /* exponentiation */
+/* Grammar follows */
+%%
+input   : /* empty string */
+        | input line
+        ;
+line: '\n'
+        | exp '\n' { write($1) }
+        | NAME ASSIGNMENT exp '\n' {
+            vars[$1] := $3
+            write($3)
+            }
+        ;
+exp: NUM { $$ := $1 }
+| NAME { $$ := vars[$1] }
+| exp '+' exp { $$ := $1 + $3 }
+| exp '-' exp { $$ := $1 - $3 }
+| exp '*' exp { $$ := $1 * $3 }
+| exp '/' exp { $$ := $1 / $3 }
+| '-' exp %prec NEG { $$ := -$2 }
+| exp '^' exp { $$ := $1 ^ $3 }
+| '(' exp ')' { $$ := $2 }
+;
+%%
+procedure main()
+  vars := table(0) # initialize all variables to zero
+  write(&quot;IYACC Calculator Demo&quot;)
+  repeat {
+    write(&quot;expression:&quot;)
+    yyparse()
+  }
+end
+procedure yylex()
+   local tok
+   static token_char, line
+   initial {
+     token_char := ~ ' \t'
+     line := &quot;&quot;
+   }
+   if line == &quot;&quot; then line := (read()||&quot;\n&quot;) | exit()
+
+   line ? while tab(upto(token_char)) do {
+      if yylval := tab(many(&amp;letters)) then tok := NAME
+      else if yylval := tab(many(&amp;digits++'.')) then tok := NUM
+      else if yylval := =&quot;:=&quot; then tok := ASSIGNMENT
+      else { yylval := move(1); tok := ord(yylval) }
+      line := tab(0)
+      return tok
+      }
+
+   tok := ord('\n')
+   line := &quot;&quot;
+   return tok
+end
+</code></pre>
+<p>
+iyacc allows single quoted character constants to be used as tokens without declaring them, so 
+<code>'+'</code>
+, 
+<code>'-'</code>
+, 
+<code>'*'</code>
+, 
+<code>'/'</code>
+, 
+<code>'^'</code>
+, 
+<code>'('</code>
+, and 
+<code>')'</code>
+ are not declared in the above grammar. The unary minus makes use of the 
+<code>%prec</code>
+ keyword to give it priority over binary minus.
+</p>
+<p>
+Note that such character constants are yacc's notation for small integers with the corresponding ASCII values; 
+<code>'+'</code>
+ in a grammar is a shorthand for the token that matches 
+<code>ord(&quot;+&quot;)</code>
+ here, not a cset. Tokens NUM, NAME, ASSIGNMENT, and NEG are declared.
+</p>
+<h2 id="semantic-actions-and-values">
+Semantic Actions and Values
+</h2>
+<p>
+When the parser matches a rule, it executes the code associated with the rule, if there is any. Actions can appear anywhere on the right-hand side of a rule, but their semantics are intuitive only at the end a rule. Vertical bars actually mark alternative rules, so it makes sense to have a (possibly different) action for each alternative. The action code may refer to the value of the symbols on the right side of the rule via the special variables 
+<code>$1</code>
+, 
+<code>$2</code>
+... and they can set the value of the symbol on the left of the colon by assigning to the variable 
+<code>$$</code>
+.
+</p>
+<p>
+The value of a terminal symbol is the contents of global variable yylval, which is assigned by the scanner. The value of a non-terminal is the value assigned to the 
+<code>$$</code>
+ variable in the grammar rule that produced that non-terminal. As was mentioned for the yylval variable, in other languages, assigning different kinds of values to 
+<code>$$</code>
+ for different non-terminals is awkward. In iyacc, it is very easy because variables can hold values of any type.
+</p>
+<h2 id="command-line-usage">
+Command-Line Usage
+</h2>
+<p>
+The preceding calculator example is standalone and can be compiled by just saying
+</p>
+<pre><code class="language-text">
+
+iyacc -i calc.y
+</code></pre>
+<p>
+followed by invoking icont (or unicon) on the resulting calc.icn.
+</p>
+<p>
+Here is the sequence of commands you would type for creating a calculator if you were using ulex to generate the lexical analyzer. This would mainly add a 
+<code>-d</code>
+ option to specify that iyacc should produce an include file, y_tab.icn, containing the 
+<code>$define</code>
+'s for the terminal symbols that yylex() must produce as return values when called by yyparse(). You would normally use a &quot;make&quot; program to manage the dependencies of these different files and programs, to avoid typing this all by hand.
+</p>
+<pre><code class="language-text">
+
+$ iyacc -i -d calc.y              creates calc.icn &amp; y_tab.icn
+$ ulex calc_lex.l                 creates calc_lex.icn
+$ unicon calc.icn calc_lex.icn    creates the program calc*
+</code></pre>
+<p>
+The resulting calculator program might be executed in a session such as the following:
+</p>
+<pre><code class="language-text">
+
+$ calc  runs calc
+iyacc Calculator Demo
+expression: (3 + 5)*2   enter an expression
+16                      prints out the answer
+expression: x := 16     enter an expression
+16                      prints out the answer
+expression: 2 * x       enter an expression
+32                      prints out the answer
+expression: ^D          control-D (EOF) stops the program
+</code></pre>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-levine92" value="1">
+John R. Levine and Tony Mason and Doug Brown. &quot;Lex \&amp; Yacc&quot;. O'Reilly and Associates. 1992.
+</li>
+<li id="cite-ray03" value="2">
+K. Ray and Ray Pereda and Clinton Jeffery. &quot;Ulex -- A Lexical Analyzer Generator for Unicon&quot;. http://unicon.org/utr/utr2/utr2a.pdf. 2003.
+</li>
+<li id="cite-jeffery-1995-cs-tr" value="3">
+Clinton Jeffery. &quot;How to Write a UTSA CS Division Technical Report&quot;. 1995.
+</li>
+<li id="cite-griswold-newsletter" value="4">
+Ralph Griswold. &quot;Icon Benchmarks&quot;. The Icon Newsletter. 1989.
+</li>
+<li id="cite-jeffery-sesrit" value="5">
+Clinton Jeffery and David Rice. &quot;sesrit.icn&quot;. http://www2.cs.uidaho.edu/~jeffery/courses/game/sesrit.icn. 1999.
+</li>
+<li id="cite-shootout-2014" value="6">
+Brent Fulgham and Isaac Gouy. &quot;The Computer Language Benchmarks Game&quot;. http://benchmarksgame.alioth.debian.org/.
+</li>
+<li id="cite-merr" value="7">
+Clinton Jeffery. &quot;Merr: an LR Syntax Error Message Tool&quot;. http://unicon.org/merr.
+</li>
+<li id="cite-crawford" value="8">
+anonymous, but owing to Douglas Crawford. &quot;Introducing JSON&quot;. json.org.
+</li>
+<li id="cite-beck-sunit" value="9">
+Kent Beck. &quot;Simple Smalltalk Testing: With Patterns&quot;. Available at https://web.archive.org/web/20150315073817/http://www.xprogramming.com/testfram.htm [Verified 13 May 2024].
+</li>
+</ol></div>
+<div class="prevnext">
+<a href="utr2b.html">&larr; UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a>
+<a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr3.pdf">pdf</a> | <a href="_sources/utr3.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

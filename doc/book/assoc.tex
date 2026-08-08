@@ -1,0 +1,857 @@
+\chapter{Inheritance and Associations}
+
+Relationships between classes are depicted in UML class diagrams by
+lines drawn between two or more class rectangles. One of the most
+important relationships between classes describes the situation when
+one class is an extension or minor variation of another class: this is
+called generalization, or \textit{inheritance}. Most other
+relationships between classes are really relationships between those
+classes' \index{instance}instances at run-time; these
+relationships are called \textit{associations}. This chapter starts
+with inheritance, and then describes a variety of associations.
+In this chapter you will learn how to:
+\begin{itemize}\itemsep0pt
+  \item Define a new class in terms of its differences from an existing class
+  \item Compose aggregate classes from component parts.
+  \item Specify new kinds of associations
+  \item Supply details about the roles and number of objects in an association
+  \item Use structure types to implement associations
+\end{itemize}
+
+\section{Inheritance}
+
+In many cases, several classes of objects are very similar. In
+particular, many classes arise as enhancements of classes that have
+already been defined. Enhancements might consist of added fields, added
+methods, or both. In other cases a class is just a special case of
+another class. For example, if you have a class
+\texttt{fraction(numerator, denominator)}, you could define class
+\texttt{inverses(denominator)} whose behavior is identical to that of a
+fraction, but whose numerator is always 1. 
+
+Both of these ideas are realized with the concept of
+\index{inheritance}inheritance. When the definition of a class is best
+expressed in terms of the definition of another class or classes, we
+call that class a \index{subclass}\textit{subclass.} The class or
+classes from which a subclass obtains its definition are called
+\index{superclass}\textit{superclass}\textit{es}. The logical relation
+between the subclass and superclass is called \textit{hyponymy}. It
+means an object of the subclass can be manipulated just as if it were
+an object of one of its defining classes. In practical terms it means
+that similar objects can share the code that manipulates their fields.
+
+Inheritance appears in a class diagram as a line between classes with an
+arrow at one end. The arrow points to the superclass, the source of
+behavior inherited by the other class. Consider Figure 11-1, in which
+an offer of a salaried appointment is defined as one kind of job offer.
+The attributes (\texttt{salary}, \texttt{title}) and methods
+(\texttt{Accept()} and \texttt{Reject()}) of class JobOffer are
+inherited by class SalariedAppointment, and do not need to be repeated
+there. A new attribute (term) is added in \texttt{SalariedAppointment}
+that is not in \texttt{JobOffer}.
+
+\begin{center}
+\includegraphics[width=4.05in,height=1.52in]{ub-img/subclass.png} 
+
+{\sffamily\bfseries Figure 11-1:}
+{\sffamily A Salaried Appointment is a subclass of a Job Offer}
+\end{center}
+
+\noindent
+The syntax of a subclass is 
+
+\iconcode{
+class \textit{classname} \textit{superclasses} (\textit{attributes}) \\
+\>   \textit{methods} \\
+{\sffamily\itshape
+initially\_section} \\
+end
+}
+
+Where \texttt{\textit{superclasses}} is an optional list of class names
+separated by colons, \texttt{\textit{attributes}} is an optional list
+of \index{variable}variable names separated by commas,
+\texttt{\textit{methods}} is an optional list of declarations for the
+class methods, and the \texttt{\textit{initially\_section}} is optional
+initialization code for the class \index{constructor}constructor. For
+example
+
+\iconcode{
+class SalariedAppointment : JobOffer (term) \\
+\>   method SetTerm(t : interval) \\
+\>   \ \ \ term := t \\
+\>   end \\
+initially \\
+\>   /term := "unknown term" \\
+end
+}
+
+As you can see, a subclass declaration is identical to a regular class,
+with the addition of one or more superclass names, separated by colons.
+The meaning of this declaration is the subject of the next section. 
+
+\subsection*{Inheritance semantics}
+
+\index{inheritance!semantics}There are times when a new class might best
+be described as a combination of two or more classes. Unicon classes
+may have more than one superclass, separated by colons in the class
+declaration. This is called multiple inheritance.
+
+Subclasses define a record type consisting of the field names of the
+subclass itself and all its superclasses. The subclass has associated
+methods consisting of those in its own body, those in the first
+superclass that were not defined in the subclass, those in the second
+superclass not defined in the subclass or the first superclass, and so
+on. In ordinary single-inheritance, this adding of fields and methods
+follows a linear bottom-up visit of each superclass,
+followed in turn by its parent superclass. 
+
+When a class has two or more superclasses, the search generalizes from a
+linear sequence to an arbitrary \index{tree}tree, directed acyclic
+\index{graph}graph, or full graph traversal. 
+\index{inheritance!multiple}Multiple inheritance adds fields and
+methods in an order defined by a depth-first traversal of the parent
+edges of the superclass graph. Think of the second and following
+superclasses in the
+multiple inheritance case as adding methods and fields only if the
+single-inheritance case (following the first superclass and all its
+parents) has not already added a field or method of the same name. 
+
+{\sffamily\bfseries
+Warning}
+
+{\sffamily
+Care should be taken employing multiple inheritance if the two parent
+classes have any fields or methods of the same name! }
+
+Fields are initialized by parameters to the constructor or by the
+class \texttt{initially} section, which is a method and is
+inherited in the normal way. It is common for a subclass \texttt{initially}
+section to call their superclasses'
+\texttt{initially} sections, for example:
+
+\iconcode{
+class sub : A : B(x) \\
+initially \\
+\>   x := 0 \\
+\>   A.initially() \\
+\>   B.initially() \\
+end
+}
+
+\noindent
+It is also common to have some attributes initialized by parameters, and
+assign others in the \texttt{initially} section. For example, to define a
+class \texttt{inverse} (for numbers of the form 1 / \textit{n}) in terms
+of a class \texttt{fraction(numerator, denominator)} one can write: 
+
+\iconcode{
+class inverse : fraction (denominator) \\
+initially \\
+\>   numerator := 1 \\
+end
+}
+
+Objects of class inverse can be manipulated using all the methods
+defined in class fraction; the code is actually shared by both classes
+at runtime. 
+
+Viewing inheritance as the addition of superclass elements not found in
+the subclass is the opposite of the more traditional object-oriented
+view that a subclass is an \index{instance!superclass}instance of the
+superclass as augmented in the subclass definition.
+Unicon's viewpoint adds quite a bit of leverage, such
+as the ability to define classes that are subclasses of each other.
+This feature is described further below. 
+
+\subsection*{Invoking superclass operations}
+
+\index{superclass!operations}When a \index{subclass}subclass defines a
+method of the same name as a method defined in the superclass,
+invocations on subclass objects execute the
+subclass' version of the
+\index{method!overriding}method. This can be overridden by explicitly
+including the superclass name in the invocation:
+
+\iconcode{
+\>   object\$superclass.method(parameters)}
+
+This facility allows the subclass method to do any additional work
+required for added fields before or after calling an appropriate
+superclass method to achieve inherited behavior. The result is
+frequently a chain of inherited method invocations. 
+
+Since initially sections are methods, they can invoke superclass
+operations including superclass initially sections. This allows a chain
+of initially sections to be specified to execute in either
+subclass-first or superclass-first order, or some mixture of the two. 
+
+\subsection*{Inheritance examples}
+
+Several inheritance examples follow from the \texttt{buffer}
+example from Chapter 10. Suppose the program does more than
+edit text\index{editor}, it has a word-associative
+dictionary, bibliography, spell-checker, and thesaurus. These
+features can be implemented using the table type.
+The contents vary, but they all use string
+keyword lookup. As external data, the databases can be stored in text
+files, one entry per line, with the keyword at the beginning. The
+format of the rest of the line varies from database to database.
+
+Figure 11-2 shows a class diagram with subclasses derived from
+\texttt{buffer}. A class \texttt{buftable} refines the
+buffer class, adding support for random access. Other classes are
+defined as subclasses of \texttt{buftable}. The implementation of these
+classes is given below.
+
+
+\begin{center}
+\includegraphics[width=3.24in,height=2.95in]{ub-img/ub-img43.png}
+\linebreak
+{\sffamily\bfseries Figure 11-2: Some Subclasses of the Buffer Class}
+\end{center}
+
+\bigskip
+
+Although all these types of data are different, the code used to read
+the data files can be shared, as well as the initial construction of
+the tables. In fact, since we are storing our data one entry per line
+in text files, we can use the code already written for buffers to do
+the file I/O itself. 
+
+\iconcode{
+class buftable : buffer() \\
+\ \ method read() \\
+\>   \ self.buffer.read() \\
+\>   \ tmp := table() \\
+\>   \ every line := !text do \\
+\>   \ \ \ line ? \{ tmp[tab(many(\&letters))] := line {\textbar} fail
+\} \\
+\>   \ text := tmp \\
+\>   \ return \\
+\ \ end \\
+\ \ method index(s) \\
+\>   \ return text[s] \\
+\ \ end \\
+end
+}
+
+This concise example shows how little must be written to achieve data
+structures with vastly different behavioral characteristics, by
+building on code that is already written. The superclass
+\texttt{read()} operation is one important step of the subclass
+\texttt{read()} operation. This technique is common enough to have a
+name: it is called \textit{method
+}\index{method!combination}\textit{combination} in the literature. It
+allows you to view the subclass as a transformation of the superclass.
+The \texttt{buftable} class is given in its entirety, but our code
+sharing example is not complete: what about the data structures
+required to support the databases themselves? They are all variants of
+the \texttt{buftable} class, and a set of possible implementations
+follow. Note that the formats presented are designed to illustrate code
+sharing; clearly, an actual application might make different choices. 
+
+\paragraph{Bibliographies}
+Bibliographies might consist of a keyword followed by an uninterpreted
+string of information. This imposes no additional structure on the data
+beyond that imposed by the \texttt{buftable} class. An example keyword
+would be Jeffery99. 
+
+\iconcode{
+class bibliography : buftable() \\
+end
+}
+
+\paragraph{Spell-checkers}
+The database for a spell-checker might be a list of words, one per
+line, the minimal structure required by the \texttt{buftable} class.
+Some classes introduce new terminology rather
+than to define a new data structure. This example introduces a lookup
+operation that can fail, for use in tests. In addition, since many
+spell-checking systems allow user definable dictionaries in addition to
+their central database, \texttt{spellChecker} objects may chain
+together for the purpose of looking up words. 
+
+\iconcode{
+class spellChecker : buftable(parent) \\
+\ \ method spell(s) \\
+\>   \ return {\textbackslash}text[s] {\textbar}
+({\textbackslash}parent).spell(s) \\
+\ \ end \\
+end
+}
+
+\paragraph{Dictionaries}
+Dictionaries are slightly more involved. Each entry might consist of a
+part of speech, an etymology, and an arbitrary string of uninterpreted
+text comprising a definition for that entry, separated by semicolons.
+Since each such entry is itself a structure, a sensible decomposition
+of the dictionary structure consists of two classes: one that manages
+the table and external file I/O, and one that handles the manipulation
+of dictionary entries, including their decoding and encoding as
+strings. 
+
+\iconcode{
+class dictionaryentry(word, partofspeech, etymology, definition) \\
+\ \ \# decode a dictionary entry into its components \\
+\ \ method decode(s)  \\
+\>   \ s ? \{ \\
+\>   \ \ \ word \ \ \ \ \ \ \ \ := tab(upto(';')) \\
+\>   \ \ \ move(1) \\
+\>   \ \ \ partofspeech := tab(upto(';')) \\
+\>   \ \ \ move(1) \\
+\>   \ \ \ etymology \ \ \ := tab(upto(';')) \\
+\>   \ \ \ move(1) \\
+\>   \ \ \ definition \ \ := tab(0) \\
+\>   \ \} \\
+\ \ end \\
+\ \ method encode() \ \# encode a dictionary entry into a string \\
+\>   \ return word {\textbar}{\textbar} ";"
+{\textbar}{\textbar} partofspeech {\textbar}{\textbar}
+";" {\textbar}{\textbar}
+ etymology {\textbar}{\textbar}
+";" {\textbar}{\textbar} definition \\
+\ \ end \\
+initially \\
+\ \ if /partofspeech then \{ \\
+\>   \ \# constructor was called with a single string argument \\
+\>   \ decode(word) \\
+\>   \ \} \\
+end \\
+\ \\
+class dictionary : buftable() \\
+\ \ method read() \\
+\>   \ self.buffer.read() \\
+\>   \ tmp := table() \\
+\>   \ every line := !text do \\
+\>   \ \ \ line ? \{ tmp[tab(many(\&letters))] := dictionaryentry(line)
+{\textbar} fail \} \\
+\>   \ text := tmp \\
+\ \ end \\
+\ \ method write() \\
+\>   \ f := open(filename, "w") {\textbar}
+fail \\
+\>   \ every write(f, (!text).encode) \\
+\>   \ close(f) \\
+\ \ end \\
+end
+}
+
+\paragraph{Thesauri}
+Although an oversimplification, one might conceive of a thesaurus as a
+list of entries, each of which consists of a comma-separated list of
+synonyms followed by a comma-separated list of antonyms, with a
+semicolon separating the two lists. Since the code for such a structure
+is nearly identical to that given for dictionaries above, we omit it
+here (you might start by generalizing class \texttt{dictionaryentry} to
+handle arbitrary strings organized as fields separated by semicolons). 
+
+
+\subsection*{A (toy) Dictionary Program}
+
+The above examples were intended to illustrate a pedagogical point
+about how inheritance facilitates specialization of existing code.
+Although they are legal Unicon code, they were always toy examples
+that illustrate ideas, not an extract from a real software
+application.  Consult the Unicon translator implementation, or
+the Unicon GUI classes, for many real-world examples of inheritance.
+
+Having said that, here is a complete program that makes use of some
+of the preceding class examples.  The program, called deen (from
+Deutsch-English) reads in a dictionary in plain text format,
+originally obtained from
+http://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en/
+and writes out English entries for one or more German language words
+given on the command-line. German was chosen fairly arbitrarily here,
+but the code does depend on the file format of the dictionary file,
+de-en.txt.
+
+\iconcode{
+\# \\
+\# deen.icn - give English equivalents of German words \\
+\#\ \\
+\$define DEEN "http://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en/de-en.txt.gz" \\
+\ \\
+procedure main(av) \\
+\>   if av[1]=="-all" then all := pop(av) \\
+\>   dd := DeenDictionary() \\
+\>   every s := !av do \\
+\>\>    if lu := dd.lookup(s) then \{ \\
+\>\>\>	 if {\textbackslash}all then \\
+\>\>\>\>	    every write(s, ": ", dd.lookup(s).definition) \\
+\>\>\>	 else write(s, ": ", lu.definition) \\
+\>\>\>	 \} \\
+\>\>      else write(s, " is not in the dictionary.") \\
+end \\
+\ \\
+class buffer(filename, text) \\
+\>   \# read a buffer in from a file \\
+\>   \# todo: decompress if .gz extension \\
+\>   method read() \\
+\>\>      if match("http://", filename) then mode := "m" else mode := "r" \\
+\>\>      f := open(filename, mode) {\textbar} stop("can't open ", image(filename)) \\
+\ \\
+\>\>      if filename[-3:0] == ".gz" then \{ \\
+\>\>\>	 if mode=="m" then \{ \# download\_to\_local\_file \\
+\>\>\>\>	    if not (f2 := open("de-en.txt.gz","w")) then \\
+\>\>\>\>\>	       stop("can't write") \\
+\>\>\>\>	    while s := reads(f, 1000000) do writes(f2, s) \\
+\>\>\>\>	    close(f) \\
+\>\>\>\>	    close(f2) \\
+\>\>\>\>	    \} \\
+\>\>\>	 system("gunzip de-en.txt.gz") \\
+\>\>\>	 f := open("de-en.txt") {\textbar} stop("can't read de-en.txt") \\
+\>\>\>	 \} \\
+\ \\
+\>\>      writes("Opened ",image(f),".{\textbackslash}nReading") \\
+\>\>      text := [ ] \\
+\>\>      every put(text, !f) do if *text\%1000=0 then writes(".") \\
+\>\>      close(f) \\
+\>\>      write("{\textbackslash}ndone.  Read ", *text, " lines") \\
+\>\>      return \\
+\>   end \\
+\>   method erase() \\
+\>\>      \#... ? \\
+\>   end \\
+\>   \# ...additional buffer operations \\
+initially \\
+\>   if {\textbackslash}filename then read() \\
+end \\
+\ \\
+class buftable : buffer() \\
+\>   method read() \\
+\>\>      self.buffer.read() \\
+\>\>      tmp := table() \\
+\>\>      every line := !text do \{ \\
+\>\>\>	 line ? \{ \\
+\>\>\>\>	    word := tab(many(\&letters)) {\textbar} stop("failed on ",
+	    image(line)) \\
+\>\>\>\>	    tmp[word] := line \\
+\>\>\>\>	    \} \\
+\>\>\>	 \} \\
+\>\>      text := tmp \\
+\>\>      return \\
+\>   end \\
+\>   method lookup(s) \\
+\>\>      suspend ! {\textbackslash} (text[s]) \\
+\>   end \\
+end \\
+\ \\
+class dictionaryentry(word, part, etymology, definition) \\
+\>   \# decode a dictionary entry into its components \\
+\>   \# assumed format is word;pos;eym;def \\
+\>   method decode(s) \\
+\>\>      s ? \{ \\
+\>\>\>	 word := tab(find(";")) \\
+\>\>\>	 move(1) \\
+\>\>\>	 part := tab(find(";")) \\
+\>\>\>	 move(1) \\
+\>\>\>	 etymology := tab(find(";")) \\
+\>\>\>	 move(1) \\
+\>\>\>	 definition := tab(0) \\
+\>\>\>	 \} \\
+\>   end \\
+\>   method encode() \# encode a dictionary entry into a string \\
+\>\>      return word {\textbar}{\textbar} ";" {\textbar}{\textbar} part {\textbar}{\textbar} ";" {\textbar}{\textbar} etymology {\textbar}{\textbar} ";" {\textbar}{\textbar}
+      definition \\
+\>   end \\
+initially \\
+\>   if /part then \# constructor was called with a single string argument \\
+\>\>      decode(word) \\
+end \\
+\ \\
+class dictionary : buftable() \\
+\>   method read() \\
+\>\>      self.buffer.read() \\
+\>\>      tmp := table() \\
+\>\>      every line := !text do \\
+\>\>\>	 line ? \{ \\
+\>\>\>\>	    word := tab(many(\&letters)) {\textbar} stop("failed on ",
+	    image(line)) \\
+\>\>\>\>	    tmp[word] := dictionaryentry(line) {\textbar} fail \\
+\>\>\>\>	    \} \\
+\>\>      text := tmp \\
+\>   end \\
+\>   method Write() \\
+\>\>      f := open(filename, "w") {\textbar} fail \\
+\>\>      every write(f, (!text).encode) \\
+\>\>      close(f) \\
+\>   end \\
+end \\
+\ \\
+class DeenEntry : dictionaryentry(gender) \\
+initially(de, en) \\
+\ \\
+\>   de ? \{ \\
+\>\>      if word := trim(tab(find("\{")),,0) then \{ \\
+\>\>\>	 ="\{" \\
+\>\>\>	 gender := tab(find("\}")) \\
+\>\>\>	 \} \\
+\>\>      else \{ \# here is one without gender info \\
+\>\>\>	 word := trim(tab(find("["){\textbar}0),,0) \\
+\>\>\>	 gender := "?" \\
+\>\>\>	 \} \\
+\>      \} \\
+\>   definition := en \\
+end \\
+\ \\
+\# \\
+\# Return a list of dictionary entries for a given line of text \\
+\# \\
+procedure get\_entries(s) \\
+\>   subentries := [] \\
+\>   s ? \{ \\
+\>\>      deutsch := tab(find("::")) {\textbar} stop("no :: in ", image(s)) \\
+\>\>      ="::"; tab(many(' ')) \\
+\>\>      english := tab(0) \\
+\>\>\ \\
+\>\>      deutsch ? \{ \\
+\>\>\>	 while *(deutschwort := tab(find("{\textbar}") {\textbar} 0))$>$0 do \{ \\
+\>\>\>\>	    deutschwort := trim(deutschwort,,0) \\
+\>\>\>\>	    ="{\textbar}" \\
+\>\>\>\>	    tab(many(' ')) \\
+\>\>\>\>	    englishword := trim(english[1:find("{\textbar}",english){\textbar}0],,0) \\
+\>\>\>\>	    english ?:= \{ \\
+\>\>\>\>\>	       tab(many(' {\textbackslash}t')) \\
+\>\>\>\>\>	       =englishword \\
+\>\>\>\>\>	       tab(many(' {\textbackslash}t')) \\
+\>\>\>\>\>	       ="{\textbar}" \\
+\>\>\>\>\>	       tab(many(' {\textbackslash}t')) \\
+\>\>\>\>\>	       tab(0) \\
+\>\>\>\>\>	       \} \\
+\>\>\>\>	    if i := find(";", deutschwort) then \{ \\
+\>\>\>\>\>	       deutschwort ? \{ \\
+\>\>\>\>\>\>		  while *(dword := tab(find(";") {\textbar} 0))$>$0 do \{ \\
+\>\>\>\>\>\>\>		     =";" \\
+\>\>\>\>\>\>\>		     tab(many(' ')) \\
+\>\>\>\>\>\>\>		     if gronk:=englishword[1:upto(';{\textbar}',
+		     englishword){\textbar}0] then \{ \\
+\>\>\>\>\>\>\>\>			if *gronk$>$0 then \{ \\
+\>\>\>\>\>\>\>\>\>			   eword := gronk \\
+\>\>\>\>\>\>\>\>\>			   \} \\
+\>\>\>\>\>\>\>\>			\} \\
+\>\>\>\>\>\>\>		     put(subentries, DeenEntry(dword, eword)) \\
+\>\>\>\>\>\>\>		     englishword ?:= \{ =eword; =";"; tab(many(' '));
+		     tab(0)\} \\
+\>\>\>\>\>\>\>		     \} \\
+\>\>\>\>\>\>		  \} \\
+\>\>\>\>\>	       \} \\
+\>\>\>\>	    else \{ \\
+\>\>\>\>\>	       put(subentries, DeenEntry(deutschwort, englishword)) \\
+\>\>\>\>\>	       \} \\
+\>\>\>\>	    \} \\
+\>\>\>	 \} \\
+\>\>      \} \\
+\>   return subentries \\
+end \\
+\ \\
+class DeenDictionary : dictionary() \\
+\>   method read() \\
+\>\>      self.buffer.read() \\
+\>\>      tmp := table() \\
+\>\>      every line := !text do \\
+\>\>\>	 line ? \{ \\
+\>\>\>\>	    if ="\#" {\textbar} line=="" then next \\
+\>\>\>\>	    if not (L := get\_entries(line)) then \\
+\>\>\>\>\>	       stop("get\_entries failing on ", image(line)) \\
+\>\>\>\>	    every x := !L do \{ \\
+\>\>\>\>\>	       if not member(tmp, x.word) then \\
+\>\>\>\>\>\>		  tmp[x.word] := [x] \\
+\>\>\>\>\>	       else put(tmp[x.word], x) \\
+\>\>\>\>\>	       \} \\
+\>\>\>\>	    \} \\
+\>\>      text := tmp \\
+\>   end \\
+initially \\
+\>   if stat("de-en.txt") then filename := "de-en.txt" \\
+\>   else if stat("de-en.txt.gz") then filename := "de-en.txt.gz" \\
+\>   else filename := DEEN \\
+\>   self.read() \\
+end
+}
+
+
+
+\subsection*{Superclass cycles and type equivalence}
+
+In many situations, there are several ways to represent the same
+abstract type. Two-dimensional points might be represented by
+\index{Cartesian coordinates}Cartesian coordinates x and y, or
+equivalently by radial coordinates expressed as a distance d and angle
+r given in \index{radian}radians. If one implements classes
+corresponding to these types there is no reason one of them should be
+considered a subclass of the other; they are interchangeable and
+equivalent.
+
+In Unicon, expressing this equivalence is simple and direct. In defining
+classes \texttt{Cartesian} and \texttt{Radial} we may declare them to
+be superclasses of each other: 
+
+\iconcode{
+class Cartesian : Radial (x, y) \\
+\# code that manipulates objects using Cartesian coordinates \\
+end \\
+\ \\
+class Radial : Cartesian (d, r) \\
+\# code that manipulates objects using \index{radial coordinates}radial
+coordinates \\
+end
+}
+
+These superclass declarations make the two types equivalent names for
+the same type of object; after inheritance,
+\index{instance!class}\index{instance}instances of both classes will
+have fields x, y, d, and r, and support the same set of operations. 
+
+Equivalent types each have a unique \index{constructor!class}constructor
+given by their class name. Often the differing order of the parameters
+used in equivalent types' constructors reflects
+different points of view. Although they export the same set of
+operations, the actual procedures invoked by equivalent
+types' instances may be different. For example, if
+both classes define an implementation of a method \texttt{print()}, the
+method invoked by a given instance depends on which constructor was
+used when the object was created.
+
+If a class inherits methods from one of its equivalent classes, it
+is responsible for initializing the state of the fields used by
+those methods in its constructor. It is also responsible for
+maintaining the state of the inherited fields when its methods make
+state changes to its own fields. In the geometric example given above,
+for class \texttt{Radial} to use any methods inherited from class
+\texttt{Cartesian}, it must at least initialize \texttt{x} and
+\texttt{y} explicitly in its constructor from calculations on its
+\texttt{d} and \texttt{r} parameters. This added
+responsibility is minimized in those classes that treat an
+object's state as immutable.
+
+\section{Associations}
+
+An \index{association}association denotes a relationship between classes
+that occurs between specific instances of the classes at runtime.
+Just as objects are instances of classes, associations
+have instances called \index{link!association instance}\textit{links.}
+Like objects, links have a lifetime, from the instant
+at which the relationship is established to the time at which the
+relationship is dissolved. Besides serving to connect two objects,
+links may have additional state information or behavior; in the most
+general case links can be considered to be objects themselves: special
+objects whose primary role is to interconnect other objects.
+
+\section{Aggregation}
+
+Inheritance may be the most famous kind of relationship between classes,
+but it is not the most indispensable. Many languages that provide
+objects do not even bother with inheritance. The composition of
+assembly objects from their component parts, on the other hand, is a
+truly ubiquitous and essential idea called
+\index{aggregation}\textit{aggregation}. The class \texttt{dictionary}
+defined in the previous section is a good example of an aggregate
+object; its component parts are \texttt{dictionaryentry} objects.
+
+Aggregation is depicted in class diagrams by a line between classes with
+a diamond marking the aggregate, or assembly, class. Figure 11-3
+shows an aggregate found in the domain of sports, where a team is
+comprised of a group of players.
+
+\begin{center}
+\includegraphics[width=2.52in,height=0.54in]{ub-img/aggregat.png} 
+
+{\sffamily\bfseries Figure 11-3:}
+{\sffamily A Team is an Aggregation of Players}
+\end{center}
+
+Unlike inheritance, aggregation describes a relationship between
+instances at run-time. Different aggregate instances are assembled from
+different component part instances. While a given player might play for
+different teams over a period of time, at any given instant a player is
+normally part of at most one team.
+
+\section{User-defined associations}
+
+All the other relationships between classes in \index{UML}UML are left
+to the application designer to specify as custom associations.
+User-defined associations are depicted by lines, annotated with the
+association name next to the line, midway between the two classes.
+Figure 11-4 shows a silly user-defined association that describes a
+family relationship called Marriage. For a diagram containing such an
+association to be well defined, the semantics of such a relationship
+must be specified in external documentation that describes Marriage for
+the purposes of the application at hand.
+
+\begin{center}
+\includegraphics[width=4.8in,height=1.0in]{ub-img/marriage.png} 
+
+{\sffamily\bfseries Figure 11-4:}
+{\sffamily A User-Defined Association}
+\end{center}
+
+\subsection*{Multiplicities, roles, and qualifiers}
+
+Whether they are aggregations or user-defined application domain
+relationships, associations are not completely specified until
+additional details are determined during program design, such as how
+many instances of each type of object may participate in a given
+relationship. These additional details appear in canonical positions
+relative to the line that depicts the association within a class
+diagram.
+
+A \index{multiplicity}\textit{multiplicity} is a number or range that
+indicates how many instances of a class are involved in the links for
+an association. In the absence of multiplicity information an
+association is interpreted as involving just one instance. It normally
+appears just below the association line next to the class to which it
+applies. Figure 11-5 shows a BasketballTeam that is an aggregate with a
+multiplicity of five Players.
+
+\begin{center}
+\includegraphics[width=3.78in,height=0.63in]{ub-img/multipcy.png}
+
+{\sffamily\bfseries Figure 11-5:}
+{\sffamily Multiplicity of a Basketball Team}
+\end{center}
+
+A multiplicity range is expressed as a pair of numbers separated by two
+periods, as in 1..3. The value * may be used by itself to indicate that
+a link may associate any number (zero or more) of objects. The * value
+may also be used in a range expression to indicate no upper bound is
+present, as in the range 2..*.
+
+A \index{role}\textit{role} is a name used to distinguish
+participants and responsibilities within an association. Roles are
+drawn just above or below the association line, adjacent to the class
+to which they refer. They are especially useful if a given association
+may link multiple instances of the same class in asymmetric
+relationships. Figure 11-6 shows a better model of the classes and
+roles involved in a Marriage association depicted earlier in Figure
+11-4.
+
+\bigskip
+
+\includegraphics[width=4.8in,height=1.2in]{ub-img/roles.png}
+
+
+{\sffamily\bfseries Figure 11-6:}
+{\sffamily Roles in an Association}
+
+\bigskip
+
+A \index{qualifier}\textit{qualifier} is a key value used to
+distinguish instances in a link, in lieu of a large
+multiplicity that would otherwise be inefficient. For example, a
+directory may contain many files, but each one may be directly accessed
+by name. A qualifier is drawn as a rectangular association end with the
+qualifier key given inside the rectangle. Figure 11-7 shows a
+reinterpretation of the basketball aggregation in which the players on
+the team are distinguished using a qualifier key named position.
+
+
+\bigskip
+
+\includegraphics[width=4.8in,height=0.9in]{ub-img/qualifier.png}
+
+{\sffamily\bfseries Figure 11-7:}
+{\sffamily Using a Qualifier in lieu of multiplicity}
+
+\subsection*{Implementing associations}
+
+Unlike inheritance, which is implemented by the language and resolved at
+\index{compile time}compile time, associations involve dynamic
+relationships established at runtime, and are implemented by the
+programmer...or are they? In the most general case, an association may
+be implemented by writing a class whose instances are links between the
+related classes' objects. In the narrowest special
+case, an association can be implemented by adding an attribute in one
+class to contain a \index{reference}reference to an object in an
+associated class. Much of the value introduced by multiplicity and
+qualifier information is to narrow the association semantics down to
+what is readily implementable using the built-in structure types
+instead of writing classes for them. If an association can be
+implemented using a list or table instead of defining a new class, the
+resulting code will be smaller and faster.
+
+In all cases, associations will introduce additional fields into the
+classes being associated. The following code example implements the
+Marriage association from Figure 11-6. For illustration purposes it is
+modeled as a one-one relationship at any given point in time. Notice
+the intertwining methods in the two classes that establish a
+bi-directional relationship. \ Error checking is left as an exercise
+for the reader.
+
+\iconcode{
+class Man(wife) \\
+\>   method Marry(w) \\
+\>   \ \ \ wife := w \\
+\>   \ \ \ if not (self === w.husband) then w.Marry(self) \\
+\>   end \\
+end \\
+class Woman(husband) \\
+\>   method Marry(m) \\
+\>   \ \ \ husband := m \\
+\>   \ \ \ if not (self === m.wife) then m.Marry(self) \\
+\>   end \\
+end
+}
+
+As a general rule, an association that has a qualifier is implemented
+with a table. The following example corresponds to
+the basketball team diagram in Figure 11-7. The players attribute might
+be a list or set in class Team, but the qualifier allows class
+BasketballTeam to override this and implement players using a table.
+Such a refinement can be awkward in a statically typed object-oriented
+language.
+Depending on whether its player parameter is supplied or is null, method
+\texttt{Player()} serves to either lookup a player, given a position,
+or to insert a player into the association. In either case the player
+at the designated position is returned.
+
+\iconcode{
+class BasketballTeam : Team () \\
+\>   method Player(position, player) \\
+\>   \ \ \ players[position] := {\textbackslash}player \\
+\>   \ \ \ return players[position] \\
+\>   end \\
+initially \\
+\>   players := table() \\
+end
+}
+
+Associations with multiplicity might be implemented using sets or lists,
+with lists being favored when multiplicity is bounded to some range, or
+when there is a natural ordering among the instances. The following
+version of the \texttt{BasketballTeam} class uses a list of five
+elements to implement its aggregation, which occupies less space than
+either a set or the table in the last example.
+
+\iconcode{
+class BasketballTeam : Team (players) \\
+\>   method Player(player) \\
+\>   \ \ \ if player === !players then fail \# already on the team \\
+\>   \ \ \ if /!players := player then return \# added at null slot \\
+\>   \ \ \ ?players := player \# kick someone else off team to add \\
+\>   end \\
+initially \\
+\>   players := list(5) \\
+end
+}
+
+Defining a new class to implement an association handles
+rare cases such as many-many relationships and associations that have
+their own state or behavior. Other examples of associations and
+their implementation are given in Part 3 of this book.
+
+\section{Summary}
+
+The relationships between classes are essential aspects of the
+application domain that are modeled in object-oriented programs. You
+can think of them as the "glue" that
+connects ideas in a piece of software. Class diagrams allow many
+details of such relationships to be specified graphically during
+design. Unicon's structure types allow most
+associations to map very naturally onto code.  In order
+to understand the subtleties of how these features are implemented, you
+may wish to study the output of \texttt{unicon -E} for various examples;
+the \texttt{-E} option writes out the Icon translation of the
+object-oriented code. 
+\clearpage
+\bigskip

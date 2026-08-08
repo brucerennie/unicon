@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uflex: A Lexical Analyzer Generator for Unicon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li class="current">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr2.html">&larr; UTR 2: iflex: A Lexical Analyzer Generator for Icon</a>
+<a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Uflex: A Lexical Analyzer Generator for Unicon</h1>
+<p class="report-authors">Clinton Jeffery and Susie Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 2b</p>
+<p class="report-date">2026-04-03</p>
+<p class="report-pdf"><a href="utr2b.pdf">pdf</a> · <a href="_sources/utr2b.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Uflex is a lexical analyzer generator for Unicon. It strongly resembles the original Lex language, and explicitly supports development of lexical specifications that can be shared with a tool for Java called JFlex. This report describes Uflex version 0.9.</p>
+</div>
+</header>
+<h2 id="1-introduction">
+1. Introduction
+</h2>
+<p>
+Parsing is a task in a compiler or interpreter that analyzes source code input and reports on its compliance and syntax structure. 
+<em>
+Scanning
+</em>
+, or lexical analysis, provides the parser's input in the form of a sequence of lexical items (words, tokens, or lexemes) from the input source code.
+</p>
+<p>
+Unicon has several string processing facilities that can be used for lexical analysis. These include string scanning, SNOBOL-style patterns with regular expressions as their literals, and various Icon Program Library modules. However, for language processing tasks such as writing compilers and interpreters, declarative specifications of lexical and syntax rules give better maintainability and modifiability than handwritten code, generally at the cost of some performance.
+</p>
+<p>
+Uflex is a tool that generates a scanner. Uflex stands for Unicon's Friendly Lexical Analyzer. It behaves similar to the UNIX 
+<code>lex(1)</code>
+ [Lesk75] tool, generating Unicon code as its output. Uflex is influenced by Flex and Jflex, the modern open source descendants of Lex for C and Java.
+</p>
+<p>
+Uflex takes an input specification for the desired lexical analysis that consists of a number of 
+<em>
+regular expressions
+</em>
+. Most languages' lexical structure can be specified using this notation. Uflex's regular expression notation is summarized in Table 1.
+</p>
+<p>
+Operator
+</p>
+<p>
+Description
+</p>
+<p>
+<code>a</code>
+</p>
+<p>
+ordinary symbols match themselves
+</p>
+<p>
+<strong>
+.
+</strong>
+</p>
+<p>
+a dot matches any one character other than newline
+</p>
+<p>
+e\ 
+<sub>1</sub>
+ 
+<strong>
+\|
+</strong>
+ e\ 
+<sub>2</sub>
+</p>
+<p>
+a bar matches either the expression on its left or its right
+</p>
+<p>
+e\ 
+<sub>1</sub>
+ e\ 
+<sub>2</sub>
+</p>
+<p>
+two expressions match the left followed by the right
+</p>
+<p>
+e\ 
+<strong>
+\
+</strong>
+*
+</p>
+<p>
+star matches zero or more occurrences of an expression
+</p>
+<p>
+<strong>
+[
+</strong>
+\ abc\ 
+<strong>
+]
+</strong>
+</p>
+<p>
+square brackets match any one character within the brackets
+</p>
+<p>
+e\ 
+<strong>
++
+</strong>
+</p>
+<p>
+plus matches one or more occurrences of an expression
+</p>
+<p>
+e\ 
+<strong>
+?
+</strong>
+</p>
+<p>
+matches zero or one occurrences of the preceding expression
+</p>
+<p>
+&quot;…&quot;
+</p>
+<p>
+matches characters in quotes literally
+</p>
+<p>
+(e)
+</p>
+<p>
+parentheses override operator precedence
+</p>
+<p>
+(?# comment)
+</p>
+<p>
+a comment
+</p>
+<p>
+Table 1: Regular Expressions in Uflex.
+</p>
+<p>
+The unary postfix operators \* and + and ? are higher precedence than the binary operators, and alternation is lower precedence than concatenation. In Table 1, the square bracketed character set notation has several extensions, including ranges such as 
+<code>[a-z]</code>
+, negation 
+<code>[^abc]</code>
+, and a set of predefined named csets. The predefined named csets correspond to C's &lt;ctype.h&gt; macros and appear as square bracked items within a cset definition, for example [[:alnum:]] denotes any one alphanumeric character. Do not blame us for this interesting notation, it comes from Flex.
+</p>
+<p>
+This document assumes you are familiar with regular expressions; if not, you may also wish to read 
+<em>
+flex &amp; bison
+</em>
+ [Levine09]. Uflex is usually used with Iyacc, a parser generator tool documented in [Pereda18]. Uflex and Iyacc are additionally described in 
+<em>
+Programming with Unicon
+</em>
+ [Jeffery03].
+</p>
+<h2 id="2-command-line-invocation">
+2. Command Line Invocation
+</h2>
+<p>
+Uflex is invoked like this:
+</p>
+<pre><code class="language-text">
+uflex [options] lexfile[.l]
+</code></pre>
+<p>
+The lex specification file normally ends in .l. This suffix is automatically added if it is omitted and adding .l will result in a valid filename.
+</p>
+<p>
+The uflex options are as follows:
+</p>
+<p>
+    option
+</p>
+<p>
+meaning
+</p>
+<p>
+<code>-automaton</code>
+</p>
+<p>
+write out finite automaton of uflex regular expressions
+</p>
+<p>
+<code>-nfa</code>
+</p>
+<p>
+This option causes Uflex to write out a non-deterministic finite automaton, which is slower but sometimes less buggy than the default deterministic finite automaton.
+</p>
+<p>
+<code>-nopp</code>
+</p>
+<p>
+skip the macro preprocessor step
+</p>
+<p>
+<code>-o</code>
+\ 
+<em>
+``file``
+</em>
+</p>
+<p>
+write output to file (default is flex-style: basename.icn)
+</p>
+<p>
+<code>-token</code>
+</p>
+<p>
+write out tokens
+</p>
+<p>
+<code>-tree</code>
+</p>
+<p>
+write out parse tree of uflex regular expressions
+</p>
+<p>
+<code>-version</code>
+</p>
+<p>
+write the uflex version and stop
+</p>
+<h2 id="3-uflex-program-structure">
+3. Uflex Program Structure
+</h2>
+<p>
+The Uflex tool takes a lexical specification and produces a lexical analyzer that corresponds to that specification. The specification consists of a list of regular expressions, with auxiliary code fragments, variables, and helper functions. The resulting generated analyzer is in the form of a procedure named 
+<code>yylex()</code>
+.
+</p>
+<p>
+All Uflex programs consist of a file with an extension of 
+<code>.l</code>
+ that contains three sections, separated by lines consisting of two percent signs. The three sections are the definitions section or header, the rules section, and the procedures section.
+</p>
+<h4 id="3-1-header-section">
+3.1 Header Section
+</h4>
+<p>
+The definitions section has two kinds of components: macros and code fragments. 
+<em>
+Macros
+</em>
+ define shorthand for regular expressions that will be used in the next section. A macro is given by a line starting with the macro name in straight alphanumeric form, followed by a space, followed by a regular expression. Beware the simple macro syntax. 
+<em>
+Code fragments
+</em>
+ enclosed by 
+<code>%{</code>
+ and 
+<code>%}</code>
+ are copied verbatim to the generated lexical analyzer. Usually they will be used to declare global variables and types or include files.
+</p>
+<h4 id="3-2-rules-section">
+3.2 Rules Section
+</h4>
+<p>
+The rules section contains the actual regular expressions that specify the lexical analysis that is to be performed. Each regular expression may be followed by an optional semantic action enclosed in curly brackets, which is a segment of Unicon code that will be executed whenever that regular expression is matched.
+</p>
+<p>
+Here are some extended flex regular expressions, some of which are supported in the uflex rules section. See the appendix for some other flex features that uflex does not yet support.
+</p>
+<p>
+[a-z]{+}[aeiou]
+</p>
+<p>
+character set union
+</p>
+<p>
+[a-z]{-}[aeiou]
+</p>
+<p>
+character set difference/subtraction
+</p>
+<p>
+\\0
+</p>
+<p>
+NUL
+</p>
+<p>
+\\123
+</p>
+<p>
+octals
+</p>
+<p>
+\\xHH
+</p>
+<p>
+hexadecimals
+</p>
+<p>
+[ [:...:] ]
+</p>
+<p>
+predefined csets
+</p>
+<p>
+[:alnum:]
+</p>
+<p>
+&amp;letters++&amp;digits
+</p>
+<p>
+[:cntrl:]
+</p>
+<p>
+[\\1-\\32]
+</p>
+<p>
+[:lower:]
+</p>
+<p>
+&amp;lcase
+</p>
+<p>
+[:space:]
+</p>
+<p>
+[ \\t\\f\\v\\n\\r]
+</p>
+<p>
+[:alpha:]
+</p>
+<p>
+a-zA-Z
+</p>
+<p>
+[:digit:]
+</p>
+<p>
+0-9
+</p>
+<p>
+[:print:]
+</p>
+<p>
+[\\24-\\176]
+</p>
+<p>
+[:upper:]
+</p>
+<p>
+&amp;ucase
+</p>
+<p>
+[:blank:]
+</p>
+<p>
+[ \\t]
+</p>
+<p>
+[:graph:]
+</p>
+<p>
+[:print:]{-}[ ]
+</p>
+<p>
+[:punct:]
+</p>
+<p>
+[:graph:]{-}([0-9a-zA-Z])
+</p>
+<p>
+[:xdigit:]
+</p>
+<p>
+[0-9a-fA-F]
+</p>
+<h4 id="3-3-procedures-section">
+3.3 Procedures Section
+</h4>
+<p>
+The procedures section is also copied out verbatim into the generated lexical analyzer. It may include a 
+<code>main()</code>
+ procedure for standalone Uflex programs, although more frequently it may include helper functions called from within the semantic actions in the rules section. The following public interface is used to communicate with Uflex-generated lexical analyzers when they are called from other modules.
+</p>
+<p>
+The generated 
+<code>yylex()</code>
+ function and its return value constitute the primary interface between the lexical analyzer and the rest of the program. 
+<code>yylex()</code>
+ returns a -1 if it consumes the entire input; returning different integer values from within semantic actions in the rules section allows 
+<code>yylex()</code>
+ to break the input up into multiple chunks of 1+ characters (called tokens), and to identify different kinds of tokens using different integer codes. In addition to the return value, the generated lexical analyzer also makes use of several global variables. The names and meanings of these are summarized in Table 2.
+</p>
+<p>
+Variable Name
+</p>
+<p>
+Description
+</p>
+<p>
+<code>yyin</code>
+</p>
+<p>
+File from which characters will be read; default: 
+<code>&amp;input</code>
+</p>
+<p>
+<code>yytext</code>
+</p>
+<p>
+String of characters matched by a regular expression
+</p>
+<p>
+<code>yyleng</code>
+</p>
+<p>
+Length of 
+<code>yytext</code>
+</p>
+<p>
+<code>yychar</code>
+</p>
+<p>
+Integer category of the most recent token
+</p>
+<p>
+<code>yylval</code>
+</p>
+<p>
+Lexical values (often an object or record) of the most recent token
+</p>
+<p>
+Table 2: Uflex global variables.
+</p>
+<h2 id="4-examples">
+4. Examples
+</h2>
+<p>
+The best way to explore the capabilties of uflex is to look at examples. This section includes a couple of traditional toy standalone examples. The uflex distribution includes a test/ directory containing additional examples that handle toy subsets of C, C++, Java, Python, Go, Kotlin, and Rust. The evaluation section below includes a discussion of a Uflex specification written for a Unicon lexical analyzer. See [Jeffery24] for additional discussion of the Uflex specification for a subset of Java, which also compiles and runs unmodified under Jflex.
+</p>
+<h4 id="4-1-a-word-count-program">
+4.1 A Word Count Program
+</h4>
+<p>
+There is a UNIX program called wc, short for word count, that counts the number of lines, words, and characters in a file. This example demonstrates how to build such a program using Uflex. A short, albeit simplistic, definition of a word is any sequence of non-white space characters, where white space characters are blanks and tabs. See Listing 1 for a Uflex program that operates like wc.
+</p>
+<pre><code class="language-unicon">
+
+ws [ \t]
+nonws [^ \t\n]
+%{
+global cc, wc, lc
+%}
+%%
+{nonws}+ { cc +:= yyleng; wc +:= 1 }
+{ws}+ { cc +:= yyleng }
+\n { lc +:= 1; cc +:= 1 }
+%%
+procedure main()
+cc := wc := lc := 0
+yylex()
+write(right(lc, 8), right(wc, 8), right(cc, 8))
+end
+</code></pre>
+<p>
+Listing 1. wc using uflex.
+</p>
+<p>
+In the word count program, the definitions section consists of two definitions, one for white space characters (
+<code>ws</code>
+) and one for non-white space characters (
+<code>nonws</code>
+). These definitions are followed by code to declare three global variables: 
+<code>cc</code>
+, 
+<code>wc</code>
+, and 
+<code>lc</code>
+. These are the counters for characters, words, and lines, respectively. The rules section in this example contains three rules. White space, words, and newlines each have a rule that matches and counts their occurrences. The procedure section has one procedure, 
+<code>main()</code>
+. It calls the lexical analyzer and then prints out the counted values.
+</p>
+<h4 id="4-2-a-lexical-analyzer-for-a-desktop-calculator">
+4.2: A Lexical Analyzer for a Desktop Calculator
+</h4>
+<p>
+The previous example demonstrates using Uflex to create standalone programs. However, 
+<code>yylex()</code>
+ is typically called from a parser. The 
+<code>yylex()</code>
+ function can be used to produce a sequence of words so that a parser such as that generated by the iyacc program can combine those words into sentences. Thus it makes sense to study how uflex is used in this context. One obvious difference is that in the earlier example, 
+<code>yylex()</code>
+ was only called once to process the entire file. In contrast, when a parser uses 
+<code>yylex()</code>
+, it calls the analyzer repeatedly, and 
+<code>yylex()</code>
+ returns with each word that it finds. This will be demonstrated in the example that follows.
+</p>
+<p>
+A calculator program is simple enough to understand in one sitting and complex enough to get a sense of how to use Uflex with its parser generator counterpart: Iyacc. In a general desktop calculator program, the user types in complex formulas, which the calculator evaluates and then prints the result. The generated lexical analyzer must recognize the words of this language, which will be handled by the parser. In this case the words are numbers, math operators, and variable names.
+</p>
+<p>
+A number is one or more digits, followed by an optional decimal point and one or more digits. In regular expressions, this may be written as:
+</p>
+<pre><code class="language-text">
+[0-9]+(\.[0-9]+)?
+</code></pre>
+<p>
+The math operators are simple words composed of one character. Variable names can be any combination of letters, digits, and underscores. So as not to confuse them with numbers, refine the definition by making sure that the variables do not begin with a number. This definition of variable names corresponds to the following regular expression:
+</p>
+<pre><code class="language-text">
+[a-zA-Z_][a-zA-Z0-9_]*
+</code></pre>
+<p>
+Recall that there are three sections to every Uflex program: a definitions section, a rules section, and a procedures section. The Uflex program for matching the words of a calculator is given in Listing 2.
+</p>
+<pre><code class="language-text">
+%{
+# y_tab.icn contains the integer codes for representing the
+# terminal symbols NAME, NUMBER, and ASSIGNMENT.
+$include y_tab.icn
+%}
+letter [a-zA-Z_]
+digiletter [a-zA-Z0-9_]
+
+%%
+{letter}{digiletter}* { yylval := yytext; return NAME }
+[0-9]+(\.[0-9]+)? { yylval := numeric(yytext); return NUMBER }
+\n {
+   return 0 # logical end-of-file
+   }
+&quot;:=&quot; { return ASSIGNMENT }
+[ \t]+ { # ignore white space }
+. { return ord(yytext) }
+%%
+</code></pre>
+<p>
+Listing 2. Uflex program for recognizing the lexical elements of a calculator.
+</p>
+<p>
+The definitions section has both a component that is copied directly to the generated lexical analyzer as well as a set of macros. The first rule matches variable names; the second rule matches numbers. The third rule returns 0 to indicate to the parser that it should evaluate the expression. The fourth rule lets the parser know that there was an assignment operator, and the fifth is used to ignore white space. The last rule matches everything else including the other mathematical operators. The character’s numeric code (e.g. ASCII) is returned directly to the parser.
+</p>
+<p>
+<code>yylval</code>
+ is used to store the result whenever we match either a variable name or a number. This way when the lexical analyzer returns the integer code for name or number, the parser knows to look in yylval for the actual name or number that was matched. Since Unicon allows variables to hold any type of value there is no need for a complicated construct to handle the fact that different tokens have different types of lexical values.
+</p>
+<p>
+Notice that the matches that are allowed by this set of regular expressions are somewhat ambiguous. For example, count10 may match a variable name and then an integer, or one variable name. The Uflex tool is designed to match the longest substring of input that can match the regular expression. So count10 would be matched as one word, which is a variable in this case. In the case where two different expression match the same number of characters, the first rule listed in the specification will be used.
+</p>
+<h4 id="4-3-a-lexical-analyzer-for-unicon">
+4.3: A Lexical Analyzer for Unicon
+</h4>
+<p>
+A lexical analyzer for Unicon is provided in uflex's test/ directory in a file named uniflex.l. It produces output that is identical to Unicon's handwritten lexical analyzer 
+<code>unilex.icn</code>
+ on the largest source file in the Unicon distribution, 
+<code>ipl/gprogs/gpxtest.icn</code>
+. So, it is pretty close and can give the reader a feel for the extent to which uflex is ready for real-world uses at this point. There is various fancy stuff to support semi-colon insertion, etc.
+</p>
+<pre><code class="language-unicon">
+
+%{
+# A Uflex Unicon lexer
+
+$include &quot;ytab_h.icn&quot;
+$define Beginner 1
+$define Ender 2
+$define Newline 4
+record token(tok, s, line, column, filename)
+%}
+
+O [0-7]
+D [0-9]
+L [[:alpha:]_]
+H [[:xdigit:]]
+R [[:alnum:]]
+FS [fFlL]
+IS [uUlL]
+W [ \t\v]
+idchars [[:alnum:]_]
+global yylineno, yycolno, yyfilename, tokflags, lastid, buffer, lastchar
+
+%%
+
+&quot;abstract&quot;  { return ABSTRACT }
+&quot;break&quot;     { tokflags +:= Beginner+Ender; return BREAK }
+&quot;by&quot;        { return BY }
+&quot;case&quot;      { tokflags +:= Beginner; return CASE }
+&quot;class&quot;     { return CLASS }
+&quot;create&quot;    { tokflags +:= Beginner; return CREATE }
+&quot;critical&quot;  { tokflags +:= Beginner; return CRITICAL }
+&quot;default&quot;   { tokflags +:= Beginner; return DEFAULT }
+&quot;do&quot;        { return DO }
+&quot;else&quot;      { return ELSE }
+&quot;end&quot;       { tokflags +:= Beginner; return END }
+&quot;every&quot;     { tokflags +:= Beginner; return EVERY }
+&quot;fail&quot;      { tokflags +:= Beginner+Ender; return FAIL }
+&quot;global&quot;    { return GLOBAL }
+&quot;if&quot;        { tokflags +:= Beginner; return IF }
+&quot;import&quot;    { return IMPORT }
+&quot;initial&quot;   { tokflags +:= Beginner; return iconINITIAL }
+&quot;initially&quot; { tokflags +:= Ender; return INITIALLY }
+&quot;invocable&quot; { return INVOCABLE }
+&quot;link&quot;      { return LINK }
+&quot;local&quot;     { tokflags +:= Beginner; return LOCAL }
+&quot;method&quot;    { return METHOD }
+&quot;next&quot;      { tokflags +:= Beginner+Ender; return NEXT }
+&quot;not&quot;       { tokflags +:= Beginner; return NOT }
+&quot;of&quot;        { return OF }
+&quot;package&quot;   { return PACKAGE }
+&quot;procedure&quot; { return PROCEDURE }
+&quot;record&quot;    { return RECORD }
+&quot;repeat&quot;    { tokflags +:= Beginner; return REPEAT }
+&quot;return&quot;    { tokflags +:= Beginner+Ender; return RETURN }
+&quot;static&quot;    { tokflags +:= Beginner; return STATIC }
+&quot;suspend&quot;   { tokflags +:= Beginner+Ender; return SUSPEND }
+&quot;then&quot;      { return THEN }
+&quot;thread&quot;    { tokflags +:= Beginner; return THREAD }
+&quot;to&quot;        { return TO }
+&quot;until&quot;     { tokflags +:= Beginner; return UNTIL }
+&quot;while&quot;     { tokflags +:= Beginner; return WHILE }
+{L}{idchars}* { tokflags +:= Beginner+Ender; return IDENT }
+
+\'[^'\\\n]*\' { tokflags +:= Beginner + Ender; return CSETLIT }
+\&quot;([^&quot;\\\n]|&quot;_\n&quot;|&quot;\\&quot;[n\\])*\&quot; { tokflags +:= Beginner + Ender; mls(); return STRINGLIT }
+&quot;!&quot;    { tokflags +:= Beginner; return BANG }
+&quot;%&quot;    { return MOD }
+&quot;%:=&quot;  { return AUGMOD }
+&quot;&amp;&quot;    { tokflags +:= Beginner; return AND }
+&quot;&amp;&amp;&quot;   { return PAND }
+&quot;&amp;:=&quot;  { return AUGAND }
+&quot;*&quot;    { tokflags +:= Beginner; return STAR }
+&quot;**&quot;   { tokflags +:= Beginner; return INTER }
+&quot;**:=&quot; { return AUGINTER }
+&quot;*:=&quot;  { return AUGSTAR }
+&quot;+&quot;    { tokflags +:= Beginner; return PLUS }
+&quot;++&quot;   { tokflags +:= Beginner; return UNION }
+&quot;++:=&quot; { return AUGUNION }
+&quot;+:&quot;   { return PCOLON }
+&quot;+:=&quot;  { return AUGPLUS }
+&quot;-&quot;    { tokflags +:= Beginner; return MINUS }
+&quot;-&gt;&quot;   { return PASSNONMATCH }
+&quot;--&quot;   { tokflags +:= Beginner; return DIFF }
+&quot;--:=&quot; { return AUGDIFF }
+&quot;-:&quot;   { return MCOLON }
+&quot;-:=&quot;  { return AUGMINUS }
+&quot;.&quot;    { tokflags +:= Beginner; return DOT }
+&quot;.$&quot;   { return PSETCUR }
+&quot;.&gt;&quot;   {
+   # missing logic here if next_gt_is_ender === 1 then ...
+   return PSETCUR
+   }
+&quot;.|&quot; { return POR }
+&quot;.&quot;[0-9]+ { tokflags +:= Beginner + Ender; return REALLIT }
+&quot;/&quot;     { tokflags +:= Beginner; return SLASH }
+&quot;/:=&quot;   { return AUGSLASH }
+&quot;:&quot;     { return COLON }
+&quot;::&quot;    { tokflags +:= Beginner; return COLONCOLON }
+&quot;:=&quot;    { return ASSIGN }
+&quot;:=:&quot;   { return SWAP }
+&quot;&lt;&quot;     { return NMLT }
+&quot;&lt;=&quot;    { return NMLE }
+&quot;&lt;=:=&quot;  { return AUGNMLE }
+&quot;&lt;&lt;&quot;    { return SLT }
+&quot;&lt;&lt;=&quot;   { return SLE }
+&quot;&lt;&lt;=:=&quot; { return AUGSLE }
+&quot;&lt;&lt;:=&quot; { return AUGSLT }
+&quot;&lt;&lt;@&quot; { tokflags +:= Beginner + Ender; return RCVBK }
+&quot;&lt;-&quot; { return REVASSIGN }
+&quot;&lt;-&gt;&quot; { return REVSWAP }
+&quot;&lt;:=&quot; { return AUGNMLT }
+&quot;&lt;@&quot; { tokflags +:= Beginner + Ender; return RCV }
+&quot;=&quot; { tokflags +:= Beginner; return NMEQ }
+&quot;=&gt;&quot; { return PIMDASSN }
+&quot;=:=&quot; { return AUGNMEQ }
+&quot;==&quot; { tokflags +:= Beginner; return SEQ }
+&quot;==:=&quot; { return AUGSEQ }
+&quot;===&quot; { tokflags  +:= Beginner; return EQUIV }
+&quot;===:=&quot; { return AUGEQUIV }
+&quot;&gt;&quot; {
+   if \next_gt_is_ender then {
+      tokflags +:= Ender
+      next_gt_is_ender := &amp;null
+      }
+   return NMGT
+   }
+&quot;&gt;=&quot; { return NMGE }
+&quot;&gt;=:=&quot; { return AUGNMGE }
+&quot;&gt;&gt;&quot; { return SGT }
+&quot;&gt;&gt;=&quot; { return SGE }
+&quot;&gt;&gt;=:=&quot; { return AUGSGE }
+&quot;&gt;&gt;:=&quot; { return AUGSGT }
+&quot;&gt;:=&quot; { return AUGNMGT }
+&quot;?&quot; { tokflags +:= Beginner; return QMARK }
+&quot;??&quot; { return PMATCH }
+&quot;?:=&quot; { return AUGQMARK  }
+&quot;@&quot; { tokflags +:= Beginner; return AT }
+&quot;@&gt;&gt;&quot; { tokflags +:= Beginner + Ender; return SNDBK }
+&quot;@&gt;&quot;  { tokflags +:= Beginner + Ender; return SND }
+&quot;@:=&quot; { return AUGAT }
+&quot;\\&quot; { tokflags +:= Beginner; return BACKSLASH }
+&quot;^&quot; { tokflags +:= Beginner; return CARET }
+&quot;^:=&quot; { return AUGCARET }
+&quot;|&quot; { tokflags +:= Beginner; return BAR }
+&quot;||&quot; { tokflags +:= Beginner; return CONCAT }
+&quot;|||&quot; { tokflags +:= Beginner; return LCONCAT }
+&quot;||:=&quot; { return AUGCONCAT }
+&quot;|||:=&quot; { return AUGLCONCAT }
+&quot;~&quot; { tokflags +:= Beginner; return TILDE }
+&quot;~=&quot; { tokflags +:= Beginner; return NMNE }
+&quot;~=:=&quot; { return AUGNMNE }
+&quot;~==&quot; { tokflags +:= Beginner; return SNE }
+&quot;~==:=&quot; { return AUGSNE }
+&quot;~===&quot; { tokflags +:= Beginner; return NEQUIV }
+&quot;~===:=&quot; { return AUGNEQUIV }
+&quot;(&quot; { tokflags +:= Beginner; return LPAREN }
+&quot;)&quot; { tokflags +:= Ender; return RPAREN }
+&quot;[&quot; { tokflags +:= Beginner; return LBRACK }
+&quot;]&quot; { tokflags +:= Ender; return RBRACK }
+&quot;{&quot; { tokflags +:= Beginner; return LBRACE }
+&quot;}&quot; { tokflags +:= Ender; return RBRACE }
+&quot;,&quot; { return COMMA }
+&quot;;&quot; { return SEMICOL }
+&quot;$(&quot; { tokflags +:= Beginner; return LBRACE }
+&quot;$)&quot; { tokflags +:= Ender; return RBRACE }
+&quot;$&lt;&quot; { tokflags +:= Beginner; return LBRACK }
+&quot;$&gt;&quot; { tokflags +:= Ender; return RBRACK}
+&quot;$$&quot; { return PIMDASSN }
+&quot;$&quot; { return DOLLAR }
+&quot;``&quot;[^`]*&quot;``&quot; { tokflags +:= Ender; return PUNEVAL }
+&quot;`&quot;[^`]*&quot;`&quot; { tokeflags +:= Ender; return PUNEVAL }
+{D}+ { tokflags +:= Beginner+Ender; return INTLIT }
+{D}+[rR]{R}+ { tokflags +:= Beginner+Ender; return INTLIT }
+{D}+[kK] { tokflags +:= Beginner+Ender; yytext:=string(yytext[1:-1]*1024); return INTLIT }
+{D}+[mM] { tokflags +:= Beginner+Ender; yytext:=string(yytext[1:-1]*1024^2); return INTLIT }
+{D}+[gG] { tokflags +:= Beginner+Ender; yytext:=string(yytext[1:-1]*1024^3); return INTLIT }
+{D}+[tT] { tokflags +:= Beginner+Ender; yytext:=string(yytext[1:-1]*1024^4); return INTLIT }
+{D}+[pP] { tokflags +:= Beginner+Ender; yytext:=string(yytext[1:-1]*1024^5); return INTLIT }
+{D}+[dD]{D}+ { tokflags +:= Beginner+Ender; return INTLIT }
+{D}+((([eE][+\-]?){D}+)?) { tokflags +:= Beginner+Ender; return REALLIT }
+{D}+\.{D}+ { tokflags +:= Beginner+Ender; return REALLIT }
+{D}+\.{D}*((([eE][+\-]?){D}+)?) { tokflags +:= Beginner+Ender; return REALLIT }
+&quot;#line &quot;[0-9]+ \&quot;[^\&quot;]*\&quot;.* {
+   yytext ? { move(6)
+      yylineno := integer(tab(many(&amp;digits)));
+      if =&quot; \&quot;&quot; &amp; (new_filename := tab(find(&quot;\&quot;&quot;))) then
+         yyfilename := new_filename
+      }
+   }
+&quot;#&quot;.* { }
+&quot;\n&quot; { yylineno +:= 1; yycolno := 1;
+       if tokflags &lt; Newline then tokflags +:= Newline }
+&quot; &quot; { yycolno +:= 1 }
+[\v\014] { }
+&quot;\t&quot;  { yycolno +:= 1; while(yycolno-1)%8~=0 do yycolno +:= 1 }
+
+%%
+
+procedure lex_error()
+   yyerror(&quot;token not recognized&quot;)
+end
+
+procedure uni_error(s)
+   /errors := 0
+   /s := &quot;token not recognized&quot;
+write(&quot;uni_error calls yyerror &quot;, image(s))
+   yyerror(s)
+   errors +:= 1
+end
+
+# implement semi-colon insert here, swap yylex:=:yylex2
+procedure yylex2()
+  static saved_tok, saved_yytext, seen_eof
+  local rv
+  if \seen_eof then return 0
+  if \saved_tok then {
+    rv := saved_tok
+    saved_tok := &amp;null
+    yytext := saved_yytext
+    yylval := yytoken := token(rv, yytext, yylineno, yycolno, yyfilename)
+    if \debuglex then
+      write(&quot;yylex() : &quot;, tokenstr(rv), &quot;\t&quot;, image(yytext))
+    return rv
+  }
+  if /ender := iand(tokflags, Ender) then
+      tokflags := 0
+  if not (rv := yylex2()) then {
+     yytext := &quot;&quot;
+     if \debuglex then
+         write(&quot;yylex() : EOFX&quot;)
+         seen_eof := 1
+         return EOFX
+  }
+  if ender~=0 &amp; iand(tokflags, Beginner)~=0 &amp; iand(tokflags, Newline)~=0 then {
+    saved_tok := rv
+    saved_yytext := yytext
+    yytext := &quot;;&quot;
+    rv := SEMICOL
+    }
+   yylval := yytoken := token(rv, yytext, yylineno, yycolno, yyfilename)
+   if \debuglex then
+      write(&quot;yylex() : &quot;, tokenstr(rv), &quot;\t&quot;, image(yytext))
+   return rv
+end
+
+# handle multi-line string, eating underscore-newline pairs and the leading
+# spaces of the next line
+procedure mls()
+  outs := &quot;&quot;
+  yytext ? {
+     while outs ||:= tab(find(&quot;_\n&quot;)) do {
+       move(2); tab(many(' \t'))
+       }
+     outs ||:= tab(0)
+     }
+  yytext := outs
+  yyleng := *yytext
+end
+</code></pre>
+<h2 id="5-evaluation">
+5. Evaluation
+</h2>
+<p>
+While still being refined at this point, uflex 0.8 is now correct enough for use on production tools. Flaws and limitations are still being repaired or documented. The Uflex test suite, in a subdirectory named test/, allows you to run a range of examples that validate working functionality and identify areas of deficiency. It could benefit from more examples and larger test inputs.
+</p>
+<p>
+One basic question about any lexical analyzer whether its speed is acceptable. Historically, the original UNIX 
+<code>lex(1)</code>
+ was famous for being slow. If a generated lexical analyzer is too much slower than a handwritten lexical analyzer, then the tool is unattractive despite its advantage in terms of improved maintainability. Performance mattered a lot more when compilers were glacial and every bit of speed counted. At that time, if you could double the speed of your lexical analyzer and make your whole compiler 10% faster, it made a huge difference in programmer productivity. Performance is less of a concern at this point, but still matters.
+</p>
+<p>
+At this point uflex-generated lexical analyzers run fast enough for many production purposes, but are not yet fast enough to compete with handwritten lexical analyzers. Unicon's handwritten lexical analyzer in unicon/uni/unicon/unilex.icn is written in about 750 lines of Unicon. It is organized into about 39 procedures and uses string scanning. A test program that uses this lexical analyzer to process files named on the command line looks like this:
+</p>
+<pre><code class="language-unicon">
+
+link unilex
+procedure main(argv)
+   t1 := &amp;time 
+   count := 0
+   yyin := open(argv[1]) | stop(&quot;can't open &quot;, argv[1]|&quot;no file given&quot;)
+   while (i := yylex()) &gt; 0 do {
+      count +:= 1
+      }
+   close(yyin)
+   t2 := &amp;time
+   write(&quot;processed &quot;, count, &quot; tokens in &quot;, t2-t1, &quot;ms&quot;)
+end
+</code></pre>
+<p>
+Linked with the handwritten Unicon lexical analyzer, the above program can be run on large .icn files such as the uflex-generated lexical analyzer in the test suite, uniflex.icn from uniflex.l. At 25KLOC and 869KB this is larger than the largest handwritten Unicon source example, the 9.8KLOC, 272KB file tests/graphics/gpxtest.icn, which is a fatter, self-contained version of ipl/gprogs/gpxtest.icn. In a basic test (./unilex uniflex.icn), the handwritten lexical analyzer processing 214469 tokens in around of 0.53 seconds on an i7-5700 running Zorin 18 Linux. The uflex-generated lexical analyzer runs on the same input in 9.8 seconds, roughly 18x slower than the handwritten lexical analyzer.
+</p>
+<p>
+As it stands currently, uflex generates a lexical analyzer that produces the same output but is an order of magnitude slower. uflex is ready to be taken seriously, but further opportunities for improvement abound. Its generated deterministic finite automata may benefit from further performance tuning; for example it is possible to generate a better representation of the finite automaton.
+</p>
+<h2 id="6-conclusions">
+6. Conclusions
+</h2>
+<p>
+Despite Unicon's plethora of string processing facilities, a yacc-compatible lexical analyzer generator remains of high value to language developers. With Uflex, it now becomes more practical to write tools such as compilers and transpilers in Unicon for full-sized languages.
+</p>
+<p>
+Uflex may be useful in language processing either as a standalone application or, as is more usual, in conjunction with a parser. Uflex is still immature but is now useful for experimental compiler prototyping.
+</p>
+<h4 id="acknowledgements">
+Acknowledgements
+</h4>
+<p>
+Katrina Ray write a prototype lexical analyzer generator for Icon/Unicon called ulex. Uflex began with a preprocessor for ulex (ulpp) that added lex macros. This was followed by a full translation of ulex from C to Unicon. The result generated lexical analyzers that were too slow to be useful. A conversion from NFA to DFA was added by Susan Jeffery. The code was further debugged and much extended in order to support many toy lexical analyzers produced for use in Clinton Jeffery's compiler construction courses.
+</p>
+<p>
+Katrina Ray's original development of ulex was supported by an NMSU fellowship and by the National Library of Medicine during its development, and we thank Katrina and the NLM for this assistance. Ray Pereda wrote the first version of UTR#2 before any working Icon/Unicon lexical analyzer generator existed, and we thank him for his contributions, including the awesome iyacc tool. The UTR2 text was substantially altered and eventually rewritten from Ray's document to describe ulex and eventually uflex.
+</p>
+<h2 id="references">
+References
+</h2>
+<ol start="1">
+<li>
+[Jeffery03] C. Jeffery, S. Mohamed, R. Pereda, and R. Parlett. Programming with Unicon. http;//unicon.sf.net/book/ub.pdf, 2003.
+</li>
+<li>
+[Lesk75] M.E. Lesk and E. Schmidt. LEX – Lexical Analyzer Generator . Computer Science Technical Report No. 39, Bell Laboratories, Murray Hill New Jersey, October 1975.
+</li>
+<li>
+[Levine09] J.R. Levine. flex &amp; bison , O'Reilly &amp; Associates, Cambridge, Massachusetts, 2009.
+</li>
+<li>
+[Pereda18] Ray Pereda. Iyacc – a Parser Generator for Icon , Unicon Technical Report 3a, http://unicon.org/utr/utr3.pdf, February 2018.
+</li>
+<li>
+[Jeffery24] Clinton Jeffery. Build Your Own Programming Language, second edition. Packt, Birmingham UK, 2024.
+</li>
+</ol>
+<h4 id="appendix-differences-between-uflex-and-unix-lex-1-and-flex-1">
+Appendix: Differences Between Uflex and UNIX 
+<code>lex(1)</code>
+ and 
+<code>flex(1)</code>
+</h4>
+<p>
+This appendix summarizes the known differences between Uflex and other implementations of the UNIX 
+<code>lex(1)</code>
+ tool. Uflex still has several important limitations to note.
+</p>
+<ul>
+<li>
+Naïve semantic actions – semantic actions must be enclosed in curly brackets
+</li>
+</ul>
+<p>
+In addition, the following (Flex) operators are not yet implemented.
+</p>
+<p>
+(?r:patt)
+</p>
+<p>
+interpret regex patt with option r (i, s, or x)
+</p>
+<p>
+(?-r:patt) (?r-s:patt)
+</p>
+<p>
+more options formats
+</p>
+<p>
+r/s
+</p>
+<p>
+lookahead operator
+</p>
+<p>
+^r
+</p>
+<p>
+beginning of line context
+</p>
+<p>
+r$
+</p>
+<p>
+end of line context
+</p>
+<p>
+r{2,5}
+</p>
+<p>
+ranges
+</p>
+<p>
+r{4}
+</p>
+<p>
+fixed # of repetitions
+</p>
+<p>
+r{2,}
+</p>
+<p>
+N-or-more r's construct
+</p>
+<p>
+&amp;lt:s&gt;r
+</p>
+<p>
+start conditions
+</p>
+<p>
+&lt;s1,s2,s3&gt;r
+</p>
+<p>
+multiple start conditions
+</p>
+<p>
+&lt;\*&gt;r
+</p>
+<p>
+any start condition
+</p>
+<p>
+&lt;&lt;EOF&gt;&gt;
+</p>
+<p>
+end-of-file
+</p>
+<p>
+&lt;s1,s2&gt;&lt;&lt;EOF&gt;&gt;
+</p>
+<p>
+end-of-file occurring in start conditions
+</p>
+<div class="prevnext">
+<a href="utr2.html">&larr; UTR 2: iflex: A Lexical Analyzer Generator for Icon</a>
+<a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr2b.pdf">pdf</a> | <a href="_sources/utr2b.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

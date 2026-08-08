@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li class="current">Command Line</li>
+<li><a href="sphinx.html">uscribe and Sphinx</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="themes.html">&larr; Themes</a>
+<a href="sphinx.html">uscribe and Sphinx &rarr;</a>
+</div>
+<h2 id="command-line">
+Command Line
+</h2>
+<h3 id="synopsis">
+Synopsis
+</h3>
+<pre><code class="language-sh">
+
+uscribe --manifest=FILE [options]
+</code></pre>
+<h3 id="options">
+Options
+</h3>
+<dl>
+<dt>**--manifest=FILE**</dt>
+<dd>
+<p>
+Required. Plain-text chapter list: one source path per line. Lines starting with 
+<code>#</code>
+ and blank lines are ignored. Paths are relative to the process current working directory.
+</p>
+</dd>
+<dt>**--title=TITLE**</dt>
+<dd>
+<p>
+Book title for 
+<code>&lt;title&gt;</code>
+, the sidebar heading, the index page, and the LaTeX 
+<code>\\title</code>
+. Default: 
+<code>Untitled Book</code>
+.
+</p>
+</dd>
+<dt>**--copyright=TEXT**</dt>
+<dd>
+<p>
+Optional footer copyright (text after ©), e.g. 
+<code>2026, Jafar Al-Gharaibeh</code>
+. HTML only. Every HTML page always ends with 
+<code>Powered by uscribe</code>
+; chapter pages also link 
+<strong>
+pdf
+</strong>
+ and 
+<strong>
+source
+</strong>
+ (
+<code>_sources/name.rst.txt</code>
+, viewable as plain text in the browser).
+</p>
+</dd>
+<dt>**--logo=FILE**</dt>
+<dd>
+<p>
+Optional sidebar logo. The image is copied into 
+<code>targetDir/_static/</code>
+ and shown above the book title in the nav. HTML only.
+</p>
+</dd>
+<dt>**--format=FMT**</dt>
+<dd>
+<p>
+Output format: 
+<code>html</code>
+ (default), 
+<code>latex</code>
+, or 
+<code>pdf</code>
+.
+</p>
+<p>
+- 
+<code>html</code>
+ — one page per chapter plus index/search/themes.   Report manifests get a UTR index table on 
+<code>index.html</code>
+. - 
+<code>latex</code>
+ — for books, a single 
+<code>book.tex</code>
+; for report   manifests (every chapter is a report), one 
+<code>.tex</code>
+ per report - 
+<code>pdf</code>
+ — like 
+<code>latex</code>
+, then run 
+<code>pdflatex</code>
+, 
+<code>xelatex</code>
+, or   
+<code>lualatex</code>
+ (whichever is first in 
+<code>PATH</code>
+) twice for TOC/xrefs
+</p>
+</dd>
+<dt>**--targetDir=DIR**</dt>
+<dd>
+<p>
+Output directory. Default: 
+<code>./htmlBook</code>
+ for HTML, 
+<code>./latexBook</code>
+ for latex/pdf. Created if missing.
+</p>
+</dd>
+<dt>**--theme=NAME**</dt>
+<dd>
+<p>
+Initial HTML theme: 
+<code>basic</code>
+, 
+<code>classic</code>
+, or 
+<code>dark</code>
+ (or a custom name under 
+<code>--themePath</code>
+). Default: 
+<code>basic</code>
+. Ignored for latex/pdf.
+</p>
+</dd>
+<dt>**--themePath=DIR**</dt>
+<dd>
+<p>
+Directory that contains theme subdirectories (
+<code>DIR/basic/static</code>
+, …). If omitted, uscribe searches 
+<code>./themes</code>
+, 
+<code>../themes</code>
+, and 
+<code>themes</code>
+. HTML only.
+</p>
+</dd>
+</dl>
+<h3 id="outputs">
+Outputs
+</h3>
+<p>
+<strong>
+HTML
+</strong>
+ (
+<code>--format=html</code>
+): for each chapter 
+<code>path/name.rst</code>
+, writes 
+<code>targetDir/name.html</code>
+, plus:
+</p>
+<ul>
+<li>
+<code>index.html</code>
+ — contents landing page (chapter list, or a UTR table with a 
+<strong>
+Formats
+</strong>
+ column of 
+<code>pdf</code>
+ / 
+<code>txt</code>
+ for report collections)
+</li>
+<li>
+<code>search.html</code>
+ + 
+<code>searchindex.js</code>
+ — full-text search
+</li>
+<li>
+<code>_static/</code>
+ — theme CSS, search JS, highlighter, theme switcher
+</li>
+<li>
+<code>_sources/</code>
+ — chapter sources as 
+<code>name.rst.txt</code>
+ (browser-viewable text; linked as 
+<strong>
+txt
+</strong>
+ / 
+<strong>
+source
+</strong>
+)
+</li>
+</ul>
+<p>
+<strong>
+LaTeX / PDF
+</strong>
+: book manifests write 
+<code>targetDir/book.tex</code>
+ (and 
+<code>book.pdf</code>
+ with 
+<code>--format=pdf</code>
+). Report manifests write one 
+<code>.tex</code>
+ / 
+<code>.pdf</code>
+ per report, named like the HTML stem (
+<code>ex-report.tex</code>
+ beside 
+<code>ex-report.html</code>
+). Local 
+<code>.. image::</code>
+ files are copied into 
+<code>targetDir</code>
+ automatically (relative paths preserved). SVG is not embedded in LaTeX (a boxed placeholder is emitted instead — convert to PDF/PNG for TeX).
+</p>
+<h3 id="exit-status">
+Exit status
+</h3>
+<p>
+Usage errors and missing files call 
+<code>stop()</code>
+ (non-zero). A successful build prints 
+<code>wrote …</code>
+ lines for each output file.
+</p>
+<div class="prevnext">
+<a href="themes.html">&larr; Themes</a>
+<a href="sphinx.html">uscribe and Sphinx &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="cli.pdf">pdf</a> | <a href="_sources/cli.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

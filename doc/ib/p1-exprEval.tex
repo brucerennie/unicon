@@ -1,0 +1,1703 @@
+\chapter{Expression Evaluation}
+\label{EV-Chapter}
+
+\textsc{Perspective}: The preceding chapter presents the essentials of
+the interpreter and expression evaluation as it might take place in a
+conventional programming language in which every expression produces
+exactly one result. For example, expressions such as
+
+\begin{iconcode}
+\>i := j \\
+\>k := i + j\\
+\>i +:= ?k
+\end{iconcode}
+
+\noindent each produce a single result: they can neither fail nor can
+they produce sequences of results.
+
+The one feature of Icon that distinguishes it most clearly from other
+programming languages is the capacity of its expression-evaluation
+mechanism to produce no result at all or to produce more than one
+result. From this capability come unconventional methods of
+controlling program flow, novel control structures, and goal-directed
+evaluation.
+
+The generality of this expression-evaluation mechanism alone sets Icon
+apart from other programming languages. While generators, in one form
+or another, exist in a number of programming languages, such as IPL-V
+(Newell 1961), CLU (Liskov 1981), Alphard (Shaw 1981), and SETL
+(Dewar, Schonberg, and Schwartz 1981), such generators are limited to
+specific constructs, designated contexts, or restricted types of
+data. Languages with pattern-matching facilities, such as SNOBOL4
+(Griswold, Poage, and Polonsky 1971), InterLisp (Teitelman 1974), and
+Prolog (Clocksin and Mellish 1981), generate alternative matches, but
+only within pattern matching.
+
+Just as Icon's expression-evaluation mechanism distinguishes it from
+other programming languages, it is also one of the most interesting
+and challenging aspects of Icon's implementation. Its applicability in
+every context and to all kinds of data has a pervasive effect on the
+implementation.
+
+
+\section{Bounded Expressions}
+
+A clear understanding of the semantics of expression evaluation in
+Icon is necessary to understand the implementation.  One of the most
+important concepts of expression evaluation in Icon is that of a
+\textit{bounded expression, }within which backtracking can take
+place. However, once a bounded expression has produced a result, it
+cannot be resumed for another result. For example, in
+
+\iconline{ \>write(i = find(s1,s2)) }
+
+\noindent find may produce a result and may be resumed to produce
+another result if the comparison fails. On the other hand, in
+
+\begin{iconcode}
+\>write(i = find(s1, s2))\\
+\>write(j = find(s1, s3))
+\end{iconcode}
+
+\noindent the two lines constitute separate expressions. Once the
+evaluation of the expression on the first line is complete, it cannot
+be resumed. Likewise, the evaluation of the expression on the second
+line is not affected by whether the expression on the first line
+succeeds or fails. However, if the two lines are joined by a
+conjunction operation, as in
+
+\begin{iconcode}
+\>write(i = find(s1, s2)) \&\\
+\>write(i = find(s1, s3))
+\end{iconcode}
+
+\noindent they are combined into a larger single expression and the
+expression on the second line is not evaluated if the expression on
+the first line fails. Similarly, if the expression on the first line
+succeeds, but the expression on the second line fails, the expression
+on the first line is resumed.
+
+The reason for the difference in the two cases is obscured by the fact
+that the Icon translator automatically inserts a semicolon at the end
+of a line on which an expression is complete and for which a new
+expression begins on the next line.
+
+Consequently, the first example is equivalent to
+
+\begin{iconcode}
+\>write(i = find(s1, s2));\\
+\>write(i = find(s1 , s3))
+\end{iconcode}
+
+The difference between the semicolon and the conjunction operator is
+substantial. A semicolon bounds an expression, while an operator binds
+its operands into a single expression.
+
+Bounded expressions are enclosed in ovals in the following examples to
+make the extent of backtracking clear. A compound expression, for
+example, has the following bounded expressions:
+
+\begin{center}
+\begin{picture}(200,30)
+\put(0,16){\makebox(200,0)[l]{
+\makebox(10,16){\{}
+\makebox(40,16){\ovt{40}{16}{$expr_1;$}}
+\makebox(40,16){\ovt{40}{16}{$expr_2;$}}
+\makebox(10,16){$ ...;$}
+\makebox(40,16){$expr_n$}
+\makebox(10,16){\}}
+}}
+\end{picture}
+\end{center}
+
+Note that $expr_n$ is not, of itself, a bounded expression.
+However, it may be part of a larger bounded expression, as in
+
+\begin{center}
+\begin{picture}(200,40)
+\put(120,20){\ovt{240}{40}{
+\makebox(240,32)[l]{
+\makebox(10,16){\{}
+\makebox(40,16){\ovt{40}{16}{$expr_1;$}}
+\makebox(40,16){\ovt{40}{16}{$expr_2;$}}
+\makebox(40,16){$ ...;$}
+\makebox(40,16){$expr_n$}
+\makebox(40,16){\} = 1;}
+}}}
+\end{picture}
+\end{center}
+
+Here $expr_n$ is part of the bounded expression for the
+comparison operator. The entire enclosing bounded expression is a
+consequence of the final semicolon. In the absence of the context
+provided by this semicolon, the entire expression might be part of a
+larger enclosing bounded expression, and so on.
+
+The separation of a procedure body into a number of bounded
+expressions, separated by semicolons (explicit or implicit) and other
+syntactic constructions, is very important. Otherwise, a procedure
+body would consist of a single expression, and failure of any
+component would propagate throughout the entire procedure
+body. Instead, control backtracking is limited in scope to abounded
+expression, as is the lifetime (and hence stack space) for temporary
+computations.
+
+Bounded expressions are particularly important in control
+structures. For example, in the if-then-else control structure, the
+control expression is bounded but the other expressions are not:
+
+\begin{center}
+\begin{picture}(200,30)
+\put(0,10){\makebox(0,0)[l]{
+\makebox(10,0){\texttt{if}}
+\makebox(40,-4){\ovt{35}{16}{$expr_1$}}
+\makebox(120,0){\texttt{then}\ \  $expr_2$\ \  \texttt{else}\ \  $expr_3$}
+}}
+\end{picture}
+\end{center}
+
+As with the compound expression illustrated earlier,  $expr_2$ or
+$exp_3$ (whichever is selected) may be the part of a larger
+bounded expression. An example is
+
+\begin{center}
+\begin{picture}(200,30)
+\put(0,0){\makebox(0,0)[l]{
+\makebox(50,0){\texttt{write (\ \ if}}
+\makebox(40,0){\ovt{35}{16}{\texttt{i < j}}}
+\makebox(130,0){\texttt{then\ \ \  i\  to\  j\ \ \ else\ \ \  j\  to\  i\ )}}
+}}
+\end{picture}
+\end{center}
+
+If the control expression were not a separate bounded expression, the
+failure of $expr_2$ or $exp_3$ would result in
+backtracking into it and the if-then-else expression would be
+equivalent to
+
+\iconline{\ \ \ ($expr_1$\  \&\ $expr_2$) \ | \ $expr_3$ \\}
+
+\noindent which is hardly what is meant by if-then-else.
+
+In a while-do loop, the control expression and the expression in the
+do clause are both bounded:
+
+\begin{center}
+\begin{picture}(200,30)
+%\put(53,10){\oval(35,16)}
+%\put(110,10){\oval(35,16)}
+\put(0,10){\makebox(0,0)[l]{
+\makebox(30,0){\texttt{while}}
+\makebox(36,-4){\ovt{36}{16}{$expr_1$}}
+\makebox(20,0){\texttt{do}}
+\makebox(36,-4){\ovt{36}{16}{$expr_2$}}
+}}
+\end{picture}
+\end{center}
+
+The two bounded expressions ensure that the expressions are evaluated
+independently of each other and any surrounding context. For example,
+if $expr_2$ fails, there is no control backtracking into $expr_1$.
+
+\subsection{Expression Frames}
+
+In the implementation of Icon, the scope of backtracking is delineated
+by \textit{expression frames}. The virtual machine instruction
+
+\iconline{ \>mark\>\>\> L1 }
+
+\noindent starts an expression frame. If the subsequent expression
+fails, \texttt{ipc} is set to the location in the icode that
+corresponds to \texttt{L1}. The value of \texttt{ipc} for a label is
+relative to the location of the icode that is read in from the icode
+file. For simplicity in the description that follows, the value of
+\texttt{ipc} is referred to just by the name of the corresponding
+label.
+
+The \texttt{mark} instruction pushes an \textit{expression frame
+marker }onto the stack and sets the expression frame pointer,
+\texttt{efp}, to it. Thus, \texttt{efp} indicates the beginning of the
+current expression frame. There is also a generator frame pointer,
+\texttt{gfp}, which points to another kind of frame that is used to
+retain information when an expression suspends with a result and is
+capable of being resumed for another. Generator frames are described
+in Sec. 9.3. The mark instruction sets \texttt{gfp} to zero,
+indicating that there is no suspended generator in a new expression
+frame.
+
+An expression frame marker consists of four words: the value
+\texttt{ipc} for the argument of mark (called the failure
+\texttt{ipc}), the previous \texttt{efp}, the previous \texttt{gfp},
+and \texttt{ilevel}, which is related to suspended generators:
+
+
+
+\begin{picture}(300,130)
+\put(100,0){\blboxlabel{gfp:0}}
+\put(100,32){\blkbox{}{}}
+\put(100,32){\rightboxlabels{previous efp}{ilevel}}
+\put(100,32){\downbars}
+\put(100,64){\blkbox{L1}{}}
+\put(100,64){\rightboxlabels{failure ipc}{previous gfp}}
+\put(100,64){\luregptr{efp}{20}}
+\put(100,64){\upetc}
+\end{picture}
+
+An expression frame marker is declared as a C structure:
+
+\begin{iconcode}
+\>struct ef\_marker \{\ \ \ \ \>\>\>\>\>\>\>\>\>\>/* expression frame marker */\\
+\>\>word *ef\_failure;\ \ \ \ \>\>\>\>\>\>\>\>\>/*\ \ failure ipc */\\
+\>\>struct ef\_marker *ef\_efp;\ \ \>\>\>\>\>\>\>\>\>/*\ \ efp */\\
+\>\>struct gf\_marker *ef\_gfp;\ \ \>\>\>\>\>\>\>\>\>/*\ \ gfp */\\
+\>\>word ef\_ilevel;\ \ \ \ \ \ \>\>\>\>\>\>\>\>\>/*\ \ ilevel */
+\end{iconcode}
+
+
+
+This structure is overlaid on the interpreter stack in order to
+reference its components. The code for the \texttt{mark} instruction
+is
+
+\begin{iconcode}
+\>case Op\_Mark:\>\>\>\>\>\>/* create expression frame marker */\\
+\>\>newefp = (struct ef\_marker *)(sp + 1);\\
+\>\>opnd = GetWord;\\
+\>\>opnd += (word)ipc;\\
+\>\>newefp->ef\_failure = (word *)opnd;\\
+\>\>newefp->ef\_gfp = gfp;\\
+\>\>newefp->ef\_efp = efp;\\
+\>\>newefp->ef\_ilevel = ilevel;\\
+\>\>sp += Wsizeof(*efp);\\
+\>\>efp = newefp;\\
+\>\>gfp = 0;\\
+\>\>break;
+\end{iconcode}
+
+The macro \texttt{Wsizeof(x)} produces the size of \texttt{x} in words.
+
+An expression frame is removed by the virtual machine instruction
+
+\iconline{ \>unmark }
+
+\noindent which restores the previous \texttt{efp} and \texttt{gfp}
+from the current expression frame marker and removes the current
+expression frame by setting \texttt{sp} to the word just above the
+frame marker.
+
+The use of \texttt{mark} and \texttt{unmark} is illustrated by
+
+\iconline{ \>if $expr_1$ then $expr_2$ else $expr_3$ }
+
+\noindent for which the virtual machine instructions are
+
+\begin{iconcode}
+\>\>mark L1\\
+\>\>\textit{code for}\ $expr_1$\\
+\>\>unmark\\
+\>\>\textit{code for}\ $expr_2$\\
+\>\>goto L2\\
+L1:\\
+\>\>\textit{code for}\ $expr_3$\\
+L2:
+\end{iconcode}
+
+
+The \texttt{mark} instruction creates an expression frame for the
+evaluation of $expr_1$. If $expr_1$ produces a result, the
+\texttt{unmark} instruction is evaluated, removing the expression
+frame for $expr_1$, along with the result produced by
+$expr_1$. Evaluation then proceeds in $expr_2$.
+
+If $expr_1$ fails, control is transferred to the location in the
+icode corresponding to \texttt{L1} and the \texttt{unmark} instruction
+is not executed. In the absence of generators, failure also removes
+the current expression frame, as described in Sec. 9.2.
+
+
+It is necessary to save the previous value of \texttt{efp} in a new
+expression marker, since expression frames may be nested. This occurs
+in interesting ways in some generative control structures, which are
+discussed in Sec. 9.4. Nested expression frames also occur as a result
+of evaluating compound expressions, such as
+
+\begin{center}
+\begin{picture}(200,10)(50,15)
+\put(0,10){\makebox(0,0)[l]{
+\makebox(30,0){\texttt{while}}
+\makebox(36,-4){\ovt{36}{16}{$expr_1$}}
+\raisebox{-10.5pt}{\makebox(130,16){\ovt{130}{32}{
+\makebox(30,0){\texttt{do\ \ if}}
+\makebox(36,-4){\ovt{36}{16}{$expr_2$}}
+\makebox(20,0){then}
+\raisebox{-4pt}{$expr_3$}
+}}}
+}}
+\end{picture}
+\end{center}
+
+
+\section{Failure}
+
+The interesting aspects of implementing expression evaluation in Icon
+can be divided into two cases: without generators and with
+generators. The possibility of failure in the absence of generators is
+itself of interest, since it occurs in other programming languages,
+such as SNOBOL4. This section describes the handling of failure and
+assumes, for the moment, that there are no generators. The next
+section describes generators.
+
+In the absence of generators, if failure occurs anywhere in an
+expression, the entire expression fails without any further
+evaluation. For example, in the expressions
+
+\begin{iconcode}
+\>i := numeric(s)\\
+\>line := read(f)
+\end{iconcode}
+
+
+\noindent if \texttt{numeric(s)} fails in the first line, the
+assignment is not performed and evaluation continues immediately with
+the second line. In the implementation, this amounts to removing the
+current expression frame in which failure occurs and continuing with
+\texttt{ipc} set to the failure \texttt{ipc} from its expression frame
+marker.
+
+The virtual machine instructions for the previous example are
+
+\begin{iconcode}
+\>mark L1\\
+\>pnull\\
+\>local i\\
+\>global numeric\\
+\>local s\\
+\>invoke 1\\
+\>asgn\\
+\>unmark\\
+L1:\\
+\>mark L2\\
+\>pnull\\
+\>local line\\
+\>global read\\
+\>local f\\
+\>invoke 1\\
+\>asgn\\
+\>unmark\\
+L2:
+\end{iconcode}
+
+
+Prior to the evaluation of the expression on the first line, there is
+some expression frame on the stack:
+
+\begin{picture}(300,170)(0,-15)
+%\put(0,-15){\graphpaper{30}{17}}
+\put(100,0){\wordbox{}{}}
+\put(100,0){\lregptr{sp}{20}}
+\put(100,-16){\upetc}
+\put(100,0){\downbars}
+\put(100,64){\blkbox{}{}}
+\put(100,64){\downetc}
+\put(100,96){\blkbox{}{}}
+\put(100,96){\upetc}
+\put(100,96){\luregptr{efp}{20}}
+\end{picture}
+
+The instruction
+
+\iconline{ \>mark\>\>\> L1 }
+
+\noindent starts a new expression frame. The execution of subsequent
+virtual machine instructions pushes additional descriptors.  The state
+of the stack when numeric is called by the \texttt{invoke} instruction is
+
+\begin{picture}(300,350)(0,15)
+%\put(0,15){\graphpaper{30}{35}}
+\put(100,32){\downbars}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,32){\dvboxptr{}{nvp}{40}{local s}}
+\put(100,64){\dvboxptr{}{nvp}{40}{global numeric}}
+\put(100,96){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,128){\dvbox{null}{n}{0}}
+\put(100,128){\trboxlabel{descriptor for result}}
+\put(100,160){\blkbox{}{}}
+\put(100,160){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,192){\blkbox{L1}{}}
+\put(100,192){\brboxlabel{previous efp}}
+\put(100,192){\luregptr{efp}{20}}
+\put(100,192){\upetc}
+\put(100,272){\downetc}
+\put(100,272){\blkbox{}{}}
+\put(100,304){\blkbox{}{}}
+\put(100,304){\upetc}
+\put(280,200){\line(1,0){50}}
+\put(330,200){\line(0,1){128}}
+\put(330,328){\vector(-1,0){130}}
+\end{picture}
+
+If \texttt{numeric(s)} fails, \texttt{efp} and \texttt{sp} are reset,
+so that the stack is in the same state as it was prior to the
+evaluation of the expression on the first line:
+
+\begin{picture}(300,180)(0,-20)
+%\put(0,-20){\graphpaper{30}{18}}
+\put(100,0){\wordbox{}{}}
+\put(100,0){\lregptr{sp}{20}}
+\put(100,-16){\upetc}
+\put(100,0){\downbars}
+\put(100,64){\blkbox{}{}}
+\put(100,64){\downetc}
+\put(100,96){\blkbox{}{}}
+\put(100,96){\upetc}
+\put(100,96){\luregptr{efp}{20}}
+\end{picture} 
+
+Control is transferred to the location in the icode corresponding to
+\texttt{L1}, and the execution of
+
+\iconline{ \>mark\>\>\> L2 }
+
+\noindent starts a new expression frame by pushing a new expression
+frame marker onto the stack.
+
+It is worth noting that failure causes only the current expression
+frame to be removed and changes \texttt{ipc} to the failure
+\texttt{ipc}. Any remaining virtual machine instructions in the
+current expression frame are bypassed; failure is simple and quick.
+
+Failure can occur at three levels: directly from the virtual machine
+instruction \texttt{efail}, from a C function that implements an
+operator or function (as in the previous example), or from an Icon
+procedure.
+
+
+When a conditional operator or function returns, it signals the
+interpreter, indicating whether it is producing a result or failing by
+using one of the RTL forms of return, \texttt{return} or
+\texttt{fail}. These RTL constructs simply produce return statements
+with different returned values.
+
+The code in the interpreter for a conditional operation is illustrated by
+
+\begin{iconcode}
+\>case Op\_Numlt:\ \ \>\>\>\>\>\>/* e1 < e2 */\\
+\>\>Setup\_Op(2);\\
+\>\>DerefArg(1);\\
+\>\>DerefArg(2);\\
+\>\>Call\_Cond;
+\end{iconcode}
+
+The macro \texttt{Call\_Cond} is similar to \texttt{Call\_Op}
+described in Sec. 8.3.1, but it tests the signal returned by the C
+function. If the signal corresponds to the production of a result, the
+break is executed and control is transferred to the beginning of the
+interpreter loop to fetch the next virtual machine instruction. On the
+other hand, if the signal corresponds to failure, control is
+transferred to the place in the interpreter that handles failure,
+\texttt{efail}.
+
+
+An Icon procedure can fail in three ways: by evaluating the expression
+fail, by the failure of the argument of a return expression, or by
+flowing off the end of the procedure body. The virtual machine
+instructions generated for the three cases are similar. For example,
+the virtual machine instructions for
+
+\iconline{ \>if i < j then fail else write(j) }
+
+are
+
+\begin{iconcode}
+\>mark\>\>\> L1\\
+\>pnull\\
+\>local\>\>\> i\\
+\>local\>\>\> j\\
+\>numlt\\
+\>unmark\\
+\>pfail\\
+L1:\\
+\>global\>\>\> write\\
+\>local\>\>\> j\\
+\>invoke\>\>\> 1
+\end{iconcode}
+
+The virtual machine instruction \texttt{pfail} first returns from the
+current procedure call (see Sec. 10.3), and then transfers to
+\texttt{efail}.
+
+
+\section{Generators and Goal-Directed Evaluation}
+
+The capability of an expression not to produce a result is useful for
+controlling program flow and for bypassing unneeded computation, but
+generators add the real power and expressiveness to the
+expression-evaluation semantics of Icon. It should be no surprise that
+generators also present difficult implementation problems. There are
+several kinds of generators, including those for control structures,
+functions and operators, and procedures. While the implementation of
+the different kinds of generators varies in detail, the same
+principles apply to all of them.
+
+
+As far as using a result of an expression in further computation is
+concerned, there is no difference between an expression that simply
+produces a result and an expression that produces a result and is
+capable of being resumed to produce mother one. For example, in
+
+\begin{iconcode}
+\>i := numeric("2")\\
+\>j := upto('aeiou', "Hello world")
+\end{iconcode}
+
+\noindent the two assignment operations are carried out in the same
+way, even though \texttt{upto()} is a generator and \texttt{numeric()}
+is not.
+
+Since such contexts cannot be determined, in general, prior to the
+time the expressions are evaluated, the implementation is designed so
+that the interpreter stack is the same, as far as enclosing
+expressions are concerned, whether an expression returns or
+suspends. For the previous example, the arguments to the assignment
+operation are in the same relative place in both cases.
+
+On the other hand, if a generator that has suspended is resumed, it
+must be capable of continuing its computation and possibly producing
+another result. For this to be possible, both the generator's state
+and the state of the interpreter stack must be preserved. For example,
+in
+
+\iconline{ \>j := (i < upto('aeiou', "Hello world")) }
+
+\noindent when the function \texttt{upto()} suspends, both \texttt{i}
+and the result produced by \texttt{upto()} must be on the stack as
+arguments of the comparison operation. However, if the comparison
+operation fails and \texttt{upto()} is resumed, the arguments of
+\texttt{upto()} must be on the stack as they were when \texttt{upto()}
+suspended. To satisfy these requirements, when \texttt{upto()}
+suspends, a portion of the stack prior to the arguments for
+\texttt{upto()} is copied to the top of the stack and the result
+produced by upto is placed on the top of the stack. Thus, the portion
+of the stack required for the resumption of \texttt{upto()} is
+preserved and the arguments for the comparison are in the proper
+place.
+
+\textbf{Generator Frames}. When an expression suspends, the state of
+the interpreter stack is preserved by creating a \textit{generator
+frame} on the interpreter stack that contains a copy of the portion of
+the interpreter stack that is needed if the generator is resumed. A
+generator frame begins with a generator frame marker that contains
+information about the interpreter state that must be restored if the
+corresponding generator is resumed. There are three kinds of generator
+frames that are distinguished by different codes:
+
+\begin{tabular}{l@{\hspace{1cm}}l}
+G\_Csusp & suspension from a C function\\
+G\_Esusp & suspension from an alternation expression\\
+G\_Psusp & suspension from a procedure\\
+&\\
+\end{tabular}
+
+\noindent
+For the first two types of generators, the information saved in the
+generator frame marker includes the code for the type of the
+generator, the i-state variables \texttt{efp}, \texttt{gfp},
+\texttt{ipc}, and the source-program line number at the time the
+generator frame is created:
+
+
+\begin{picture}(300,130)
+\put(100,16){\wordbox{}{}}
+\put(100,16){\downbars}
+\put(100,0){\trboxlabel{saved line number}}
+\put(100,32){\blkbox{}{}}
+\put(100,32){\rightboxlabels{saved gfp}{saved ipc}}
+\put(100,64){\blkbox{}{}}
+\put(100,64){\rightboxlabels{generator type}{saved efp}}
+\put(100,64){\upetc}
+\put(100,64){\luregptr{gfp}{20}}
+\end{picture}
+
+The corresponding C structure is
+\begin{iconcode}
+\>struct gf\_marker \>\>\>\>\>\>\>\>\>\>\>/* generator frame marker */\\
+\>\>word gf\_gentype;\>\>\>\>\>\>\>\>\>\>/*\ \ type */\\
+\>\>struct ef\_marker *gf\_efp;\>\>\>\>\>\>\>\>\>\>/*\ \ efp */\\
+\>\>struct gf\_marker *gf\_gfp;\>\>\>\>\>\>\>\>\>\>/*\ \ gfp */\\
+\>\>word *gf\_ipc\>\>\>\>\>\>\>\>\>\>/*\ \ ipc */\\
+\>\>word gf\_line;\>\>\>\>\>\>\>\> \>\>/*\ \ line number */\\
+\>\};
+\end{iconcode}
+
+Generators for procedure suspension contain, in addition, the i-state
+variable related to procedures. See Sec. 10.3.3.
+
+As an example, consider the expression
+
+\iconline{ \>write(i = (1 to 3)); }
+
+The virtual machine instructions for this expression are:
+
+\begin{iconcode}
+\>mark\>\>\> L1\\
+\>global\>\>\> write\\
+\>local\>\>\> i\\
+\>pnull\\
+\>int\>\>\> 1\\
+\>int\>\>\> 3\\
+\>push\>\>\> 1\>\>\>\>\>\>\# default increment\\
+\>toby\\
+\>numeq\\
+\>invoke\>\>\> 1\\
+\>unmark\\
+L1 :
+\end{iconcode}
+
+The state of the stack after execution of the first seven instructions is
+
+\begin{picture}(300,340)(0,-20)
+%\put(0,-20){\graphpaper{30}{34}}
+\put(100,0){\dvbox{integer}{n}{1}}
+\put(100,0){\downbars}
+\put(100,0){\lregptr{sp}{20}}
+\put(100,32){\dvbox{integer}{n}{3}}
+\put(100,64){\dvbox{integer}{n}{1}}
+\put(100,96){\dvbox{null}{n}{0}}
+\put(100,96){\trboxlabel{Arg0 for toby}}
+\put(100,128){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,160){\dvbox{null}{n}{0}}
+\put(100,160){\trboxlabel{Arg0 for numeq}}
+\put(100,192){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,224){\blkbox{}{}}
+\put(100,224){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,256){\blkbox{L1}{}}
+\put(100,256){\brboxlabel{previous efp}}
+\put(100,256){\luregptr{efp}{20}}
+\put(100,256){\upetc}
+
+\end{picture}
+
+The code in the interpreter for calling a generative operator with n
+arguments is
+
+\begin{iconcode}
+\>rargp = (struct descrip *)(sp -1) -n;\\
+\>signal = (*(optab[op]))(rargp);\\
+\>goto C\_rtn\_term;
+\end{iconcode}
+
+Note that \texttt{rargp} points to Arg0 and is the argument of the
+call to the C function for the operator.
+
+The RTL function for \texttt{toby} is
+
+\begin{iconcode}
+operator\{*\} ... toby(from, to, by)\\
+\>/*\\
+\>\ * arguments must be integers.\\
+\>\ */\\
+\>if !cnv:C\_integer(from) then\\
+\>\>runerr(101, from)\\
+\>if !cnv:C\_integer(to) then\\
+\>\>runerr(101, to)\\
+\>if !cnv:C\_integer(by) then\\
+\>\>runerr(101, by)\\
+\>abstract \{\\
+\>\>return integer\\
+\>\>\}\\
+\>inline \{\\
+\>\>/*\\
+\>\>\ * by must not be zero.\\
+\>\>\ */\\
+\>\>if (by == 0) \{\\
+\>\>\>irunerr(211, by);\\
+\>\>\>errorfail;\\
+\>\>\>\}\\
+\>\>/*\\
+\>\>\ * Count up or down (depending on relationship of from and\\
+\>\>\ * \ to) and suspend each value in sequence, failing when\\
+\>\>\ * \ the limit has been exceeded.\\
+\>\>\ */\\
+\>\>if (by > 0)\\
+\>\>\>for ( ; from <= to; from += by) \{\\
+\>\>\>\>suspend C\_integer from;\\
+\>\>\>\>\}\\
+\>\>else\\
+\>\>\>for ( ; from >= to; from += by) \{\\
+\>\>\>\>suspend C\_integer from;\\
+\>\>\>\>\}\\
+\>\>fail;\\
+\>\>\}\\
+end
+\end{iconcode}
+
+The RTL \texttt{operator} construct, which is similar to
+\texttt{function}, produces the C header
+
+\iconline{ int Otoby(dptr r\_args) }
+
+\noindent so that \texttt{toby} is called with a pointer to
+Arg0. Arguments with logical names Arg0, Arg1, and so forth are
+referred as \texttt{r\_args[0]}, \texttt{r\_args[1]}, and so on in the
+generated code.
+
+When \texttt{toby} is called, it replaces its Arg0 descriptor by a
+descriptor for the integer \texttt{from} and suspends by using the RTL
+\texttt{suspend} construct rather than \texttt{return}.
+
+The \texttt{suspend} statement \textit{calls }\texttt{interp()}
+instead of returning to it. This leaves the call of \texttt{toby}
+intact with its variables preserved and also transfers control to
+\texttt{interp()} so that the next virtual machine instruction can be
+interpreted. However, it is necessary to push a generator marker on
+the interpreter stack and copy a portion of the interpreter stack, so
+that interpretation can continue without changing the portion of the
+interpreter stack that \texttt{toby} needs in case it is resumed. This
+is accomplished by calling \texttt{interp()} with arguments that
+signal it to build a generator frame. The C code generated for
+\texttt{suspend} is
+
+\begin{iconcode}
+\>if ((signal = interp(G\_Osusp, r\_args RTTCURTSTATARG)) != \ A\_Resume) \{\\
+\>\>return signal;\\
+\>\}
+\end{iconcode}
+
+The argument \texttt{G\_Osusp} in the call of \texttt{interp()}
+indicates that a generator frame for C function that implements an
+operator is needed. The argument \texttt{r\_args} points to the
+location on the interpreter stack where Arg0 for the suspending C
+function is located. This location is the same as rargp in the call of
+\texttt{interp()} that called \texttt{upto}.
+
+In this situation, \texttt{interp()} puts a generator frame marker on
+the interpreter stack and copies the portion of the interpreter stack
+from the last expression or generator frame marker through cargp onto
+the top of the interpreter stack:
+
+\begin{picture}(300,540)(0,15)
+%\put(0,15){\graphpaper{30}{54}}
+\put(100,32){\dvbox{integer}{n}{1}}
+\put(100,32){\downbars}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,64){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,96){\dvbox{null}{n}{0}}
+\put(100,96){\trboxlabel{Arg0 for numeq}}
+\put(100,128){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,176){\blkbox{}{}{}}
+\put(100,176){\downbars}
+\put(100,176){\rightboxlabels{saved gfp}{saved ipc}}
+\put(100,160){\brboxlabel{saved line number}}
+\put(100,208){\blkbox{G\_Csusp}{}{}}
+\put(100,208){\brboxlabel{saved efp}}
+\put(100,224){\lregptr{gfp}{20}}
+\put(100,240){\dvbox{integer}{n}{1}}
+\put(100,272){\dvbox{integer}{n}{3}}
+\put(100,304){\dvbox{integer}{n}{1}}
+\put(100,336){\dvbox{integer}{n}{1}}
+\put(100,336){\trboxlabel{Arg0 for toby}}
+\put(100,352){\lregptr{cargp}{20}}
+\put(100,368){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,400){\dvbox{null}{n}{0}}
+\put(100,400){\trboxlabel{Arg0 for numeq}}
+\put(100,432){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,464){\blkbox{}{}}
+\put(100,464){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,496){\blkbox{L1}{}{}}
+\put(100,496){\brboxlabel{previous efp}}
+\put(100,496){\upetc}
+\put(100,512){\lregptr{efp}{20}}
+\put(270,216){\line(1,0){50}}
+\put(320,216){\line(0,1){304}}
+\put(320,520){\vector(-1,0){120}}
+\end{picture}
+
+The stack is exactly the same, as far as the execution of
+\texttt{numeq} is concerned, as it would have been if \texttt{toby}
+had simply returned. However, the arguments of \texttt{toby} (and the
+\ preceding arguments of \texttt{numeq}) are still intact, so that
+\texttt{toby} can be resumed. The generator frame is interposed
+between the two portions of the interpreter stack. The top of the
+stack corresponds to the evaluation of
+
+\iconline{ \>write(i = 1); }
+
+\textbf{Resumption}.\ \ Suppose the value of \texttt{i} in the
+previous example is 2. The comparison fails and control is transferred
+to \texttt{efail}, as it is in the case of all operations that
+fail. The code for \texttt{efail} is
+
+\begin{iconcode}\\
+\>case Op\_Efail:\\
+\>efail:\\
+\>\>/*\\
+\>\>\ * Failure has occurred in the current expression frame.\\
+\>\>\ */\\
+\>\>if (gfp == 0) \{\\
+\>\>\>/*\\
+\>\>\>\ * There are no suspended generators to resume. Remove\\
+\>\>\>\ * the current expression frame, restoring values.\\
+\>\>\>\ *\\
+\>\>\>\ * If the failure ipc is 0, propagate failure to the\\
+\>\>\>\ * enclosing frame by branching back to efail.\\
+\>\>\>\ * This happens, for example, in looping control\\
+\>\>\>\ * structures that fail when complete.\\
+\>\>\>\ */\\
+\>\>\>ipc = efp->ef\_failure;\\
+\>\>\>gfp = efp->ef-9fp;\\
+\>\>\>sp = (word *)efp -1;\\
+\>\>\>efp = efp->ef\_efp;\\
+\>\>\>if (ipc == 0)\\
+\>\>\>\>goto efail;\\
+\>\>\>break;\\
+\>\>\>\}\\
+\>\>else \{\\
+\>\>\>/*\\
+\>\>\>\ * There is a, generator that can be resumed. Make\\
+\>\>\>\ * the stack adjustments and then switch on the\\
+\>\>\>\ * type of the generator frame marker.\\
+\>\>\>\ */\\
+\>\>\>register struct gf\_marker *resgfp = gfp;\\
+\>\>\>tvoe = resgfp->gf gentype;\\
+\>\>\>ipc = resgfp->gf\_ipc;\\
+\>\>\>efp = resgfp->gf\_efp;\\
+\>\>\>line = resgfp->gf\_line;\\
+\>\>\>gfp = resgfp->gf\_gfp;\\
+\>\>\>sp = (word * )resgfp -1;\\
+\\
+\>\>\>switch (type) \{\\
+\>\>\>case G\_Csusp: \{\\
+\>\>\>\>{}-{}-ilevel;\\
+\>\>\>\>return A\_Resumption;\\
+\>\>\>\>\textrm{break;}\\
+\>\>\>\>\}\\
+\>\>\>case G\_Esusp:\\
+\>\>\>\>goto efail;\\
+\>\>\>case G\_Psusp:\\
+\>\>\>\>break;\\
+\>\>\>\}\\
+\>\>break;\\
+\>\>\}
+\end{iconcode}
+
+If there were no generator frame (if \texttt{gfp} were 0), the entire
+expression frame would be removed, and the expression would fail as
+described in Sec. 9.2. However, since there is a C\_Susp generator
+frame, the stack is restored to the state it\ \ is in when
+\texttt{toby} suspended, and the values saved in the generator frame
+marker are \textit{restored:}
+
+
+\begin{picture}(300,320)(0,240)
+%\put(0,240){\graphpaper{30}{32}}
+\put(100,240){\lregptr{sp}{20}}
+\put(100,240){\dvbox{integer}{n}{1}}
+\put(100,272){\dvbox{integer}{n}{3}}
+\put(100,304){\dvbox{integer}{n}{1}}
+\put(100,336){\dvbox{integer}{n}{1}}
+\put(100,336){\trboxlabel{Arg0 for toby}}
+\put(100,368){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,400){\dvbox{null}{n}{0}}
+\put(100,400){\trboxlabel{Arg0 for numeq}}
+\put(100,432){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,464){\blkbox{}{}}
+\put(100,464){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,496){\blkbox{L1}{}{}}
+\put(100,496){\brboxlabel{previous efp}}
+\put(100,496){\upetc}
+\put(100,512){\lregptr{efp}{20}}
+\end{picture}
+
+
+All traces of the first execution of \texttt{numeq} have been removed
+from the stack. As shown by the code for \texttt{efail}, the call to
+\texttt{toby} is resumed by \textit{returning} to it from
+\texttt{interp()} with the signal \texttt{A\_Resumption}, which
+indicates another result is needed. When control is returned to
+\texttt{toby}, it changes its Arg0 descriptor to the integer 2
+suspends again:
+
+
+\begin{picture}(300,540)(0,15)
+%\put(0,15){\graphpaper{30}{54}}
+\put(100,32){\dvbox{integer}{n}{1}}
+\put(100,32){\downbars}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,64){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,96){\dvbox{null}{n}{0}}
+\put(100,96){\trboxlabel{Arg0 for numeq}}
+\put(100,128){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,176){\blkbox{}{}{}}
+\put(100,176){\downbars}
+\put(100,176){\rightboxlabels{saved gfp}{saved ipc}}
+\put(100,160){\brboxlabel{saved line number}}
+\put(100,208){\blkbox{G\_Csusp}{}{}}
+\put(100,208){\brboxlabel{saved efp}}
+\put(100,224){\lregptr{gfp}{20}}
+\put(100,240){\dvbox{integer}{n}{1}}
+\put(100,272){\dvbox{integer}{n}{3}}
+\put(100,304){\dvbox{integer}{n}{1}}
+\put(100,336){\dvbox{integer}{n}{2}}
+\put(100,336){\trboxlabel{Arg0 for toby}}
+\put(100,352){\lregptr{cargp}{20}}
+\put(100,368){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,400){\dvbox{null}{n}{0}}
+\put(100,400){\trboxlabel{Arg0 for numeq}}
+\put(100,432){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,464){\blkbox{}{}}
+\put(100,464){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,496){\blkbox{L1}{}{}}
+\put(100,496){\brboxlabel{previous efp}}
+\put(100,496){\upetc}
+\put(100,512){\lregptr{efp}{20}}
+\put(270,216){\line(1,0){50}}
+\put(320,216){\line(0,1){304}}
+\put(320,520){\vector(-1,0){120}}
+\end{picture}
+
+The interpreter stack is exactly as it was when \texttt{toby}
+suspended the first time, except that the integer 2 is on the stack in
+place of the integer 1. The top of the stack corresponds to the
+evaluation of
+
+\iconline{ \>write(i = 2); }
+
+Since the value of \texttt{i} is 2, \texttt{numeq} succeeds. It copies
+the value of its second argument to its Arg0 descriptor and
+returns. The value 2 is written and the \texttt{unmark} instruction is
+executed, removing the entire expression frame from the stack.
+
+
+\textbf{Goal-Directed Evaluation. }Goal-directed evaluation occurs
+when an expression fails and there are generator frames on the
+interpreter stack as the consequence of expressions that have
+suspended.
+
+In the case of an expression such as
+
+\iconline{ \>1 to upto(c, s) }
+
+\noindent \texttt{upto()} suspends first, followed by
+\texttt{toby}. These generator frames are linked together, with
+\texttt{gfp} pointing to the one for \texttt{toby}, which in turn
+contains a pointer to the one for \texttt{upto()}. In general,
+generator frames are linked together with \texttt{gfp} pointing to the
+one for the most recent suspension. This produces the last-in,
+first-out (depth-first) \textit{order of} expression evaluation in
+Icon. Goal-directed evaluation occurs as a result of resuming
+a suspended expression when failure occurs in the surrounding
+expression frame.
+
+
+\textbf{Removing C Frames.} Since C functions that suspend call the
+interpreter and the interpreter in turn calls C functions, expression
+evaluation typically results in a sequence of frames for calls on the
+C stack. When the evaluation of a bounded expression is complete,
+there may be frames on the C stack for generators, even though these
+generators no longer can be resumed.
+
+In order to {\textquotedbl}unwind{\textquotedbl} the C stack in such
+cases, the i-state variable \texttt{ilevel} is used to keep track of
+the level of call of \texttt{interp()} by C functions. Whenever
+\texttt{interp()} is called, it increments \texttt{ilevel}. When an
+expression frame is created, the current value of \texttt{ilevel} is
+saved in it, as illustrated previously.
+
+When the expression frame is about to be removed, if the current value
+of \texttt{ilevel} is greater than the value in the current expression
+frame, \texttt{ilevel} is decremented and the interpreter
+\textit{returns }with a signal to the C function that called it to
+return rather than to produce another result. If the signal returned
+by \texttt{interp()} is \texttt{A\_Resumption}, the C function
+continues execution, while for any other signal the C function
+returns.
+
+Since C functions return to \texttt{interp()}, \texttt{interp()}
+always checks the signal returned to it to determine if it produced a
+result or if it is unwinding. If it is unwinding, \texttt{interp()}
+returns the unwinding signal instead of continuing evaluation
+of\textit{ }the current expression.
+
+Consider again the expression
+
+\iconline{ \>write(i = (1 to 3)); }
+
+\noindent for which the virtua1 machine instructions are
+
+\begin{iconcode}
+\>mark\>\>\> L1\\
+\>global\>\>\> write\\
+\>local\>\>\> i\\
+\>pnull\\
+\>int\>\>\> 1\\
+\>int\>\>\> 3\\
+\>push1\>\>\>\>\>\>\# default increment\\
+\>toby\\
+\>numeq\\
+\>invoke\>\>\> 1\\
+\>unmark\\
+L1 :
+\end{iconcode}
+
+
+When \texttt{toby} produces a result, it calls \texttt{interp()}. When
+the \texttt{unmark} instruction is executed, the C stack contains a
+frame for the call to \texttt{toby} and for its call to
+\texttt{interp()}. The code for \texttt{unmark} is
+
+\begin{iconcode}
+\>case Op\_Unmark:\ \ /* remove expression frame */\\
+\>\>gfp = efp->ef-gfp;\\
+\>\>sp = (word *)efp -1;\\
+\>\>/*\\
+\>\>\ * Remove any suspended C generators.\\
+\>\>\ */\\
+\>Unmark\_uw:\\
+\>\>if (efp->ef\_ilevel < ilevel) \{\\
+\>\>\>{}-{}-ilevel;\\
+\>\>\>return A\_Unmark\_uw;\\
+\>\>\>\}\\
+\>\>efp = efp->ef\_efp;\\
+\>\>break;
+\end{iconcode}
+
+
+Note that in this case Suspend gets the return code
+\texttt{A\_Unmark\_uw} and in turn returns \texttt{A\_Unmark\_uw} to
+\texttt{interp()}. The section of code in \texttt{interp()} that
+checks the signal that is returned from C functions is
+
+\begin{iconcode}
+\>C\_rtn\_term:\\
+\>\>switch (signal) \{\\
+\>\>case A\_Failure:\\
+\>\>\>goto efail;\\
+\>\>case A\_Unmark\_uw:\ \ \>\>\>\>\>\>\>\>/* unwind for unmark */\\
+\>\>\>goto Unmark uw;\\
+\>\>case A\_Lsusp\_uw:\ \ \>\>\>\>\>\>\>\>/* unwind for Isusp */\\
+\>\>\>goto Lsusp\_uw;\\
+\>\>case A\_Eret\_uw:\ \ \>\>\>\>\>\>\>\>/* unwind for eret */\\
+\>\>\>goto Eret\_uw;\\
+\>\>case A\_Pret\_uw:\ \ \>\>\>\>\>\>\>\>/* unwind for pret */\\
+\>\>\>goto Pret\_uw;\\
+\>\>case A\_Pfail\_uw:\ \ \>\>\>\>\>\>\>\>/* unwind for pfail */\\
+\>\>\>goto Pfail\_uw;\\
+\>\>\}\\
+\>\>sp = (word * )rargp + 1;\ \ \>\>\>\>\>\>\>\>/* set sp to result */\\
+\>\>continue;\\
+\>\}
+\end{iconcode}
+
+
+Thus, when \texttt{interp()} returns to a C function with an unwinding
+signal, there is a cascade of C returns until \texttt{ilevel} is the
+same as it was when the current expression frame was created. Note
+that there are several cases in addition to \texttt{unmark} where
+unwinding is necessary.
+
+\section{Generative Control Structures}
+
+In addition to functions and operators that may generate more than one
+result, there are several generative control structures at the level
+of virtual machine instructions.
+
+\subsection{Alternation}
+
+The virtual machine instructions for
+
+\iconline{ \>\>\textit{expr\TextSubscript{2}} | \textit{expr\TextSubscript{3}} }
+
+are
+\begin{iconcode}
+\>mark\>\>\> L1\\
+\>\textit{code for expr}\TextSubscript{2}\\
+\>esusp\\
+\>goto\>\>\> L2\\
+L1:\\
+\>\textit{code for expr}\textit{\TextSubscript{3}}\\
+L2:
+\end{iconcode}
+
+The mark instruction creates an expression frame marker for
+alternation whose purpose is to preserve the failure \texttt{ipc} for
+\texttt{L1} in case the results for \textit{expr3 }are needed. If
+\textit{expr2 }produces a result, \texttt{esusp} creates a generator
+frame with the usual marker and then copies the portion of the
+interpreter stack between the last expression or generator frame
+marker and the alternation marker to the top of the stack. It then
+pushes a copy of the result produced by \textit{expr2}. This connects
+the result produced by \textit{expr2 }with the expression prior to the
+alternation control structure. Next, \texttt{esusp} sets \texttt{efp}
+to point to the expression frame marker prior to the alternation
+marker. For example, in the expression
+
+\iconline{ \>write(i := 1 | 2) }
+
+\noindent the stack after the execution of \texttt{esusp} is
+
+\begin{picture}(300,540)
+\put(100,32){\dvbox{integer}{n}{1}}
+\put(100,32){\downbars}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,64){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,96){\dvbox{null}{n}{0}}
+\put(100,96){\trboxlabel{Arg0 for numeq}}
+\put(100,128){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,176){\blkbox{}{0}}
+\put(100,176){\downbars}
+\put(100,176){\rightboxlabels{saved gfp}{saved ipc}}
+\put(100,160){\brboxlabel{saved line number}}
+\put(100,208){\blkboxptr{G\_Esusp}{40}{saved efp}}
+\put(100,224){\lregptr{gfp}{20}}
+\put(100,240){\dvbox{integer}{n}{1}}
+\put(100,272){\blkbox{0}{}}
+\put(100,272){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,304){\blkboxptr{L2}{40}{previous efp}}
+\put(100,336){\dvboxptr{}{nvp}{40}{local i}}
+\put(100,368){\dvbox{null}{n}{0}}
+\put(100,368){\trboxlabel{Arg0 for numeq}}
+\put(100,400){\dvboxptr{}{nvp}{40}{global write}}
+\put(100,432){\blkbox{}{}}
+\put(100,432){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,464){\blkbox{L1}{}{}}
+\put(100,464){\brboxlabel{previous efp}}
+\put(100,464){\upetc}
+\put(100,480){\lregptr{efp}{20}}
+\put(290,216){\line(1,0){60}}
+\put(350,216){\line(0,1){112}}
+\put(350,328){\vector(-1,0){150}}
+\put(310,312){\line(1,0){20}}
+\put(330,312){\line(0,1){14}}
+\put(330,328){\oval(4,4)[r]}
+\put(330,330){\line(0,1){158}}
+\put(330,488){\vector(-1,0){130}}
+\end{picture}
+
+The top portion of the stack is the same as if \textit{expr2 }had
+produced a result in the absence of alternation.  However, the
+generator frame marker pushed by \texttt{esusp} contains a pointer to
+the alternation marker.
+
+If another result from \textit{expr2} is needed, the generator frame
+left by \texttt{esusp} is removed, restoring the stack to its state
+when \textit{expr2} produced a result. If \textit{expr2} itself was a
+generator that suspended, it is resumed. Otherwise, control is
+transferred to \texttt{efail} and \texttt{ipc} is set to a value
+corresponding to \texttt{L1}, so that \textit{expr3} is evaluated next.
+
+\subsection{Repeated Alternation}
+
+Alternation is the general model for generative control
+structures. Repeated alternation, \texttt{{\textbar}}\textit{expr}, is
+similar to alternation, and would be equivalent to
+
+\iconline{ \textit{\ \ expr }| \textit{expr }| \textit{expr }| ... }
+
+\noindent except for a special termination condition that causes
+repeated alternation to stop if \textit{expr} does not produce a
+result. Without this termination condition, an expression such as
+
+\iconline{ \>\ \ |upto(c, s) }
+
+\noindent would never return if \texttt{upto()} failed{---}expression
+evaluation would vanish into a {\textquotedbl}black
+hole.{\textquotedbl} Expressions that produce results at one time but
+not at another also are useful. For example,
+
+\iconline{ \>\ \ |read() }
+
+\noindent generates the lines from the standard input file. Because of
+the termination condition, this expression terminates when the end of
+the input file is reached. If it vanished into a {\textquotedbl}black
+hole,{\textquotedbl} it could not be used safely.
+
+If it were not for the termination condition, the virtual machine
+instructions for \texttt{{\textbar}}\textit{expr} would be
+
+\begin{iconcode}
+L1:\\
+\>\>mark\>\>\>\> L1\\
+\>\>\textit{code for expr}\\
+\>\>esusp
+\end{iconcode}
+
+The {\textquotedbl}black hole{\textquotedbl} here is evident{---}if
+\textit{expr} fails, it is evaluated again and there is no way out.
+
+The termination condition is handled by an instruction that changes
+the failure \texttt{ipc} in the current expression marker. The actual
+virtual machine instructions for \texttt{{\textbar}}\textit{expr} are
+
+\begin{iconcode}
+L1:\\
+\>\>mark0\\
+\>\>code for expr\\
+\>\>chfail\>\>\>\>L1\\
+\>\>esusp
+\end{iconcode}
+
+The virtual machine instruction \texttt{mark0} pushes an expression
+frame marker with a zero failure \texttt{ipc}. If a zero failure
+\texttt{ipc} is encountered during failure, as illustrated by the code
+for \texttt{efail} in Sec. 9.3, failure is transmitted to the
+enclosing expression. If \textit{expr }produces a result, however, the
+\texttt{chfail} instruction is executed. It changes the failure
+\texttt{ipc} in the current expression marker to correspond to
+\texttt{L1}, so that if \textit{expr }does not produce a result when
+it is resumed, execution starts at the location in the icode
+corresponding to \texttt{L1} again, causing another iteration of the
+alternation loop. It is important to realize that \texttt{chfail} only
+changes the failure \texttt{ipc} in the current expression marker on
+the stack.  Subsequent execution of \texttt{mark0} creates a new
+expression frame whose marker has a zero failure \texttt{ipc}.
+
+\subsection{Limitation}
+
+In the limitation control structure,
+
+{\ttfamily\mdseries
+\textit{\ \ \ expr1 }{\textbackslash} \textit{expr2}}
+
+\noindent the normal left-to-right evaluation of Icon is reversed and
+\textit{expr2 }is evaluated first. The virtual machine instructions are
+
+{\ttfamily\mdseries
+\ \ \ \ \ \ \textit{code for expr2}}
+
+{\ttfamily\mdseries
+\ \ \ \ \ \ limit}
+
+{\ttfamily\mdseries
+\ \ \ \ \ \ \textit{code for expr1}}
+
+{\ttfamily\mdseries
+\ \ \ \ \ \ lsusp}
+
+If \textit{expr2 }succeeds, its result is on the top of the stack. The
+limit instruction checks this result to be sure that it is legal{---}an
+integer greater than or equal to zero. If it is not an integer, an
+attempt is made to convert it to one. If the limit value is zero,
+limit fails. Otherwise, limit creates an expression frame marker with
+a zero failure \texttt{ipc} and execution continues, so that
+\textit{expr1 }is evaluated in its own expression frame. During the
+evaluation of \textit{expr1, }the limit value is directly below its
+expression marker. For example, in
+
+{\ttfamily\mdseries
+\textit{\ \ expr1 }{\textbackslash} 10}
+
+\noindent the stack prior to the evaluation of \textit{expr1} is
+
+\begin{picture}(300,140)(0,15)
+%\put(0,15){\graphpaper{30}{14}}
+\put(100,32){\blkbox{}{}}
+\put(100,32){\rightboxlabels{previous gfp}{ilevel}}
+\put(100,32){\downbars}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,64){\blkbox{0}{}}
+\put(100,64){\brboxlabel{previous efp}}
+\put(100,80){\lregptr{efp}{20}}
+\put(100,96){\dvbox{integer}{n}{10}}
+\put(100,96){\upetc}
+\end{picture}
+
+
+If \textit{expr1} produces a result, \texttt{lsusp} is executed. The
+\texttt{lsusp} instruction is very similar to \texttt{esusp}. Before
+producing a generator frame, however, \texttt{lsusp} decrements the
+limit value. If it becomes zero, the expression frame for
+\textit{expr1} is removed, the C stack is unwound, and the last value
+it produced is placed on the stack in place of the limit
+value. Otherwise, it copies the portion of the interpreter stack
+between the end of the last expression or generator frame marker and
+the limit value to the top of the stack. Note that no generator frame
+is needed.
+
+\section{Iteration}
+
+The difference between evaluation and resumption in a loop is
+illustrated by the virtual machine instructions for a conventional
+loop
+
+\iconline{ \>while \textit{expr1 }do \textit{expr2} }
+
+\noindent and the iteration control structure
+
+\iconline{ \>every \textit{expr1 }do \textit{expr2} }
+
+\noindent The instructions for \texttt{while-do} are
+
+\begin{iconcode}
+L1:\\
+\>mark0\\
+\>\textit{code for expr1}\\
+\>unmark\\
+\> mark\>\>\> L1\\
+\>\textit{code for expr2}\\
+\>unmark\\
+\>goto\>\>\>L1
+\end{iconcode}
+
+
+If \textit{expr1} fails, the entire expression fails and failure is
+transmitted to the enclosing expression frame because the failure
+\texttt{ipc} is zero. If \textit{expr1} produces a result,
+\textit{expr2} is evaluated in a separate expression frame. Whether
+\textit{expr2} produces a result or not, its expression frame is
+removed and execution continues at the beginning of the loop.
+
+The instructions for \texttt{every-do} are
+
+\begin{iconcode}
+\>mark0\\
+\>\textit{code for expr1}\\
+\>pop\\
+\>mark0\\
+\>\textit{code for expr2}\\
+\>unmark\\
+\>efail
+\end{iconcode}
+
+
+
+If \textit{expr1} fails, the entire expression fails and failure is
+transmitted to the enclosing expression frame as in the case of
+\texttt{while-do}. If \textit{expr1} produces a result, it is
+discarded by the \texttt{pop} instruction, since this result is not
+used in any subsequent computation. The expression frame for
+\textit{expr1} is not removed, however, and \textit{expr2} is
+evaluated in its own expression frame within the expression frame for
+\textit{expr1} (unlike the case for the while loop). If \textit{expr2}
+produces a result, its expression frame is removed and \texttt{efail}
+is executed. If \textit{expr2} fails, it transmits failure to the
+enclosing expression frame, which is the expression frame for
+\textit{expr1}. If \textit{expr2} produces a result, \texttt{efail}
+causes failure in the expression frame for \textit{expr1}. Thus, the
+effect is the same, whether or not \textit{expr2} produces a
+result. All results are produced simply by forcing failure.
+
+If the expression frame for \textit{expr1} contains a generator frame,
+which is the case if \textit{expr1} suspended, evaluation is resumed
+accordingly, so that \textit{expr1} can produce another result. If
+\textit{expr1} simply produces a result instead of suspending, there
+is no generator frame, \texttt{efail} removes its expression frame,
+and failure is transmitted to the enclosing expression frame.
+
+
+\section{String Scanning}
+
+String scanning is one of the most useful operations in Icon. Its
+implementation, however, is comparatively simple.  There is no special
+expression-evaluation mechanism associated with string scanning
+\textit{per se}; all {\textquotedbl}pattern matching{\textquotedbl}
+follows naturally from goal-directed evaluation.
+
+The string-scanning keywords, \texttt{\&subject} and \texttt{\&pos}
+must be handled properly, however. These keywords have global scope
+with respect to procedure invocation, but they are maintained in a
+stack-like fashion with respect to string-scanning expressions.
+
+The expression
+
+\iconline{\> \textit{expr1 }? \textit{expr2} }
+
+\noindent is a control structure, not an operation, since, by
+definition, the arguments for an operation are evaluated before the
+operation is performed. This form of evaluation does not work for
+string scanning, since after \textit{expr1} is evaluated, but before
+\textit{expr2} is evaluated, the previous values of \texttt{\&subject}
+and \texttt{\&pos} must be saved and new ones
+established. Furthermore, when string scanning is finished, the old
+values of \texttt{\&subject} and \texttt{\&pos} must be restored. In
+addition, if string scanning succeeds, the values of these keywords at
+the time string scanning produces a result must be saved so that they
+can be restored if the string-scanning operation is resumed to produce
+another result.
+
+The virtual machine instructions for
+
+\iconline{ \textit{\ \ expr1 }? \textit{expr2} }
+
+are
+\begin{iconcode}
+\>\textit{code for expr1}\\
+\>bscan\\
+\>\textit{code for expr2}\\
+\>escan
+\end{iconcode}
+
+
+If \textit{expr1} succeeds, it leaves a result on the top of the
+stack. The \texttt{bscan} instruction assures that this value is a
+string, performing a conversion if necessary. Otherwise, the old
+values of \texttt{\&subject} and \texttt{\&pos} are pushed on the
+stack, the value of \texttt{\&subject} is set to the (possibly
+converted) one produced by \textit{expr1}, and \texttt{\&pos} is set
+to 1.
+
+
+The \texttt{bscan} instruction then suspends. This is necessary in
+case \textit{expr2} fails, so that \texttt{bscan} can get control
+again to perform data backtracking, restoring the previous values of
+\texttt{\&subject} and \texttt{\&pos} from the stack where they were
+saved.
+
+
+If \textit{expr2} succeeds, the \texttt{escan} instruction copies the
+descriptor on the top of the stack to its Arg0 position, overwriting
+the result produced by \textit{expr2}. It then exchanges the current
+values of \texttt{\&subject} and \texttt{\&pos} with those saved by
+\texttt{bscan} thus restoring the values of these keywords to their
+values prior to the scanning expression and at the same time saving
+the values they had at the time \textit{expr2} produced a result. The
+\texttt{escan} instruction then suspends.
+
+If \texttt{escan} is resumed, the values of \texttt{\&subject} and
+\texttt{\&pos} are restored from the stack, restoring the situation to
+what it was when \textit{expr2} produced a result. The \texttt{escan}
+instruction then fails in order to force the resumption of any
+suspended generators left by \textit{expr2.}
+
+Suppose, for example, that the values of \texttt{\&subject} and
+\texttt{\&pos} are \texttt{{\textquotedbl}the{\textquotedbl}} and 2
+respectively, when the following expression is evaluated:
+
+\iconline{ \ \ read(f) ? move(4) }
+
+Suppose \texttt{read(f)} produces the string
+\texttt{{\textquotedbl}coconuts{\textquotedbl}}. The stack is
+
+\begin{picture}(300,80)(0,16)
+\put(100,32){\dvboxptr{8}{}{40}{"coconuts"}}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,32){\upetc}
+\put(100,32){\downbars}
+\end{picture}
+
+\begin{iconcode}
+\>\&subject:\>\>\>\> "the"\\
+\>\&pos:\>\>\>\> 2
+\end{iconcode}
+
+The \texttt{bscan} instruction is executed, pushing the current values
+of \texttt{\&subject} and \texttt{\&pos}:
+
+\begin{picture}(300,140)(0,16)
+\put(100,32){\dvbox{integer}{n}{2}}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,32){\trboxlabel{saved \&pos}}
+\put(100,32){\downbars}
+\put(100,64){\dvboxptr{3}{}{40}{"the"}}
+\put(100,64){\trboxlabel{saved \&subject}}
+\put(100,96){\dvboxptr{8}{}{40}{"coconuts"}}
+\put(100,96){\upetc}
+\end{picture}
+
+\begin{iconcode}
+\>\&subject:\>\>\>\> "the"\\
+\>\&pos:\>\>\>\> 2
+\end{iconcode}
+
+The \texttt{bscan} instruction sets \texttt{\&subject} to
+\texttt{{\textquotedbl}coconuts{\textquotedbl}} and \texttt{\&pos} to
+1. The \texttt{bscan} instruction then suspends and \texttt{move(4)}
+is evaluated. It suspends, and the top of the stack is
+
+\begin{picture}(300,170)(0,16)
+\begin{picture}(0,0)(0,-32)
+\put(100,32){\dvbox{integer}{n}{2}}
+\put(100,32){\trboxlabel{saved \&pos}}
+\put(100,64){\dvboxptr{3}{}{40}{"the"}}
+\put(100,64){\trboxlabel{saved \&subject}}
+\put(100,96){\dvboxptr{8}{}{40}{"coconuts"}}
+\put(100,96){\upetc}
+\end{picture}
+\put(100,32){\dvboxptr{4}{}{40}{"coco"}}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,32){\downbars}
+\end{picture}
+
+\begin{iconcode}
+\>\&subject:\>\>\>\> "coconuts"\\
+\>\&pos:\>\>\>\> 5
+\end{iconcode}
+
+The \texttt{escan} instruction is executed next. It copies the
+descriptor on the top of the stack to replace the result produced by
+\textit{expr2. }It then exchanges the current values of
+\texttt{\&subject} and \texttt{\&pos} with those on the stack:
+
+\begin{picture}(300,140)(0,16)
+\put(100,32){\dvbox{integer}{n}{5}}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,32){\trboxlabel{saved \&pos}}
+\put(100,32){\downbars}
+\put(100,64){\dvboxptr{8}{}{40}{"coconuts"}}
+\put(100,64){\trboxlabel{saved \&subject}}
+\put(100,96){\dvboxptr{4}{}{40}{"coco"}}
+\put(100,96){\trboxlabel{result to be returned}}
+\put(100,96){\upetc}
+\end{picture}
+
+\begin{iconcode}
+\>\&subject:\>\>\>\> "the"\\
+\>\&pos\>\>\>\>: 2
+\end{iconcode}
+
+The \texttt{escan} instruction then suspends, building a generator
+frame. The result of \textit{expr2} is placed on the top of the stack,
+becoming the result of the entire scanning expression.
+
+\begin{picture}(300,80)(0,16)
+\put(100,32){\dvboxptr{4}{}{40}{"coco"}}
+\put(100,32){\lregptr{sp}{20}}
+\put(100,32){\downbars}
+\put(100,32){\upetc}
+\end{picture}
+
+Since \texttt{escan} suspends, the saved values of \texttt{\&subject}
+and \texttt{\&pos} are preserved in a generator frame on the stack
+until \texttt{escan} is resumed or until the current expression frame
+is removed.
+
+\textsc{Retrospective}: The implementation of expression evaluation in
+Icon focuses on the concept of an expression frame within which
+control backtracking can occur. Bounded expressions, for example, are
+represented on the stack by expression frames, which confine
+backtracking.
+
+In the absence of generators, failure simply results in the removal of
+the current expression frame and transfer to a new location in the
+icode, bypassing instructions that otherwise would have been executed.
+
+State information must be saved when a generator suspends, so that its
+evaluation can be resumed. This information is preserved in a
+generator frame within the current expression frame. Generator frames
+are linked together in a last-in, first-out fashion. Goal-directed
+evaluation is a natural consequence of resuming the most recently
+suspended generator when an expression fails, instead of simply
+removing the current expression frame.
+
+String scanning involves saving and restoring the values of
+\texttt{\&subject} and \texttt{\&pos}. This is somewhat complicated,
+since scanning expressions can suspend and be resumed, but string
+scanning itself introduces nothing new into expression evaluation:
+generators and goal-directed evaluation provide {\textquotedbl}pattern
+matching.{\textquotedbl}
+
+\bigskip
+
+\noindent\textbf{EXERCISES}
+
+\textbf{\ref*{EV-Chapter}.1}
+Circle all the bounded expressions in the following segments of code:
+
+\begin{iconcode}
+\>while line := read() do\\
+\>\>if *line = i then write(line)\\
+\\
+\>if (i = find(s1,s2)) \& (j = find(s1,s3)) then \{\\
+\>\>write(i)\\
+\>\>write(j)\\
+\>\>\}\\
+\\
+\>line ? while write(move(1)) do\\
+\>\>\>move(1)
+\end{iconcode}
+
+\textbf{\ref*{EV-Chapter}.2}
+Describe the effect of nested generators and generators in mutual
+evaluation on the interpreter level.
+
+\textbf{\ref*{EV-Chapter}.3}
+Consider a hypothetical control structure called
+\textit{exclusive alternation} that is the same as regular
+alternation, except that if the first argument produces at least one
+result, the results from the second argument are not produced. Show
+the virtual machine instructions that should be generated for
+exclusive alternation.
+
+\textbf{\ref*{EV-Chapter}.4}
+The expression \texttt{read(f)} is an example of an expression
+that may produce result at one time and fail at another. This is
+possible because of a side effect of evaluating it{---}changing the
+position in the file f. Give an example of an expression that may fail
+at one time and produce a result at a subsequent time.
+
+\textbf{\ref*{EV-Chapter}.5}
+There are potential ``black holes'' in
+the expression-evaluation mechanism of Icon, despite the termination
+condition for repeated alternation. Give an example of one.
+
+\textbf{\ref*{EV-Chapter}.6}
+The expression frame marker produced by limit makes it easy to
+locate the limitation counter. Show how the counter could be located
+without the marker.
+
+\textbf{\ref*{EV-Chapter}.7}
+Suppose that the virtual machine instructions for
+
+\iconline{ \>every \textit{expr1} do \textit{expr2} }
+
+\noindent did not pop the result produced by \textit{expr1}. What
+effect would this have?
+
+\textbf{\ref*{EV-Chapter}.8}
+The virtual machine instructions for
+
+\iconline{ \>every expr }
+
+are
+
+\begin{iconcode}
+\>mark0\\
+\>\textit{code for expr}\\
+\>pop\\
+\>efail
+\end{iconcode}
+
+\noindent so that failure causes \textit{expr} to be resumed. The
+keyword \texttt{\&fail} also fails, so that the virtual machine
+instructions for
+
+\iconline{ \textit{\ \ \ expr }\& \&fail }
+
+are
+
+\begin{iconcode}
+\>\textit{code for expr}\\
+\>efail
+\end{iconcode}
+
+It is sometimes claimed that these two expressions are equivalent. If
+this were so, the shorter virtual machine instruction sequence for the
+second expression could be used for the first expression. Explain why
+the two expressions are not equivalent, in general, and give an
+example in which they are different.
+
+\textbf{\ref*{EV-Chapter}.9}
+Diagram the states of the stack for the example given in
+Sec. \ref*{EV-Chapter}.6, showing all generator frames.
+
+\textbf{\ref*{EV-Chapter}.10}
+Show the successive stack states for the evaluation of the
+following expressions, assuming that the values of \texttt{\&subject}
+and \texttt{\&pos} are \texttt{"the"} and
+2 respectively, and that \texttt{read()} produces
+\texttt{"coconuts"} in each case:
+
+\begin{tabular}{c@{\hspace{1cm}}l}
+(a) & \texttt{ read(f) ? move(10)}\\
+(b) & \texttt{ (read(f) ? move(4)) ? move(2)}\\
+(c) & \texttt{ read(f) ? (move(4) ? move(2))}\\
+(d) & \texttt{ (read(f) ? move(4)) ? move(10)}\\
+(e) & \texttt{ (read(f) ? move(4 {\textbar} 6)) ? move(5)}\\
+(f) & \texttt{ (read(f) ? move(4)) \& (read(f) \& move(10))}\\
+\\
+\end{tabular}
+
+\textbf{\ref*{EV-Chapter}.11}
+Write Icon procedures to emulate string
+scanning. \textit{Hint:} consider the virtual machine instructions for
+
+\iconline{ \textit{\ \ expr1 }? \textit{expr2} }

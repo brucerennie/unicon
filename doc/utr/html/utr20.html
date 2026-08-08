@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Unicon JSON Library</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li><a href="utr11.html">UTR 11: unicon — interpret or compile Unicon programs</a></li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li class="current">UTR 20: The Unicon JSON Library</li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr19.html">&larr; UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a>
+<a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">The Unicon JSON Library</h1>
+<p class="report-authors">Gigi Young and Clinton Jeffery</p>
+<p class="report-tr">Unicon Technical Report: 20</p>
+<p class="report-date">2020-10-16</p>
+<p class="report-pdf"><a href="utr20.pdf">pdf</a> · <a href="_sources/utr20.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>This report describes a library for supporting conversion to and from JSON (JavaScript Object Notation) and their equivalent Unicon structures.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+JSON is a widely used lightweight data-interchange format 
+[<a class="cite" href="#cite-crawford">8</a>] that supports nested, sequential and associative data structures. This report describes two Unicon library functions that allow for convenient data conversion between JSON and Unicon.
+</p>
+<h2 id="an-overview-of-the-json-grammar">
+An Overview of the JSON Grammar
+</h2>
+<p>
+The JSON grammar is straightforward. A JSON data structure is composed of one or more JSON values, which can be either a string, number, boolean true, boolean false, null, array, or object. An array contains a list of JSON values, while an object is a set of string-value pairs. In other words, an array is a list of values and an object is a table (dictionary) that requires keys to be strings. Arrays and objects may be arbitrarily nested within each other.
+</p>
+<p>
+The manner in which the tokens of the JSON grammar are defined allows a token's category to be determined from its first character. The JSON tokens are string, number, true, false, null, and the operators used for array, object, and their productions (
+<code>{}[]:,</code>
+). The following table gives the possible first characters of each non-operator JSON token.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+possible first characters
+</th>
+<th>
+JSON token
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>{</code>
+</td>
+<td>
+object
+</td>
+</tr>
+<tr>
+<td>
+<code>[</code>
+</td>
+<td>
+array
+</td>
+</tr>
+<tr>
+<td>
+<code>-0123456789</code>
+</td>
+<td>
+number
+</td>
+</tr>
+<tr>
+<td>
+<code>&quot;</code>
+</td>
+<td>
+string
+</td>
+</tr>
+<tr>
+<td>
+<code>t</code>
+</td>
+<td>
+true
+</td>
+</tr>
+<tr>
+<td>
+<code>f</code>
+</td>
+<td>
+false
+</td>
+</tr>
+<tr>
+<td>
+<code>n</code>
+</td>
+<td>
+null
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-unicon-json-api">
+The Unicon JSON API
+</h2>
+<p>
+The JSON library contains four thread-safe functions: 
+<code>jtou()</code>
+, 
+<code>jtous()</code>
+, 
+<code>jtouf()</code>
+ for converting from JSON to Unicon and 
+<code>utoj()</code>
+ for converting from Unicon to JSON. The data equivalencies are as follows:
+</p>
+<p>
+<strong>
+JSON to Unicon data type equivalency
+</strong>
+</p>
+<table>
+<thead>
+<tr>
+<th>
+JSON data type
+</th>
+<th>
+Unicon data type
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+object
+</td>
+<td>
+table
+</td>
+</tr>
+<tr>
+<td>
+array
+</td>
+<td>
+list
+</td>
+</tr>
+<tr>
+<td>
+string
+</td>
+<td>
+string
+</td>
+</tr>
+<tr>
+<td>
+number
+</td>
+<td>
+int, real
+</td>
+</tr>
+<tr>
+<td>
+true
+</td>
+<td>
+string - 
+<code>&quot;__true__&quot;</code>
+</td>
+</tr>
+<tr>
+<td>
+false
+</td>
+<td>
+string - 
+<code>&quot;__false__&quot;</code>
+</td>
+</tr>
+<tr>
+<td>
+null
+</td>
+<td>
+null value - 
+<code>&amp;null</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<strong>
+Unicon to JSON data equivalency
+</strong>
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Unicon data type
+</th>
+<th>
+JSON data type
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+table, set, cset, record, class
+</td>
+<td>
+object
+</td>
+</tr>
+<tr>
+<td>
+list
+</td>
+<td>
+array
+</td>
+</tr>
+<tr>
+<td>
+string
+</td>
+<td>
+string
+</td>
+</tr>
+<tr>
+<td>
+int, real
+</td>
+<td>
+number
+</td>
+</tr>
+<tr>
+<td>
+string - 
+<code>&quot;__true__&quot;</code>
+</td>
+<td>
+true
+</td>
+</tr>
+<tr>
+<td>
+string - 
+<code>&quot;__false__&quot;</code>
+</td>
+<td>
+false
+</td>
+</tr>
+<tr>
+<td>
+null value - 
+<code>&amp;null</code>
+</td>
+<td>
+null
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+There are more Unicon data structures than JSON was designed to represent. Consequently, string encodings (
+<code>&quot;__unitable__&quot;</code>
+, 
+<code>&quot;__uniset__&quot;</code>
+, 
+<code>&quot;__unicset__&quot;</code>
+, 
+<code>&quot;__unirecord__&quot;</code>
+, and 
+<code>&quot;__uniclass__&quot;</code>
+) have been defined to differentiate the different types of Unicon structures represented by a JSON object (tables, sets, csets, records, and classes respectively). The JSON object Unicon-encodings are listed in the table below:
+</p>
+<p>
+<strong>
+JSON object Unicon-encodings
+</strong>
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Unicon data type
+</th>
+<th>
+JSON specification
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+table
+</td>
+<td>
+<code>{&quot;__unitable__&quot;:1, ...}</code>
+</td>
+</tr>
+<tr>
+<td>
+set
+</td>
+<td>
+<code>{&quot;__uniset__&quot;:[...]}</code>
+</td>
+</tr>
+<tr>
+<td>
+cset
+</td>
+<td>
+<code>{&quot;__unicset__&quot;:&quot;...&quot;}</code>
+</td>
+</tr>
+<tr>
+<td>
+record
+</td>
+<td>
+<code>{&quot;__unirecord__&quot;:&quot;RecordName&quot;,&quot;Field1&quot;:&quot;Value1&quot;, ...}</code>
+</td>
+</tr>
+<tr>
+<td>
+class
+</td>
+<td>
+<code>{&quot;__uniclass__&quot;:&quot;ClassName&quot;,&quot;Field1&quot;:&quot;Value1&quot;, ...}</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+These encodings are strict and no type coercions will be performed. For example,
+</p>
+<pre><code class="language-json">
+
+{&quot;__unitable__&quot;:&quot;1&quot;}
+</code></pre>
+<p>
+would produce a Unicon table with key-value pair
+</p>
+<pre><code class="language-unicon">
+
+T[&quot;__unitable__&quot;] := &quot;1&quot;
+</code></pre>
+<p>
+instead of an empty table. Any JSON object that does not adhere to these Unicon-encodings will default to a Unicon table. Furthermore, records and classes that adhere to Unicon-encoding syntax but whose constructors do not exist in the calling program will also be converted to Unicon tables.
+</p>
+<p>
+The Unicon table is a superset of what the JSON object can represent. A JSON object is a dictionary which only supports string keys, while a Unicon table supports any valid Unicon type as a key. To support JSON conversion of Unicon tables, the grammar of a JSON object is optionally extended to accept any JSON value as a key. The extended JSON object becomes a set of value-value pairs instead of string-value pairs.
+</p>
+<p>
+Although the aim of this library is to support inter-language data exchange, it is just as important to support all Unicon data types. The choosen compromise allows Unicon users the decision of whether or not to adhere to strict JSON with the parameter 
+<code>strict</code>
+. 
+<code>strict</code>
+ is a parameter for every function in the JSON library API and defaults to 
+<code>&amp;null</code>
+. If 
+<code>strict</code>
+ is non-null, then library functions adhere to the JSON specification. Otherwise, an extended-JSON specification which allows for non-string key values for JSON objects is used.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``jtou(s, strict:&amp;null, mode:&amp;null, error:&amp;errout)``
+</strong>
+ — 
+<strong>
+JSON to Unicon
+</strong>
+</p>
+<p>
+<code>jtou(s)</code>
+ generates the equivalent Unicon data structure(s) to parameter 
+<code>s</code>
+, a JSON-encoded string or JSON filename. Parameter 
+<code>strict</code>
+ enforces strict adherence to the JSON specification if non-null. Parameter 
+<code>mode</code>
+ can be specified as 
+<code>&quot;s&quot;</code>
+ (see 
+<code>jtous()</code>
+) to force JSON-encoded string conversion or as 
+<code>&quot;f&quot;</code>
+ (see 
+<code>jtouf()</code>
+) to force JSON file conversion. 
+<code>jtou(s)</code>
+ tries to first process 
+<code>s</code>
+ as a string, then as a filename if 
+<code>mode</code>
+ is not specified. Parameter 
+<code>error</code>
+ allows the user to specify a file or filestream other than standard error for error output. This function fails if 
+<code>s</code>
+ is not valid JSON, depending on parameter 
+<code>strict</code>
+. It should be noted that error messages may be misleading if 
+<code>mode</code>
+ is not specified.
+</p>
+<p>
+To conform with other JSON libraries, trailing commas are allows for JSON arrays and objects.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``jtous(s, strict:&amp;null, error:&amp;errout)``
+</strong>
+ — 
+<strong>
+JSON string to Unicon
+</strong>
+</p>
+<p>
+<code>jtous(s)</code>
+ (equivalent to 
+<code>jtou(s,&quot;s&quot;)</code>
+) generates the equivalent Unicon data structure(s) to parameter 
+<code>s</code>
+, a JSON-encoded string. Parameter 
+<code>strict</code>
+ enforces strict adherence to the JSON specification if non-null. Parameter 
+<code>error</code>
+ allows the user to specify a file or filestream other than standard error for error output. This function fails if 
+<code>s</code>
+ is not valid JSON, depending on parameter 
+<code>strict</code>
+.
+</p>
+<p>
+To conform with other JSON libraries, trailing commas are allows for JSON arrays and objects.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``jtouf(s, strict:&amp;null, error:&amp;errout)``
+</strong>
+ — 
+<strong>
+JSON file to Unicon
+</strong>
+</p>
+<p>
+<code>jtouf(s)</code>
+ (equivalent to 
+<code>jtou(s,&quot;f&quot;)</code>
+) generates the equivalent Unicon data structure(s) to parameter 
+<code>s</code>
+, a JSON filename. Parameter 
+<code>strict</code>
+ enforces strict adherence to the JSON specification if non-null. Parameter 
+<code>error</code>
+ allows the user to specify a file or filestream other than standard error for error output. This function fails if 
+<code>s</code>
+ is not valid JSON, depending on parameter 
+<code>strict</code>
+.
+</p>
+<p>
+To conform with other JSON libraries, trailing commas are allows for JSON arrays and objects.
+</p>
+<p>
+----
+</p>
+<p>
+<strong>
+``utoj(u, strict:&amp;null, error:&amp;errout)``
+</strong>
+ — 
+<strong>
+Unicon to JSON
+</strong>
+</p>
+<p>
+<code>utoj(u)</code>
+ takes a Unicon value, 
+<code>u</code>
+, and returns a corresponding JSON-formatted string. Parameter 
+<code>strict</code>
+ enforces strict adherence to the JSON specification if non-null. Parameter 
+<code>error</code>
+ allows the user to specify a filestream other than standard error for error output.
+</p>
+<h2 id="examples">
+Examples
+</h2>
+<p>
+Unicon's JSON library is straightforward. 
+<code>jtou()</code>
+, 
+<code>jtous()</code>
+, or 
+<code>jtouf()</code>
+ are used to convert JSON to Unicon data types and 
+<code>utoj()</code>
+ is used to convert Unicon data types to JSON. 
+<code>jtou(s,&quot;s&quot;)</code>
+ is equivalent to 
+<code>jtous(s)</code>
+ and 
+<code>jtou(s,&quot;f&quot;)</code>
+ is equivalent to 
+<code>jtouf(s)</code>
+. 
+<code>jtou(s)</code>
+ will convert 
+<code>s</code>
+ whether it is a JSON-encoded string or JSON filename as long as the JSON is valid. However, one may want to use the specific functions 
+<code>jtous()</code>
+ and 
+<code>jtouf()</code>
+ in the case of error handling accuracy.
+</p>
+<p>
+----
+</p>
+<p>
+The following program converts a JSON data structure which consists of an object and an array to a Unicon list containing a table and list. The 
+<code>jtou*()</code>
+ family of functions are generators, which allows the use of the list constructor.
+</p>
+<pre><code class="language-unicon">
+
+link json
+procedure main()
+   u := [: jtou(&quot;{\&quot;one\&quot;:1, \&quot;two\&quot;:2, \&quot;three\&quot;:3}_
+       [true, false, null, 1.23e3]&quot;) :]
+   x := u[1]
+   y := u[2]
+   write(x[&quot;one&quot;])
+   write(x[&quot;two&quot;])
+   write(x[&quot;three&quot;])
+   every i := 1 to *y do write(y[i])
+end
+</code></pre>
+<p>
+The output of which is:
+</p>
+<pre><code class="language-text">
+
+1
+2
+3
+__true__
+__false__
+ 1230.0
+</code></pre>
+<p>
+----
+</p>
+<p>
+This simple program converts a Unicon table to a JSON object
+</p>
+<pre><code class="language-unicon">
+
+link json
+procedure main()
+   T := table()
+   T[&quot;one&quot;] := 1
+   T[&quot;two&quot;] := 2
+   T[&quot;list&quot;] := [1,2,3]
+   T[&quot;table&quot;] := table()
+   write(utoj(T))
+end
+</code></pre>
+<p>
+and outputs:
+</p>
+<pre><code class="language-json">
+
+{&quot;__unitable__&quot;:1,&quot;two&quot;:2,&quot;table&quot;:{&quot;__unitable__&quot;:1},&quot;one&quot;:1,&quot;list&quot;:[1,2,3]}
+</code></pre>
+<p>
+The extraction of keys from Unicon tables occurs in a random manner, resulting in JSON data that does not follow the order in which the Unicon table was constructed. However, lists are sequential in Unicon, so the resulting ordering of the JSON array is retained.
+</p>
+<p>
+----
+</p>
+<p>
+The following program performs a class conversion
+</p>
+<pre><code class="language-unicon">
+
+link json
+
+class Person(name, age, gender)
+   #
+   # some methods here
+   #
+end
+
+procedure main()
+   person := Person(&quot;Joe&quot;, 42, &quot;Male&quot;)
+   write(utoj(person))
+end
+</code></pre>
+<p>
+which outputs:
+</p>
+<pre><code class="language-json">
+
+{&quot;__uniclass__&quot;:&quot;Person&quot;,&quot;name&quot;:&quot;Joe&quot;,&quot;age&quot;:42,&quot;gender&quot;:&quot;Male&quot;}
+</code></pre>
+<p>
+----
+</p>
+<p>
+The following program performs a Unicon-to-JSON-back-to-Unicon conversion and is more complicated than the previous examples. This shows that the JSON library can be used to store Unicon data. Unicon's JSON library does not store object references, but can recreate structually equivalent objects.
+</p>
+<pre><code class="language-unicon">
+
+link json
+link ximage
+
+record R(a,b,c)
+
+class S(d,e,f)
+end
+
+procedure main()
+   c := S()
+   c.d := &quot;a&quot;
+   c.e := &quot;b&quot;
+   c.f := &quot;c&quot;
+   r := R(1,2,3)
+   s := set([&quot;abc&quot;])
+   s2 := set([&quot;__unicset__&quot;,&quot;__uniset__&quot;,&quot;__uniclass__&quot;,&quot;__unirecord__&quot;])
+   t := table()
+   t['a'] := 'bc'
+   t[&quot;\177b&quot;] := 2
+   t[&quot;c&quot;] := table()
+   t[&quot;c&quot;][&quot;\^cd&quot;] := 3.89e-4
+   t[1] := r
+   t[2] := c
+   t[s] := set([&quot;I'm a set element&quot;])
+   t[&quot;__uniset__&quot;] := s2
+   l := [t, s]
+
+   write(&quot;Before encoding:&quot;,ximage(l))
+   X := utoj(l)
+   write(&quot;\nEncoded JSON: &quot;,X)
+   y := jtous(X)
+   write(&quot;\nAfter encoding:&quot;,ximage(y),&quot;\n&quot;)
+end
+</code></pre>
+<p>
+This program produces the output:
+</p>
+<pre><code class="language-text">
+
+Before encoding:L4 := list(2)
+   L4[1] := T1 := table(&amp;null)
+      T1[1] := R_R_1 := R()
+         R_R_1.a := 1
+         R_R_1.b := 2
+         R_R_1.c := 3
+      T1[2] := S_1 := S()
+         S_1.d := &quot;a&quot;
+         S_1.e := &quot;b&quot;
+         S_1.f := &quot;c&quot;
+      T1[&quot;__uniset__&quot;] := S2 := set()
+         insert(S2,&quot;__uniclass__&quot;)
+         insert(S2,&quot;__unicset__&quot;)
+         insert(S2,&quot;__unirecord__&quot;)
+         insert(S2,&quot;__uniset__&quot;)
+      T1[&quot;c&quot;] := T2 := table(&amp;null)
+         T2[&quot;\x03d&quot;] := 0.000389
+      T1[&quot;\db&quot;] := 2
+      T1['a'] := 'bc'
+      T1[{S1 := set()
+            insert(S1,&quot;abc&quot;)
+         S1}] := S3 := set()
+         insert(S3,&quot;I'm a set element&quot;)
+   L4[2] := S1
+
+Encoded JSON: [{&quot;__unitable__&quot;:1,&quot;\u007Fb&quot;:2,2:{&quot;__uniclass__&quot;:&quot;S&quot;,&quot;d&quot;:&quot;a&quot;,&quot;
+e&quot;:&quot;b&quot;,&quot;f&quot;:&quot;c&quot;},&quot;__uniset__&quot;:{&quot;__uniset__&quot;:[&quot;__uniclass__&quot;,&quot;__uniset__&quot;,&quot;__u
+nirecord__&quot;,&quot;__unicset__&quot;]},1:{&quot;__unirecord__&quot;:&quot;R&quot;,&quot;a&quot;:1,&quot;b&quot;:2,&quot;c&quot;:3},{&quot;__un
+iset__&quot;:[&quot;abc&quot;]}:{&quot;__uniset__&quot;:[&quot;I'm a set element&quot;]},{&quot;__unicset__&quot;:&quot;a&quot;}:{&quot;
+__unicset__&quot;:&quot;bc&quot;},&quot;c&quot;:{&quot;__unitable__&quot;:1,&quot;\u0003d&quot;:0.000389}},{&quot;__uniset__&quot;:
+[&quot;abc&quot;]}]
+
+After encoding:L24 := list(2)
+   L24[1] := T7 := table(&amp;null)
+      T7[1] := R_R_3 := R()
+         R_R_3.a := 1
+         R_R_3.b := 2
+         R_R_3.c := 3
+      T7[2] := S_2 := S()
+         S_2.d := &quot;a&quot;
+         S_2.e := &quot;b&quot;
+         S_2.f := &quot;c&quot;
+      T7[&quot;__uniset__&quot;] := S4 := set()
+         insert(S4,&quot;__uniclass__&quot;)
+         insert(S4,&quot;__unicset__&quot;)
+         insert(S4,&quot;__unirecord__&quot;)
+         insert(S4,&quot;__uniset__&quot;)
+      T7[&quot;c&quot;] := T13 := table(&amp;null)
+         T13[&quot;\x03d&quot;] := 0.000389
+      T7[&quot;\db&quot;] := 2
+      T7['a'] := 'bc'
+      T7[{S5 := set()
+            insert(S5,&quot;abc&quot;)
+         S5}] := S6 := set()
+         insert(S6,&quot;I'm a set element&quot;)
+   L24[2] := S7 := set()
+      insert(S7,&quot;abc&quot;)
+</code></pre>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-levine92" value="1">
+John R. Levine and Tony Mason and Doug Brown. &quot;Lex \&amp; Yacc&quot;. O'Reilly and Associates. 1992.
+</li>
+<li id="cite-ray03" value="2">
+K. Ray and Ray Pereda and Clinton Jeffery. &quot;Ulex -- A Lexical Analyzer Generator for Unicon&quot;. http://unicon.org/utr/utr2/utr2a.pdf. 2003.
+</li>
+<li id="cite-jeffery-1995-cs-tr" value="3">
+Clinton Jeffery. &quot;How to Write a UTSA CS Division Technical Report&quot;. 1995.
+</li>
+<li id="cite-griswold-newsletter" value="4">
+Ralph Griswold. &quot;Icon Benchmarks&quot;. The Icon Newsletter. 1989.
+</li>
+<li id="cite-jeffery-sesrit" value="5">
+Clinton Jeffery and David Rice. &quot;sesrit.icn&quot;. http://www2.cs.uidaho.edu/~jeffery/courses/game/sesrit.icn. 1999.
+</li>
+<li id="cite-shootout-2014" value="6">
+Brent Fulgham and Isaac Gouy. &quot;The Computer Language Benchmarks Game&quot;. http://benchmarksgame.alioth.debian.org/.
+</li>
+<li id="cite-merr" value="7">
+Clinton Jeffery. &quot;Merr: an LR Syntax Error Message Tool&quot;. http://unicon.org/merr.
+</li>
+<li id="cite-crawford" value="8">
+anonymous, but owing to Douglas Crawford. &quot;Introducing JSON&quot;. json.org.
+</li>
+<li id="cite-beck-sunit" value="9">
+Kent Beck. &quot;Simple Smalltalk Testing: With Patterns&quot;. Available at https://web.archive.org/web/20150315073817/http://www.xprogramming.com/testfram.htm [Verified 13 May 2024].
+</li>
+</ol></div>
+<div class="prevnext">
+<a href="utr19.html">&larr; UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a>
+<a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr20.pdf">pdf</a> | <a href="_sources/utr20.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

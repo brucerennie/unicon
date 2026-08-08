@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li class="current">Installation</li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+<li><a href="sphinx.html">uscribe and Sphinx</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="intro.html">&larr; Introduction</a>
+<a href="quickstart.html">Quick Start &rarr;</a>
+</div>
+<h2 id="installation">
+Installation
+</h2>
+<h3 id="requirements">
+Requirements
+</h3>
+<p>
+<strong>
+Required
+</strong>
+</p>
+<ul>
+<li>
+A built Unicon tree (
+<code>./configure &amp;&amp; make</code>
+ from the unicon sources)
+</li>
+</ul>
+<p>
+<strong>
+Optional (PDF only)
+</strong>
+</p>
+<ul>
+<li>
+A TeX engine on your 
+<code>PATH</code>
+: 
+<code>pdflatex</code>
+, 
+<code>xelatex</code>
+, or 
+<code>lualatex</code>
+. uscribe picks the first one it finds. HTML and 
+<code>--format=latex</code>
+ (
+<code>.tex</code>
+ only) do not need TeX.
+</li>
+</ul>
+<p>
+There is no Homebrew or apt package literally named 
+<code>pdflatex</code>
+; that name is a program shipped inside a TeX distribution. Install one of the packages below, then confirm:
+</p>
+<pre><code class="language-sh">
+
+which pdflatex || which xelatex || which lualatex
+</code></pre>
+<h3 id="tex-pdf-dependencies-by-platform">
+TeX / PDF dependencies by platform
+</h3>
+<h4 id="macos-homebrew">
+macOS (Homebrew)
+</h4>
+<p>
+Compact (recommended for uscribe):
+</p>
+<pre><code class="language-sh">
+
+brew install --cask basictex
+</code></pre>
+<p>
+Full MacTeX (much larger):
+</p>
+<pre><code class="language-sh">
+
+brew install --cask mactex
+# or: brew install --cask mactex-no-gui
+</code></pre>
+<p>
+After BasicTeX or MacTeX, restart the terminal (or run 
+<code>eval &quot;$(/usr/libexec/path_helper)&quot;</code>
+) so the new binaries are on 
+<code>PATH</code>
+.
+</p>
+<h4 id="debian-ubuntu">
+Debian / Ubuntu
+</h4>
+<p>
+Minimal (often enough):
+</p>
+<pre><code class="language-sh">
+
+sudo apt update
+sudo apt install texlive-latex-base
+</code></pre>
+<p>
+Recommended if 
+<code>pdflatex</code>
+ complains about missing packages (hyperref, fancyvrb, graphicx fonts, and similar):
+</p>
+<pre><code class="language-sh">
+
+sudo apt install texlive-latex-recommended texlive-fonts-recommended
+</code></pre>
+<p>
+Larger kitchen-sink options:
+</p>
+<pre><code class="language-sh">
+
+sudo apt install texlive-latex-extra
+# or everything: sudo apt install texlive-full
+</code></pre>
+<h4 id="fedora-rhel-family">
+Fedora / RHEL-family
+</h4>
+<pre><code class="language-sh">
+
+sudo dnf install texlive-latex
+# fuller: sudo dnf install texlive-scheme-medium
+# everything: sudo dnf install texlive-scheme-full
+</code></pre>
+<h4 id="arch-linux">
+Arch Linux
+</h4>
+<pre><code class="language-sh">
+
+sudo pacman -S texlive-basic texlive-latex
+# or a broader set: sudo pacman -S texlive-meta
+</code></pre>
+<h4 id="windows">
+Windows
+</h4>
+<p>
+Install either MiKTeX (https://miktex.org/download) — packages on demand — or TeX Live for Windows (https://tug.org/texlive/).
+</p>
+<p>
+Ensure the installer puts 
+<code>pdflatex</code>
+ on your 
+<code>PATH</code>
+, then open a new Command Prompt or PowerShell window.
+</p>
+<h4 id="what-uscribe-latex-output-needs">
+What uscribe LaTeX output needs
+</h4>
+<p>
+Generated 
+<code>book.tex</code>
+ uses a small set of packages (
+<code>graphicx</code>
+, 
+<code>hyperref</code>
+, 
+<code>xcolor</code>
+, 
+<code>fancyvrb</code>
+, 
+<code>booktabs</code>
+). A latex base or recommended install is usually enough. If 
+<code>pdflatex</code>
+ stops with 
+<code>File …sty not found</code>
+, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
+</p>
+<p>
+SVG figures are not embedded in PDF; convert them to PDF or PNG, or accept the boxed placeholder uscribe emits for 
+<code>.svg</code>
+ paths.
+</p>
+<h3 id="build-uscribe">
+Build uscribe
+</h3>
+<p>
+From the unicon tree:
+</p>
+<pre><code class="language-sh">
+
+cd uni/uscribe
+make
+</code></pre>
+<p>
+That compiles the 
+<code>uscribe</code>
+ package, links 
+<code>./uscribe</code>
+, and installs a copy to 
+<code>../../bin/uscribe</code>
+.
+</p>
+<p>
+Regenerate Make dependencies after adding 
+<code>.icn</code>
+ files:
+</p>
+<pre><code class="language-sh">
+
+make deps
+</code></pre>
+<h3 id="verify">
+Verify
+</h3>
+<pre><code class="language-sh">
+
+uscribe
+# prints usage and exits
+</code></pre>
+<h3 id="build-this-manual">
+Build this manual
+</h3>
+<p>
+HTML:
+</p>
+<pre><code class="language-sh">
+
+cd doc/uscribe
+make
+# open out/index.html
+</code></pre>
+<p>
+PDF (after installing a TeX engine as above):
+</p>
+<pre><code class="language-sh">
+
+cd doc/uscribe
+make pdf
+# open out/book.pdf
+</code></pre>
+<p>
+<code>make latex</code>
+ writes 
+<code>out/book.tex</code>
+ without running a TeX engine. 
+<code>make pdf</code>
+ writes the 
+<code>.tex</code>
+ and runs the engine twice (TOC and cross-references).
+</p>
+<div class="prevnext">
+<a href="intro.html">&larr; Introduction</a>
+<a href="quickstart.html">Quick Start &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="install.pdf">pdf</a> | <a href="_sources/install.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

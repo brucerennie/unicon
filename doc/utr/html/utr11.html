@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>unicon — interpret or compile Unicon programs</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="utr1.html">UTR 1b: An ODBC Interface for the Unicon Programming Language</a></li>
+<li><a href="utr2.html">UTR 2: iflex: A Lexical Analyzer Generator for Icon</a></li>
+<li><a href="utr2b.html">UTR 2b: Uflex: A Lexical Analyzer Generator for Unicon</a></li>
+<li><a href="utr3.html">UTR 3a: iyacc: A Parser Generator for Icon and Unicon</a></li>
+<li><a href="utr4.html">UTR 4a: Writing CGI and PHP Scripts in Icon and Unicon</a></li>
+<li><a href="utr5.html">UTR 5: The Implementation of Graphics in Unicon Version 10</a></li>
+<li><a href="utr5b.html">UTR 5b: The Implementation of Graphics in Unicon Version 12</a></li>
+<li><a href="utr6.html">UTR 6c: An IVIB Primer</a></li>
+<li><a href="utr7.html">UTR 7d: Version 13.1 of Unicon for Microsoft Windows</a></li>
+<li><a href="utr8.html">UTR 8c: Unicon Language Reference</a></li>
+<li><a href="utr9.html">UTR 9d: Unicon 3D Graphics User's Guide and Reference Manual</a></li>
+<li><a href="utr10.html">UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a></li>
+<li class="current">UTR 11: unicon — interpret or compile Unicon programs</li>
+<li><a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment</a></li>
+<li><a href="utr13.html">UTR 13a: The Unicon Messaging Facilities</a></li>
+<li><a href="utr14.html">UTR 14: Unicon Threads: User's Guide and Reference Manual</a></li>
+<li><a href="utr15.html">UTR 15: How to Write a Unicon Technical Report</a></li>
+<li><a href="utr16.html">UTR 16a: A Unicon Benchmark Suite</a></li>
+<li><a href="utr17.html">UTR 17: A Transformational Interpreter for Goal-Directed Evaluation</a></li>
+<li><a href="utr18.html">UTR 18c: Pattern Matching in Unicon</a></li>
+<li><a href="utr19.html">UTR 19: Adding New Diagnostic Syntax Error Messages to Unicon</a></li>
+<li><a href="utr20.html">UTR 20: The Unicon JSON Library</a></li>
+<li><a href="utr21.html">UTR 21: Configuring and Building Version 13 of Unicon</a></li>
+<li><a href="utr22.html">UTR 22: Unicon OpenGL 2D and 2D/3D Graphics User's Guide</a></li>
+<li><a href="utr23.html">UTR 23: Unicon Unit Testing Framework User's Guide</a></li>
+<li><a href="utf8.html">UTF-8 Support Notes</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="utr10.html">&larr; UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a>
+<a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">unicon — interpret or compile Unicon programs</h1>
+<p class="report-authors">Unicon Project</p>
+<p class="report-tr">Unicon Technical Report: 11</p>
+<p class="report-date">2014-07-28</p>
+<p class="report-pdf"><a href="utr11.pdf">pdf</a> · <a href="_sources/utr11.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Manual page for unicon, icont, and iconc — tools that convert Unicon and Icon source programs into executable form.</p>
+</div>
+</header>
+<h2 id="name">
+NAME
+</h2>
+<p>
+unicon - interpret or compile Unicon programs
+</p>
+<h2 id="synopsis">
+SYNOPSIS
+</h2>
+<p>
+| unicon [ option ... ] file ... [ -x arg ... ] | icont [ option ... ] file ... [ -x arg ... ] | iconc [ option ... ] file ... [ -x arg ... ]
+</p>
+<h2 id="description">
+DESCRIPTION
+</h2>
+<p>
+The programs unicon, icont and iconc convert Unicon and Icon source programs into executable form. By default unicon, like icont, translates quickly and provides interpretive (virtual machine) execution. Unicon with the -C option uses iconc, which takes longer to compile but produces programs that execute faster. icont and iconc for the most part can be used interchangeably. Unicon is a superset that supports Icon programs, while adding classes, packages, and various other features.
+</p>
+<p>
+This manual page describes unicon, and the versions of icont and iconc that come with unicon. This page is gratefully based on the Icon Project manual page for icon. Where there there are differences in usage between unicon, icont and iconc, these are noted.
+</p>
+<p>
+<strong>
+File Names:
+</strong>
+ Files whose names end in .icn are assumed to be Unicon source files. The .icn suffix may be omitted; if it is not present, it is supplied. The character - can be used to indicate an Unicon source file given in standard input. Several source files can be given on the same command line; if so, they are combined to produce a single program.
+</p>
+<p>
+The name of the executable file is the base name of the first input file, formed by deleting the suffix, if present. stdin is used for source programs given in standard input.
+</p>
+<p>
+<strong>
+Processing:
+</strong>
+ As noted in the synopsis above, unicon, icont and iconc accept options followed by file names, optionally followed by -x and arguments. If -x is given, the program is executed automatically and any following arguments are passed to it.
+</p>
+<p>
+unicon: The processing performed by unicon consists of 
+<em>
+class and package preprocessing
+</em>
+ followed by invocation of icont (or iconc, if -C is given) to produce code and/or executable output.
+</p>
+<p>
+icont: The processing performed by icont consists of two phases: 
+<em>
+translation
+</em>
+ and 
+<em>
+linking
+</em>
+. During translation, each Icon source file is translated into an intermediate language called 
+<em>
+ucode
+</em>
+. A ucode file is produced for each source file, with a base name taken from the source file and the suffix .u. During linking, one or more ucode files are combined to produce a single 
+<em>
+icode
+</em>
+ file. The ucode files are deleted after the icode file is created.
+</p>
+<p>
+Processing by unicon or icont can be terminated after translation by the -c option. In this case, the ucode files are not deleted. The names of .u files from previous translations can be given on the unicon or icont command line. These files files are included in the linking phase after the translation of any source files. Ucode files that are explicitly named are not deleted.
+</p>
+<p>
+iconc: The processing performed by iconc consists of two phases: 
+<em>
+code generation
+</em>
+ and 
+<em>
+compilation and linking
+</em>
+. The code generation phase produces C code, consisting of a .c and a .h file, with the base name of the first source file. These files are then compiled and linked to produce an executable binary file. The C files normally are deleted after compilation and linking.
+</p>
+<p>
+Processing by iconc can be terminated after code generation by the -c option. In this case, the C files are not deleted.
+</p>
+<h2 id="options">
+OPTIONS
+</h2>
+<p>
+The following options are recognized by unicon, icont, and iconc:
+</p>
+<table>
+<tbody>
+<tr>
+<td>
+</td>
+<td>
+-c
+</td>
+<td>
+</td>
+<td>
+Stop after producing intermediate files and do not delete them (unicon and icont only).
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+-e 
+<em>
+file
+</em>
+</p>
+<p>
+Redirect standard error output to 
+<em>
+file
+</em>
+.
+</p>
+<p>
+-f s
+</p>
+<p>
+Enable full string invocation.
+</p>
+<p>
+-o 
+<em>
+name
+</em>
+</p>
+<p>
+Name the output file 
+<em>
+name
+</em>
+.
+</p>
+<table>
+<tbody>
+<tr>
+<td>
+</td>
+<td>
+-s
+</td>
+<td>
+</td>
+<td>
+Suppress informative messages. Normally, both informative messages and error messages are sent to standard error output.
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+-t
+</td>
+<td>
+</td>
+<td>
+Arrange for &amp;trace to have an initial value of -1 when the program is executed and for iconc enable debugging features.
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+-u
+</td>
+<td>
+</td>
+<td>
+Issue warning messages for undeclared identifiers in the program.
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+-v 
+<em>
+i
+</em>
+</p>
+<p>
+Set verbosity level of informative messages to 
+<em>
+i
+</em>
+</p>
+<table>
+<tbody>
+<tr>
+<td>
+</td>
+<td>
+<em>
+-E
+</em>
+</td>
+<td>
+</td>
+<td>
+Direct the results of preprocessing to standard output and inhibit further processing.
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+The following options are recognized only by unicon:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+\
+</th>
+<th>
+-C
+</th>
+<th>
+Have unicon generate code using iconc instead of icont
+</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+<p>
+-version
+</p>
+<p>
+Print the version of Unicon and exit.
+</p>
+<p>
+-features
+</p>
+<p>
+Print the features compiled into this implementation Unicon and exit.
+</p>
+<p>
+The following additional options are recognized only by unicon and icont:
+</p>
+<p>
+\  -G  Bundle a graphics-enabled VM (MS Windows)
+</p>
+<dl>
+<dt>| The following additional options are recognized only by by unicon -C</dt>
+<dd>
+<p>
+and iconc:
+</p>
+</dd>
+</dl>
+<p>
+| -f 
+<em>
+string
+</em>
+</p>
+<p>
+Enable features as indicated by the letters in 
+<em>
+string
+</em>
+:
+</p>
+<table>
+<tbody>
+<tr>
+<td>
+</td>
+<td>
+a
+</td>
+<td>
+</td>
+<td>
+all, equivalent to delns
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+d
+</td>
+<td>
+</td>
+<td>
+enable debugging features: display(), name(), variable(), error trace back, and the effect of -f n (see below)
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+e
+</td>
+<td>
+</td>
+<td>
+enable error conversion
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+l
+</td>
+<td>
+</td>
+<td>
+enable large-integer arithmetic
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+n
+</td>
+<td>
+</td>
+<td>
+produce code that keeps track of line numbers and file names in the source code
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+s
+</td>
+<td>
+</td>
+<td>
+enable full string invocation
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+-n 
+<em>
+string
+</em>
+</p>
+<p>
+Disable specific optimizations. These are indicated by the letters in 
+<em>
+string
+</em>
+:
+</p>
+<table>
+<tbody>
+<tr>
+<td>
+</td>
+<td>
+a
+</td>
+<td>
+</td>
+<td>
+all, equivalent to cest
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+c
+</td>
+<td>
+</td>
+<td>
+control flow optimizations other than switch statement optimizations
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+e
+</td>
+<td>
+</td>
+<td>
+expand operations in-line when reasonable (keywords are always put in-line)
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+s
+</td>
+<td>
+</td>
+<td>
+optimize switch statements associated with operation invocations
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td>
+t
+</td>
+<td>
+</td>
+<td>
+type inference
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+-p 
+<em>
+arg
+</em>
+</p>
+<p>
+Pass 
+<em>
+arg
+</em>
+ on to the C compiler used by iconc
+</p>
+<p>
+-r 
+<em>
+path
+</em>
+</p>
+<p>
+Use the run-time system at 
+<em>
+path
+</em>
+, which must end with a slash.
+</p>
+<p>
+-CC 
+<em>
+prg
+</em>
+</p>
+<p>
+Have iconc use the C compiler given by 
+<em>
+prg
+</em>
+</p>
+<h2 id="environment-variables">
+ENVIRONMENT VARIABLES
+</h2>
+<dl>
+<dt>| When an Unicon program is executed, several environment variables are</dt>
+<dd>
+<p>
+examined to determine certain execution parameters. Values in parentheses are the default values.
+</p>
+</dd>
+</dl>
+<p>
+| BLKSIZE (1% of physical memory)
+</p>
+<p>
+The initial size of the allocated block region, in bytes.
+</p>
+<p>
+COEXPSIZE (2000)
+</p>
+<p>
+The size, in words, of each co-expression block.
+</p>
+<p>
+DBLIST
+</p>
+<p>
+The location of data bases for iconc to search before the standard one. The value of DBLIST should be a semicolon-separated string of the form 
+<em>
+p1;p2;... pn
+</em>
+ where the 
+<em>
+pi
+</em>
+ name directories.
+</p>
+<p>
+ICONCORE
+</p>
+<p>
+If set, a core dump is produced for error termination.
+</p>
+<p>
+ICONX
+</p>
+<p>
+The location of iconx, the executor for icode files, is built into an icode file when it is produced. This location can be overridden by setting the environment variable ICONX. If ICONX is set, its value is used in place of the location built into the icode file.
+</p>
+<p>
+IPATH
+</p>
+<p>
+The location of ucode files specified in link declarations for icont. IPATH is a semicolon-separated list of directories. The current directory is always searched first, regardless of the value of IPATH.
+</p>
+<p>
+LPATH
+</p>
+<p>
+The location of source files specified in preprocessor $include directives and in link declarations for iconc. LPATH is otherwise similar to IPATH.
+</p>
+<p>
+MSTKSIZE (50000)
+</p>
+<p>
+The size, in words, of the main interpreter stack for icont.
+</p>
+<p>
+NOERRBUF
+</p>
+<p>
+By default, &amp;errout is buffered. If this variable is set, &amp;errout is not buffered.
+</p>
+<p>
+QLSIZE (5000)
+</p>
+<p>
+The size, in bytes, of the region used for pointers to strings during garbage collection.
+</p>
+<p>
+STRSIZE (1% of physical memory)
+</p>
+<p>
+The initial size of the string space, in bytes.
+</p>
+<p>
+TRACE
+</p>
+<p>
+The initial value of &amp;trace. If this variable has a value, it overrides the translation-time -t option.
+</p>
+<h2 id="files">
+FILES
+</h2>
+<p>
+| unicon Unicon translator | icont Icon translator | iconc Icon compiler | iconx Icon executor
+</p>
+<h2 id="see-also">
+SEE ALSO
+</h2>
+<p>
+<em>
+Programming with Unicon
+</em>
+, Clinton Jeffery, Shamim Mohamed, Ray Pereda and Robert Parlett, http://unicon.org, 2008.
+</p>
+<p>
+<em>
+The Icon Programming Language
+</em>
+, Ralph E. Griswold and Madge T. Griswold, Peer-to-Peer Communications, Inc., Third Edition, 1996.
+</p>
+<p>
+<em>
+Version 9.3 of Icon
+</em>
+, Ralph E. Griswold, Clinton L. Jeffery, and Gregg M. Townsend, IPD278, Department of Computer Science, The University of Arizona, 1996.
+</p>
+<p>
+<em>
+Version 9 of the Icon Compiler
+</em>
+, Ralph E. Griswold, IPD237, Department of Computer Science, The University of Arizona, 1995.
+</p>
+<h2 id="limitations-and-bugs">
+LIMITATIONS AND BUGS
+</h2>
+<p>
+The icode files for the interpreter do not stand alone; the Icon run-time system (iconx) must be present.
+</p>
+<p>
+Stack overflow is checked using a heuristic that is not always effective.
+</p>
+<dl>
+<dt>| &quot;unicon -C&quot; and iconc are not yet ported to MS Windows. They run out</dt>
+<dd>
+<p>
+of
+</p>
+</dd>
+<dt>| memory on large programs if limited swap or virtual memory address</dt>
+<dd>
+<p>
+space is available, such as 32-bit platforms. A few features of Unicon, such as ODBC database access, are not yet supported under &quot;unicon -C&quot; and iconc.
+</p>
+</dd>
+</dl>
+<div class="prevnext">
+<a href="utr10.html">&larr; UTR 10c: Debugging with UDB 2.1: User's Guide and Reference Manual</a>
+<a href="utr12.html">UTR 12a: Ui: a Unicon Development Environment &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+Powered by uscribe | <a href="utr11.pdf">pdf</a> | <a href="_sources/utr11.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

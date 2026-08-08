@@ -1,0 +1,215 @@
+%
+% ub.tex - main module for the Unicon book.
+%
+% The font size (12pt) is overlarge on purpose, because the book is scaled
+% down by 0.7 or so in order to print hard copies 4 pages per sheet on
+% letter or legal paper.
+%
+
+% This file was converted to LaTeX by Writer2LaTeX ver. 1.0.2
+% see http://writer2latex.sourceforge.net for more info
+
+\documentclass[letterpaper,twoside,12pt]{book}
+\usepackage[scaled=.85]{helvet}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+%\usepackage[textwidth=6.4in,textheight=8.9in]{geometry}
+\usepackage[inner=1.3in,outer=0.8in,textheight=8.9in]{geometry}
+\usepackage{color,array,xtab,hhline}
+\usepackage{makeidx}
+%%% K.O. This is only needed in usecase.tex. 
+%\usepackage{aeguill}
+%\newcommand{\stereotype}[1]{\guillemotleft {#1}\guillemotright}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue, urlcolor=blue, pdftitle=Programming with Unicon, pdfauthor=Clinton Jeffery, pdfsubject=, pdfkeywords=}
+% TikZ loads graphicx automatically (and gets upset if it's already loaded).
+%\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary {arrows.meta,graphs,shapes.misc,shapes.symbols,calc}
+
+%%% K.O. icon.sty: I think icon.sty can be eliminated, and only a couple of its
+%%% declarations, redefining the tt font, can be inserted in this file.
+%%%%%%% CJ: icon.sty may be used/shared by other documents. Considering it.
+
+%%% 0. In my mind, making ttfamily and sffamily the same is questionable.
+%%% The bold seems not to make a difference.
+%%%%%% CJ: In principle, I agree. In practice, the goal is to have a
+%%%%%% helvetica-like sans-serif ``code font'' used everywhere. Can
+%%%%%% fix this but it will take a lot of grunt work. Need a trained monkey.
+
+%%% 1. This file changes some global parameters, like baselinestretch.
+%%%%%% CJ: it is intentional, but might be messed up.
+
+%%% 2. Check what is the effect of \renewcommand{\"}[0]{{\tt "}} on the rest of
+%%% the document!!
+%%%%%% CJ: Intention is to use inchmarks (in code), instead of double quotes.
+%%%%%% Might be screwed up.
+
+\input icon.sty
+\makeatletter
+\newcommand\arraybslash{\let\\\@arraycr}
+\makeatother
+\def\ssp{\def\baselinestretch{1.0}\large\normalsize}
+\def\dsp{\def\baselinestretch{1.0}\large\normalsize}
+\renewcommand{\iconcode}[1]{{\tt\ssp\begin{tabbing} xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=\+\kill #1 \end{tabbing}\dsp}}
+
+%%% K.O. Suggested replacement for \iconcode
+\newenvironment{icode}{%
+\ttfamily
+\begin{tabbing}
+  xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=xxx\=\+\kill%
+}{\end{tabbing}}
+
+%
+% Adapted from a post by Gonzalo Medino on stackexchange.com in order to
+% eliminate a reference to amsmath.
+%
+\makeatletter
+\DeclareRobustCommand{\text}{%
+  \ifmmode\expandafter\text@\else\expandafter\mbox\fi}
+\let\nfss@text\text
+\def\text@#1{{\mathchoice
+  {\textdef@\displaystyle\f@size{#1}}%
+  {\textdef@\textstyle\f@size{#1}}%
+  {\textdef@\textstyle\sf@size{#1}}%
+  {\textdef@\textstyle \ssf@size{#1}}%
+  \check@mathfonts
+  }%
+}
+\def\textdef@#1#2#3{\hbox{{%
+                    \everymath{#1}%
+                    \let\f@size#2\selectfont
+                    #3}}}
+\makeatother
+
+\providecommand\textsubscript[1]{\ensuremath{{}_{\text{#1}}}}
+
+%%% DPW  Put these here temporarily
+\newcommand\RoadNarrows{\raisebox{-2mm}{\includegraphics[height=9mm]{ub-img/USRoadNarrows.pdf}}}
+\newcommand\NoRestriction{\raisebox{-2mm}{\includegraphics[height=9mm]{ub-img/NoRestriction.pdf}}}
+\newcommand\WarningNotThreadSafe{\marginpar[\hfill\RoadNarrows]{\RoadNarrows}}
+\newcommand\ConcurrencyIssue{\marginpar[\hfill\NoRestriction]{\NoRestriction}}
+\newcommand{\IsNotThreadSafe}[1]{#1 is not thread-safe. \WarningNotThreadSafe}
+\newcommand{\AreNotThreadSafe}[1]{#1 are not thread-safe. \WarningNotThreadSafe}
+\reversemarginpar
+
+\makeindex
+
+\title{Programming with Unicon}
+\author{Clinton Jeffery}
+\date{2014-04-01T16:26:26.98}
+
+
+\begin{document}
+
+\thispagestyle{empty}
+\setlength{\topmargin}{-0.05in}
+\hspace{-0.5in}
+%\includegraphics[width=7.2in,height=8.9in]{ub-img/ub-img1.png}
+\includegraphics[width=7.1in,height=8.76in]{ub-img/ub-img1.png}
+\clearpage
+
+\bigskip
+This page intentionally left blank.
+\clearpage
+
+\vspace*{3\bigskipamount}
+\begin{center}
+  \bfseries\Huge
+  Programming with Unicon
+\end{center}
+\bigskip
+\bigskip
+\begin{center}
+  \bfseries\huge
+  2\textsuperscript{nd} edition
+\end{center}
+\vspace*{7\bigskipamount}
+\begin{flushright}\bfseries
+Clinton Jeffery \\
+Shamim Mohamed \\
+Jafar Al Gharaibeh \\
+Ray Pereda \\
+Robert Parlett 
+\end{flushright}
+\clearpage
+
+\thispagestyle{empty}
+\bigskip
+\bigskip
+Copyright \copyright 1999-2021 Clinton Jeffery, Shamim Mohamed,
+Jafar Al Gharaibeh, Ray Pereda, and Robert Parlett
+
+Permission is granted to copy, distribute and/or modify this document under the
+terms of the GNU Free Documentation License, Version 1.2 or any later version
+published by the Free Software Foundation; with no Invariant Sections, no
+Front-Cover Texts, and no Back-Cover Texts. A copy of the license is included in
+the section entitled ``GNU Free Documentation License''.
+\bigskip
+
+
+This is a draft manuscript dated \today.  Send comments and errata
+to \linebreak \href{mailto:support@unicon.org}{support@unicon.org}.
+
+\bigskip
+This document was prepared using \LaTeX.
+\clearpage
+
+\frontmatter
+\setcounter{tocdepth}{2}
+\tableofcontents
+\include{preface}
+
+\mainmatter
+
+\include{intro}
+
+\part{Core Unicon}
+
+\include{programs}
+\include{struct}
+\include{string}
+\include{advanced}
+\include{system}
+\include{database}
+\include{graphics}
+\include{thread}
+\include{monitor}
+
+\part{Object-oriented Software Development}
+
+\include{classes}
+\include{assoc}
+\include{large}
+\include{usecase}
+
+
+\part{Example Applications}
+
+\include{cgi}
+\include{admin}
+\include{internet}
+\include{genetic}
+\include{gui}
+
+
+\part{Appendices}
+\appendix
+
+\include{langref}
+\include{ipl}
+\include{ucl}
+\include{diffs}
+\include{port}
+\include{install}
+% \include{resourc}
+\include{experimental}
+\backmatter
+
+\include{referenc}
+\small
+\printindex
+
+
+\end{document}

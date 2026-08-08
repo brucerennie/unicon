@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+<li class="current">uscribe and Sphinx</li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="cli.html">&larr; Command Line</a>
+<span></span>
+</div>
+<h2 id="uscribe-and-sphinx">
+uscribe and Sphinx
+</h2>
+<p>
+If you already know Sphinx, this chapter maps familiar ideas onto uscribe. It is not a claim of compatibility.
+</p>
+<h3 id="conceptual-map">
+Conceptual map
+</h3>
+<ul>
+<li>
+<strong>
+Sphinx ``toctree``
+</strong>
+ → uscribe 
+<strong>
+manifest
+</strong>
+ (
+<code>.manifest</code>
+ file listing chapter paths in order)
+</li>
+<li>
+<strong>
+Sphinx ``conf.py`` / ``html_theme``
+</strong>
+ → 
+<code>--theme</code>
+ / 
+<code>--themePath</code>
+ plus the in-page theme dropdown
+</li>
+<li>
+<strong>
+Sphinx builders (html, latex, …)
+</strong>
+ → 
+<code>--format=html|latex|pdf</code>
+ (
+<code>HtmlOutputter</code>
+ / 
+<code>LatexOutputter</code>
+); PDF runs a TeX engine on the generated 
+<code>book.tex</code>
+</li>
+<li>
+<strong>
+Sphinx / Pygments highlighting
+</strong>
+ → client-side 
+<code>highlight-unicon.js</code>
+ for Unicon listings
+</li>
+<li>
+<strong>
+Sphinx search
+</strong>
+ → 
+<code>searchindex.js</code>
+ + 
+<code>search.html</code>
+ (simple substring search, not Sphinx's stemmer index)
+</li>
+<li>
+<strong>
+Sphinx domains / autodoc
+</strong>
+ → not present; use 
+<code>unidoc</code>
+ for API extraction from Unicon sources
+</li>
+</ul>
+<h3 id="markup">
+Markup
+</h3>
+<p>
+uscribe understands a 
+<strong>
+subset
+</strong>
+ of RST: underline headings, bullets, simple/grid/list tables, definition lists, 
+<code>include</code>
+ / 
+<code>literalinclude</code>
+, 
+<code>figure</code>
+ captions, explicit 
+<code>.. _label:</code>
+ targets, nested admonition bodies, and light inline markup (including 
+<code>:ref:`Text &lt;label&gt;</code>
+`). It does not run docutils. Sphinx-only roles, domains, and extensions will not work unchanged.
+</p>
+<h3 id="project-layout">
+Project layout
+</h3>
+<p>
+Sphinx:
+</p>
+<pre><code class="language-text">
+docs/
+  conf.py
+  index.rst
+  ...
+</code></pre>
+<p>
+uscribe:
+</p>
+<pre><code class="language-text">
+mybook/
+  book.manifest
+  intro.rst
+  ...
+  images/
+  Makefile   # optional; see doc/uscribe/
+</code></pre>
+<p>
+This user guide is itself a uscribe project: the tool documents and drives itself.
+</p>
+<div class="prevnext">
+<a href="cli.html">&larr; Command Line</a>
+<span></span>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="sphinx.pdf">pdf</a> | <a href="_sources/sphinx.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>
