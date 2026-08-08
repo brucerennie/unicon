@@ -1872,8 +1872,10 @@ int apply_sock_attrs(int s, int prebind, dptr attr, int nattr,
       *val++ = '\0';
 
       if (!is_sock_attr(abuf)) {
+#if HAVE_LIBSSL
          if (is_ssl_attr(abuf))
             continue;                   /* handled by create_ssl_context() */
+#endif                                  /* HAVE_LIBSSL */
          errno = 0;                     /* &errortext carries the error */
          set_errortext_with_val(1310, tmps);
          return 0;
@@ -3784,6 +3786,9 @@ SSL_CTX * create_ssl_context(dptr attr, int n, int type ) {
 
    return ctx;
 }
+
+#include "rcrypto.ri"
+
 #endif                                  /* LIBSSL */
 
 #if HAVE_LIBSSH
