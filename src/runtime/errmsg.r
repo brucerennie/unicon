@@ -37,7 +37,7 @@ void set_errortext_with_val(int i, char* errval)
      if ((StrLoc(k_errorvalue) = alcstr(NULL, buflen)) != NULL) {
        strcpy(StrLoc(k_errorvalue), errval);
        have_errval = 1;
-       StrLen(k_errorvalue) = buflen;
+       SetStrLen(k_errorvalue, buflen);
      }
    }
 
@@ -63,7 +63,7 @@ void set_gaierrortext(int i)
    buf[511] = 0;
    buflen = strlen(buf);
    if ((StrLoc(k_errortext) = alcstr(buf, buflen)) != NULL) {
-     StrLen(k_errortext) = buflen;
+     SetStrLen(k_errortext, buflen);
    }
 }
 #endif                          /* HAVE_GETADDRINFO */
@@ -88,7 +88,7 @@ void set_ssl_context_errortext(int err, char* errval)
      if ((StrLoc(k_errorvalue) = alcstr(NULL, buflen)) != NULL) {
        strcpy(StrLoc(k_errorvalue), errval);
        have_errval = 1;
-       StrLen(k_errorvalue) = buflen;
+       SetStrLen(k_errorvalue, buflen);
      }
    }
 
@@ -98,7 +98,7 @@ void set_ssl_context_errortext(int err, char* errval)
      buflen = strlen(sslerr);
      if ((StrLoc(k_errortext) = alcstr(NULL, buflen)) != NULL) {
        strcpy(StrLoc(k_errortext), sslerr);
-       StrLen(k_errortext) = buflen;
+       SetStrLen(k_errortext, buflen);
      }
    }
    else
@@ -156,7 +156,7 @@ int set_ssl_connection_errortext(SSL *ssl, int err)
    buflen = strlen(buf);
    if ((StrLoc(k_errortext) = alcstr(NULL, buflen)) != NULL) {
      strcpy(StrLoc(k_errortext), buf);
-     StrLen(k_errortext) = buflen;
+     SetStrLen(k_errortext, buflen);
    }
 
    return err;
@@ -185,7 +185,7 @@ void set_ssh_errortext(ssh_session sess, int err)
    }
    buflen = strlen(buf);
    if ((StrLoc(k_errortext) = alcstr(buf, buflen)) != NULL)
-      StrLen(k_errortext) = buflen;
+      SetStrLen(k_errortext, buflen);
 }
 #endif                          /* HAVE_LIBSSH */
 
@@ -198,7 +198,7 @@ void set_syserrortext(int ern)
    CURTSTATE();
    IntVal(amperErrno) = ern;
    if ((StrLoc(k_errortext) = alc_strerror(ern)) != NULL) {
-      StrLen(k_errortext) = strlen(StrLoc(k_errortext));
+      SetStrLen(k_errortext, strlen(StrLoc(k_errortext)));
       }
 }
 
@@ -215,7 +215,7 @@ void set_gzerrortext(gzFile f)
    IntVal(amperErrno) = 214;
    if ((StrLoc(k_errortext) = alcstr(NULL, slen)) != NULL) {
       strcpy(StrLoc(k_errortext), s);
-      StrLen(k_errortext) = slen;
+      SetStrLen(k_errortext, slen);
       }
 }
 #endif                                  /* HAVE_LIBZ */
