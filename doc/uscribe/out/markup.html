@@ -34,16 +34,16 @@ placeholder="Search…" aria-label="Filter chapter list">
 <li><a href="intro.html">Introduction</a></li>
 <li><a href="install.html">Installation</a></li>
 <li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="config.html">Book Configuration</a></li>
 <li class="current">Markup Reference</li>
 <li><a href="themes.html">Themes</a></li>
 <li><a href="cli.html">Command Line</a></li>
-<li><a href="sphinx.html">uscribe and Sphinx</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
 <div class="main">
 <div class="prevnext">
-<a href="quickstart.html">&larr; Quick Start</a>
+<a href="config.html">&larr; Book Configuration</a>
 <a href="themes.html">Themes &rarr;</a>
 </div>
 <h2 id="markup-reference">
@@ -59,9 +59,7 @@ restricted RST-like
 <h3 id="headings">
 Headings
 </h3>
-<pre><code class="language-rst">
-
-Chapter Title
+<pre><code class="language-rst">Chapter Title
 =============
 
 Section
@@ -74,6 +72,37 @@ Subsection
 Characters 
 <code>= - ~ ^</code>
  are recognized as underline styles. Heading level follows the underline character. The underline length must be greater than or equal to the title length.
+</p>
+<h3 id="document-fields">
+Document fields
+</h3>
+<p>
+A chapter may start with an RST field list (Docutils bibliographic fields). Repeat 
+<code>:author:</code>
+ for several names. Book chapters show these as a byline under the first heading; omit the fields and nothing is added. Reports also use 
+<code>:title:</code>
+, 
+<code>:trnumber:</code>
+, 
+<code>:abstract:</code>
+, and 
+<code>:docclass:</code>
+ for the UTR cover.
+</p>
+<pre><code class="language-rst">:author: Jane Doe
+:author: Pat Lee
+:date: 2026-08-15
+:copyright: 2026, Jane Doe
+
+Chapter Title
+=============
+</code></pre>
+<p>
+Book-wide title, logo, theme, and PDF name belong in 
+<code>book.conf</code>
+ (see 
+<a href="config.html#book-configuration">Book Configuration</a>
+). They are not chapter fields.
 </p>
 <h3 id="paragraphs-and-lists">
 Paragraphs and lists
@@ -94,8 +123,7 @@ Blank lines separate paragraphs. Bullet lists use
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-1. Install the ``uscribe`` binary (:doc:`install`)
+<pre><code class="language-rst">1. Install the ``uscribe`` binary (:doc:`install`)
 2. Write a tiny book (:doc:`quickstart`)
 #. Pick a theme (:doc:`themes`)
 </code></pre>
@@ -130,8 +158,7 @@ A term on its own line followed by an indented body. Blank lines inside the body
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-format
+<pre><code class="language-rst">format
    Selects the builder.
 
    Use ``html`` for a browsable book, or ``latex`` / ``pdf`` for print.
@@ -187,8 +214,7 @@ Simple
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-=====  ==========
+<pre><code class="language-rst">=====  ==========
 Flag   Meaning
 =====  ==========
 html   HTML book
@@ -252,8 +278,7 @@ Grid
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-+--------+--------+--------+
+<pre><code class="language-rst">+--------+--------+--------+
 | Left   | Mid    | Right  |
 +========+========+========+
 | A      | B spanning two  |
@@ -303,8 +328,7 @@ A plain grid without spans:
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-+--------+------------+
+<pre><code class="language-rst">+--------+------------+
 | Flag   | Meaning    |
 +========+============+
 | html   | HTML book  |
@@ -356,8 +380,7 @@ List tables
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-.. list-table::
+<pre><code class="language-rst">.. list-table::
    :header-rows: 1
 
    * - Flag
@@ -413,8 +436,7 @@ Place
 <p>
 Source:
 </p>
-<pre><code class="language-rst">
-.. _stable-labels:
+<pre><code class="language-rst">.. _stable-labels:
 
 Stable labels
 -------------
@@ -489,8 +511,7 @@ Directives
 <p>
 Admonition bodies are re-parsed as nested blocks (lists, code, nested directives). Source then rendered:
 </p>
-<pre><code class="language-rst">
-.. note::
+<pre><code class="language-rst">.. note::
 
    Admonition bodies can hold nested blocks:
 
@@ -547,9 +568,7 @@ Figures take a caption (numbered in HTML/LaTeX) and optional
 <code>.. _label:</code>
 :
 </p>
-<pre><code class="language-rst">
-
-.. _logo-figure:
+<pre><code class="language-rst">.. _logo-figure:
 
 .. figure:: images/uscribe-logo.png
 
@@ -571,9 +590,7 @@ See
 <p>
 Other authoring forms (shown literally):
 </p>
-<pre><code class="language-rst">
-
-.. code-block:: unicon
+<pre><code class="language-rst">.. code-block:: unicon
 
    procedure main()
       write(&quot;ok&quot;)
@@ -612,8 +629,7 @@ Source (
 <code>includes/shared-tip.rst</code>
 ):
 </p>
-<pre><code class="language-rst">
-.. tip::
+<pre><code class="language-rst">.. tip::
 
    Snippets under ``includes/`` can be pulled into any chapter with
    ``.. include::`` so the same advice is not copy-pasted.
@@ -642,8 +658,7 @@ Pull a real
 <code>:language:</code>
 :
 </p>
-<pre><code class="language-unicon">
-# Shared sample for literalinclude demos
+<pre><code class="language-unicon"># Shared sample for literalinclude demos
 procedure main()
    write(&quot;hello from includes/hello.icn&quot;)
    write(&amp;version)
@@ -652,8 +667,7 @@ end
 <p>
 The same file, only the body between markers:
 </p>
-<pre><code class="language-unicon">
-   write(&quot;hello from includes/hello.icn&quot;)
+<pre><code class="language-unicon">   write(&quot;hello from includes/hello.icn&quot;)
    write(&amp;version)
 </code></pre>
 <h3 id="unicon-listings">
@@ -686,9 +700,7 @@ Unicon listings
 <p>
 Example Unicon program as it appears in the built book:
 </p>
-<pre><code class="language-unicon">
-
-# Hello from a uscribe listing
+<pre><code class="language-unicon"># Hello from a uscribe listing
 procedure main()
    every i := 1 to 3 do
       write(&quot;tick &quot;, i)
@@ -719,11 +731,11 @@ See also
 .
 </p>
 <div class="prevnext">
-<a href="quickstart.html">&larr; Quick Start</a>
+<a href="config.html">&larr; Book Configuration</a>
 <a href="themes.html">Themes &rarr;</a>
 </div>
 <footer class="footer" role="contentinfo">
-&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="markup.pdf">pdf</a> | <a href="_sources/markup.rst.txt" rel="nofollow">source</a>
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/markup.rst.txt" rel="nofollow">source</a>
 </footer>
 </div></div>
 </body></html>

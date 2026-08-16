@@ -1,14 +1,17 @@
-/* Token colors for Unicon highlighting (used by all themes; themes may override) */
+/* Token colors match Sphinx/Pygments default (Visual Studio), as used by
+ * Unicon Programming: https://unicon.sourceforge.io/up/
+ * Dark theme overrides these in book.css.
+ */
 
 pre.highlight, pre:has(code.language-unicon) {
   line-height: 1.45;
 }
 
-.tok-keyword { color: #0550ae; font-weight: 600; }
-.tok-builtin { color: #8250df; }
-.tok-string  { color: #0a3069; }
-.tok-cset    { color: #953800; }
-.tok-comment { color: #6e7781; font-style: italic; }
-.tok-number  { color: #0550ae; }
-.tok-op      { color: #cf222e; }
+.tok-keyword { color: #0000ff; }
+.tok-builtin { color: #2b91af; }
+.tok-string  { color: #a31515; }
+.tok-cset    { color: #a31515; }
+.tok-comment { color: #008000; }
+.tok-number  { color: #a000a0; }
+.tok-op      { color: #0000ff; }
 .tok-ident   { color: inherit; }

@@ -34,17 +34,17 @@ placeholder="Search…" aria-label="Filter chapter list">
 <li><a href="intro.html">Introduction</a></li>
 <li><a href="install.html">Installation</a></li>
 <li class="current">Quick Start</li>
+<li><a href="config.html">Book Configuration</a></li>
 <li><a href="markup.html">Markup Reference</a></li>
 <li><a href="themes.html">Themes</a></li>
 <li><a href="cli.html">Command Line</a></li>
-<li><a href="sphinx.html">uscribe and Sphinx</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
 <div class="main">
 <div class="prevnext">
 <a href="install.html">&larr; Installation</a>
-<a href="markup.html">Markup Reference &rarr;</a>
+<a href="config.html">Book Configuration &rarr;</a>
 </div>
 <h2 id="quick-start">
 Quick Start
@@ -52,7 +52,9 @@ Quick Start
 <p>
 A uscribe project is a directory of chapter 
 <code>.rst</code>
- files plus a manifest that lists them in reading order.
+ files, a manifest that lists them in reading order, and usually a 
+<code>book.conf</code>
+ for book-wide title, logo, and PDF name.
 </p>
 <h3 id="1-create-a-manifest">
 1. Create a manifest
@@ -61,9 +63,7 @@ A uscribe project is a directory of chapter
 <code>book.manifest</code>
  (name is conventional; any path works):
 </p>
-<pre><code class="language-text">
-
-# comments and blank lines are ignored
+<pre><code class="language-text"># comments and blank lines are ignored
 preface.rst
 chapter1.rst
 chapter2.rst
@@ -76,9 +76,7 @@ Underline-style headings, paragraphs, lists, and directives. Example
 <code>chapter1.rst</code>
 :
 </p>
-<pre><code class="language-rst">
-
-First Chapter
+<pre><code class="language-rst">First Chapter
 =============
 
 Hello from uscribe. See :ref:`Second Chapter` later.
@@ -108,22 +106,30 @@ Underline rule:
 <p>
 Here is that Unicon listing as it appears when built (syntax highlighted in HTML):
 </p>
-<pre><code class="language-unicon">
-
-procedure main()
+<pre><code class="language-unicon">procedure main()
    write(&quot;hi&quot;)
 end
 </code></pre>
-<h3 id="3-build-html">
-3. Build HTML
+<h3 id="3-book-settings">
+3. Book settings
 </h3>
-<pre><code class="language-sh">
-
-uscribe --manifest=book.manifest \
-         --title=&quot;My Book&quot; \
-         --targetDir=./out \
-         --theme=basic \
-         --themePath=/path/to/uni/uscribe/themes
+<p>
+<code>book.conf</code>
+ next to the manifest (optional; CLI overrides). Full key list: 
+<a href="config.html#book-configuration">Book Configuration</a>
+.
+</p>
+<pre><code class="language-text">title: My Book
+copyright: 2026, Your Name
+logo: images/logo.png
+name: my-book
+theme: basic
+themePath: /path/to/uni/uscribe/themes
+</code></pre>
+<h3 id="4-build-html">
+4. Build HTML
+</h3>
+<pre><code class="language-sh">uscribe --targetDir=./out
 </code></pre>
 <p>
 Or from a project 
@@ -137,8 +143,8 @@ Open
 <code>out/index.html</code>
 . Use the sidebar for chapters, search, and theme switching.
 </p>
-<h3 id="4-build-pdf-optional">
-4. Build PDF (optional)
+<h3 id="5-build-pdf-optional">
+5. Build PDF (optional)
 </h3>
 <p>
 Install a TeX engine first — see the 
@@ -149,19 +155,20 @@ TeX / PDF dependencies by platform
 <a href="install.html#installation">Installation</a>
 . Then:
 </p>
-<pre><code class="language-sh">
-
-uscribe --format=pdf --manifest=book.manifest \
-         --title=&quot;My Book&quot; --targetDir=./out
+<pre><code class="language-sh">uscribe --format=pdf --targetDir=./out
 </code></pre>
 <p>
 Or 
 <code>make pdf</code>
 . Output is 
-<code>out/book.pdf</code>
- (and 
-<code>out/book.tex</code>
-). SVG figures are not embedded; convert them to PDF or PNG for TeX.
+<code>out/STEM.pdf</code>
+ from the 
+<code>name</code>
+ key (default stem 
+<code>book</code>
+). This user guide uses 
+<code>name: uscribe-userguide</code>
+. SVG figures are not embedded; convert them to PDF or PNG for TeX.
 </p>
 <h3 id="where-files-go">
 Where files go
@@ -173,7 +180,11 @@ Where files go
 </li>
 <li>
 <code>*.manifest</code>
- — manifest (chapter order)
+ — chapter order
+</li>
+<li>
+<code>book.conf</code>
+ — book title, logo, copyright, PDF name, theme
 </li>
 <li>
 <code>images/</code>
@@ -184,9 +195,9 @@ Where files go
 <li>
 <code>out/</code>
  — generated HTML and/or 
-<code>book.tex</code>
+<code>STEM.tex</code>
  / 
-<code>book.pdf</code>
+<code>STEM.pdf</code>
 </li>
 <li>
 <code>themes/</code>
@@ -195,10 +206,10 @@ Where files go
 </ul>
 <div class="prevnext">
 <a href="install.html">&larr; Installation</a>
-<a href="markup.html">Markup Reference &rarr;</a>
+<a href="config.html">Book Configuration &rarr;</a>
 </div>
 <footer class="footer" role="contentinfo">
-&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="quickstart.pdf">pdf</a> | <a href="_sources/quickstart.rst.txt" rel="nofollow">source</a>
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/quickstart.rst.txt" rel="nofollow">source</a>
 </footer>
 </div></div>
 </body></html>

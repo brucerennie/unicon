@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search…" aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li class="current">Book Configuration</li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="quickstart.html">&larr; Quick Start</a>
+<a href="markup.html">Markup Reference &rarr;</a>
+</div>
+<h2 id="book-configuration">
+Book Configuration
+</h2>
+<p>
+Book-wide settings live in 
+<code>book.conf</code>
+. Chapter order lives in 
+<code>book.manifest</code>
+. Per-chapter author, date, and copyright live in the RST field list (see 
+<a href="markup.html#markup-reference">Markup Reference</a>
+). Build invocation (
+<code>--format</code>
+, 
+<code>--targetDir</code>
+) stays on the command line.
+</p>
+<h3 id="how-the-file-is-found">
+How the file is found
+</h3>
+<ol start="1">
+<li>
+<code>--config=FILE</code>
+ if you pass it (the file must exist).
+</li>
+<li>
+Otherwise 
+<code>book.conf</code>
+ in the same directory as the manifest.
+</li>
+<li>
+If that file is missing, uscribe continues with CLI values and built-in defaults.
+</li>
+</ol>
+<p>
+With the usual defaults (
+<code>book.manifest</code>
+ in the current directory), a book directory only needs:
+</p>
+<pre><code class="language-sh">uscribe --targetDir=./out
+</code></pre>
+<h3 id="file-format">
+File format
+</h3>
+<p>
+One 
+<code>key: value</code>
+ per line. Keys are case-insensitive. Blank lines and 
+<code>#</code>
+ comments are ignored. A leading colon on the key is allowed (
+<code>:title:</code>
+), so the file can look like an RST field list if you prefer.
+</p>
+<p>
+Unknown keys print a warning on standard error and are ignored. Values do not wrap to the next line.
+</p>
+<p>
+<code>logo</code>
+ and 
+<code>themePath</code>
+ are paths. Relative paths are resolved against the directory that contains 
+<code>book.conf</code>
+, not against the process current working directory. Absolute paths are left as-is.
+</p>
+<p>
+Command-line options override the file. The Makefile for this guide passes 
+<code>--theme</code>
+ so 
+<code>make classic</code>
+ can change the initial skin without editing 
+<code>book.conf</code>
+.
+</p>
+<h3 id="title">
+title
+</h3>
+<p>
+Book title: HTML 
+<code>&lt;title&gt;</code>
+, sidebar heading, index heading, and the LaTeX 
+<code>\\title</code>
+ / title page. Default if unset: 
+<code>Untitled Book</code>
+. CLI: 
+<code>--title</code>
+.
+</p>
+<h3 id="copyright">
+copyright
+</h3>
+<p>
+Book-wide footer text after © on HTML pages (for example 
+<code>2026, Jafar Al-Gharaibeh</code>
+). This is not a chapter byline; a chapter 
+<code>:copyright:</code>
+ field is separate (see 
+<a href="markup.html#markup-reference">Markup Reference</a>
+). CLI: 
+<code>--copyright</code>
+.
+</p>
+<h3 id="logo">
+logo
+</h3>
+<p>
+Image file. HTML copies it to 
+<code>targetDir/_static/</code>
+ and shows it in the sidebar. LaTeX / PDF copies it next to the 
+<code>.tex</code>
+ and places it on the title page (page 1), not as a numbered figure. CLI: 
+<code>--logo</code>
+.
+</p>
+<h3 id="name">
+name
+</h3>
+<p>
+Basename for the book 
+<code>.tex</code>
+ / 
+<code>.pdf</code>
+ (and the HTML footer 
+<strong>
+pdf
+</strong>
+ link). A trailing 
+<code>.pdf</code>
+ or 
+<code>.tex</code>
+ is stripped. Letters, digits, 
+<code>_</code>
+, and 
+<code>-</code>
+ only. Default: 
+<code>book</code>
+. Ignored for report collections (one PDF per report, named like the HTML stem). CLI: 
+<code>--name</code>
+.
+</p>
+<h3 id="theme">
+theme
+</h3>
+<p>
+Initial HTML theme: 
+<code>basic</code>
+, 
+<code>classic</code>
+, or 
+<code>dark</code>
+ (or a custom name under 
+<code>themePath</code>
+). Default: 
+<code>basic</code>
+. Readers can still switch skins in the sidebar. Ignored for LaTeX / PDF. CLI: 
+<code>--theme</code>
+.
+</p>
+<h3 id="themepath">
+themePath
+</h3>
+<p>
+Directory that contains theme subdirectories (
+<code>DIR/basic/static</code>
+, …). Also accepted as 
+<code>themepath</code>
+ or 
+<code>theme_path</code>
+. If omitted, uscribe searches 
+<code>./themes</code>
+, 
+<code>../themes</code>
+, and 
+<code>themes</code>
+. CLI: 
+<code>--themePath</code>
+.
+</p>
+<h3 id="docclass">
+docclass
+</h3>
+<p>
+<code>book</code>
+ (default) or 
+<code>report</code>
+. Report mode is usually selected per chapter with 
+<code>:docclass: report</code>
+ or 
+<code>:trnumber:</code>
+; this key forces the class for every chapter. Also accepted as 
+<code>doc_class</code>
+ or 
+<code>doc-class</code>
+. CLI: 
+<code>--docclass</code>
+.
+</p>
+<h3 id="not-in-book-conf">
+Not in book.conf
+</h3>
+<p>
+These stay on the command line because they describe one 
+<em>
+build
+</em>
+, not the book:
+</p>
+<ul>
+<li>
+<code>--format</code>
+ — 
+<code>html</code>
+, 
+<code>latex</code>
+, or 
+<code>pdf</code>
+</li>
+<li>
+<code>--targetDir</code>
+ — output directory (default 
+<code>./htmlBook</code>
+ or 
+<code>./latexBook</code>
+)
+</li>
+<li>
+<code>--manifest</code>
+ — chapter list (default 
+<code>book.manifest</code>
+)
+</li>
+</ul>
+<h3 id="this-guide">
+This guide
+</h3>
+<p>
+The file that builds this manual:
+</p>
+<pre><code class="language-text"># Book-level settings (not chapter order — that is book.manifest).
+# Paths are relative to this file. Command-line options override.
+title: uscribe User Guide
+copyright: 2026, Jafar Al-Gharaibeh
+logo: images/uscribe-logo.png
+name: uscribe-userguide
+theme: basic
+themePath: ../../uni/uscribe/themes
+</code></pre>
+<p>
+Chapter order is 
+<code>book.manifest</code>
+ in the same directory.
+</p>
+<div class="prevnext">
+<a href="quickstart.html">&larr; Quick Start</a>
+<a href="markup.html">Markup Reference &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/config.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

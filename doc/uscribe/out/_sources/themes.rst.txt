@@ -23,6 +23,9 @@ Build-time default
 
    uscribe ... --theme=classic --themePath=../themes
 
+``theme`` and ``themePath`` may also be set in ``book.conf``
+(see :doc:`config`).
+
 Or with the sample Makefiles:
 
 .. code-block:: sh

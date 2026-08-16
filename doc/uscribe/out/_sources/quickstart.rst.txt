@@ -1,8 +1,9 @@
 Quick Start
 ===========
 
-A uscribe project is a directory of chapter ``.rst`` files plus a
-manifest that lists them in reading order.
+A uscribe project is a directory of chapter ``.rst`` files, a
+manifest that lists them in reading order, and usually a
+``book.conf`` for book-wide title, logo, and PDF name.
 
 1. Create a manifest
 --------------------
@@ -57,23 +58,34 @@ highlighted in HTML):
       write("hi")
    end
 
-3. Build HTML
+3. Book settings
+----------------
+
+``book.conf`` next to the manifest (optional; CLI overrides).
+Full key list: :doc:`config`.
+
+.. code-block:: text
+
+   title: My Book
+   copyright: 2026, Your Name
+   logo: images/logo.png
+   name: my-book
+   theme: basic
+   themePath: /path/to/uni/uscribe/themes
+
+4. Build HTML
 -------------
 
 .. code-block:: sh
 
-   uscribe --manifest=book.manifest \
-            --title="My Book" \
-            --targetDir=./out \
-            --theme=basic \
-            --themePath=/path/to/uni/uscribe/themes
+   uscribe --targetDir=./out
 
 Or from a project ``Makefile`` patterned on ``doc/uscribe/Makefile``.
 
 Open ``out/index.html``. Use the sidebar for chapters, search, and
 theme switching.
 
-4. Build PDF (optional)
+5. Build PDF (optional)
 -----------------------
 
 Install a TeX engine first — see the *TeX / PDF dependencies by
@@ -81,17 +93,18 @@ platform* section under :ref:`Installation`. Then:
 
 .. code-block:: sh
 
-   uscribe --format=pdf --manifest=book.manifest \
-            --title="My Book" --targetDir=./out
+   uscribe --format=pdf --targetDir=./out
 
-Or ``make pdf``. Output is ``out/book.pdf`` (and ``out/book.tex``).
+Or ``make pdf``. Output is ``out/STEM.pdf`` from the ``name`` key
+(default stem ``book``). This user guide uses ``name: uscribe-userguide``.
 SVG figures are not embedded; convert them to PDF or PNG for TeX.
 
 Where files go
 --------------
 
 - ``*.rst`` — chapter sources
-- ``*.manifest`` — manifest (chapter order)
+- ``*.manifest`` — chapter order
+- ``book.conf`` — book title, logo, copyright, PDF name, theme
 - ``images/`` — figures (copied into ``out/images/``)
-- ``out/`` — generated HTML and/or ``book.tex`` / ``book.pdf``
+- ``out/`` — generated HTML and/or ``STEM.tex`` / ``STEM.pdf``
 - ``themes/`` — built-in skins shared across projects (HTML)

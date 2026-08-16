@@ -162,17 +162,79 @@
       vertical-align: middle;
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="/unicon/assets/site.css" />
 </head>
-<body class="unicon-doc-home">
+<body>
 <nav class="unicon-site-nav" aria-label="Site">
   <div class="unicon-site-nav-inner">
     <a class="home" href="/unicon/">Unicon</a>
     <span class="sep">·</span>
     <a href="/unicon/doc/">Documentation</a>
-    <span class="sep">·</span>
-    <a href="/unicon/doc/utr/html/">Technical reports</a>
     <span class="sep">·</span>
     <a href="/unicon/CONTRIBUTING.html">Contributing</a>
     <span class="sep">·</span>
@@ -186,77 +248,310 @@
 <header id="title-block-header">
 <h1 class="title">Unicon documentation</h1>
 </header>
-<p>In-tree manuals and reports for Unicon. Pick a path below; most HTML
-is generated from RST (or LaTeX for the books).</p>
-<h2 id="start-here">Start here</h2>
+<h1 id="unicon-documentation">Unicon documentation</h1>
+<p>This page indexes manuals, technical reports, and HTML shipped under
+<code>doc/</code> in the source tree. Paths are relative to
+<code>doc/</code>.</p>
+<p><strong>On the web:</strong> the <a
+href="https://unicon.sourceforge.io/">Unicon project site</a> hosts a <a
+href="https://unicon.sourceforge.io/ubooks.html">Books</a> page and a <a
+href="https://unicon.sourceforge.io/reports.html">Technical Reports</a>
+index with downloads and mirrors for many of the same works.</p>
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#programming-with-unicon">Programming with Unicon</a></li>
+<li><a href="#the-icon-programming-language-implementation">The Icon
+Programming Language Implementation</a></li>
+<li><a href="#unicon-technical-reports-utrs">Unicon Technical Reports
+(UTRs)</a>
+<ul>
+<li><a href="#unicode-reference-data-for-utf-8-utr-work">Unicode
+reference data (for UTF-8 / UTR work)</a></li>
+</ul></li>
+<li><a href="#other-documentation">Other documentation</a>
+<ul>
+<li><a href="#general-unicon-pages">General Unicon pages</a></li>
+<li><a href="#uscribe-user-guide">uscribe user guide</a></li>
+<li><a href="#icon-93-legacy">Icon 9.3 legacy</a></li>
+<li><a href="#udb-unicon-debugger">UDB — Unicon debugger</a></li>
+</ul></li>
+<li><a href="#building-pdfs-from-latex">Building PDFs from
+LaTeX</a></li>
+</ul>
+<hr />
+<h2 id="programming-with-unicon">Programming with Unicon</h2>
+<p>LaTeX source for the book <em>Programming with Unicon</em>. See also
+the site’s <a href="https://unicon.sourceforge.io/ubooks.html">Books</a>
+page for published editions and related titles.</p>
+<ul>
+<li><a href="/unicon/doc/book/">README</a> — LaTeX build notes and TeX package
+dependencies</li>
+<li><a href="book/"><code>*.tex</code> sources</a> — book manuscript (no
+standalone <code>.html</code> / <code>.md</code> in-tree)</li>
+</ul>
+<p><em>Location in tree: <code>doc/book/</code>.</em></p>
+<hr />
+<h2 id="the-icon-programming-language-implementation">The Icon
+Programming Language Implementation</h2>
+<p>Implementation-oriented LaTeX (parts 1–3, appendices) for <em>The
+Icon Programming Language Implementation</em>.</p>
+<ul>
+<li><a href="ib/"><code>*.tex</code> sources</a> — full manuscript (no
+<code>.html</code> / <code>.md</code> / <code>.txt</code> in-tree)</li>
+</ul>
+<p><em>Location in tree: <code>doc/ib/</code>.</em></p>
+<hr />
+<h2 id="unicon-technical-reports-utrs">Unicon Technical Reports
+(UTRs)</h2>
+<p>Numbered project reports (UTR #1, UTR #2, …). HTML, PDF, and office
+exports may live under <code>doc/utr/</code>, <code>doc/unicon/</code>,
+or <code>doc/udb/</code> depending on age and format. The <a
+href="https://unicon.sourceforge.io/reports.html">Technical Reports</a>
+page on <a
+href="https://unicon.sourceforge.io/">unicon.sourceforge.io</a> lists
+reports with links to PDFs/HTML on unicon.org and elsewhere.</p>
+<p>Standard Markdown tables use equal column widths, so a narrow “#”
+column still wastes space. Each report below is one line: <strong>UTR
+#N</strong> — format links — <em>title</em>.</p>
+<ul>
+<li><strong>UTR #1</strong> — <a href="unicon/utr1/utr1.htm">HTML</a> —
+<em>An ODBC Interface for the Unicon Programming Language</em></li>
+<li><strong>UTR #2</strong> — <a href="unicon/utr2.pdf">PDF</a> —
+<em>iflex: A Lexical Analyzer Generator for Icon</em></li>
+<li><strong>UTR #3</strong> — <a href="unicon/utr3.pdf">PDF</a> —
+<em>iyacc: A Parser Generator for Icon</em></li>
+<li><strong>UTR #4</strong> — <a href="unicon/utr4.html">HTML</a> —
+<em>Writing CGI and PHP Scripts in Icon and Unicon</em></li>
+<li><strong>UTR #5</strong> — <a href="unicon/utr5.pdf">PDF</a>, <a
+href="utr/utr5b.odt">OpenDocument</a> — <em>The Implementation of
+Graphics in Unicon</em> (V10 PDF; V12 internals in ODT
+<strong>UTR-5b</strong>)</li>
+<li><strong>UTR #6</strong> — <a href="utr/utr6.html">HTML</a>, <a
+href="unicon/utr6.html">HTML (Word export)</a>, <a
+href="unicon/utr6/header.htm">fragment</a> — <em>An IVIB Primer</em>
+(<code>header.htm</code> is a small fragment; main body is
+<code>utr6.html</code>)</li>
+<li><strong>UTR #7</strong> — <a href="utr/utr7.html">HTML</a> —
+<em>Version 13.1 of Unicon for Microsoft Windows</em></li>
+<li><strong>UTR #8</strong> — <a href="unicon/utr8.html">HTML</a>, <a
+href="unicon/utr8.pdf">PDF</a> — <em>Unicon Language Reference</em></li>
+<li><strong>UTR #9</strong> — <a href="utr/utr9.html">HTML</a>, <a
+href="utr/utr9c.pdf">PDF</a> — <em>Unicon 3D Graphics User’s Guide and
+Reference Manual</em></li>
+<li><strong>UTR #10</strong> — <a href="utr/utr10.html">HTML (utr)</a>,
+<a href="udb/utr10.html">HTML (udb)</a>, <a
+href="udb/utr10.pdf">PDF</a>, <a href="udb/utr10.docx">Word</a> —
+<em>Debugging With UDB</em></li>
+<li><strong>UTR #11</strong> — <a href="unicon/utr11.html">HTML</a> —
+<em>Unicon Manual Page</em></li>
+<li><strong>UTR #12</strong> — <a href="utr/utr12.html">HTML</a> —
+<em>UI: a Unicon Development Environment</em></li>
+<li><strong>UTR #13</strong> — <a href="utr/utr13.odt">OpenDocument</a>
+— <em>The Unicon Messaging Facilities</em></li>
+<li><strong>UTR #14</strong> — <a href="utr/utr14.docx">Word</a> —
+<em>Unicon Threads User’s Guide and Reference Manual</em></li>
+<li><strong>UTR #21</strong> — <a href="utr/utr21.html">HTML</a> —
+<em>Configuring and Building Version 13 of Unicon</em></li>
+</ul>
+<h3 id="unicode-reference-data-for-utf-8-utr-work">Unicode reference
+data (for UTF-8 / UTR work)</h3>
+<p>Machine-readable tables in <code>doc/utr/utf8/</code>:</p>
+<ul>
+<li><a href="utr/utf8/UnicodeData.txt">UnicodeData.txt</a> — Unicode
+character database<br />
+</li>
+<li><a href="utr/utf8/CaseFolding.txt">CaseFolding.txt</a> —
+case-folding mappings<br />
+</li>
+<li><a href="utr/utf8/SpecialCasing.txt">SpecialCasing.txt</a> —
+special-casing rules<br />
+</li>
+<li><a href="utr/utf8/utf8info.txt">utf8info.txt</a> — UTF-8 / Unicon
+notes</li>
+</ul>
+<hr />
+<h2 id="other-documentation">Other documentation</h2>
+<h3 id="general-unicon-pages">General Unicon pages</h3>
+<p>Pages that are not a single numbered UTR (guides, indexes,
+examples).</p>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 73%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th>I want to…</th>
-<th>Go to</th>
+<th>File</th>
+<th>Title / purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><p><strong>Learn Unicon</strong></p></td>
-<td><p><a href="unicon/html/faq.html">FAQ</a> · published <a
-href="https://unicon.sourceforge.io/ubooks.html">Books</a></p></td>
+<td><a href="unicon/faq.html">faq.html</a></td>
+<td><em>Unicon: Frequently Asked Questions</em></td>
 </tr>
 <tr class="even">
-<td><p><strong>Read reports</strong></p></td>
-<td><p><a href="utr/html/index.html">Technical report collection</a>
-(UTR 1–23, plus UTF-8 notes)</p></td>
+<td><a href="unicon/posix.html">posix.html</a></td>
+<td><em>Unicon: A Posix Interface for the Icon Programming
+Language</em></td>
 </tr>
 <tr class="odd">
-<td><p><strong>Debug</strong></p></td>
-<td><p><a href="utr/html/utr10.html">UTR 10 — UDB</a> · short <a
-href="udb/index.html">overview</a></p></td>
+<td><a href="unicon/reports.html">reports.html</a></td>
+<td><em>Technical Reports</em> — in-tree index; see also the project
+site <a href="https://unicon.sourceforge.io/reports.html">Technical
+Reports</a></td>
+</tr>
+<tr class="even">
+<td><a href="unicon/svn.html">svn.html</a></td>
+<td><em>Unicon Source Code SVN Repository</em> — <strong>legacy</strong>
+(SVN; development uses Git today)</td>
+</tr>
+<tr class="odd">
+<td><a href="unicon/simple.html">simple.html</a>, <a
+href="unicon/simp.html">simp.html</a></td>
+<td><em>A Simple Example — Using the CGI Icon Library</em></td>
 </tr>
 </tbody>
 </table>
-<h2 id="language-reference">Language reference</h2>
+<p><em>Location in tree: <code>doc/unicon/</code>.</em></p>
+<h3 id="uscribe-user-guide">uscribe user guide</h3>
+<p>HTML user guide for <em>uscribe</em> (Unicon’s book documentation
+generator). On GitHub Pages the built guide is at <a
+href="uscribe/out/index.html">doc/uscribe/out/</a>
+(e.g. <code>https://…/unicon/doc/uscribe/out/</code>). Sources are RST;
+build locally with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> doc/uscribe</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># open doc/uscribe/out/index.html</span></span></code></pre></div>
 <ul>
-<li><a href="utr/html/utr8.html">UTR 8 — Language reference</a></li>
-<li><a href="utr/html/utr11.html">UTR 11 — unicon(1) man page</a></li>
-<li><a href="unicon/html/posix.html">POSIX interface notes</a></li>
-<li><a href="utr/html/utf8.html">UTF-8 support notes</a></li>
+<li><a href="uscribe/out/index.html">Built HTML (Pages)</a> — generated
+user guide</li>
+<li><a href="uscribe/out/uscribe-userguide.pdf">PDF</a> — same guide as
+a single PDF</li>
+<li><a href="uscribe/README.md">README</a> — build notes</li>
+<li><a href="uscribe/"><code>*.rst</code> sources</a> — manual
+chapters</li>
 </ul>
-<h2 id="books-latex-sources">Books (LaTeX sources)</h2>
-<p>Manuscripts in the tree; printed/PDF editions are on the project
-site.</p>
+<p><em>Location in tree: <code>doc/uscribe/</code>. Tool sources:
+<code>uni/uscribe/</code>.</em></p>
+<h3 id="icon-9.3-legacy">Icon 9.3 legacy</h3>
+<p>Inherited Icon Project documents (IPDs), FAQs, and manual pages.</p>
+<p><strong>Index</strong></p>
 <ul>
-<li><a href="book/">Programming with Unicon</a> —
-<code>doc/book/</code></li>
-<li><a href="ib/">Icon implementation book</a> —
-<code>doc/ib/</code></li>
-<li>Site: <a href="https://unicon.sourceforge.io/ubooks.html">Books
-page</a></li>
+<li><a href="/unicon/doc/icon/">README</a> — lists IPDs and manual pages</li>
 </ul>
-<h2 id="tools-and-how-tos">Tools and how-tos</h2>
+<p><strong>HTML</strong></p>
+<table>
+<colgroup>
+<col style="width: 42%" />
+<col style="width: 57%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Title</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="icon/faq.htm">faq.htm</a></td>
+<td><em>Frequently Asked Questions about the Icon programming
+language</em></td>
+</tr>
+<tr class="even">
+<td><a href="icon/ipd266.htm">ipd266.htm</a></td>
+<td><em>An Overview of the Icon Programming Language; Version
+9</em></td>
+</tr>
+<tr class="odd">
+<td><a href="icon/ipd281.htm">ipd281.htm</a></td>
+<td><em>Graphics Facilities for the Icon Programming Language; Version
+9.3</em></td>
+</tr>
+<tr class="even">
+<td><a href="icon/ipd283.htm">ipd283.htm</a></td>
+<td><em>The Icon Program Library; Version 9.3.3</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>PDF — manual pages</strong></p>
 <ul>
-<li><a href="uscribe/out/index.html">uscribe user guide</a> — RST →
-HTML/PDF doc tool</li>
-<li><a href="utr/html/utr15.html">UTR 15 — writing a UTR</a></li>
-<li><a href="unicon/html/simple.html">CGI library example</a></li>
+<li><a href="icon/icon.1.pdf">icon.1.pdf</a> — <em>icon</em>(1) — Icon
+interpreter/compiler<br />
+</li>
+<li><a href="icon/icon_vt.1.pdf">icon_vt.1.pdf</a> — <em>icon_vt</em>(1)
+— variant translator</li>
 </ul>
-<h2 id="archives">Archives</h2>
-<p>Older or superseded material kept for reference.</p>
+<p><strong>PDF — Icon Project Documents (IPD)</strong></p>
 <ul>
-<li><a href="icon/">Icon 9.3 documents</a> — IPDs, Icon FAQs, man
-pages</li>
-<li><a href="unicon/html/svn.html">SVN checkout notes</a> — legacy;
-development uses Git</li>
-<li><a href="unicon/html/reports.html">Alternate reports
-listing</a></li>
+<li><a href="icon/ipd046.pdf">ipd046.pdf</a> — <em>Trouble report
+form</em></li>
+<li><a href="icon/ipd112.pdf">ipd112.pdf</a> — <em>Version 8.0
+implementation differences</em></li>
+<li><a href="icon/ipd177.pdf">ipd177.pdf</a> — <em>Supporting
+documentation for XPM</em></li>
+<li><a href="icon/ipd193.pdf">ipd193.pdf</a> — <em>Support Procedures
+for Icon Program Monitors</em></li>
+<li><a href="icon/ipd237.pdf">ipd237.pdf</a> — <em>Version 9
+compiler</em></li>
+<li><a href="icon/ipd238.pdf">ipd238.pdf</a> — <em>Configuring the
+Version 9 source code</em></li>
+<li><a href="icon/ipd239.pdf">ipd239.pdf</a> — <em>Version 9
+implementation differences</em></li>
+<li><a href="icon/ipd240.pdf">ipd240.pdf</a> — <em>Calling C
+functions</em></li>
+<li><a href="icon/ipd241.pdf">ipd241.pdf</a> — <em>Version 9 benchmark
+report</em></li>
+<li><a href="icon/ipd243.pdf">ipd243.pdf</a> — <em>Installing Version 9
+on UNIX platforms</em></li>
+<li><a href="icon/ipd244.pdf">ipd244.pdf</a> — <em>Icon 9 UNIX Manual
+Page</em> (<code>icon</code>, <code>icont</code>,
+<code>iconc</code>)</li>
+<li><a href="icon/ipd245.pdf">ipd245.pdf</a> — <em>Variant
+translators</em></li>
+<li><a href="icon/ipd246.pdf">ipd246.pdf</a> — <em>Icon 9 Variant
+Translator UNIX Manual Page</em> (<code>icon_vt</code>)</li>
+<li><a href="icon/ipd256.pdf">ipd256.pdf</a> — <em>Version 9 UNIX user’s
+manual</em></li>
+<li><a href="icon/ipd261.pdf">ipd261.pdf</a> — <em>RTL manual</em></li>
+<li><a href="icon/ipd263.pdf">ipd263.pdf</a> — <em>Building source-code
+processors for Icon</em></li>
+<li><a href="icon/ipd265.pdf">ipd265.pdf</a> — <em>Visual interface
+builder</em></li>
+<li><a href="icon/ipd266.pdf">ipd266.pdf</a> — <em>An Overview of the
+Icon Programming Language; Version 9</em></li>
+<li><a href="icon/ipd271.pdf">ipd271.pdf</a> — <em>Version 9 of Icon for
+Microsoft Windows</em></li>
+<li><a href="icon/ipd278.pdf">ipd278.pdf</a> — <em>Version 9.3 language
+features</em></li>
+<li><a href="icon/ipd279.pdf">ipd279.pdf</a> — <em>Version 9.3 Icon
+program library</em></li>
+<li><a href="icon/ipd280.pdf">ipd280.pdf</a> — <em>Icon
+glossary</em></li>
+<li><a href="icon/ipd281.pdf">ipd281.pdf</a> — <em>Graphics Facilities
+for the Icon Programming Language; Version 9.3</em></li>
+<li><a href="icon/ipd283.pdf">ipd283.pdf</a> — <em>The Icon Program
+Library; Version 9.3.3</em></li>
 </ul>
-<h2 id="build-the-html-contributors">Build the HTML (contributors)</h2>
-<p>From a configured Unicon tree:</p>
-<pre><code>make -C doc/utr html        # technical reports
-make -C doc/unicon html     # FAQ, Posix, …
-make -C doc/uscribe html   # uscribe guide</code></pre>
-<p>Preview this site locally:</p>
-<pre><code>bash config/scripts/gh-pages/build-gh-pages-site.sh _site
-bash config/scripts/gh-pages/serve-local.sh</code></pre>
+<p><em>Location in tree: <code>doc/icon/</code>.</em></p>
+<h3 id="udb-unicon-debugger">UDB — Unicon debugger</h3>
+<p>Overview of the source-level debugger. Full treatment of debugging is
+<strong>UTR #10</strong> in <a
+href="#unicon-technical-reports-utrs">Unicon Technical Reports
+(UTRs)</a> above.</p>
+<ul>
+<li><a href="udb/index.html">index.html</a> — <em>UDB: The Unicon
+Source-Level Debugger</em> (overview)</li>
+</ul>
+<p><em>Location in tree: <code>doc/udb/</code>.</em></p>
+<hr />
+<h2 id="building-pdfs-from-latex">Building PDFs from LaTeX</h2>
+<p>The book, implementation book, and UTR LaTeX trees have
+<code>Makefile</code> targets. From the repository root:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> doc/book</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> doc/ib</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> doc/utr</span></code></pre></div>
+<p>See each directory’s <code>Makefile</code> for targets and
+prerequisites.</p>
 <footer class="unicon-site-footer">
   <a href="/unicon/">Home</a>
   · <a href="/unicon/doc/">Documentation</a>

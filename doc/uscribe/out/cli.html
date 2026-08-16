@@ -34,17 +34,17 @@ placeholder="Search…" aria-label="Filter chapter list">
 <li><a href="intro.html">Introduction</a></li>
 <li><a href="install.html">Installation</a></li>
 <li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="config.html">Book Configuration</a></li>
 <li><a href="markup.html">Markup Reference</a></li>
 <li><a href="themes.html">Themes</a></li>
 <li class="current">Command Line</li>
-<li><a href="sphinx.html">uscribe and Sphinx</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
 <div class="main">
 <div class="prevnext">
 <a href="themes.html">&larr; Themes</a>
-<a href="sphinx.html">uscribe and Sphinx &rarr;</a>
+<span></span>
 </div>
 <h2 id="command-line">
 Command Line
@@ -52,9 +52,7 @@ Command Line
 <h3 id="synopsis">
 Synopsis
 </h3>
-<pre><code class="language-sh">
-
-uscribe --manifest=FILE [options]
+<pre><code class="language-sh">uscribe [options]
 </code></pre>
 <h3 id="options">
 Options
@@ -63,9 +61,21 @@ Options
 <dt>**--manifest=FILE**</dt>
 <dd>
 <p>
-Required. Plain-text chapter list: one source path per line. Lines starting with 
+Plain-text chapter list: one source path per line. Lines starting with 
 <code>#</code>
- and blank lines are ignored. Paths are relative to the process current working directory.
+ and blank lines are ignored. Paths are relative to the process current working directory. Default: 
+<code>book.manifest</code>
+ in the current directory.
+</p>
+</dd>
+<dt>**--config=FILE**</dt>
+<dd>
+<p>
+Book-level settings file. If omitted, uscribe loads 
+<code>book.conf</code>
+ next to the manifest when that file exists. See 
+<a href="config.html#book-configuration">Book Configuration</a>
+ for the key list, path rules, and defaults. Any command-line option overrides the file.
 </p>
 </dd>
 <dt>**--title=TITLE**</dt>
@@ -75,7 +85,9 @@ Book title for
 <code>&lt;title&gt;</code>
 , the sidebar heading, the index page, and the LaTeX 
 <code>\\title</code>
-. Default: 
+. Default: from 
+<code>book.conf</code>
+, else 
 <code>Untitled Book</code>
 .
 </p>
@@ -91,7 +103,9 @@ Optional footer copyright (text after ©), e.g.
 <strong>
 pdf
 </strong>
- and 
+ (the book PDF from 
+<code>--name</code>
+, or a sibling PDF for reports) and 
 <strong>
 source
 </strong>
@@ -100,12 +114,36 @@ source
 , viewable as plain text in the browser).
 </p>
 </dd>
+<dt>**--name=STEM**</dt>
+<dd>
+<p>
+Basename for the book 
+<code>.tex</code>
+ / 
+<code>.pdf</code>
+ (default: 
+<code>book</code>
+). HTML footers and the index link to 
+<code>STEM.pdf</code>
+. A trailing 
+<code>.pdf</code>
+ or 
+<code>.tex</code>
+ is stripped. Letters, digits, 
+<code>_</code>
+, and 
+<code>-</code>
+ only. Ignored for report collections (one file per report, named like the HTML stem).
+</p>
+</dd>
 <dt>**--logo=FILE**</dt>
 <dd>
 <p>
-Optional sidebar logo. The image is copied into 
+Optional logo. HTML copies it into 
 <code>targetDir/_static/</code>
- and shown above the book title in the nav. HTML only.
+ and shows it in the sidebar. LaTeX / PDF copies it into 
+<code>targetDir</code>
+ and places it on the title page (page 1), not as a chapter figure.
 </p>
 </dd>
 <dt>**--format=FMT**</dt>
@@ -127,8 +165,10 @@ Output format:
 . - 
 <code>latex</code>
  — for books, a single 
+<code>STEM.tex</code>
+ (default   
 <code>book.tex</code>
-; for report   manifests (every chapter is a report), one 
+); for report manifests (every chapter is a   report), one 
 <code>.tex</code>
  per report - 
 <code>pdf</code>
@@ -244,11 +284,13 @@ source
 LaTeX / PDF
 </strong>
 : book manifests write 
-<code>targetDir/book.tex</code>
+<code>targetDir/STEM.tex</code>
  (and 
-<code>book.pdf</code>
+<code>STEM.pdf</code>
  with 
 <code>--format=pdf</code>
+; default stem 
+<code>book</code>
 ). Report manifests write one 
 <code>.tex</code>
  / 
@@ -275,10 +317,10 @@ Usage errors and missing files call
 </p>
 <div class="prevnext">
 <a href="themes.html">&larr; Themes</a>
-<a href="sphinx.html">uscribe and Sphinx &rarr;</a>
+<span></span>
 </div>
 <footer class="footer" role="contentinfo">
-&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="cli.pdf">pdf</a> | <a href="_sources/cli.rst.txt" rel="nofollow">source</a>
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/cli.rst.txt" rel="nofollow">source</a>
 </footer>
 </div></div>
 </body></html>

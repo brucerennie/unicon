@@ -34,10 +34,10 @@ placeholder="Search…" aria-label="Filter chapter list">
 <li class="current">Introduction</li>
 <li><a href="install.html">Installation</a></li>
 <li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="config.html">Book Configuration</a></li>
 <li><a href="markup.html">Markup Reference</a></li>
 <li><a href="themes.html">Themes</a></li>
 <li><a href="cli.html">Command Line</a></li>
-<li><a href="sphinx.html">uscribe and Sphinx</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -49,7 +49,6 @@ placeholder="Search…" aria-label="Filter chapter list">
 <h2 id="introduction">
 Introduction
 </h2>
-<img class="figure logo" src="images/uscribe-logo.png" alt="Uscribe — documentation for Unicon">
 <p>
 <em>
 uscribe
@@ -101,9 +100,7 @@ Mark listings with
 <code>icn</code>
 ). In HTML they are highlighted client-side:
 </p>
-<pre><code class="language-unicon">
-
-procedure greet(who)
+<pre><code class="language-unicon">procedure greet(who)
    write(&quot;Hello, &quot;, \who | &quot;world&quot;, &quot;!&quot;)
 end
 
@@ -147,6 +144,12 @@ How to read this guide
  — generate HTML from a tiny book
 </li>
 <li>
+<a href="config.html#book-configuration">Book Configuration</a>
+ — 
+<code>book.conf</code>
+ keys, defaults, and CLI overrides
+</li>
+<li>
 <a href="markup.html#markup-reference">Markup Reference</a>
  — headings, lists, inline markup, directives
 </li>
@@ -158,17 +161,13 @@ How to read this guide
 <a href="cli.html#command-line">Command Line</a>
  — CLI options
 </li>
-<li>
-<a href="sphinx.html#uscribe-and-sphinx">uscribe and Sphinx</a>
- — what maps to what if you know Sphinx
-</li>
 </ul>
 <div class="prevnext">
 <span></span>
 <a href="install.html">Installation &rarr;</a>
 </div>
 <footer class="footer" role="contentinfo">
-&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="intro.pdf">pdf</a> | <a href="_sources/intro.rst.txt" rel="nofollow">source</a>
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/intro.rst.txt" rel="nofollow">source</a>
 </footer>
 </div></div>
 </body></html>

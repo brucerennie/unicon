@@ -16,7 +16,8 @@
     Attrib:1, getserv:1, gethost:1, send:1, receive:1, system:1, integer:1,
     string:1, type:1, image:1, member:1, put:1, pull:1, pop:1, get:1,
     sort:1, map:1, repl:1, reverse:1, trim:1, left:1, right:1, center:1,
-    find:1, match:1, upto:1, many:1, any:1, tab:1, move:1, pos:1, bal:1
+    find:1, match:1, upto:1, many:1, any:1, tab:1, move:1, pos:1, bal:1,
+    key:1, insert:1, delete:1, copy:1, list:1, table:1, set:1, numeric:1
   };
 
   function escapeHtml(s) {

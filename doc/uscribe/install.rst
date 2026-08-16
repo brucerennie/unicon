@@ -98,11 +98,14 @@ new Command Prompt or PowerShell window.
 What uscribe LaTeX output needs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Generated ``book.tex`` uses a small set of packages
-(``graphicx``, ``hyperref``, ``xcolor``, ``fancyvrb``, ``booktabs``).
-A latex base or recommended install is usually enough. If
-``pdflatex`` stops with ``File …sty not found``, install the matching
-TeX Live or MiKTeX package (or a larger scheme) and retry.
+Generated ``STEM.tex`` uses a small set of packages
+(``graphicx``, ``hyperref``, ``xcolor``, ``fancyvrb``, ``booktabs``,
+``longtable``). ``multirow`` is loaded when the ``.sty`` is installed
+(needed for grid-table row spans). A latex recommended install is
+usually enough; GitHub Pages installs ``texlive-latex-extra`` so the
+user-guide PDF build has the full set. If ``pdflatex`` stops with
+``File …sty not found``, install the matching TeX Live or MiKTeX
+package (or a larger scheme) and retry.
 
 SVG figures are not embedded in PDF; convert them to PDF or PNG, or
 accept the boxed placeholder uscribe emits for ``.svg`` paths.
@@ -132,7 +135,7 @@ Verify
 .. code-block:: sh
 
    uscribe
-   # prints usage and exits
+   # no book.manifest in this directory: prints usage and exits
 
 Build this manual
 -----------------
@@ -151,8 +154,8 @@ PDF (after installing a TeX engine as above):
 
    cd doc/uscribe
    make pdf
-   # open out/book.pdf
+   # open out/uscribe-userguide.pdf
 
-``make latex`` writes ``out/book.tex`` without running a TeX engine.
+``make latex`` writes ``out/uscribe-userguide.tex`` without running a TeX engine.
 ``make pdf`` writes the ``.tex`` and runs the engine twice (TOC and
 cross-references).

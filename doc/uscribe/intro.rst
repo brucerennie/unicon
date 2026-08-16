@@ -1,10 +1,6 @@
 Introduction
 ============
 
-.. image:: images/uscribe-logo.png
-
-   Uscribe — documentation for Unicon
-
 *uscribe* is a prose/book documentation generator for Unicon. It reads
 a small RST-like markup, builds a doctree, resolves cross-chapter
 references, and writes themed HTML (and optionally LaTeX/PDF) for
@@ -56,7 +52,7 @@ How to read this guide
 
 - :doc:`install` — build and install the ``uscribe`` binary
 - :doc:`quickstart` — generate HTML from a tiny book
+- :doc:`config` — ``book.conf`` keys, defaults, and CLI overrides
 - :doc:`markup` — headings, lists, inline markup, directives
 - :doc:`themes` — basic, classic, dark, and the in-page switcher
 - :doc:`cli` — CLI options
-- :doc:`sphinx` — what maps to what if you know Sphinx

@@ -34,10 +34,10 @@ placeholder="Search…" aria-label="Filter chapter list">
 <li><a href="intro.html">Introduction</a></li>
 <li><a href="install.html">Installation</a></li>
 <li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="config.html">Book Configuration</a></li>
 <li><a href="markup.html">Markup Reference</a></li>
 <li class="current">Themes</li>
 <li><a href="cli.html">Command Line</a></li>
-<li><a href="sphinx.html">uscribe and Sphinx</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -97,16 +97,22 @@ Theme
 <h3 id="build-time-default">
 Build-time default
 </h3>
-<pre><code class="language-sh">
-
-uscribe ... --theme=classic --themePath=../themes
+<pre><code class="language-sh">uscribe ... --theme=classic --themePath=../themes
 </code></pre>
+<p>
+<code>theme</code>
+ and 
+<code>themePath</code>
+ may also be set in 
+<code>book.conf</code>
+ (see 
+<a href="config.html#book-configuration">Book Configuration</a>
+).
+</p>
 <p>
 Or with the sample Makefiles:
 </p>
-<pre><code class="language-sh">
-
-make          # THEME=basic
+<pre><code class="language-sh">make          # THEME=basic
 make classic
 make dark
 </code></pre>
@@ -121,9 +127,7 @@ initial
 <h3 id="theme-layout-on-disk">
 Theme layout on disk
 </h3>
-<pre><code class="language-text">
-
-themes/
+<pre><code class="language-text">themes/
   basic/static/book.css
   classic/static/book.css
   dark/static/book.css
@@ -155,7 +159,7 @@ See
 <a href="cli.html">Command Line &rarr;</a>
 </div>
 <footer class="footer" role="contentinfo">
-&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="themes.pdf">pdf</a> | <a href="_sources/themes.rst.txt" rel="nofollow">source</a>
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/themes.rst.txt" rel="nofollow">source</a>
 </footer>
 </div></div>
 </body></html>

@@ -6,38 +6,57 @@ Synopsis
 
 .. code-block:: sh
 
-   uscribe --manifest=FILE [options]
+   uscribe [options]
 
 Options
 -------
 
 **--manifest=FILE**
-  Required. Plain-text chapter list: one source path per line.
-  Lines starting with ``#`` and blank lines are ignored. Paths are
-  relative to the process current working directory.
+  Plain-text chapter list: one source path per line. Lines starting
+  with ``#`` and blank lines are ignored. Paths are relative to the
+  process current working directory. Default: ``book.manifest`` in
+  the current directory.
+
+**--config=FILE**
+  Book-level settings file. If omitted, uscribe loads
+  ``book.conf`` next to the manifest when that file exists.
+  See :doc:`config` for the key list, path rules, and defaults.
+  Any command-line option overrides the file.
 
 **--title=TITLE**
   Book title for ``<title>``, the sidebar heading, the index page,
-  and the LaTeX ``\\title``. Default: ``Untitled Book``.
+  and the LaTeX ``\\title``. Default: from ``book.conf``, else
+  ``Untitled Book``.
 
 **--copyright=TEXT**
   Optional footer copyright (text after ©), e.g.
   ``2026, Jafar Al-Gharaibeh``. HTML only. Every HTML page always
   ends with ``Powered by uscribe``; chapter pages also link
-  **pdf** and **source** (``_sources/name.rst.txt``, viewable as
+  **pdf** (the book PDF from ``--name``, or a sibling PDF for
+  reports) and **source** (``_sources/name.rst.txt``, viewable as
   plain text in the browser).
 
+**--name=STEM**
+  Basename for the book ``.tex`` / ``.pdf`` (default: ``book``).
+  HTML footers and the index link to ``STEM.pdf``. A trailing
+  ``.pdf`` or ``.tex`` is stripped. Letters, digits, ``_``, and
+  ``-`` only. Ignored for report collections (one file per report,
+  named like the HTML stem).
+
 **--logo=FILE**
-  Optional sidebar logo. The image is copied into ``targetDir/_static/``
-  and shown above the book title in the nav. HTML only.
+  Optional logo. HTML copies it into ``targetDir/_static/`` and
+  shows it in the sidebar. LaTeX / PDF copies it into
+  ``targetDir`` and places it on the title page (page 1), not as
+  a chapter figure.
 
 **--format=FMT**
   Output format: ``html`` (default), ``latex``, or ``pdf``.
 
   - ``html`` — one page per chapter plus index/search/themes.
     Report manifests get a UTR index table on ``index.html``.
-  - ``latex`` — for books, a single ``book.tex``; for report
-    manifests (every chapter is a report), one ``.tex`` per report
+  - ``latex`` — for books, a single ``STEM.tex`` (default
+    ``book.tex``); for report manifests (every chapter is a
+    report), one ``.tex`` per report
   - ``pdf`` — like ``latex``, then run ``pdflatex``, ``xelatex``, or
     ``lualatex`` (whichever is first in ``PATH``) twice for TOC/xrefs
 
@@ -69,8 +88,8 @@ writes ``targetDir/name.html``, plus:
 - ``_sources/`` — chapter sources as ``name.rst.txt`` (browser-viewable
   text; linked as **txt** / **source**)
 
-**LaTeX / PDF**: book manifests write ``targetDir/book.tex`` (and
-``book.pdf`` with ``--format=pdf``). Report manifests write one
+**LaTeX / PDF**: book manifests write ``targetDir/STEM.tex`` (and
+``STEM.pdf`` with ``--format=pdf``; default stem ``book``). Report manifests write one
 ``.tex`` / ``.pdf`` per report, named like the HTML stem
 (``ex-report.tex`` beside ``ex-report.html``).
 Local ``.. image::`` files are copied into ``targetDir`` automatically

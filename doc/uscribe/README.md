@@ -7,7 +7,9 @@ This directory holds the **uscribe User Guide**, built with uscribe
 # from the unicon tree
 make -C uni/uscribe          # build the uscribe tool
 make -C doc/uscribe          # build this guide → out/index.html
+# book settings: book.conf (title, logo, name, …)
 ```
 
 Themes: `make basic`, `make classic`, or `make dark` in this directory.
-Also `make latex` / `make pdf` when a TeX engine is installed.
+Also `make latex` / `make pdf` when a TeX engine is installed
+(`out/uscribe-userguide.pdf`).

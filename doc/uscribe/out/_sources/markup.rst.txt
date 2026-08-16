@@ -22,6 +22,28 @@ Characters ``= - ~ ^`` are recognized as underline styles. Heading
 level follows the underline character. The underline length must be
 greater than or equal to the title length.
 
+Document fields
+---------------
+
+A chapter may start with an RST field list (Docutils bibliographic
+fields). Repeat ``:author:`` for several names. Book chapters show
+these as a byline under the first heading; omit the fields and
+nothing is added. Reports also use ``:title:``, ``:trnumber:``,
+``:abstract:``, and ``:docclass:`` for the UTR cover.
+
+.. code-block:: rst
+
+   :author: Jane Doe
+   :author: Pat Lee
+   :date: 2026-08-15
+   :copyright: 2026, Jane Doe
+
+   Chapter Title
+   =============
+
+Book-wide title, logo, theme, and PDF name belong in
+``book.conf`` (see :doc:`config`). They are not chapter fields.
+
 Paragraphs and lists
 --------------------
 
