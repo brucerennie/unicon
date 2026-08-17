@@ -2,11 +2,12 @@
 
 :root {
   --sidebar-w: 16rem;
-  --border: #d0d0d0;
-  --bg-side: #f4f4f4;
+  --border: #d0d5db;
+  --bg-side: #f3f5f7;
   --bg-main: #fff;
   --link: #0645ad;
   --current: #222;
+  --accent: #c45c26;
 }
 
 * { box-sizing: border-box; }
@@ -34,6 +35,7 @@ body {
   padding: 1rem 0.85rem 2rem;
   background: var(--bg-side);
   border-right: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
   flex-shrink: 0;
 }
 
@@ -47,16 +49,18 @@ body {
 
 .sidebar .sidebar-logo {
   display: block;
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.55rem;
   text-align: center;
   text-decoration: none;
+  border-bottom: 2px solid var(--accent);
 }
 
 .sidebar .sidebar-logo img {
   display: block;
   width: auto;
   max-width: 100%;
-  max-height: 5.5rem;
+  max-height: 8rem;
   margin: 0 auto;
   border: none;
   background: transparent;
@@ -97,6 +101,9 @@ body {
 .sidebar li.current {
   font-weight: 650;
   color: var(--current);
+  border-left: 3px solid var(--accent);
+  padding-left: 0.4rem;
+  margin-left: -0.4rem;
 }
 
 .sidebar li.hidden { display: none; }
@@ -162,7 +169,7 @@ img.figure.logo, figure.figure.logo img {
 }
 
 pre {
-  background: #f0f0f0;
+  background: #f4f6f8;
   padding: 0.75rem;
   overflow: auto;
   border-radius: 3px;
@@ -213,6 +220,16 @@ dd { margin: 0.25rem 0 0 1.25rem; }
   font-size: 1.1rem;
   font-weight: 650;
   margin: 0.5rem 0;
+}
+.chapter-byline {
+  margin: -0.15rem 0 1.35rem;
+  font-size: 0.95rem;
+  color: var(--muted, #5c6370);
+  font-style: italic;
+}
+.chapter-byline .sep {
+  font-style: normal;
+  opacity: 0.7;
 }
 .report-tr, .report-date {
   font-weight: 650;
