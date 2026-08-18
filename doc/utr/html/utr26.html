@@ -30,13 +30,14 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <input class="search-box" id="nav-search" type="search" 
 placeholder="Search..." aria-label="Filter chapter list">
 <ol id="nav-toc">
+<li><a href="utr25.html">UTR 25: Native Unicode Support in the Unicon Runtime</a></li>
 <li class="current">UTR 26: Native SSH and SFTP Support in Unicon</li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
 <div class="main">
 <div class="prevnext">
-<span></span>
+<a href="utr25.html">&larr; UTR 25: Native Unicode Support in the Unicon Runtime</a>
 <span></span>
 </div>
 <header class="report-masthead">
@@ -121,7 +122,7 @@ libssh2
 libssh
 </strong>
  
-[<a class="cite" href="#cite-libssh">2</a>], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (
+[<a class="cite" href="#cite-libssh">4</a>], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (
 <a href="utr26.html#sec-receive">section 8.3</a>
 ).
 </p>
@@ -157,7 +158,7 @@ open
 The Messaging facility (HTTP/POP/SMTP, 
 <code>rmsg.r</code>
 , libtp) 
-[<a class="cite" href="#cite-jeffery-utr13">3</a>] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (
+[<a class="cite" href="#cite-jeffery-utr13">5</a>] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (
 <code>exec</code>
  / 
 <code>shell</code>
@@ -1896,7 +1897,10 @@ Trust-on-first-use.
 </p>
 <p>
 <strong>
-``~`` in ``key=``.
+<code>~</code>
+ in 
+<code>key=</code>
+.
 </strong>
  Not expanded. The helper and 
 <code>ussh</code>
@@ -1963,15 +1967,21 @@ References
 <li id="cite-jeffery-utr15" value="1">
 Clinton Jeffery. &quot;How to Write a Unicon Technical Report&quot;. doc/utr/utr15.tex. 2013.
 </li>
-<li id="cite-libssh" value="2">
+<li id="cite-unicode-standard" value="2">
+Unicode Consortium. &quot;The Unicode Standard&quot;. https://www.unicode.org/versions/latest/. 2026.
+</li>
+<li id="cite-unicon-utf8lib" value="3">
+Unicon Project. &quot;UTF-8 class library&quot;. uni/lib/utf8.icn.
+</li>
+<li id="cite-libssh" value="4">
 The libssh Project. &quot;libssh -- The SSH Library&quot;. https://www.libssh.org/. 2026.
 </li>
-<li id="cite-jeffery-utr13" value="3">
+<li id="cite-jeffery-utr13" value="5">
 Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
 </li>
 </ol></div>
 <div class="prevnext">
-<span></span>
+<a href="utr25.html">&larr; UTR 25: Native Unicode Support in the Unicon Runtime</a>
 <span></span>
 </div>
 <footer class="footer" role="contentinfo">

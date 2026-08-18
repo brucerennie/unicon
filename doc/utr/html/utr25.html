@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Native Unicode Support in the Unicon Runtime</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li class="current">UTR 25: Native Unicode Support in the Unicon Runtime</li>
+<li><a href="utr26.html">UTR 26: Native SSH and SFTP Support in Unicon</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<span></span>
+<a href="utr26.html">UTR 26: Native SSH and SFTP Support in Unicon &rarr;</a>
+</div>
+<header class="report-masthead">
+<h1 class="report-title">Native Unicode Support in the Unicon Runtime</h1>
+<p class="report-authors">Jafar Al-Gharaibeh</p>
+<p class="report-tr">Unicon Technical Report: 25</p>
+<p class="report-date">August 2026</p>
+<p class="report-pdf"><a href="utr25.pdf">pdf</a> | <a href="_sources/utr25.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon strings historically have no concept of Unicode: a string is a byte sequence, and operations like subscripting, length, and concatenation operate on bytes. This report describes a native implementation that gives strings UTF-8 awareness while preserving byte-for-byte performance and memory layout for content that is pure ASCII. The approach -- tagging a string's existing descriptor rather than introducing a new allocated representation -- is the tagged-qualifier design. The report covers the bit-level representation, the mechanisms that apply it, the operations that have been made Unicode-aware, examples, the alternatives that were evaluated and why they were not chosen, and the work that remains. It is intended to remain useful as a reference after the feature has shipped, not only as a plan for building it. Keywords: Unicon, Unicode, UTF-8, strings, runtime, technical report.</p>
+</div>
+</header>
+<h2 id="sec-intro">
+1. Introduction
+</h2>
+<p>
+This report records the as-built native Unicode support in the Unicon runtime: how a string is tagged, how literals and I/O become tagged, which operations interpret positions as codepoints, and what is still byte-oriented. It is formatted as a Unicon Technical Report 
+[<a class="cite" href="#cite-jeffery-utr15">1</a>]. 
+<a href="utr26.html#sec-examples">section 8</a>
+ collects short programs by operation. Automated tests live under 
+<code>tests/unicode/</code>
+.
+</p>
+<p>
+The feature is optional. A 64-bit build without 
+<code>NoUniconUnicode</code>
+ reports 
+<code>Unicode</code>
+ in 
+<code>&amp;features</code>
+. On 32-bit, or with that switch, the tag macros are no-ops and the suite is skipped.
+</p>
+<h3 id="sec-term">
+1.1 Terminology: Unicode vs. UTF-8
+</h3>
+<p>
+These are not interchangeable in this work.
+</p>
+<p>
+<strong>
+Unicode
+</strong>
+ is the language-facing idea: codepoints, text semantics, and the feature itself (
+<code>&amp;features</code>
+ reports 
+<code>Unicode</code>
+; 
+<code>_UNICODE</code>
+; 
+<code>UniconUnicode</code>
+; 
+<code>unicode()</code>
+, 
+<code>uchar()</code>
+, 
+<code>uord()</code>
+; 
+<code>*</code>
+ / 
+<code>s[i]</code>
+ on a tagged string). 
+<code>unicode(s)</code>
+ means &quot;treat these bytes as Unicode text,&quot; not &quot;encode as Unicode.&quot;
+</p>
+<p>
+<strong>
+UTF-8
+</strong>
+ is the encoding of the payload 
+[<a class="cite" href="#cite-unicode-standard">2</a>]: the bytes in string space, 
+<code>open</code>
+ 
+<code>i</code>
+-mode decoding, lead-byte width scans, and well-formedness. ASCII is a subset of UTF-8; a plain (untagged) string is a byte string. 
+<code>type()</code>
+ stays 
+<code>&quot;string&quot;</code>
+ for both views. The language-level inverse of 
+<code>unicode(s)</code>
+, and the difference between a content test and a tag test, are discussed in 
+<a href="utr25.html#sec-api">section 7</a>
+.
+</p>
+<p>
+Internal C names (
+<code>F_UniQual</code>
+, 
+<code>IsUniQual</code>
+) stay as the tag; comments should say &quot;UTF-8-tagged qualifier.&quot; The class library 
+<code>UTF8</code>
+/
+<code>UTF8Set</code>
+ is correctly named: it is a byte-walking encoding layer. Native support is the Unicode view of those same bytes.
+</p>
+<h2 id="sec-design">
+2. Design principle and representation
+</h2>
+<p>
+Unicon strings are qualifiers: a two-word descriptor consisting of a length word (
+<code>dword</code>
+) and a pointer into string space (
+<code>vword.sptr</code>
+). There is no allocated block and no indirection beyond the pointer itself. This representation is why plain string operations in Unicon are cheap, and it is the property this design is built to preserve: a string containing no non-ASCII bytes must cost exactly what it costs today, in memory layout, in macro behavior, and in execution speed.
+</p>
+<p>
+The approach taken is to reuse bits already present in the descriptor's length word rather than introduce a new block type for Unicode-aware strings. A 64-bit word gives far more range than any realistic string length needs, leaving room to encode additional state in the unused high bits without changing the descriptor's size or a plain string's representation at all.
+</p>
+<h3 id="sec-bits">
+2.1 Bit layout
+</h3>
+<p>
+Available on 64-bit builds (
+<code>WordBits == 64</code>
+) when compiled with 
+<code>UniconUnicode</code>
+ defined (
+<code>src/h/config.h</code>
+). With the feature disabled, every macro described below reduces to today's unmodified behavior, so no call site needs its own conditional compilation.
+</p>
+<pre><code class="language-text">bit 63       F_Nqual        (existing -- qualifier vs. typed value)
+bit 62       F_UniQual      (this string is UTF-8-tagged)
+bits 32-61   cp_count       (30 bits, cached codepoint count)
+bits 0-31    byte length    (32 bits, ~4.3 GB maximum)
+</code></pre>
+<p>
+<strong>
+Byte length retains a full 32 bits rather than being reduced further.
+</strong>
+ Unlike the codepoint count, byte length has no fallback: if a string's true length does not fit in its field, there is no secondary source of truth to recover it from, since Unicon strings are not null-terminated. The codepoint count, by contrast, can always be recomputed by walking the string when it is not cached, so it can safely be given whatever bits remain. In practice this is generous rather than tight -- the sentinel value (see below) is reached only by a string close to the full 4.3 GB byte-length limit that is almost entirely single-byte content, which would not be UTF-8-tagged in the first place under normal conditions.
+</p>
+<p>
+<strong>
+Why the remaining bits were spent on a cached codepoint count rather than a cached scan position.
+</strong>
+ Two different kinds of cache were considered for these bits. A cached 
+<em>
+codepoint count
+</em>
+ records how many codepoints a string contains, making the size operation (
+<code>*s</code>
+) constant-time. A cached 
+<em>
+scan position
+</em>
+ instead records a single (codepoint index, byte offset) pair -- the last position looked up -- letting a subsequent lookup near that position resume without walking from the start of the string. Both are legitimate optimizations, but they help different things: a cached count benefits every size query uniformly, regardless of string length, since there is no cheaper way to answer &quot;how many codepoints does this string have&quot; without either counting or having already counted. A cached position only pays for itself when a string is subscripted repeatedly and nontrivially; for short strings accessed only a few times, walking from the start is already competitive with or faster than maintaining any index, a result obtained by direct measurement rather than assumed. Because a large share of string values in typical Unicon programs are short-lived tokens -- parsed, compared, and discarded, rarely subscripted more than once or twice -- the cached-count approach has the stronger claim on the representation's limited bits, and is what this design uses.
+</p>
+<p>
+A cached-position representation matching the same bit budget was designed and benchmarked in the course of this work (a 14-bit cached codepoint index paired with a 16-bit cached byte offset, packed into the same word) and was found to match a fully allocated index structure to within a few percent for strings up to roughly sixteen thousand codepoints. It was not adopted because the codepoint-count design above has the better-evidenced claim on the same bits, not because it does not work; it remains a candidate for a future representation, discussed in 
+<a href="utr26.html#sec-status">section 9</a>
+.
+</p>
+<h3 id="sec-macros">
+2.2 Core macros
+</h3>
+<p>
+Defined in 
+<code>src/h/rmacros.h</code>
+:
+</p>
+<pre><code class="language-c">StrLen(q)         /* byte length, masked to exclude tag/count bits */
+SetStrLen(q,n)    /* sets byte length; see section 2.3 for why this clears
+                     rather than preserves the other fields */
+IsUniQual(d)      /* tests the UTF-8 tag */
+SetUniQual(d)     /* sets the UTF-8 tag */
+CpCount(q)        /* reads the cached codepoint count, or the sentinel
+                     value 0 if none is cached */
+SetCpCount(q,n)   /* sets the cached codepoint count */
+</code></pre>
+<p>
+Three shared helpers implement UTF-8 decoding logic used throughout the runtime:
+</p>
+<pre><code class="language-c">uq_lead_width(b)              /* width in bytes of the UTF-8 character
+                                 starting at lead byte b */
+uq_scan(bytes, len, &amp;ncps)    /* scans a byte range once; returns
+                                 whether any multi-byte character was
+                                 found, and the total codepoint count */
+uq_seek_cp(bytes, target_cp)  /* returns the byte offset at which
+                                 codepoint index target_cp begins */
+</code></pre>
+<p>
+All three treat a malformed lead byte as a one-byte unit and continue, rather than raising an error; this lenient behavior is specific to internal scanning and is distinct from the strict validation applied by 
+<code>uord()</code>
+ (
+<a href="utr25.html#sec-uchar">section 4</a>
+).
+</p>
+<h3 id="sec-strlen">
+2.3 
+<code>StrLen</code>
+ masking and 
+<code>SetStrLen</code>
+ overwrite semantics
+</h3>
+<p>
+<code>StrLen</code>
+ unconditionally masks out the tag and count bits before returning a byte length. This has to be unconditional rather than applied only where Unicode-awareness is expected, because a tagged string can reach any code path that handles strings generically -- 
+<code>write()</code>
+, list and table operations, anything treating a string as an opaque byte sequence -- and any of those reading the raw, unmasked word would compute an incorrect length.
+</p>
+<p>
+<code>SetStrLen</code>
+ performs a full overwrite of the descriptor's length word, rather than clearing only the length bits and preserving whatever tag and count bits were already present. This is a deliberate choice, not an oversight: the large majority of call sites that assign a string length are populating a freshly declared descriptor -- a local variable on the stack, an uninitialized table slot -- whose prior content is unrelated garbage rather than a meaningful previous value. Preserving that content would leak it into the tag and count fields of what is meant to be a clean, newly constructed string. A full overwrite (with the incoming length itself masked, so that an oversized value cannot bleed into the neighboring count field) produces a deterministic, untagged result in every case, which is what nearly every call site actually requires.
+</p>
+<p>
+The consequence is that any code that needs to both set a length and retain or apply tagging must do so explicitly, in order: 
+<code>SetStrLen</code>
+, then 
+<code>SetUniQual</code>
+, then 
+<code>SetCpCount</code>
+ if applicable. Reversing this order silently loses the tag, since 
+<code>SetStrLen</code>
+ clears it. This ordering requirement is not enforced by the type system and must be checked by hand at any call site that does both. Concatenation (
+<a href="utr25.html#sec-concat">section 5</a>
+) is the clearest illustration of where getting this wrong produces a real, silent defect: an implementation that computes a combined length via 
+<code>SetStrLen</code>
+ and only afterward decides whether to tag the result is correct; one that sets the tag first, relying on an earlier whole-descriptor copy to have carried it, is not, because the subsequent 
+<code>SetStrLen</code>
+ call clears whatever the copy carried.
+</p>
+<h2 id="sec-promo">
+3. Promotion: how a string becomes tagged
+</h2>
+<p>
+A string literal's bytes are fixed and known at compile time. Rather than defer classification to when the program runs, the compiler (
+<code>icont</code>
+) scans a literal once during compilation and encodes the result directly in the compiled program, so that loading and executing the program never needs to re-examine the literal's bytes to determine whether it is Unicode content.
+</p>
+<p>
+Tagging a literal is a compile-time concern only; there is no runtime scan. An earlier iteration of this work included a runtime scan-on-first-use as a fallback for literals compiled by a version of 
+<code>icont</code>
+ predating this feature, on the reasoning that it would let such a program benefit from tagging without recompilation. That reasoning turned out not to hold up: the interpreter cannot distinguish &quot;this literal is untagged because a Unicode-aware compiler determined it is pure ASCII&quot; from &quot;this literal is untagged because the compiler that produced it knew nothing about tagging&quot; -- both look identical, an unset tag bit. A scan keyed on &quot;not yet tagged&quot; therefore cannot skip pure-ASCII literals selectively; it must scan every one of them, from every program, on their first execution, to confirm what a Unicode-aware compiler had already determined at compile time. This defeats the purpose of compile-time tagging for the overwhelmingly common case -- a program compiled by a current 
+<code>icont</code>
+ -- in order to support the comparatively rare case of running old, unrecompiled icode. Since recompiling with a current 
+<code>icont</code>
+ is a normal, low-cost expectation for picking up a new compiler feature, the runtime scan was removed rather than kept as a fallback. A program compiled by a version of 
+<code>icont</code>
+ predating this feature runs with every literal's tag bit unset, which is indistinguishable from, and behaves identically to, this feature being entirely absent -- correct, unsurprising behavior requiring no special case, with recompilation being the ordinary path to Unicode-aware literals.
+</p>
+<h3 id="sec-compile">
+3.1 Compile-time tagging
+</h3>
+<p>
+<code>src/icont/tsym.c</code>
+'s 
+<code>putlit</code>
+, which registers each literal encountered during compilation, scans a string literal's already-decoded bytes (the compiler's own literal-decoding stage has already resolved any escape sequences by this point, so no further byte transformation occurs between here and the final compiled output) and sets a flag, 
+<code>F_UniQualLit</code>
+, defined in 
+<code>src/icont/tsym.h</code>
+ and 
+<code>src/icont/link.h</code>
+. This flag occupies the bit immediately above the four existing literal-type flags (
+<code>F_IntLit</code>
+, 
+<code>F_RealLit</code>
+, 
+<code>F_StrLit</code>
+, 
+<code>F_CsetLit</code>
+); it is unrelated to the runtime's 
+<code>F_UniQual</code>
+ bit position, a separate bit space entirely, and the two should not be conflated.
+</p>
+<p>
+The flag is carried through the compiler's intermediate representation using the existing mechanism already used for the other literal-type flags, requiring no format changes. At final code emission (
+<code>src/icont/lcode.c</code>
+'s 
+<code>uniquallen</code>
+), if the flag is set, 
+<code>F_UniQual</code>
+ is encoded directly into the length value written into the compiled program. Because this value is written permanently into the compiled program rather than patched in at run time, the interpreter's literal-loading instruction (
+<code>Op_Str</code>
+ in 
+<code>src/runtime/interp.r</code>
+) simply loads it -- including on every re-load performed by that instruction's own pre-existing, unrelated self-patching optimization, which rewrites itself after first use to skip recomputing a literal's address on subsequent executions. No interaction between the two was needed beyond this: the tag is already correct in the bytecode the first time it is read, and remains correct on every later read, without any additional mechanism.
+</p>
+<p>
+One implementation detail is worth recording because it is not obvious from the surrounding code: the values involved in constructing this tagged length are 64 bits wide, while the pre-existing internal representation of a literal's length during compilation is 32 bits (
+<code>int</code>
+) in two places -- the parameter to the function that emits the final instruction, and the field holding a literal's length in the compiler's symbol table. Writing a 64-bit tagged value through either as originally typed would silently truncate it. The chosen fix widens only the function parameter at the point where the tagged value is actually constructed, leaving the symbol-table field's width and the compiler's intermediate file format untouched; the alternative of widening the symbol-table field would have required corresponding changes to that intermediate file's text-based serialization, a larger and riskier change for no additional benefit.
+</p>
+<p>
+Compile-time tagging encodes the UTF-8 tag but not a cached codepoint count, since doing so would require the same width change that was deliberately avoided above. As a consequence, a compile-time-tagged literal's codepoint count is not cached until something explicitly computes it; the size operation on such a literal remains correct, falling back to a full scan, but does not receive the constant-time benefit that a cached count would provide until a future revision addresses this (
+<a href="utr26.html#sec-status">section 9</a>
+).
+</p>
+<h2 id="sec-uchar">
+4. 
+<code>uchar()</code>
+ and 
+<code>uord()</code>
+: Unicode-aware character conversion
+</h2>
+<p>
+Unicon's existing 
+<code>char()</code>
+ and 
+<code>ord()</code>
+ functions convert between an integer ordinal and a single-character string. Both are strictly byte-oriented: 
+<code>char(i)</code>
+ accepts only 
+<code>0 &lt;= i &lt;= 255</code>
+ and produces a single-byte string; 
+<code>ord(s)</code>
+ accepts only a string of exactly one byte. These functions are unchanged by this work and are expected to remain byte-oriented indefinitely, since existing code depends on that behavior for purposes unrelated to Unicode text -- base-256 byte encodings, and lookup tables indexed by raw byte value among them.
+</p>
+<p>
+Two new functions provide Unicode-aware equivalents:
+</p>
+<ul>
+<li>
+<code>uchar(i)</code>
+ accepts any Unicode scalar value (
+<code>0 &lt;= i &lt;= 0x10FFFF</code>
+, excluding the surrogate range 
+<code>0xD800</code>
+-
+<code>0xDFFF</code>
+, which are not valid standalone Unicode scalar values) and returns its UTF-8 encoding as a string, tagged when the encoding is genuinely multi-byte.
+</li>
+<li>
+<code>uord(s)</code>
+ accepts a string and returns its codepoint value, requiring that 
+<code>s</code>
+ consist of exactly one well-formed UTF-8 encoded codepoint -- correct length for its lead byte, correctly formed continuation bytes, no overlong encoding, and no surrogate value. Unlike the lenient byte-width detection used internally for scanning (
+<a href="utr25.html#sec-macros">section 2.2</a>
+), 
+<code>uord()</code>
+ is strict: malformed or wrong-length input raises a runtime error rather than failing silently, matching the convention already used by 
+<code>ord()</code>
+ for its own precondition violations.
+</li>
+</ul>
+<p>
+Both are registered as ordinary built-in functions (
+<code>src/h/fdefs.h</code>
+) and implemented in 
+<code>src/runtime/fmisc.r</code>
+ alongside 
+<code>char()</code>
+ and 
+<code>ord()</code>
+. Round-trip correctness (
+<code>uord(uchar(i)) = i</code>
+) has been verified across both the Basic Multilingual Plane and the supplementary planes, including four-byte-encoded codepoints.
+</p>
+<h2 id="sec-concat">
+5. Concatenation
+</h2>
+<p>
+The 
+<code>||</code>
+ operator (
+<code>src/runtime/ocat.r</code>
+) has three internal implementation paths, corresponding to different memory-layout optimizations (zero-copy when operands are already adjacent in string space, in-place extension when the left operand is the most recently allocated string, and a general copying path otherwise). All three propagate both the UTF-8 tag and the cached codepoint count to their result: the tag is set if either operand is tagged; the codepoint count is computed as the sum of each operand's contribution, where an untagged operand's own byte length stands in for its codepoint count (valid, since an untagged string is by construction pure ASCII), and a tagged operand contributes its cached count if one is available. If either operand's count is not available (uncached or otherwise unknown), the result's count is left uncached rather than guessed, and a subsequent size query on the result falls back to a full scan.
+</p>
+<p>
+Per 
+<a href="utr25.html#sec-strlen">section 2.3</a>
+, all three paths must apply tagging after computing the result length via 
+<code>SetStrLen</code>
+, not before.
+</p>
+<h2 id="sec-io">
+6. Deliberately unscanned input: files and sockets
+</h2>
+<p>
+Data arriving through 
+<code>read()</code>
+, 
+<code>reads()</code>
+, and equivalent socket operations is not scanned or tagged automatically, regardless of its actual content. This is a deliberate design decision rather than an oversight, made after comparing a byte-copy-only implementation against one that also scans for non-ASCII content in the same pass. Read operations, unlike literals, have no repeated-execution structure to amortize a scan's cost against: every call processes genuinely new bytes, so a mandatory scan would impose its cost on every call to every program performing I/O, whether or not the data ever contains non-ASCII content. Measured in isolation, a combined copy-and-scan implementation was found to run roughly sixteen times slower than a copy-only implementation at a typical line-read size (128 bytes), and remained an order of magnitude or more slower across read sizes from tens of bytes to several kilobytes, since a modern 
+<code>memcpy</code>
+ implementation is substantially better optimized than an equivalent scanning loop. Given the principle that ASCII content should not pay a cost, automatic scanning of read data was rejected.
+</p>
+<p>
+This has one consequence worth stating precisely, since it affects the correctness reasoning in 
+<a href="utr25.html#sec-concat">section 5</a>
+: an untagged string is assumed to be pure ASCII by every operation that examines the tag, including concatenation's codepoint-count propagation. That assumption holds for every string this implementation produces internally, but does not hold in general for content read from an external source that happens to contain multi-byte UTF-8 and was never scanned. A program that reads such content and relies on native Unicode-aware operations without first tagging it explicitly may see byte-oriented rather than codepoint-oriented results -- correct in the sense that no data is lost or corrupted, but not Unicode-aware until the content is tagged by one of the mechanisms below.
+</p>
+<p>
+Three mechanisms give a program control over tagging where it is needed, rather than making it automatic:
+</p>
+<ul>
+<li>
+<strong>
+<code>unicode(s)</code>
+</strong>
+ (
+<code>src/runtime/omisc.r</code>
+), an explicit, on-demand function. If 
+<code>s</code>
+ is untagged, it is scanned; if the scan finds non-ASCII content, the result is tagged and its codepoint count cached. If 
+<code>s</code>
+ is already tagged but has no cached count (the common case for a compile-time-tagged literal, 
+<a href="utr25.html#sec-compile">section 3.1</a>
+), the count is computed and cached. If 
+<code>s</code>
+ is pure ASCII, it is returned unchanged. 
+<code>string(s)</code>
+ is not the inverse; see 
+<a href="utr25.html#sec-api">section 7</a>
+.
+</li>
+<li>
+<strong>
+The 
+<code>i</code>
+ mode character to 
+<code>open()</code>
+</strong>
+, which sets a per-file or per-connection flag causing subsequent 
+<code>reads()</code>
+ calls on that file or connection to scan and tag their results automatically. This is implemented at all of the function's internal return points that produce a taggable result -- the file, socket, and secure-shell channel paths -- with the exception of pseudo-terminal reads, which return through a different internal mechanism not yet adapted for tagging (
+<a href="utr26.html#sec-status">section 9</a>
+).
+</li>
+<li>
+<strong>
+A global default
+</strong>
+, changing what 
+<code>open()</code>
+ assumes when a caller does not specify a mode explicitly, has been designed but not implemented.
+</li>
+</ul>
+<p>
+Adding a new file-status flag to 
+<code>open()</code>
+'s mode-character parsing is not sufficient by itself to make the flag usable on every connection type: socket and messaging connections are each additionally validated against an explicit allowlist of permitted flag combinations (
+<code>src/runtime/fsys.r</code>
+, 
+<code>if (status &amp; ~(...)) runerr(...)</code>
+), independent of the character-parsing switch, and a new flag must be added to each relevant allowlist as well or it will be silently rejected for that connection type despite being accepted by 
+<code>open()</code>
+'s general mode parsing.
+</p>
+<h2 id="sec-api">
+7. Language API: views, conversion, and tests
+</h2>
+<ul>
+<li>
+<code>type()</code>
+ is 
+<code>&quot;string&quot;</code>
+ for both views. No 
+<code>&quot;unicode&quot;</code>
+ type: 
+<code>type(x) == &quot;string&quot;</code>
+ and 
+<code>||</code>
+ / 
+<code>string()</code>
+ treat tagged values as strings.
+</li>
+<li>
+ASCII is never tagged. 
+<code>unicode(&quot;hello&quot;)</code>
+ is a no-op. On ASCII, 
+<code>*s</code>
+ / 
+<code>s[i]</code>
+ / scanning already match the text view.
+</li>
+<li>
+<code>unicode(s)</code>
+: text view (
+<code>*</code>
+ / 
+<code>[]</code>
+ are codepoints).
+</li>
+<li>
+Inverse of 
+<code>unicode(s)</code>
+: same UTF-8 bytes, untagged descriptor (
+<code>*</code>
+ / 
+<code>[]</code>
+ are bytes). Not implemented. Name open. Implementation is a descriptor copy plus 
+<code>SetStrLen</code>
+.
+</li>
+<li>
+Current untag path: 
+<code>writes</code>
+ to a file, 
+<code>reads</code>
+ without 
+<code>i</code>
+. Not an API.
+</li>
+</ul>
+<h3 id="sec-string">
+7.1 
+<code>string()</code>
+ is not the inverse
+</h3>
+<ul>
+<li>
+<code>string(x)</code>
+: convert to string or fail. Identity on strings, including the tag. 
+<code>string(a, b, ...)</code>
+ concatenates and keeps the tag (
+<code>||</code>
+ does the same).
+</li>
+<li>
+Must stay identity: 
+<code>s := string(x) | fail</code>
+ is the usual coerce. Used in 
+<code>uni/lib/format.icn</code>
+, GUI text fields, XML 
+<code>string(e)</code>
+, IPL. Stripping the tag would make later 
+<code>*</code>
+ / 
+<code>[]</code>
+ byte-oriented on 
+<code>&quot;café&quot;</code>
+.
+</li>
+<li>
+<code>if string(x) then</code>
+ still succeeds as a type test if the tag is dropped; 
+<code>if s := string(x) then</code>
+ would bind the byte view.
+</li>
+<li>
+Rejected inverse names: 
+<code>bytes(s)</code>
+ (storage size), 
+<code>utf8(s)</code>
+ (encode; opposite of 
+<code>unicode(s)</code>
+), 
+<code>plain(s)</code>
+.
+</li>
+<li>
+No builtin 
+<code>isunicode(s)</code>
+ if the inverse exists; see 
+<a href="utr25.html#sec-tests">section 7.2</a>
+.
+</li>
+</ul>
+<h3 id="sec-tests">
+7.2 Content test vs. tag test
+</h3>
+<p>
+Two different questions. 
+<code>foo</code>
+ is the inverse of 
+<code>unicode</code>
+.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Question
+</th>
+<th>
+isunicode (content)
+</th>
+<th>
+istagged (descriptor)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Asks
+</td>
+<td>
+text view ~= byte view?
+</td>
+<td>
+is 
+<code>F_UniQual</code>
+ set on this value?
+</td>
+</tr>
+<tr>
+<td>
+Form
+</td>
+<td>
+<code>*unicode(s) ~= *foo(s)</code>
+</td>
+<td>
+must read the bit; no derived form
+</td>
+</tr>
+<tr>
+<td>
+<code>*unicode(s)</code>
+</td>
+<td>
+codepoints (bytes if ASCII)
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>*foo(s)</code>
+</td>
+<td>
+always bytes
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>
+<code>s</code>
+</th>
+<th>
+<code>*unicode(s)</code>
+</th>
+<th>
+<code>*foo(s)</code>
+</th>
+<th>
+content 
+<code>~=</code>
+</th>
+<th>
+tagged?
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>&quot;hello&quot;</code>
+</td>
+<td>
+5
+</td>
+<td>
+5
+</td>
+<td>
+no
+</td>
+<td>
+no
+</td>
+</tr>
+<tr>
+<td>
+<code>&quot;café&quot;</code>
+ (literal)
+</td>
+<td>
+4
+</td>
+<td>
+5
+</td>
+<td>
+yes
+</td>
+<td>
+yes
+</td>
+</tr>
+<tr>
+<td>
+café bytes, no 
+<code>i</code>
+</td>
+<td>
+4
+</td>
+<td>
+5
+</td>
+<td>
+yes
+</td>
+<td>
+no
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+The last two rows have the same 
+<code>*</code>
+ comparison and a different tag. A content test is not a tag test. Inverse plus 
+<code>*</code>
+ covers content. A tag predicate is needed only if a program must ask &quot;am I in the text view?&quot; without assigning 
+<code>unicode(s)</code>
+.
+</p>
+<h2 id="sec-examples">
+8. Examples
+</h2>
+<p>
+These examples assume a Unicon build with 
+<code>Unicode</code>
+ in 
+<code>&amp;features</code>
+. Non-ASCII literals are tagged at compile time, so 
+<code>&quot;café&quot;</code>
+ already has a text view: 
+<code>*s</code>
+ and 
+<code>s[i]</code>
+ are codepoints. The programs under 
+<code>tests/unicode/</code>
+ are the executable form of this section; 
+<code>languages.icn</code>
+ is a longer script sample.
+</p>
+<h3 id="sec-ex-size">
+8.1 Length and subscript
+</h3>
+<p>
+<code>*s</code>
+ is 4, not 5. 
+<code>s[4]</code>
+ is the letter é, not a continuation byte:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local s, i
+   s := &quot;café&quot;
+   write(&quot;*s = &quot;, *s)
+   every i := 1 to *s do
+      write(&quot;s[&quot;, i, &quot;] = &quot;, s[i])
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">*s = 4
+s[1] = c
+s[2] = a
+s[3] = f
+s[4] = é
+</code></pre>
+<p>
+<code>&quot;hello&quot;</code>
+ is untagged ASCII, so 
+<code>*</code>
+ and 
+<code>[]</code>
+ still mean bytes, which for ASCII are the same as codepoints.
+</p>
+<p>
+8.2 
+<code>unicode()</code>
+, 
+<code>uchar()</code>
+, and 
+<code>uord()</code>
+ ---------------------------------------------
+</p>
+<p>
+<code>unicode(s)</code>
+ tags non-ASCII UTF-8. 
+<code>uchar</code>
+ / 
+<code>uord</code>
+ are the codepoint pair; 
+<code>char</code>
+ / 
+<code>ord</code>
+ stay byte-oriented (
+<a href="utr25.html#sec-uchar">section 4</a>
+):
+</p>
+<pre><code class="language-unicon">procedure main()
+   write(*unicode(&quot;hello&quot;))
+   write(*unicode(&quot;café&quot;))
+   write(unicode(&quot;café&quot;)[4])
+   write(uord(uchar(233)))
+   write(*uchar(233))
+   write(char(65), &quot; &quot;, ord(&quot;A&quot;))
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">5
+4
+é
+233
+1
+A 65
+</code></pre>
+<p>
+<code>uord</code>
+ on more than one codepoint is error 205.
+</p>
+<h3 id="sec-ex-concat">
+8.3 Concatenation
+</h3>
+<p>
+<code>||</code>
+ tags the result if either operand is tagged, and adds cached codepoint counts when both are known (
+<a href="utr25.html#sec-concat">section 5</a>
+):
+</p>
+<pre><code class="language-unicon">procedure main()
+   write(*(&quot;café&quot; || &quot;naïve&quot;))
+   write(*(&quot;café&quot; || &quot;hello&quot;))
+   write(*(&quot;hello&quot; || &quot;café&quot;))
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">9
+9
+9
+</code></pre>
+<p>
+<code>string(a, b, ...)</code>
+ concatenates too and 
+<strong>
+keeps
+</strong>
+ the tag, the same as 
+<code>||</code>
+. It is not a byte-view switch (
+<a href="utr25.html#sec-string">section 7.1</a>
+).
+</p>
+<h3 id="sec-ex-scan">
+8.4 Scanning
+</h3>
+<p>
+On a tagged subject, 
+<code>move</code>
+, 
+<code>tab</code>
+, and 
+<code>pos</code>
+ use codepoint positions:
+</p>
+<pre><code class="language-unicon">procedure main()
+   &amp;subject := &quot;café naïve&quot;
+   &amp;pos := 1
+   write(move(4))
+   &amp;pos := 1
+   write(tab(5))
+   &amp;pos := 1
+   write(pos(1))
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">café
+café
+1
+</code></pre>
+<h3 id="sec-ex-io">
+8.5 
+<code>open()</code>
+ mode 
+<code>i</code>
+</h3>
+<p>
+Without 
+<code>i</code>
+, 
+<code>reads()</code>
+ is untagged (byte 
+<code>*</code>
+). With 
+<code>i</code>
+, the same UTF-8 is tagged (
+<a href="utr26.html#sec-io">section 6</a>
+):
+</p>
+<pre><code class="language-unicon">procedure main()
+   local f, s
+   f := open(&quot;uio.dat&quot;, &quot;wu&quot;) | stop(&quot;open&quot;)
+   writes(f, &quot;café&quot;)
+   close(f)
+
+   f := open(&quot;uio.dat&quot;, &quot;r&quot;) | stop(&quot;open&quot;)
+   s := reads(f, 100)
+   close(f)
+   write(*s)
+
+   f := open(&quot;uio.dat&quot;, &quot;ri&quot;) | stop(&quot;open&quot;)
+   s := reads(f, 100)
+   close(f)
+   write(*s)
+   write(s[4])
+   remove(&quot;uio.dat&quot;)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">5
+4
+é
+</code></pre>
+<h3 id="sec-ex-tag">
+8.6 Content vs. tag
+</h3>
+<p>
+Untagged UTF-8 from a file, or built from 
+<code>char()</code>
+ bytes, has byte 
+<code>*</code>
+. 
+<code>unicode()</code>
+ is the text view. The two disagree exactly when the payload is multi-byte (
+<a href="utr25.html#sec-tests">section 7.2</a>
+):
+</p>
+<pre><code class="language-unicon">procedure main()
+   local raw
+   raw := char(195) || char(169)    # UTF-8 of é, untagged
+   write(*raw)
+   write(*unicode(raw))
+   write(*string(unicode(raw)))
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">2
+1
+1
+</code></pre>
+<p>
+<code>string(s)</code>
+ on 
+<code>&quot;café&quot;</code>
+ also keeps the tag: 
+<code>*string(s) = *s</code>
+.
+</p>
+<h2 id="sec-status">
+9. Status and future work
+</h2>
+<p>
+The following operations have been made Unicode-aware. Subscripting (
+<code>s[i]</code>
+) and section extraction (
+<code>s[i:j]</code>
+) both include the case of extraction from a named variable, which for either operator is handled by a separate code path (
+<code>src/runtime/cnv.r</code>
+'s dereferencing of a trapped substring variable) rather than by the operator's own logic directly, and independently applies the same tagging rule -- the result is tagged only when the extracted range is genuinely multi-byte, not simply because the source was tagged, since a slice of a tagged string can itself be pure ASCII. Element generation (
+<code>!s</code>
+) and random selection (
+<code>?s</code>
+) use the same codepoint unit on a tagged string: each result is one complete UTF-8 character, matching 
+<code>s[i]</code>
+, rather than a single byte that could split a multi-byte encoding. Substring assignment (
+<code>s[i] := x</code>
+ and the range form 
+<code>s[i:j] := x</code>
+) shares this same trapped-variable mechanism on assignment and is complete as well; assigning into a tagged string correctly recomputes the result's tag and codepoint count by scanning the assembled result rather than assuming either the prefix or the suffix inherits the source's tag. 
+<code>move</code>
+, 
+<code>tab</code>
+, and 
+<code>pos</code>
+, which operate on 
+<code>&amp;subject</code>
+ and 
+<code>&amp;pos</code>
+, have been made to interpret their positions as codepoints for a tagged subject wherever the underlying position arithmetic (
+<code>cvpos</code>
+) already treats units abstractly; only the point where an abstract position becomes an actual byte offset needed a tagged-aware branch. 
+<code>many</code>
+, among the pattern-scanning functions, has been made Unicode-aware in one specific respect: it walks a tagged subject codepoint by codepoint rather than byte by byte, so that its notion of position is codepoint-based. It does not, and cannot yet, test a multi-byte codepoint against the character set argument at all -- a plain character set represents only codepoints 0-255, so there is no meaningful membership test to perform for one. The implementation reflects this directly rather than approximating it: on reaching a multi-byte codepoint, it stops immediately, without ever calling the character-set membership test on any of that codepoint's bytes. This was verified deliberately, not assumed -- including a check that a character set constructed to contain the exact raw byte values of a multi-byte codepoint's UTF-8 encoding still does not cause the scan to continue through it, ruling out the specific failure mode of accidentally testing individual continuation bytes as if they were independent ASCII characters. Extending 
+<code>many</code>
+ (and the character-set type more generally) to test Unicode content meaningfully requires a codepoint-range set type, which does not exist yet (below). 
+<code>find</code>
+ and 
+<code>match</code>
+, which search for and test one string against another rather than testing a character set, have also been made Unicode-aware: the byte-level comparison each performs internally is unchanged and does not itself need to become codepoint-aware, since UTF-8 is self-synchronizing -- an exact byte match beginning and ending at codepoint boundaries is already a correct codepoint-level match. Only the bounds each accepts and the position each returns needed to change, to mean codepoints rather than bytes for a tagged subject; 
+<code>find</code>
+, as a generator, walks one codepoint at a time across its search window for this reason, testing the byte comparison at each codepoint boundary rather than at each byte offset. The size operator (
+<code>*s</code>
+), concatenation (
+<code>||</code>
+), and the explicit 
+<code>unicode()</code>
+, 
+<code>uchar()</code>
+, and 
+<code>uord()</code>
+ functions are also complete, as described above.
+</p>
+<p>
+Table and set key equality, lookup, and membership testing are unaffected by tagging, confirmed by direct test rather than assumed from the general masking behavior described in 
+<a href="utr25.html#sec-strlen">section 2.3</a>
+: a tagged literal, a byte-identical untagged string read from a file, and a string explicitly tagged via 
+<code>unicode()</code>
+ all compare equal to one another and are interchangeable as table keys and set members, since hashing and equality both operate on 
+<code>StrLen</code>
+-masked byte content only.
+</p>
+<p>
+<code>reverse</code>
+ has also been made Unicode-aware, and needed a different fix than the position-based functions above rather than a lighter version of the same one: a naive byte-for-byte reversal, which is what the original byte-oriented implementation did and is a correct way to reverse an ASCII string, actively corrupts multi-byte content, since reversing byte order breaks the lead-byte/continuation-byte structure a multi-byte encoding depends on. This was confirmed as real before being fixed, not assumed: reversing a string containing one two-byte character produced a byte sequence a UTF-8 decoder cannot correctly interpret. The fix reverses codepoint order while leaving each codepoint's own bytes in their original internal order, by walking the source forward one codepoint at a time and writing each into the result working backward from the end, so the first codepoint encountered ends up last as a unit rather than having its own bytes individually reversed. Round-trip correctness (
+<code>reverse(reverse(s)) = s</code>
+, byte for byte) and correct behavior for a string containing several multi-byte codepoints have both been verified.
+</p>
+<p>
+The following remain byte-oriented and unfixed. 
+<code>bal</code>
+, 
+<code>any</code>
+, and 
+<code>upto</code>
+ share 
+<code>many</code>
+'s original, unfixed shape -- testing a single position or byte-based run against a character set -- and each was confirmed, by direct test rather than by inference from the others, to report byte positions rather than codepoint positions for tagged content: a character immediately following a multi-byte codepoint is reported at its byte offset, one or more past its true codepoint index. For 
+<code>any</code>
+ specifically, this was traced further, to the level of individual bytes: testing a position that falls on a multi-byte codepoint's lead or continuation byte tests that isolated byte against the character set independently, rather than recognizing that no plain character set can represent the codepoint as a member at all. 
+<code>detab</code>
+, 
+<code>entab</code>
+, 
+<code>map</code>
+, 
+<code>trim</code>
+, and 
+<code>sort</code>
+/
+<code>sortf</code>
+, by contrast, were confirmed safe despite being byte-oriented: none of them reorder or split an existing multi-byte byte sequence, so a tagged string's encoding survives each of them intact even though position, padding, or width calculations remain byte-based rather than codepoint-based. 
+<code>center</code>
+, 
+<code>left</code>
+, and 
+<code>right</code>
+ fall in this same safe-but-imprecise category. Fixing 
+<code>bal</code>
+ and 
+<code>any</code>
+ (
+<code>upto</code>
+ and 
+<code>map</code>
+ also, since both take a character-set argument) is blocked on the same codepoint-range character-set type as 
+<code>many</code>
+.
+</p>
+<p>
+<strong>
+Long strings under repeated access.
+</strong>
+ The current implementation performs subscripting on a tagged string by walking from the nearer end of the string on every access; no index or position cache is maintained. This is appropriate for the dominant case in real Unicon programs -- short-lived string values accessed a small number of times -- but scales poorly for a long string accessed repeatedly, such as a parser scanning across a large source file. Controlled, isolated benchmarking (independent of the runtime, measuring the underlying walk-versus-index algorithms directly rather than the interpreter) found the following, for a 100,000-codepoint string with mixed single- and multi-byte content, comparing the no-cache walk against an indexed scheme combining a single-entry position cache with a bucketed index:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+access pattern
+</th>
+<th>
+walk (no cache)
+</th>
+<th>
+indexed
+</th>
+<th>
+ratio
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+bursty, front-biased (typical tokenizer access)
+</td>
+<td>
+41.9 us
+</td>
+<td>
+0.070 us
+</td>
+<td>
+~600x
+</td>
+</tr>
+<tr>
+<td>
+sequential scan (typical tokenizing walk)
+</td>
+<td>
+245.4 us
+</td>
+<td>
+0.133 us
+</td>
+<td>
+~1,850x
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+A block-based representation with an optional index was designed and benchmarked to address this -- an allocated structure (tentatively 
+<code>struct b_unistr</code>
+) carrying a single-entry position cache together with an optional bucketed index, with a default bucket size of 8 determined by sweeping the tradeoff between index memory overhead and lookup speed -- but was not implemented. The open design question is not the structure itself but the trigger: when a tagged string should be promoted into this representation, and, once promoted, when its index should be upgraded from the cheap single-entry cache to the full bucketed form. Neither threshold was resolved; a length-based threshold was tested directly and found not to work; the more promising direction identified was triggering the upgrade based on observed access cost during actual use rather than on any property known at the time a string is first promoted. A related possibility, not yet implemented, is an explicit optional argument to 
+<code>unicode()</code>
+ allowing a program that already knows its own access pattern to request the indexed representation proactively, bypassing the need for an automatic trigger.
+</p>
+<p>
+<strong>
+A language-level inverse of 
+<code>unicode()</code>
+</strong>
+ is still unnamed (
+<a href="utr25.html#sec-api">section 7</a>
+). The operation is settled (same bytes, untagged descriptor). 
+<code>string()</code>
+ is not that operation. A content test can be derived from the inverse via 
+<code>*</code>
+; a tag test cannot.
+</p>
+<p>
+<strong>
+<code>icont</code>
+ caching a codepoint count, not only the tag, for literals
+</strong>
+ (
+<a href="utr25.html#sec-compile">section 3.1</a>
+) would remove the one remaining asymmetry between compile-time and runtime tagging, at the cost of the same intermediate-file width consideration that was avoided when implementing the tag itself.
+</p>
+<p>
+<strong>
+Codepoint-range character sets.
+</strong>
+ Unicon's existing cset type is a 256-bit membership table and cannot represent codepoints beyond 255. A design extending csets to represent arbitrary codepoint ranges, using a sorted range list for codepoints above 255 while leaving the existing bitmap representation untouched for 0-255, was evaluated against alternative representations and found to use substantially less memory across a range of real Unicode block compositions, but was not implemented. 
+<code>many</code>
+ (above) is a concrete existing example of what this blocks: it correctly walks a tagged subject by codepoint, but has no character-set representation capable of matching a non-ASCII codepoint against, regardless.
+</p>
+<p>
+<strong>
+Pseudo-terminal reads
+</strong>
+ do not currently support the 
+<code>i</code>
+ mode mechanism described in 
+<a href="utr26.html#sec-io">section 6</a>
+; the internal function handling them constructs its return value through a different mechanism than the paths that have been adapted, requiring restructuring rather than a direct extension of the existing approach.
+</p>
+<p>
+<strong>
+Existing UTF-8 support in the standard library.
+</strong>
+ 
+<code>uni/lib/utf8.icn</code>
+ 
+[<a class="cite" href="#cite-unicon-utf8lib">3</a>], a pre-existing class-based UTF-8 implementation predating this work, manages UTF-8 content by walking strings byte-by-byte under the assumption that string indexing is always byte-oriented -- a correct assumption before this feature existed, and no longer a safe one for a tagged string, since indexing on a tagged string is codepoint-oriented. The library's tests are consequently excluded from the test suite when this feature is enabled (
+<code>tests/general/Makefile</code>
+, conditioned on the 
+<code>unicode</code>
+ feature being present in 
+<code>&amp;features</code>
+). The library continues to provide functionality with no native equivalent yet -- codepoint-range set operations and several scanning primitives -- and remains usable by programs that do not enable native tagging; reconciling the two, either by adapting the library to native tagging or by extending native support to cover what it currently provides, is unresolved.
+</p>
+<h2 id="sec-coverage">
+Appendix: test coverage
+</h2>
+<p>
+Automated tests specific to this feature live under 
+<code>tests/unicode/</code>
+, one program per concern (
+<code>size</code>
+, 
+<code>subsc</code>
+, 
+<code>concat</code>
+, 
+<code>convert</code>
+, 
+<code>scan</code>
+, 
+<code>section</code>
+, 
+<code>bang</code>
+, 
+<code>many</code>
+, 
+<code>match</code>
+, 
+<code>find</code>
+, 
+<code>reverse</code>
+, 
+<code>file_i</code>
+, 
+<code>socket_i</code>
+, plus 
+<code>ascii_*</code>
+ and 
+<code>languages</code>
+). 
+<code>tests/general/Makefile</code>
+ excludes the pre-existing 
+<code>utf8</code>
+/
+<code>utf8_ovld</code>
+ tests (
+<a href="utr26.html#sec-status">section 9</a>
+) when the feature is enabled.
+</p>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-jeffery-utr15" value="1">
+Clinton Jeffery. &quot;How to Write a Unicon Technical Report&quot;. doc/utr/utr15.tex. 2013.
+</li>
+<li id="cite-unicode-standard" value="2">
+Unicode Consortium. &quot;The Unicode Standard&quot;. https://www.unicode.org/versions/latest/. 2026.
+</li>
+<li id="cite-unicon-utf8lib" value="3">
+Unicon Project. &quot;UTF-8 class library&quot;. uni/lib/utf8.icn.
+</li>
+<li id="cite-libssh" value="4">
+The libssh Project. &quot;libssh -- The SSH Library&quot;. https://www.libssh.org/. 2026.
+</li>
+<li id="cite-jeffery-utr13" value="5">
+Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
+</li>
+</ol></div>
+<div class="prevnext">
+<span></span>
+<a href="utr26.html">UTR 26: Native SSH and SFTP Support in Unicon &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="utr25.pdf">pdf</a> | <a href="_sources/utr25.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>
