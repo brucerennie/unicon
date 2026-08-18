@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.18)  18 AUG 2026 00:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.18)  18 AUG 2026 06:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -325,7 +325,7 @@ Package hyperref Info: Link coloring ON on input line 16.
 \@outlinefile=\write4
 \openout4 = `uscribe-userguide.out'.
 
-<uscribe-logo.png, id=233, 1027.84pt x 1027.84pt>
+<uscribe-logo.png, id=253, 1027.84pt x 1027.84pt>
 File: uscribe-logo.png Graphic file (type png)
 <use uscribe-logo.png>
 Package pdftex.def Info: uscribe-logo.png  used on input line 20.
@@ -363,13 +363,13 @@ Chapter 2.
 
 
 ]
-Overfull \hbox (115.21245pt too wide) in paragraph at lines 135--136
+Overfull \hbox (115.21245pt too wide) in paragraph at lines 139--140
 []\T1/cmr/m/n/10.95 After Ba-sicTeX or Mac-TeX, restart the ter-mi-nal (or run 
 \T1/cmtt/m/n/10.95 eval "$(/usr/libexec/path_helper)"\T1/cmr/m/n/10.95 )
  []
 
 
-Overfull \hbox (47.51935pt too wide) in paragraph at lines 188--189
+Overfull \hbox (47.51935pt too wide) in paragraph at lines 192--193
 \T1/cmr/m/n/10.95 user-guide PDF build has the full set. If \T1/cmtt/m/n/10.95 
 pdflatex \T1/cmr/m/n/10.95 stops with \T1/cmtt/m/n/10.95 File ...sty not found\
 T1/cmr/m/n/10.95 ,
@@ -378,7 +378,7 @@ T1/cmr/m/n/10.95 ,
 [7] [8] [9]
 Chapter 3.
 
-Overfull \hbox (31.1748pt too wide) in paragraph at lines 264--265
+Overfull \hbox (31.1748pt too wide) in paragraph at lines 268--269
 \T1/cmr/m/n/10.95 Underline-style head-ings, para-graphs, lists, and di-rec-tiv
 es. Ex-am-ple \T1/cmtt/m/n/10.95 chapter1.rst\T1/cmr/m/n/10.95 : 
  []
@@ -388,99 +388,133 @@ es. Ex-am-ple \T1/cmtt/m/n/10.95 chapter1.rst\T1/cmr/m/n/10.95 :
 
 ] [11] [12]
 Chapter 4.
+
+Overfull \hbox (36.29402pt too wide) in paragraph at lines 391--392
+[]\T1/cmr/m/n/10.95 Headings in the body be-come the side-bar TOC. Ex-plicit la
+-bels (\T1/cmtt/m/n/10.95 .. _sec-intro:\T1/cmr/m/n/10.95 )
+ []
+
 [13
 
 
 ]
-Overfull \hbox (66.22343pt too wide) in paragraph at lines 400--401
-\T1/cmr/m/n/10.95 Book-wide footer text af-ter (c) on HTML pages (for ex-am-ple
- \T1/cmtt/m/n/10.95 2026, Jafar Al-Gharaibeh\T1/cmr/m/n/10.95 ).
+Overfull \hbox (2.70485pt too wide) in paragraph at lines 413--414
+[]\T1/cmr/m/n/10.95 Build from that di-rec-tory (de-faults pick up \T1/cmtt/m/n
+/10.95 book.manifest \T1/cmr/m/n/10.95 and, if present,
  []
 
 
-Overfull \hbox (2.78323pt too wide) in paragraph at lines 420--421
+Overfull \hbox (2.27187pt too wide) in paragraph at lines 426--427
+\T1/cmr/m/n/10.95 Make-file passes \T1/cmtt/m/n/10.95 --config=report-example.c
+onf \T1/cmr/m/n/10.95 to avoid pick-ing up the guide
+ []
+
+LaTeX Font Info:    Trying to load font information for TS1+cmtt on input line 
+433.
+(/usr/share/texlive/texmf-dist/tex/latex/base/ts1cmtt.fd
+File: ts1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
+) [14]
+Overfull \hbox (7.03265pt too wide) in paragraph at lines 471--472
+[]\T1/cmr/m/n/10.95 The Uni-con Tech-ni-cal Re-ports tree is this pat-tern: \T1
+/cmtt/m/n/10.95 doc/utr/utr.manifest
+ []
+
+[15] [16]
+Chapter 5.
+[17
+
+
+]
+Overfull \hbox (65.00694pt too wide) in paragraph at lines 549--550
+\T1/cmr/m/n/10.95 Book-wide footer text af-ter \TS1/cmr/m/n/10.95 © \T1/cmr/m/n
+/10.95 on HTML pages (for ex-am-ple \T1/cmtt/m/n/10.95 2026, Jafar Al-Gharaibeh
+\T1/cmr/m/n/10.95 ).
+ []
+
+
+Overfull \hbox (2.78323pt too wide) in paragraph at lines 569--570
 \T1/cmr/m/n/10.95 ac-cepted as \T1/cmtt/m/n/10.95 themepath \T1/cmr/m/n/10.95 o
 r \T1/cmtt/m/n/10.95 theme_path\T1/cmr/m/n/10.95 . If omit-ted, uscribe searche
 s \T1/cmtt/m/n/10.95 ./themes\T1/cmr/m/n/10.95 ,
  []
 
-[14] [15]
-Chapter 5.
-[16
+[18] [19]
+Chapter 6.
+[20
 
 
-] [17] [18]
-Overfull \hbox (26.09671pt too wide) in paragraph at lines 711--712
+] [21] [22]
+Overfull \hbox (26.09671pt too wide) in paragraph at lines 863--864
 \T1/cmr/m/n/10.95 lects ex-plicit la-bels and ti-tle slugs; pass 2 turns ref ro
 les into \T1/cmtt/m/n/10.95 chapter.html#anchor
  []
 
-[19] [20]
-<images/uscribe-logo.png, id=420, 1027.84pt x 1027.84pt>
+[23] [24]
+<images/uscribe-logo.png, id=475, 1027.84pt x 1027.84pt>
 File: images/uscribe-logo.png Graphic file (type png)
 <use images/uscribe-logo.png>
-Package pdftex.def Info: images/uscribe-logo.png  used on input line 817.
+Package pdftex.def Info: images/uscribe-logo.png  used on input line 969.
 (pdftex.def)             Requested size: 323.9978pt x 323.99088pt.
 
 
-LaTeX Warning: Hyper reference `markup-logo-figure' on page 21 undefined on inp
-ut line 823.
+LaTeX Warning: Hyper reference `markup-logo-figure' on page 25 undefined on inp
+ut line 975.
 
-[21] [22 <./images/uscribe-logo.png (PNG copy)>] [23] [24]
-Chapter 6.
-[25
-
-
-] [26]
+[25] [26 <./images/uscribe-logo.png (PNG copy)>] [27] [28]
 Chapter 7.
+[29
 
-Overfull \hbox (24.7305pt too wide) in paragraph at lines 1001--1002
+
+] [30]
+Chapter 8.
+
+Overfull \hbox (24.7305pt too wide) in paragraph at lines 1153--1154
 []\T1/cmr/m/n/10.95 Book-level set-tings file. If omit-ted, uscribe loads \T1/c
 mtt/m/n/10.95 book.conf
  []
 
-[27
+[31
 
 
 ]
-Overfull \hbox (6.49872pt too wide) in paragraph at lines 1017--1018
+Overfull \hbox (6.49872pt too wide) in paragraph at lines 1169--1170
 []\T1/cmr/m/n/10.95 Optional logo. HTML copies it into \T1/cmtt/m/n/10.95 targe
 tDir/_static/
  []
 
 
-Overfull \hbox (0.63715pt too wide) in paragraph at lines 1028--1029
+Overfull \hbox (0.63715pt too wide) in paragraph at lines 1180--1181
 []\T1/cmr/m/n/10.95 Output di-rec-tory. De-fault: \T1/cmtt/m/n/10.95 ./htmlBook
  \T1/cmr/m/n/10.95 for HTML,
  []
 
 
-Overfull \hbox (78.49689pt too wide) in paragraph at lines 1036--1037
+Overfull \hbox (78.49689pt too wide) in paragraph at lines 1188--1189
 []\T1/cmr/m/n/10.95 Directory that con-tains theme sub-di-rec-to-ries (\T1/cmtt
 /m/n/10.95 DIR/basic/static\T1/cmr/m/n/10.95 ,
  []
 
 
-Overfull \hbox (61.13113pt too wide) in paragraph at lines 1043--1044
+Overfull \hbox (61.13113pt too wide) in paragraph at lines 1195--1196
 \T1/cmr/bx/n/10.95 HTML \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 --format=html\T1/
 cmr/m/n/10.95 ): for each chap-ter \T1/cmtt/m/n/10.95 path/name.rst\T1/cmr/m/n/
 10.95 , writes \T1/cmtt/m/n/10.95 targetDir/name.html\T1/cmr/m/n/10.95 ,
  []
 
 
-Overfull \hbox (0.29745pt too wide) in paragraph at lines 1053--1054
+Overfull \hbox (0.29745pt too wide) in paragraph at lines 1205--1206
 []\T1/cmtt/m/n/10.95 _sources/ \T1/cmr/m/n/10.95 --- chap-ter sources as \T1/cm
 tt/m/n/10.95 name.rst.txt \T1/cmr/m/n/10.95 (browser-viewable text;
  []
 
 
-Overfull \hbox (9.73788pt too wide) in paragraph at lines 1056--1057
+Overfull \hbox (9.73788pt too wide) in paragraph at lines 1208--1209
 []\T1/cmr/bx/n/10.95 LaTeX / PDF\T1/cmr/m/n/10.95 : book man-i-fests write \T1/
 cmtt/m/n/10.95 targetDir/STEM.tex \T1/cmr/m/n/10.95 (and \T1/cmtt/m/n/10.95 STE
 M.pdf
  []
 
-[28] [29] (./uscribe-userguide.aux)
+[32] [33] (./uscribe-userguide.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -493,32 +527,33 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
 Package rerunfilecheck Info: File `uscribe-userguide.out' has not changed.
-(rerunfilecheck)             Checksum: 8E4668014CA5B4DDD92BDA4EEABAFDA4;7404.
+(rerunfilecheck)             Checksum: 4293C91667108A0C99398AA4FBDC9038;8173.
  ) 
 Here is how much of TeX's memory you used:
- 9952 strings out of 476182
- 153158 string characters out of 5795595
- 1935975 words of memory out of 5000000
- 31741 multiletter control sequences out of 15000+600000
- 571785 words of font info for 61 fonts, out of 8000000 for 9000
+ 9993 strings out of 476182
+ 154038 string characters out of 5795595
+ 1937975 words of memory out of 5000000
+ 31768 multiletter control sequences out of 15000+600000
+ 572082 words of font info for 62 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,79p,610b,656s stack positions out of 10000i,1000n,20000p,200000b,200000s
- </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.60
-0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.
-600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm109
-5.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1
-440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
-t1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/e
-cti1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
-/ecbx2074.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/
-ec/ecsl1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
-n/ec/ecrm1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
-pen/ec/ecbx1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jkn
-appen/ec/ecbx2488.600pk>
-Output written on uscribe-userguide.pdf (29 pages, 2096565 bytes).
+ 75i,6n,79p,621b,656s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tctt1000.60
+0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.
+600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt100
+0.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1
+095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecb
+x1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/e
+ctt1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
+/ecti1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/
+ec/ecbx2074.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
+n/ec/ecsl1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
+pen/ec/ecrm1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jkn
+appen/ec/ecbx1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/j
+knappen/ec/ecbx2488.600pk>
+Output written on uscribe-userguide.pdf (33 pages, 2109159 bytes).
 PDF statistics:
- 1009 PDF objects out of 1200 (max. 8388607)
- 486 compressed objects within 5 object streams
- 99 named destinations out of 1000 (max. 500000)
- 467 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1085 PDF objects out of 1200 (max. 8388607)
+ 545 compressed objects within 6 object streams
+ 109 named destinations out of 1000 (max. 500000)
+ 507 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -1,4 +1,4 @@
 # Unicon Technical Reports (uscribe RST sources).
-# One path per report; order is index / sidebar order.
-utr25.rst
+# One path per report; order is the catalog index.
 utr26.rst
+utr27.rst

@@ -37,6 +37,8 @@ This manual is the user guide for uscribe itself. Sources live under \texttt{doc
 \item 
 Multi-chapter books and manuals (ordered by a manifest file)
 \item 
+Standalone reports (UTR-style): one HTML page per report, section navigation in the sidebar, and a catalog \texttt{index.html} of links
+\item 
 HTML output with sidebar navigation, search, and selectable themes
 \item 
 Unicon code samples with syntax highlighting
@@ -63,7 +65,7 @@ end
 \end{Verbatim}
 
 
-See \hyperref[markup-markup-reference]{Markup Reference} for the full dialect and \hyperref[quickstart-quick-start]{Quick Start} to generate a tiny book.
+See \hyperref[markup-markup-reference]{Markup Reference} for the full dialect, \hyperref[quickstart-quick-start]{Quick Start} to generate a tiny book, and \hyperref[reports-reports]{Reports} for a single paper or a catalog of papers.
 
 \section{Relation to unidoc}
 \label{intro-relation-to-unidoc}
@@ -77,6 +79,8 @@ See \hyperref[markup-markup-reference]{Markup Reference} for the full dialect an
 \hyperref[install-installation]{Installation} --- build and install the \texttt{uscribe} binary
 \item 
 \hyperref[quickstart-quick-start]{Quick Start} --- generate HTML from a tiny book
+\item 
+\hyperref[reports-reports]{Reports} --- one paper, or several papers plus a catalog index
 \item 
 \hyperref[config-book-configuration]{Book Configuration} --- \texttt{book.conf} keys, defaults, and CLI overrides
 \item 
@@ -185,7 +189,7 @@ Ensure the installer puts \texttt{pdflatex} on your \texttt{PATH}, then open a n
 \subsection{What uscribe LaTeX output needs}
 \label{install-what-uscribe-latex-output-needs}
 
-Generated \texttt{STEM.tex} uses a small set of packages (\texttt{graphicx}, \texttt{hyperref}, \texttt{xcolor}, \texttt{fancyvrb}, \texttt{booktabs}, \texttt{longtable}). \texttt{multirow} is loaded when the \texttt{.sty} is installed (needed for grid-table row spans). A latex recommended install is usually enough; GitHub Pages installs \texttt{texlive-latex-extra} so the user-guide PDF build has the full set. If \texttt{pdflatex} stops with \texttt{File~...sty~not~found}, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
+Generated \texttt{STEM.tex} uses a small set of packages (\texttt{graphicx}, \texttt{hyperref}, \texttt{xcolor}, \texttt{fancyvrb}, \texttt{booktabs}, \texttt{longtable}). \texttt{multirow} is loaded when the \texttt{.sty} is installed (needed for grid-table row spans). A latex recommended install is usually enough; GitHub Pages installs \texttt{texlive-latex-extra} so the user-guide PDF build has the full set. If \texttt{pdflatex} stops with \texttt{File~…sty~not~found}, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
 
 
 SVG figures are not embedded in PDF; convert them to PDF or PNG, or accept the boxed placeholder uscribe emits for \texttt{.svg} paths.
@@ -352,6 +356,151 @@ Or \texttt{make~pdf}. Output is \texttt{out/STEM.pdf} from the \texttt{name} key
 \item 
 \texttt{themes/} --- built-in skins shared across projects (HTML)
 \end{itemize}
+
+A report (one paper) or a catalog of reports uses the same tools with a different manifest. See \hyperref[reports-reports]{Reports}.
+
+\clearpage
+\chapter{Reports}
+\label{reports-reports}
+
+A \textbf{report} is one paper: one \texttt{.rst} source, one HTML page, one PDF. The left sidebar is that paper's sections (Introduction, Motivation, …). A \textbf{book} (this guide) is the other shape: many chapters, sidebar = chapter list, one combined PDF.
+
+
+If every file in the manifest is a report, uscribe also writes a catalog \texttt{index.html} --- a table of links. You can ignore it when you only have one report.
+
+\section{Mark a file as a report}
+\label{reports-mark-a-file-as-a-report}
+
+Start the \texttt{.rst} with a field list. \texttt{:docclass:~report} (or a \texttt{:trnumber:}) selects report layout: masthead, abstract, article PDF, section sidebar.
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+:title: Report Mode Example
+:author: Uscribe Maintainers
+:trnumber: 0
+:date: 2026-08-07
+:abstract: Minimal fixture for UTR-style report metadata, external
+   links, sub/sup, and raw passthrough.
+:docclass: report
+
+Introduction
+============
+
+\end{Verbatim}
+
+
+Headings in the body become the sidebar TOC. Explicit labels (\texttt{..~\_sec-intro:}) become \texttt{\#sec-intro} jump targets.
+
+\section{One report}
+\label{reports-one-report}
+
+Put the paper in its own directory. Author, title, and abstract stay in the \texttt{.rst} field list (above). The manifest is one line. You do not need a per-report \texttt{.conf}.
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+my-paper/
+  book.manifest      # one line: paper.rst
+  paper.rst
+  book.conf          # optional: themePath (same file books use)
+\end{Verbatim}
+
+
+\texttt{book.manifest}:
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+paper.rst
+\end{Verbatim}
+
+
+Build from that directory (defaults pick up \texttt{book.manifest} and, if present, \texttt{book.conf}):
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+uscribe --targetDir=./out
+\end{Verbatim}
+
+
+Open \textbf{``paper.html``}. The sidebar is that paper's sections. \texttt{index.html} is a one-row catalog; you can ignore it.
+
+
+Optional \texttt{book.conf} is only \emph{build} settings (theme, logo, \texttt{themePath}), not author or abstract. If you omit \texttt{title} there, the sidebar uses the paper's \texttt{:title:}.
+
+
+This guide's live fixture lives next to the user-guide \texttt{book.conf}, so the Makefile passes \texttt{--config=report-example.conf} to avoid picking up the guide settings. The paper is \href{ex-one-report/ex-report.html}{ex-report.html} (after \texttt{make~-C~doc/uscribe}).
+
+
+Output:
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+out/
+  paper.html       ← the report (section nav)
+  paper.pdf        ← if you passed --format=pdf
+  index.html
+  search.html
+  _static/
+  _sources/
+\end{Verbatim}
+
+\section{Several reports and an index}
+\label{reports-several-reports-and-an-index}
+
+Same layout, more files in the manifest. Each paper is still one HTML page. \texttt{book.conf} \texttt{title} is the \emph{series} name on the catalog (and the link back from each paper's sidebar).
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+my-reports/
+  book.manifest
+  book.conf          # title: My Technical Reports
+  paper-a.rst
+  paper-a.bib
+  paper-b.rst
+\end{Verbatim}
+
+
+\texttt{book.manifest}:
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+paper-a.rst
+paper-b.rst
+\end{Verbatim}
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+uscribe --targetDir=./out
+\end{Verbatim}
+
+
+Open \textbf{``index.html``} for the table (number, title, author, date, pdf/txt). Open a row to read that paper; its sidebar is that paper's sections.
+
+
+The Unicon Technical Reports tree is this pattern: \texttt{doc/utr/utr.manifest} and \texttt{doc/utr/book.conf}, via \texttt{make~-C~doc/utr~html}.
+
+
+Live fixtures in this guide (again using a separate \texttt{--config} because they share a directory with the user guide): \href{ex-reports/index.html}{catalog index}, \href{ex-reports/ex-report.html}{first report}, \href{ex-reports/ex-report-b.html}{second report}. The manifests are \texttt{report-example.manifest} (one file) and \texttt{reports-example.manifest} (two files).
+
+\section{Book vs report (summary)}
+\label{reports-book-vs-report-summary}
+\begin{longtable}{lll}
+\hline
+Piece & Book & Report \\
+\hline
+\endfirsthead
+\hline
+Piece & Book & Report \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+Source & many chapters & one \texttt{.rst} per paper \\
+Sidebar & other chapters & sections of this paper \\
+\texttt{index.html} & ordered chapter list & catalog table of papers \\
+PDF & one file for the whole book & one file per paper \\
+When & manuals, this user guide & UTR, a standalone paper \\
+\end{longtable}
+
+
+A mixed manifest (some reports, some book chapters) is unusual. Each report page still gets a section sidebar; book chapters keep the chapter list. Prefer an all-report manifest or an all-book manifest.
+
+
+See \hyperref[markup-markup-reference]{Markup Reference} for the field-list keys and \hyperref[cli-command-line]{Command Line} for \texttt{--format} / \texttt{--manifest}.
+
 \clearpage
 \chapter{Book Configuration}
 \label{config-book-configuration}
@@ -397,7 +546,7 @@ Book title: HTML \texttt{<title>}, sidebar heading, index heading, and the LaTeX
 \section{copyright}
 \label{config-copyright}
 
-Book-wide footer text after (c) on HTML pages (for example \texttt{2026,~Jafar~Al-Gharaibeh}). This is not a chapter byline; a chapter \texttt{:copyright:} field is separate (see \hyperref[markup-markup-reference]{Markup Reference}). CLI: \texttt{--copyright}.
+Book-wide footer text after © on HTML pages (for example \texttt{2026,~Jafar~Al-Gharaibeh}). This is not a chapter byline; a chapter \texttt{:copyright:} field is separate (see \hyperref[markup-markup-reference]{Markup Reference}). CLI: \texttt{--copyright}.
 
 \section{logo}
 \label{config-logo}
@@ -417,12 +566,15 @@ Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a cus
 \section{themePath}
 \label{config-themepath}
 
-Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). Also accepted as \texttt{themepath} or \texttt{theme\_path}. If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. CLI: \texttt{--themePath}.
+Directory that contains theme subdirectories (\texttt{DIR/basic/static}, …). Also accepted as \texttt{themepath} or \texttt{theme\_path}. If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. CLI: \texttt{--themePath}.
 
 \section{docclass}
 \label{config-docclass}
 
 \texttt{book} (default) or \texttt{report}. Report mode is usually selected per chapter with \texttt{:docclass:~report} or \texttt{:trnumber:}; this key forces the class for every chapter. Also accepted as \texttt{doc\_class} or \texttt{doc-class}. CLI: \texttt{--docclass}.
+
+
+A report is one HTML page and one PDF. The sidebar on that page is the report's sections. \texttt{index.html} is a catalog of links. Workflow and live examples: \hyperref[reports-reports]{Reports}.
 
 \section{Not in book.conf}
 \label{config-not-in-book-conf}
@@ -481,7 +633,7 @@ Characters \texttt{=~-~\textasciitilde{}~\textasciicircum{}} are recognized as u
 \section{Document fields}
 \label{markup-document-fields}
 
-A chapter may start with an RST field list (Docutils bibliographic fields). Repeat \texttt{:author:} for several names. Book chapters show these as a byline under the first heading; omit the fields and nothing is added. Reports also use \texttt{:title:}, \texttt{:trnumber:}, \texttt{:abstract:}, and \texttt{:docclass:} for the UTR cover.
+A chapter may start with an RST field list (Docutils bibliographic fields). Repeat \texttt{:author:} for several names. Book chapters show these as a byline under the first heading; omit the fields and nothing is added. Reports also use \texttt{:title:}, \texttt{:trnumber:}, \texttt{:abstract:}, and \texttt{:docclass:} for the cover --- see \hyperref[reports-reports]{Reports} for the one-paper and catalog workflows.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 :author: Jane Doe
@@ -877,7 +1029,7 @@ Snippets under \texttt{includes/} can be pulled into any chapter with \texttt{..
 \end{quote}
 
 
-Pull a real \texttt{.icn} file as a listing. Language defaults from the extension (\texttt{.icn} -> \texttt{unicon}); override with \texttt{:language:}:
+Pull a real \texttt{.icn} file as a listing. Language defaults from the extension (\texttt{.icn} → \texttt{unicon}); override with \texttt{:language:}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 # Shared sample for literalinclude demos
@@ -898,7 +1050,7 @@ The same file, only the body between markers:
 \section{Unicon listings}
 \label{markup-unicon-listings}
 
-\texttt{code-block} languages \texttt{unicon}, \texttt{icon}, and \texttt{icn} get Unicon syntax highlighting in HTML (via \texttt{highlight-unicon.js}). Other languages are emitted as plain \texttt{<pre><code~class="language-...">} without Unicon highlighting --- use \texttt{sh} for shell, \texttt{rst} or \texttt{text} for markup samples. \texttt{literalinclude} of \texttt{.icn} files uses the same highlighting.
+\texttt{code-block} languages \texttt{unicon}, \texttt{icon}, and \texttt{icn} get Unicon syntax highlighting in HTML (via \texttt{highlight-unicon.js}). Other languages are emitted as plain \texttt{<pre><code~class="language-…">} without Unicon highlighting --- use \texttt{sh} for shell, \texttt{rst} or \texttt{text} for markup samples. \texttt{literalinclude} of \texttt{.icn} files uses the same highlighting.
 
 
 Example Unicon program as it appears in the built book:
@@ -925,7 +1077,7 @@ See also \hyperref[quickstart-quick-start]{Quick Start} and \hyperref[cli-comman
 \chapter{Themes}
 \label{themes-themes}
 
-HTML chrome (sidebar, search, prev/next) is fixed in the generator. A \emph{theme} is a CSS skin plus shared JavaScript.
+HTML chrome (sidebar, search, prev/next on book chapters) is fixed in the generator. A \emph{theme} is a CSS skin plus shared JavaScript.
 
 \section{Built-in themes}
 \label{themes-built-in-themes}
@@ -975,7 +1127,7 @@ themes/
 \end{Verbatim}
 
 
-To add a custom theme, create \texttt{themes/mytheme/static/book.css} and pass \texttt{--theme=mytheme}. Keep the same HTML class names (\texttt{.sidebar}, \texttt{.main}, \texttt{.tok-keyword}, ...) so shared scripts keep working.
+To add a custom theme, create \texttt{themes/mytheme/static/book.css} and pass \texttt{--theme=mytheme}. Keep the same HTML class names (\texttt{.sidebar}, \texttt{.main}, \texttt{.tok-keyword}, …) so shared scripts keep working.
 
 
 See \texttt{themes/README.md} in the source tree for layout details.
@@ -1006,7 +1158,7 @@ Book title for \texttt{<title>}, the sidebar heading, the index page, and the La
 
 \item[**--copyright=TEXT**]
 
-Optional footer copyright (text after (c)), e.g. \texttt{2026,~Jafar~Al-Gharaibeh}. HTML only. Every HTML page always ends with \texttt{Powered~by~uscribe}; chapter pages also link \textbf{pdf} (the book PDF from \texttt{--name}, or a sibling PDF for reports) and \textbf{source} (\texttt{\_sources/name.rst.txt}, viewable as plain text in the browser).
+Optional footer copyright (text after ©), e.g. \texttt{2026,~Jafar~Al-Gharaibeh}. HTML only. Every HTML page always ends with \texttt{Powered~by~uscribe}; chapter pages also link \textbf{pdf} (the book PDF from \texttt{--name}, or a sibling PDF for reports) and \textbf{source} (\texttt{\_sources/name.rst.txt}, viewable as plain text in the browser).
 
 \item[**--name=STEM**]
 
@@ -1021,7 +1173,7 @@ Optional logo. HTML copies it into \texttt{targetDir/\_static/} and shows it in 
 Output format: \texttt{html} (default), \texttt{latex}, or \texttt{pdf}.
 
 
-- \texttt{html} --- one page per chapter plus index/search/themes.   Report manifests get a UTR index table on \texttt{index.html}. - \texttt{latex} --- for books, a single \texttt{STEM.tex} (default   \texttt{book.tex}); for report manifests (every chapter is a   report), one \texttt{.tex} per report - \texttt{pdf} --- like \texttt{latex}, then run \texttt{pdflatex}, \texttt{xelatex}, or   \texttt{lualatex} (whichever is first in \texttt{PATH}) twice for TOC/xrefs
+- \texttt{html} --- one page per chapter plus index/search/themes.   Report manifests get a catalog table on \texttt{index.html}. Each   report page's sidebar lists that report's sections.   See \hyperref[reports-reports]{Reports}. - \texttt{latex} --- for books, a single \texttt{STEM.tex} (default   \texttt{book.tex}); for report manifests (every chapter is a   report), one \texttt{.tex} per report - \texttt{pdf} --- like \texttt{latex}, then run \texttt{pdflatex}, \texttt{xelatex}, or   \texttt{lualatex} (whichever is first in \texttt{PATH}) twice for TOC/xrefs
 
 \item[**--targetDir=DIR**]
 
@@ -1033,7 +1185,7 @@ Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a cus
 
 \item[**--themePath=DIR**]
 
-Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. HTML only.
+Directory that contains theme subdirectories (\texttt{DIR/basic/static}, …). If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. HTML only.
 
 \end{description}
 
@@ -1044,7 +1196,7 @@ Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). I
 
 \begin{itemize}
 \item 
-\texttt{index.html} --- contents landing page (chapter list, or a UTR table with a \textbf{Formats} column of \texttt{pdf} / \texttt{txt} for report collections)
+\texttt{index.html} --- contents landing page (chapter list, or a catalog table of reports with a \textbf{Formats} column of \texttt{pdf} / \texttt{txt})
 \item 
 \texttt{search.html} + \texttt{searchindex.js} --- full-text search
 \item 
@@ -1058,6 +1210,6 @@ Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). I
 \section{Exit status}
 \label{cli-exit-status}
 
-Usage errors and missing files call \texttt{stop()} (non-zero). A successful build prints \texttt{wrote~...} lines for each output file.
+Usage errors and missing files call \texttt{stop()} (non-zero). A successful build prints \texttt{wrote~…} lines for each output file.
 
 \end{document}

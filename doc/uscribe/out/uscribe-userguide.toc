@@ -22,36 +22,41 @@
 \contentsline {section}{\numberline {3.4}4. Build HTML}{11}{section.3.4}%
 \contentsline {section}{\numberline {3.5}5. Build PDF (optional)}{12}{section.3.5}%
 \contentsline {section}{\numberline {3.6}Where files go}{12}{section.3.6}%
-\contentsline {chapter}{\numberline {4}Book Configuration}{13}{chapter.4}%
-\contentsline {section}{\numberline {4.1}How the file is found}{13}{section.4.1}%
-\contentsline {section}{\numberline {4.2}File format}{13}{section.4.2}%
-\contentsline {section}{\numberline {4.3}title}{14}{section.4.3}%
-\contentsline {section}{\numberline {4.4}copyright}{14}{section.4.4}%
-\contentsline {section}{\numberline {4.5}logo}{14}{section.4.5}%
-\contentsline {section}{\numberline {4.6}name}{14}{section.4.6}%
-\contentsline {section}{\numberline {4.7}theme}{14}{section.4.7}%
-\contentsline {section}{\numberline {4.8}themePath}{15}{section.4.8}%
-\contentsline {section}{\numberline {4.9}docclass}{15}{section.4.9}%
-\contentsline {section}{\numberline {4.10}Not in book.conf}{15}{section.4.10}%
-\contentsline {section}{\numberline {4.11}This guide}{15}{section.4.11}%
-\contentsline {chapter}{\numberline {5}Markup Reference}{16}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Headings}{16}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Document fields}{16}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Paragraphs and lists}{17}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Definition lists}{17}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Tables}{18}{section.5.5}%
-\contentsline {section}{\numberline {5.6}Labels and cross-references}{20}{section.5.6}%
-\contentsline {section}{\numberline {5.7}Stable labels}{20}{section.5.7}%
-\contentsline {section}{\numberline {5.8}Inline markup}{20}{section.5.8}%
-\contentsline {section}{\numberline {5.9}Directives}{21}{section.5.9}%
-\contentsline {section}{\numberline {5.10}Include / literalinclude}{23}{section.5.10}%
-\contentsline {section}{\numberline {5.11}Unicon listings}{24}{section.5.11}%
-\contentsline {chapter}{\numberline {6}Themes}{25}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Built-in themes}{25}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Build-time default}{25}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Theme layout on disk}{26}{section.6.3}%
-\contentsline {chapter}{\numberline {7}Command Line}{27}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Synopsis}{27}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Options}{27}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Outputs}{28}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Exit status}{29}{section.7.4}%
+\contentsline {chapter}{\numberline {4}Reports}{13}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Mark a file as a report}{13}{section.4.1}%
+\contentsline {section}{\numberline {4.2}One report}{14}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Several reports and an index}{15}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Book vs report (summary)}{15}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Book Configuration}{17}{chapter.5}%
+\contentsline {section}{\numberline {5.1}How the file is found}{17}{section.5.1}%
+\contentsline {section}{\numberline {5.2}File format}{17}{section.5.2}%
+\contentsline {section}{\numberline {5.3}title}{18}{section.5.3}%
+\contentsline {section}{\numberline {5.4}copyright}{18}{section.5.4}%
+\contentsline {section}{\numberline {5.5}logo}{18}{section.5.5}%
+\contentsline {section}{\numberline {5.6}name}{18}{section.5.6}%
+\contentsline {section}{\numberline {5.7}theme}{18}{section.5.7}%
+\contentsline {section}{\numberline {5.8}themePath}{19}{section.5.8}%
+\contentsline {section}{\numberline {5.9}docclass}{19}{section.5.9}%
+\contentsline {section}{\numberline {5.10}Not in book.conf}{19}{section.5.10}%
+\contentsline {section}{\numberline {5.11}This guide}{19}{section.5.11}%
+\contentsline {chapter}{\numberline {6}Markup Reference}{20}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Headings}{20}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Document fields}{20}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Paragraphs and lists}{21}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Definition lists}{21}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Tables}{22}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Labels and cross-references}{24}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Stable labels}{24}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Inline markup}{24}{section.6.8}%
+\contentsline {section}{\numberline {6.9}Directives}{25}{section.6.9}%
+\contentsline {section}{\numberline {6.10}Include / literalinclude}{27}{section.6.10}%
+\contentsline {section}{\numberline {6.11}Unicon listings}{28}{section.6.11}%
+\contentsline {chapter}{\numberline {7}Themes}{29}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Built-in themes}{29}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Build-time default}{29}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Theme layout on disk}{30}{section.7.3}%
+\contentsline {chapter}{\numberline {8}Command Line}{31}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Synopsis}{31}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Options}{31}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Outputs}{32}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Exit status}{33}{section.8.4}%

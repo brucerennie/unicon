@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example Technical Reports</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body><div class="layout">
+<nav class="sidebar" aria-label="Report index">
+<div class="book-title"><a href="index.html">Example Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter reports; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter report list">
+<ol id="nav-toc">
+<li><a href="ex-report.html">UTR 0: Report Mode Example</a></li>
+<li><a href="ex-report-b.html">UTR 99: Second Report Example</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<h1>Example Technical Reports</h1>
+<table class="report-index">
+<thead><tr>
+<th>UTR</th><th>Title</th><th>Author</th>
+<th class="report-index-date">Date</th>
+<th class="report-index-fmt">Formats</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="report-index-tr">
+<a href="ex-report.html">0</a>
+</td>
+<td><a href="ex-report.html">Report Mode Example</a></td>
+<td>Uscribe Maintainers</td>
+<td class="report-index-date">2026-08-07</td>
+<td class="report-index-fmt">
+<span class="report-pdf-missing">pdf</span> | <a href="_sources/ex-report.rst.txt">txt</a>
+</td>
+</tr>
+<tr>
+<td class="report-index-tr">
+<a href="ex-report-b.html">99</a>
+</td>
+<td><a href="ex-report-b.html">Second Report Example</a></td>
+<td>Uscribe Maintainers</td>
+<td class="report-index-date">2026-08-07</td>
+<td class="report-index-fmt">
+<span class="report-pdf-missing">pdf</span> | <a href="_sources/ex-report-b.rst.txt">txt</a>
+</td>
+</tr>
+</tbody></table>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Uscribe Maintainers. | Powered by uscribe
+</footer>
+</div></div></body></html>

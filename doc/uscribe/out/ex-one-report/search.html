@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Report Example - Search</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body><div class="layout">
+<script src="searchindex.js"></script>
+<nav class="sidebar" aria-label="Report index">
+<div class="book-title"><a href="index.html">One Report Example</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter reports; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter report list">
+<ol id="nav-toc">
+<li><a href="ex-report.html">UTR 0: Report Mode Example</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<h1>Search</h1>
+<input class="search-box" id="full-search" type="search" 
+placeholder="Search reports..." style="max-width:28rem">
+<div id="search-results"></div>
+<script>
+(function(){
+function qparam(){var m=location.search.match(/[?&]q=([^&]*)/);
+return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''}
+function run(q){q=(q||'').toLowerCase().trim();
+var box=document.getElementById('search-results');
+var data=window.USCRIBE_SEARCH||[];
+if(!q){box.innerHTML='<p>Type a query.</p>';return}
+var hits=[];
+for(var i=0;i<data.length;i++){var e=data[i];
+var hay=((e.title||'')+' '+(e.body||'')).toLowerCase();
+if(hay.indexOf(q)!==-1)hits.push(e)}
+if(!hits.length){box.innerHTML='<p>No matches.</p>';return}
+var ol=document.createElement('ol');
+for(var j=0;j<hits.length;j++){
+var li=document.createElement('li');
+var a=document.createElement('a');
+a.href=hits[j].file;a.textContent=hits[j].title;
+li.appendChild(a);ol.appendChild(li)}
+box.textContent='';box.appendChild(ol)}
+var input=document.getElementById('full-search');
+var initial=qparam();input.value=initial;run(initial);
+input.addEventListener('input',function(){run(input.value)});
+})();
+</script>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Uscribe Maintainers. | Powered by uscribe
+</footer>
+</div></div></body></html>

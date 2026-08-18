@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cryptographic Facilities in Unicon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Report contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter sections; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter section list">
+<ol id="nav-toc">
+<li class="toc-l1"><a href="#sec-intro">1. Introduction
+</a></li>
+<li class="toc-l1"><a href="#sec-motivation">2. Motivation
+</a></li>
+<li class="toc-l1"><a href="#sec-principles">3. Design principles
+</a></li>
+<li class="toc-l1"><a href="#sec-modes">4. Modes
+</a></li>
+<li class="toc-l1"><a href="#sec-ops">5. Operations
+</a></li>
+<li class="toc-l1"><a href="#sec-attrs">6. Attributes
+</a></li>
+<li class="toc-l2"><a href="#sec-attrs-tls">6.1 TLS / DTLS attributes
+</a></li>
+<li class="toc-l2"><a href="#sec-attrs-crypto">6.2 Crypto attributes
+</a></li>
+<li class="toc-l2"><a href="#sec-attrs-shared">6.3 Shared names with SSH
+</a></li>
+<li class="toc-l1"><a href="#sec-handles">7. Material handles
+</a></li>
+<li class="toc-l1"><a href="#sec-examples">8. Examples
+</a></li>
+<li class="toc-l2"><a href="#sec-ex-hash">8.1 Hash
+</a></li>
+<li class="toc-l2"><a href="#sec-ex-hmac">8.2 HMAC
+</a></li>
+<li class="toc-l2"><a href="#sec-ex-sign">8.3 Sign and verify
+</a></li>
+<li class="toc-l2"><a href="#sec-ex-enc">8.4 Symmetric encrypt and decrypt
+</a></li>
+<li class="toc-l2"><a href="#sec-ex-file">8.5 File encrypt and decrypt
+</a></li>
+<li class="toc-l2"><a href="#sec-ex-tls">8.6 TLS identity reuse and DTLS
+</a></li>
+<li class="toc-l1"><a href="#sec-io">9. I/O and 
+<code>Attrib()</code>
+</a></li>
+<li class="toc-l1"><a href="#sec-errors">10. Error handling
+</a></li>
+<li class="toc-l1"><a href="#sec-build">11. Build integration
+</a></li>
+<li class="toc-l1"><a href="#sec-status">12. Status and remaining work
+</a></li>
+<li class="toc-l1"><a href="#sec-coverage">Appendix: test coverage
+</a></li>
+<li class="toc-l1"><a href="#references">References
+</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<header class="report-masthead">
+<h1 class="report-title">Cryptographic Facilities in Unicon</h1>
+<p class="report-authors">Jafar Al-Gharaibeh</p>
+<p class="report-tr">Unicon Technical Report: 27</p>
+<p class="report-date">August 2026</p>
+<p class="report-pdf"><a href="utr27.pdf">pdf</a> | <a href="_sources/utr27.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), close(), and Attrib() interface already used for files, sockets, and SSH sessions. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS. Keywords: Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.</p>
+</div>
+</header>
+<h2 id="sec-intro">
+1. Introduction
+</h2>
+<p>
+This report describes the cryptographic facilities in the Unicon runtime: how a handle is opened, how payload flows through 
+<code>write()</code>
+ / 
+<code>read()</code>
+, how key and certificate material is loaded and reused, and how the same letters and attributes compose with encrypted sockets. It is formatted as a Unicon Technical Report 
+[<a class="cite" href="#cite-jeffery-utr15">1</a>]. The language-facing reference lives in 
+<em>
+Programming with Unicon
+</em>
+ (Chapter 6) and the language reference (
+<code>open</code>
+ modes 
+<code>e</code>
+ / 
+<code>er</code>
+ / 
+<code>eh</code>
+ / 
+<code>re</code>
+ / 
+<code>we</code>
+, and 
+<code>ne</code>
+ / 
+<code>nue</code>
+). Automated tests live under 
+<code>tests/crypto/</code>
+.
+</p>
+<p>
+The feature is optional in the same sense as TLS. A build with OpenSSL reports 
+<code>secure sockets layer encryption</code>
+ in 
+<code>&amp;features</code>
+ (the 
+<code>_SSL</code>
+ flag). Without the library, the crypto paths are compiled out. There is no separate 
+<code>--disable-crypto</code>
+ switch; 
+<code>--disable-ssl</code>
+ turns off both encrypted sockets and these facilities.
+</p>
+<h2 id="sec-motivation">
+2. Motivation
+</h2>
+<p>
+Unicon already links OpenSSL 
+[<a class="cite" href="#cite-openssl">4</a>] for mode 
+<code>n</code>
+ with 
+<code>e</code>
+ -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to leave the language. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through; loading a key once and signing many messages is the same pattern as opening an SSH session once and deriving channels 
+[<a class="cite" href="#cite-algharaibeh-utr26">5</a>].
+</p>
+<p>
+No new external dependency is introduced. The implementation uses OpenSSL's EVP interface, which the encrypted-socket support already requires.
+</p>
+<h2 id="sec-principles">
+3. Design principles
+</h2>
+<p>
+<strong>
+``e`` is the crypto letter, reused not invented.
+</strong>
+ Unicon already uses 
+<code>e</code>
+ for encryption (
+<code>Fs_Encrypt</code>
+). New modes carry that letter rather than adding one letter per operation. 
+<code>op=</code>
+ selects what the handle does.
+</p>
+<p>
+<strong>
+``e`` composes as a modifier.
+</strong>
+ Mode letters already stack, and several already branch on bits accumulated so far: 
+<code>n</code>
+ + 
+<code>e</code>
+ is an encrypted socket; 
+<code>r</code>
+ + 
+<code>e</code>
+ / 
+<code>w</code>
+ + 
+<code>e</code>
+ is a file transform; 
+<code>e</code>
+ + 
+<code>h</code>
+ is an in-memory hash; 
+<code>e</code>
+ + 
+<code>r</code>
+ is raw key material rather than a path.
+</p>
+<p>
+<strong>
+The open target configures the operation; payload is I/O.
+</strong>
+ Target is never the message being hashed or encrypted. What target means depends on the mode (algorithm name, key path, data file, host:port). Payload always flows through 
+<code>write()</code>
+ / 
+<code>read()</code>
+ / 
+<code>reads()</code>
+.
+</p>
+<p>
+<strong>
+Attributes are ``name=value`` strings, or handles.
+</strong>
+ A string element is parsed as always. A 
+<strong>
+handle
+</strong>
+ -- the return value of a prior 
+<code>open(..., &quot;e&quot;)</code>
+ -- is a typed attribute that could not survive being flattened into a string. Handles are interpreted by 
+<strong>
+role
+</strong>
+ from their own content (private key, public key, cert, symmetric key), not by position or by an attribute name.
+</p>
+<p>
+<strong>
+Material comes from a file, raw bytes, or a handle.
+</strong>
+ A file path is the target under mode 
+<code>e</code>
+, or 
+<code>key=</code>
+ when the target is already spoken for (
+<code>re</code>
+ / 
+<code>we</code>
+, 
+<code>n</code>
+ + 
+<code>e</code>
+). Raw bytes use mode 
+<code>er</code>
+. A handle avoids re-parsing.
+</p>
+<p>
+<strong>
+Initialization is lazy.
+</strong>
+ 
+<code>open()</code>
+ does not create the underlying EVP context until the first 
+<code>write()</code>
+ (or the first transforming 
+<code>read()</code>
+ on a file). A handle that is never used costs nothing. 
+<code>read()</code>
+ finalizes and resets, so the next 
+<code>write()</code>
+ initializes again.
+</p>
+<p>
+<strong>
+``Attrib()`` reconfigures only in the idle window
+</strong>
+ -- before the first 
+<code>write()</code>
+, or after a 
+<code>read()</code>
+ and before the next 
+<code>write()</code>
+. Changing 
+<code>op=</code>
+, 
+<code>alg=</code>
+, 
+<code>cipher=</code>
+, or 
+<code>iv=</code>
+ mid-operation fails. Handles are accepted by 
+<code>open()</code>
+ only, not by 
+<code>Attrib()</code>
+: 
+<code>Attrib()</code>
+ already treats a file argument as a retarget.
+</p>
+<h2 id="sec-modes">
+4. Modes
+</h2>
+<p>
+<code>open()</code>
+'s mode string is scanned character by character in 
+<code>src/runtime/fsys.r</code>
+. Letters are not independent: 
+<code>u</code>
+ after 
+<code>n</code>
+ is UDP, 
+<code>r</code>
+ after 
+<code>n</code>
+ is raw, 
+<code>h</code>
+ after 
+<code>e</code>
+ is hash. Order matters. 
+<code>e</code>
+ already set 
+<code>Fs_Encrypt</code>
+; this design adds 
+<code>Fs_Crypto</code>
+ for hash / HMAC / sign / verify / encrypt-decrypt handles so they are distinct from TLS sockets that also carry 
+<code>Fs_Encrypt</code>
+.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Mode
+</th>
+<th>
+Meaning
+</th>
+<th>
+Target
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>e</code>
+</td>
+<td>
+Load material, or an operation whose target is material
+</td>
+<td>
+Key/cert path, or a material handle
+</td>
+</tr>
+<tr>
+<td>
+<code>er</code>
+</td>
+<td>
+Same, but the target is raw bytes
+</td>
+<td>
+In-memory string
+</td>
+</tr>
+<tr>
+<td>
+<code>eh</code>
+</td>
+<td>
+Hash; no 
+<code>op=</code>
+ needed
+</td>
+<td>
+Digest name, e.g. 
+<code>sha256</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>re</code>
+</td>
+<td>
+Read a file, transformed (hash or decrypt)
+</td>
+<td>
+Data-file path
+</td>
+</tr>
+<tr>
+<td>
+<code>we</code>
+</td>
+<td>
+Write a file, transformed (encrypt)
+</td>
+<td>
+Data-file path
+</td>
+</tr>
+<tr>
+<td>
+<code>ne</code>
+</td>
+<td>
+Encrypted TCP (TLS) -- unchanged
+</td>
+<td>
+<code>host:port</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>nue</code>
+ / 
+<code>naue</code>
+</td>
+<td>
+Encrypted UDP (DTLS)
+</td>
+<td>
+<code>host:port</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<code>e</code>
+ / 
+<code>er</code>
+ are the 
+<strong>
+data-pipe
+</strong>
+ shape: write payload in, read the result out. 
+<code>eh</code>
+ is separate because its target is an algorithm name, never material. 
+<code>re</code>
+ / 
+<code>we</code>
+ are the 
+<strong>
+file-transform
+</strong>
+ shape: the target is the data file, so key material arrives via 
+<code>key=</code>
+ or a handle attribute.
+</p>
+<p>
+<code>h</code>
+ alone remains SSH. 
+<code>r</code>
+ alone remains read. The new meanings apply only when 
+<code>e</code>
+ was seen first.
+</p>
+<p>
+Mode 
+<code>-</code>
+ skips peer verification on TLS (
+<code>ne-</code>
+) and SSH (
+<code>h-</code>
+), the same as 
+<code>verifyPeer=no</code>
+. An explicit 
+<code>verifyPeer=</code>
+ overrides the mode flag.
+</p>
+<h2 id="sec-ops">
+5. Operations
+</h2>
+<p>
+<code>op=</code>
+ names the operation when the mode does not already imply one. Loading material (
+<code>e</code>
+ / 
+<code>er</code>
+ with a file or raw target and no 
+<code>op=</code>
+), hashing in memory (
+<code>eh</code>
+), and TLS / DTLS sockets take no 
+<code>op=</code>
+.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+<code>op=</code>
+</th>
+<th>
+What it does
+</th>
+<th>
+Typical mode
+</th>
+<th>
+Other attributes
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>hash</code>
+</td>
+<td>
+Digest of a file
+</td>
+<td>
+<code>re</code>
+</td>
+<td>
+<code>alg=</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>hmac</code>
+</td>
+<td>
+Keyed digest (RFC 2104)
+</td>
+<td>
+<code>e</code>
+ / 
+<code>er</code>
+</td>
+<td>
+<code>alg=</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>sign</code>
+</td>
+<td>
+Produce a signature
+</td>
+<td>
+<code>e</code>
+ / 
+<code>er</code>
+</td>
+<td>
+<code>alg=</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>verify</code>
+</td>
+<td>
+Check a signature
+</td>
+<td>
+<code>e</code>
+ / 
+<code>er</code>
+</td>
+<td>
+<code>alg=</code>
+, 
+<code>sig=</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>encrypt</code>
+</td>
+<td>
+Symmetric encrypt
+</td>
+<td>
+<code>e</code>
+ / 
+<code>er</code>
+, or 
+<code>we</code>
+</td>
+<td>
+<code>cipher=</code>
+; 
+<code>key=</code>
+ or a handle for 
+<code>we</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>decrypt</code>
+</td>
+<td>
+Symmetric decrypt
+</td>
+<td>
+<code>e</code>
+ / 
+<code>er</code>
+, or 
+<code>re</code>
+</td>
+<td>
+<code>cipher=</code>
+; 
+<code>key=</code>
+ or a handle for 
+<code>re</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+HMAC is the construction of RFC 2104 
+[<a class="cite" href="#cite-rfc2104">6</a>] over the digest named by 
+<code>alg=</code>
+. Algorithm and cipher names are OpenSSL's own (
+<code>sha256</code>
+, 
+<code>aes-256-gcm</code>
+) and are passed through rather than mapped to a Unicon-defined set.
+</p>
+<p>
+Defaults are 
+<code>alg=sha256</code>
+ and 
+<code>cipher=aes-256-gcm</code>
+.
+</p>
+<h2 id="sec-attrs">
+6. Attributes
+</h2>
+<p>
+Trailing 
+<code>open()</code>
+ arguments are 
+<code>name=value</code>
+ strings or crypto handles. Empty values and unknown names fail (TLS attribute errors use 1302; crypto state/name mistakes use 1316).
+</p>
+<h3 id="sec-attrs-tls">
+6.1 TLS / DTLS attributes
+</h3>
+<p>
+These are the names 
+<code>create_ssl_context()</code>
+ accepts. They apply to 
+<code>ne</code>
+ / 
+<code>nue</code>
+ and are unchanged except for the two alignments in 
+<a href="utr27.html#sec-attrs-shared">section 6.3</a>
+.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Attribute
+</th>
+<th>
+Meaning
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>cert=</code>
+</td>
+<td>
+Certificate file path
+</td>
+</tr>
+<tr>
+<td>
+<code>key=</code>
+</td>
+<td>
+Private key file path
+</td>
+</tr>
+<tr>
+<td>
+<code>keypass=</code>
+</td>
+<td>
+Passphrase for an encrypted private key
+</td>
+</tr>
+<tr>
+<td>
+<code>ca=</code>
+ / 
+<code>caDir=</code>
+ / 
+<code>caStore=</code>
+</td>
+<td>
+Trust store
+</td>
+</tr>
+<tr>
+<td>
+<code>ciphers=</code>
+ / 
+<code>ciphers1.3=</code>
+</td>
+<td>
+TLS 1.2 (and earlier) list, and TLS 1.3 suites
+</td>
+</tr>
+<tr>
+<td>
+<code>minProto=</code>
+ / 
+<code>maxProto=</code>
+</td>
+<td>
+Protocol version bounds, e.g. 
+<code>TLS1.2</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>verifyPeer=</code>
+</td>
+<td>
+<code>yes</code>
+ / 
+<code>no</code>
+; 
+<code>no</code>
+ is the same as mode 
+<code>-</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+Socket attributes (
+<code>reuseaddr</code>
+, 
+<code>ttl</code>
+, 
+<code>iface</code>
+, 
+<code>join</code>
+, 
+<code>proto</code>
+, ...) are applied separately and are unaffected.
+</p>
+<h3 id="sec-attrs-crypto">
+6.2 Crypto attributes
+</h3>
+<table>
+<thead>
+<tr>
+<th>
+Attribute
+</th>
+<th>
+Meaning
+</th>
+<th>
+Used with
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>op=</code>
+</td>
+<td>
+Operation name
+</td>
+<td>
+All data-pipe and file-transform ops
+</td>
+</tr>
+<tr>
+<td>
+<code>alg=</code>
+</td>
+<td>
+Digest / signature algorithm (default 
+<code>sha256</code>
+)
+</td>
+<td>
+<code>hash</code>
+, 
+<code>hmac</code>
+, 
+<code>sign</code>
+, 
+<code>verify</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>cipher=</code>
+</td>
+<td>
+Symmetric cipher (default 
+<code>aes-256-gcm</code>
+)
+</td>
+<td>
+<code>encrypt</code>
+, 
+<code>decrypt</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>iv=</code>
+</td>
+<td>
+Explicit IV; omit for automatic IV
+</td>
+<td>
+<code>encrypt</code>
+, 
+<code>decrypt</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>sig=</code>
+</td>
+<td>
+Signature being checked
+</td>
+<td>
+<code>verify</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>key=</code>
+</td>
+<td>
+Key path when the target is already a data file or host
+</td>
+<td>
+<code>re</code>
+ / 
+<code>we</code>
+, and TLS
+</td>
+</tr>
+<tr>
+<td>
+<code>type=</code>
+</td>
+<td>
+Narrow a multi-item file: 
+<code>cert</code>
+, 
+<code>key</code>
+, 
+<code>pubkey</code>
+</td>
+<td>
+Material load (
+<code>e</code>
+ / 
+<code>er</code>
+)
+</td>
+</tr>
+<tr>
+<td>
+<code>keypass=</code>
+</td>
+<td>
+Passphrase for an encrypted key file
+</td>
+<td>
+Material load
+</td>
+</tr>
+<tr>
+<td>
+<code>state</code>
+ / 
+<code>state=</code>
+</td>
+<td>
+Digest checkpoint; not available with OpenSSL 3
+</td>
+<td>
+<code>hash</code>
+, 
+<code>hmac</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<code>key=</code>
+ on a crypto handle is typed by content and by the operation: PEM / DER private keys for 
+<code>sign</code>
+ and TLS; raw bytes for 
+<code>encrypt</code>
+, 
+<code>decrypt</code>
+, and 
+<code>hmac</code>
+. A role mismatch fails rather than guessing.
+</p>
+<p>
+Without 
+<code>iv=</code>
+, 
+<code>encrypt</code>
+ generates a fresh random IV per operation and prepends it to the ciphertext; 
+<code>decrypt</code>
+ reads that prefix. Supplying 
+<code>iv=</code>
+ opts out -- useful for a wire format that does not prepend an IV, or for test vectors -- and hands uniqueness back to the caller. The default cipher is AEAD; the runtime appends the authentication tag after the ciphertext.
+</p>
+<p>
+<code>Attrib(h, &quot;type&quot;)</code>
+ reports the material role (
+<code>symkey</code>
+, 
+<code>key</code>
+, 
+<code>cert</code>
+, ...). 
+<code>Attrib(h, &quot;state&quot;)</code>
+ is the designed checkpoint for resuming a hash across a process break: it snapshots in-progress digest state without finalizing or resetting. The blob is 
+<strong>
+opaque and not portable
+</strong>
+ (OpenSSL version and provider), must be restored into the same algorithm, and for 
+<code>hmac</code>
+ is key-equivalent secret material (length-extension). Ordinary streaming does not need it. OpenSSL 3 removed the MD_CTX export APIs, so the operation currently fails with 1316.
+</p>
+<h3 id="sec-attrs-shared">
+6.3 Shared names with SSH
+</h3>
+<p>
+<code>key=</code>
+ is a private-key path on TLS, crypto, and SSH. 
+<code>keypass=</code>
+ is the shared name for a key-file passphrase. SSH 
+<code>password=</code>
+ is the remote login password and is not accepted on TLS. Crypto still accepts 
+<code>password=</code>
+ as an alias for 
+<code>keypass=</code>
+.
+</p>
+<p>
+<code>verifyPeer=yes|no</code>
+ and mode 
+<code>-</code>
+ mean the same thing on TLS and SSH. An explicit 
+<code>verifyPeer=</code>
+ overrides the mode flag. Trust stores stay distinct: TLS uses 
+<code>ca=</code>
+ (X.509); SSH uses 
+<code>hostkeyfile=</code>
+ (OpenSSH 
+<code>known_hosts</code>
+).
+</p>
+<h2 id="sec-handles">
+7. Material handles
+</h2>
+<p>
+Mode 
+<code>e</code>
+ with no 
+<code>op=</code>
+ loads keys and certificates. Content is auto-detected (PEM by header, DER by probe-by-parse). A file that holds several items -- a combined cert+key PEM, or a cert plus chain -- loads into one handle. 
+<code>type=</code>
+ narrows that to a single role.
+</p>
+<pre><code class="language-unicon">k  := open(&quot;signing.pem&quot;, &quot;e&quot;)
+pk := open(&quot;verify.pem&quot;, &quot;e&quot;)
+c  := open(&quot;client.pem&quot;, &quot;e&quot;)
+kb := open(key_bytes, &quot;er&quot;)
+ek := open(&quot;enc.key&quot;, &quot;e&quot;, &quot;keypass=&quot; || pw)
+c  := open(&quot;bundle.pem&quot;, &quot;e&quot;, &quot;type=cert&quot;)
+</code></pre>
+<p>
+A raw key is still a file value; 
+<code>Attrib(h, &quot;type&quot;)</code>
+ reports the role:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local k
+   k := open(&quot;sixteen-byte-key-material-here!!&quot;, &quot;er&quot;) |
+      stop(&amp;errortext)
+   write(type(k))
+   write(Attrib(k, &quot;type&quot;))
+   close(k)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">file
+symkey
+</code></pre>
+<p>
+Material split across files can be merged:
+</p>
+<pre><code class="language-unicon">idh := open(&quot;client.pem&quot;, &quot;e&quot;)
+Attrib(idh, &quot;key=client.key&quot;)
+</code></pre>
+<p>
+A handle is a file value (
+<code>type(h)</code>
+ is 
+<code>&quot;file&quot;</code>
+) carrying 
+<code>Fs_Crypto</code>
+, the same way a window or socket is a file that does not support every file operation. The underlying 
+<code>CryptoFile</code>
+ is malloc'd, like 
+<code>SSHfile</code>
+, so pointers stay stable across garbage collection and are freed by 
+<code>close()</code>
+.
+</p>
+<p>
+Consumers ask a handle for the roles they need. An encrypted socket wants a cert and a private key: one merged handle satisfies both, or two handles each contribute what they have. 
+<code>op=sign</code>
+ wants a private key; 
+<code>op=hmac</code>
+ wants symmetric bytes. A missing role, or two handles supplying the same role, fails at 
+<code>open()</code>
+ rather than later at 
+<code>write()</code>
+.
+</p>
+<p>
+Handles appear only among 
+<code>open()</code>
+ attributes, not 
+<code>Attrib()</code>
+. Binding material is an open-time concern; 
+<code>Attrib()</code>
+ already uses a file argument to retarget which socket the following names apply to.
+</p>
+<p>
+<code>open(k, &quot;e&quot;, &quot;op=sign&quot;)</code>
+ derives an operation from a material handle. A graphics-style 
+<code>clone()</code>
+ would give that verb a single meaning, but would be a second mechanism next to the handle attributes that TLS and 
+<code>re</code>
+ / 
+<code>we</code>
+ need anyway.
+</p>
+<h2 id="sec-examples">
+8. Examples
+</h2>
+<p>
+These assume a build with 
+<code>secure sockets layer encryption</code>
+. Failures set 
+<code>&amp;errortext</code>
+; the usual form is 
+<code>h := open(...) | stop(&amp;errortext)</code>
+. Package 
+<code>crypto</code>
+ (
+<code>uni/lib/crypto.icn</code>
+) supplies 
+<code>hexencode</code>
+ / 
+<code>hexbytes</code>
+ and base64 helpers for dumping binary digests and keys. The programs under 
+<code>tests/crypto/</code>
+ are the executable form of this section.
+</p>
+<h3 id="sec-ex-hash">
+8.1 Hash
+</h3>
+<p>
+SHA-256 of the known vector 
+<code>abc</code>
+:
+</p>
+<pre><code class="language-unicon">import crypto
+
+procedure main()
+   local h, digest
+   h := open(&quot;sha256&quot;, &quot;eh&quot;) | stop(&amp;errortext)
+   write(h, &quot;abc&quot;)
+   digest := read(h)
+   write(hexbytes(digest, 1))
+   close(h)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+</code></pre>
+<p>
+<code>write()</code>
+ may be called many times; 
+<code>read()</code>
+ finalizes the digest 
+<strong>
+and resets
+</strong>
+ the handle, so the same handle can hash unrelated messages. Chunked 
+<code>&quot;hel&quot;</code>
+ + 
+<code>&quot;lo&quot;</code>
+ matches a single write of 
+<code>&quot;hello&quot;</code>
+. A read with nothing pending fails:
+</p>
+<pre><code class="language-unicon">import crypto
+
+procedure main()
+   local h, d1, d2
+   h := open(&quot;sha256&quot;, &quot;eh&quot;) | stop(&amp;errortext)
+   write(h, &quot;hello&quot;)
+   d1 := hexbytes(read(h), 1)
+   write(h, &quot;hel&quot;)
+   write(h, &quot;lo&quot;)
+   d2 := hexbytes(read(h), 1)
+   write(d1)
+   write(d2)
+   if read(h) then write(&quot;idle:fail&quot;) else write(&quot;idle:ok&quot;)
+   close(h)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+idle:ok
+</code></pre>
+<p>
+A whole file uses the file-transform shape. The first 
+<code>read()</code>
+ consumes the file and returns the digest:
+</p>
+<pre><code class="language-unicon">import crypto
+
+procedure main()
+   local f, h, digest
+   f := open(&quot;hash.dat&quot;, &quot;w&quot;) | stop(&amp;errortext)
+   writes(f, &quot;abc&quot;)
+   close(f)
+   h := open(&quot;hash.dat&quot;, &quot;re&quot;, &quot;op=hash&quot;, &quot;alg=sha256&quot;) |
+      stop(&amp;errortext)
+   digest := read(h)
+   write(hexbytes(digest, 1))
+   close(h)
+   remove(&quot;hash.dat&quot;)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+</code></pre>
+<h3 id="sec-ex-hmac">
+8.2 HMAC
+</h3>
+<p>
+Raw key bytes use mode 
+<code>er</code>
+. 
+<code>read()</code>
+ returns the MAC; the same handle can MAC many messages after each finalize:
+</p>
+<pre><code class="language-unicon">import crypto
+
+procedure main()
+   local hm, mac
+   hm := open(&quot;secret-key-bytes&quot;, &quot;er&quot;, &quot;op=hmac&quot;, &quot;alg=sha256&quot;) |
+      stop(&amp;errortext)
+   write(hm, &quot;message one&quot;)
+   mac := read(hm)
+   write(hexbytes(mac, 1))
+   write(*mac)
+   close(hm)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">9fd1a900325bd173af31bf6467de8139d6615202654cf0fe2645cd2997eaf879
+32
+</code></pre>
+<p>
+A key loaded from a file is the same, with the material handle as the 
+<code>open()</code>
+ target and 
+<code>op=hmac</code>
+ as an attribute:
+</p>
+<pre><code class="language-unicon">k  := open(&quot;hmac.key&quot;, &quot;e&quot;)
+hm := open(k, &quot;e&quot;, &quot;op=hmac&quot;, &quot;alg=sha256&quot;)
+</code></pre>
+<h3 id="sec-ex-sign">
+8.3 Sign and verify
+</h3>
+<p>
+A private key signs; a certificate or public key verifies. 
+<code>read()</code>
+ on the signer returns the signature bytes. The listing assumes 
+<code>signing.pem</code>
+ and 
+<code>verify.pem</code>
+ in the current directory:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local k, sg, pk, vf, signature
+   k := open(&quot;signing.pem&quot;, &quot;e&quot;) | stop(&amp;errortext)
+   sg := open(k, &quot;e&quot;, &quot;op=sign&quot;, &quot;alg=sha256&quot;) | stop(&amp;errortext)
+   write(sg, &quot;hello&quot;)
+   signature := read(sg) | stop(&amp;errortext)
+   close(sg)
+
+   pk := open(&quot;verify.pem&quot;, &quot;e&quot;) | stop(&amp;errortext)
+   vf := open(pk, &quot;e&quot;, &quot;op=verify&quot;, &quot;alg=sha256&quot;,
+      &quot;sig=&quot; || signature) | stop(&amp;errortext)
+   write(vf, &quot;hello&quot;)
+   if read(vf) then write(&quot;ok&quot;) else stop(&quot;bad signature: &quot;,
+      &amp;errortext)
+   close(vf)
+   close(k)
+   close(pk)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">ok
+</code></pre>
+<p>
+A failed verify sets 
+<code>&amp;errornumber</code>
+ 1315 so it is distinct from &quot;nothing written.&quot; The same handle can check many messages by setting 
+<code>sig=</code>
+ in the idle window:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local k, sg, pk, vf, signature, msg
+   k := open(&quot;signing.pem&quot;, &quot;e&quot;) | stop(&amp;errortext)
+   sg := open(k, &quot;e&quot;, &quot;op=sign&quot;, &quot;alg=sha256&quot;) | stop(&amp;errortext)
+   pk := open(&quot;verify.pem&quot;, &quot;e&quot;) | stop(&amp;errortext)
+   vf := open(pk, &quot;e&quot;, &quot;op=verify&quot;, &quot;alg=sha256&quot;) |
+      stop(&amp;errortext)
+   every msg := ![&quot;one&quot;, &quot;two&quot;] do {
+      write(sg, msg)
+      signature := read(sg) | stop(&amp;errortext)
+      Attrib(vf, &quot;sig=&quot; || signature)
+      write(vf, msg)
+      if read(vf) then write(msg, &quot;:ok&quot;) else write(msg, &quot;:fail&quot;)
+      }
+   every close(sg | vf | k | pk)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">one:ok
+two:ok
+</code></pre>
+<h3 id="sec-ex-enc">
+8.4 Symmetric encrypt and decrypt
+</h3>
+<p>
+The idle-window 
+<code>Attrib(..., &quot;op=decrypt&quot;)</code>
+ reuses the bound key. Ciphertext is binary; the recovered plaintext is what matters:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local ky, c, ct, pt
+   ky := open(&quot;sixteen-byte-key-material-here!!&quot;, &quot;er&quot;) |
+      stop(&amp;errortext)
+   c := open(ky, &quot;e&quot;, &quot;op=encrypt&quot;) | stop(&amp;errortext)
+   write(c, &quot;hello&quot;)
+   ct := read(c)
+   Attrib(c, &quot;op=decrypt&quot;)
+   write(c, ct)
+   pt := read(c)
+   write(pt)
+   close(c)
+   close(ky)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">hello
+</code></pre>
+<p>
+With no 
+<code>iv=</code>
+, each 
+<code>read()</code>
+ generates a fresh IV and prepends it, so one handle can encrypt many messages. Lengths below include the IV and AEAD tag:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local ky, c, msg, ct
+   ky := open(&quot;sixteen-byte-key-material-here!!&quot;, &quot;er&quot;) |
+      stop(&amp;errortext)
+   c := open(ky, &quot;e&quot;, &quot;op=encrypt&quot;) | stop(&amp;errortext)
+   every msg := ![&quot;alpha&quot;, &quot;beta&quot;, &quot;gamma&quot;] do {
+      write(c, msg)
+      ct := read(c)
+      write(msg, &quot; &quot;, *ct, &quot; bytes&quot;)
+      }
+   close(c)
+   close(ky)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">alpha 33 bytes
+beta 32 bytes
+gamma 33 bytes
+</code></pre>
+<p>
+For a wire format that does not prepend an IV, or for test vectors, set 
+<code>iv=</code>
+ in the idle window and take uniqueness yourself:
+</p>
+<pre><code class="language-unicon">every plaintext := !messages do {
+   Attrib(c, &quot;iv=&quot; || newiv())
+   write(c, plaintext)
+   ciphertext := read(c)
+   }
+</code></pre>
+<h3 id="sec-ex-file">
+8.5 File encrypt and decrypt
+</h3>
+<p>
+Writes encrypt and are finalized on 
+<code>close()</code>
+. Reads decrypt as a stream. AEAD authentication is checked on the 
+<strong>
+final
+</strong>
+ read: earlier 
+<code>reads()</code>
+ chunks are provisional. Nothing decrypted should be acted on until the stream completes without error.
+</p>
+<pre><code class="language-unicon">procedure main()
+   local ky, f, chunk, pending
+   ky := open(&quot;sixteen-byte-key-material-here!!&quot;, &quot;er&quot;) |
+      stop(&amp;errortext)
+   f := open(&quot;secrets.dat&quot;, &quot;we&quot;, &quot;op=encrypt&quot;, ky) |
+      stop(&amp;errortext)
+   writes(f, &quot;classified&quot;)
+   close(f)
+   f := open(&quot;secrets.dat&quot;, &quot;re&quot;, &quot;op=decrypt&quot;, ky) |
+      stop(&amp;errortext)
+   pending := &quot;&quot;
+   while chunk := reads(f, 4096) do
+      pending ||:= chunk
+   if \ &amp;errornumber then
+      stop(&quot;tampered: &quot;, &amp;errortext)
+   write(pending)
+   close(f)
+   remove(&quot;secrets.dat&quot;)
+   close(ky)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">classified
+</code></pre>
+<p>
+Callers who cannot defer processing should use the data-pipe shape, where a single 
+<code>read()</code>
+ returns plaintext only after the tag verifies.
+</p>
+<p>
+The same key handle can wrap many files:
+</p>
+<pre><code class="language-unicon">keyh := open(&quot;aes.key&quot;, &quot;e&quot;)
+every name := !filenames do {
+   f := open(name || &quot;.enc&quot;, &quot;we&quot;, &quot;op=encrypt&quot;, keyh)
+   write(f, contents(name))
+   close(f)
+   }
+</code></pre>
+<h3 id="sec-ex-tls">
+8.6 TLS identity reuse and DTLS
+</h3>
+<p>
+Encrypted TCP remains 
+<code>&quot;ne&quot;</code>
+. Material handles may be passed as attributes so certs and keys are parsed once. The socket asks by role, not by position: one combined PEM, or two handles, both work.
+</p>
+<pre><code class="language-unicon">id := open(&quot;client.pem&quot;, &quot;e&quot;)
+conn := open(&quot;host:443&quot;, &quot;ne&quot;, id, &quot;verifyPeer=no&quot;)
+conn := open(&quot;host:443&quot;, &quot;ne-&quot;, id)    # same as verifyPeer=no
+
+certh := open(&quot;client.pem&quot;, &quot;e&quot;)
+keyh  := open(&quot;client.key&quot;, &quot;e&quot;)
+conn  := open(&quot;host:443&quot;, &quot;ne&quot;, certh, keyh)
+</code></pre>
+<p>
+Encrypted UDP (DTLS) uses 
+<code>&quot;nue&quot;</code>
+ / 
+<code>&quot;naue&quot;</code>
+. The runtime selects a DTLS context when the socket is datagram.
+</p>
+<h2 id="sec-io">
+9. I/O and 
+<code>Attrib()</code>
+</h2>
+<p>
+On a data-pipe handle, 
+<code>write()</code>
+ accumulates and 
+<code>read()</code>
+ finalizes. 
+<code>read()</code>
+ is always terminal -- one read consumes the whole result and resets the handle -- for two reasons that are easy to forget later. First, the default cipher is AEAD (
+<code>aes-256-gcm</code>
+): nothing authenticated can be released until the tag is checked at the end, so a mid-stream plaintext read would be a lie. Second, 
+<code>read()</code>
+ already means &quot;finalize and reset&quot; for hash / HMAC / sign; a partial encrypt read would look identical to a final one, and the handle would reset under the caller. Block ciphers such as CBC or CTR 
+<em>
+could
+</em>
+ emit ciphertext at a block boundary, but that would be a second meaning of 
+<code>read()</code>
+ next to the AEAD and digest rules, so it is not offered. A second 
+<code>read()</code>
+ with nothing written since the last one fails, as when reading a socket with no data. 
+<code>close()</code>
+ is idempotent: a second 
+<code>close()</code>
+, or 
+<code>close()</code>
+ on a never-written handle, releases the handle and drops its reference to any bound key.
+</p>
+<p>
+On 
+<code>we</code>
+, writes encrypt to the file and 
+<code>close()</code>
+ flushes the AEAD tag. On 
+<code>re</code>
+ with 
+<code>op=decrypt</code>
+, 
+<code>reads()</code>
+ yields plaintext chunks. On 
+<code>re</code>
+ with 
+<code>op=hash</code>
+, the first 
+<code>read()</code>
+ returns the digest.
+</p>
+<p>
+<code>Attrib()</code>
+ during the idle window may change 
+<code>op=</code>
+, 
+<code>alg=</code>
+, 
+<code>cipher=</code>
+, 
+<code>iv=</code>
+, and 
+<code>sig=</code>
+. A change while a digest or cipher is in flight fails (1316). 
+<code>Attrib(h, &quot;type&quot;)</code>
+ is a query. Handles are not valid 
+<code>Attrib()</code>
+ values.
+</p>
+<p>
+Framing is owned by the runtime: IV prepended, tag appended, both fixed-length per cipher. The same layout is used for 
+<code>e</code>
+ / 
+<code>er</code>
+ output and for 
+<code>we</code>
+ files.
+</p>
+<h2 id="sec-errors">
+10. Error handling
+</h2>
+<p>
+Crypto and TLS connect failures 
+<strong>
+fail
+</strong>
+, they do not 
+<code>runerr</code>
+. This matches the SSL connect path: set 
+<code>&amp;errortext</code>
+, tear down what was allocated, and fail, so callers write 
+<code>if h := open(...) then ... else ...</code>
+. Runtime errors are reserved for type mistakes (a bad mode letter, a non-file where a handle is required).
+</p>
+<p>
+Error numbers, defined in 
+<code>src/runtime/data.r</code>
+:
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Number
+</th>
+<th>
+Text
+</th>
+<th>
+Typical cause
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+1300--1308
+</td>
+<td>
+SSL / certificate / cipher errors
+</td>
+<td>
+TLS context and handshake
+</td>
+</tr>
+<tr>
+<td>
+1311
+</td>
+<td>
+unknown cryptographic algorithm or cipher
+</td>
+<td>
+Bad 
+<code>alg=</code>
+ or 
+<code>cipher=</code>
+</td>
+</tr>
+<tr>
+<td>
+1312
+</td>
+<td>
+cryptographic handle lacks required material
+</td>
+<td>
+Missing key, cert, or wrong role
+</td>
+</tr>
+<tr>
+<td>
+1313
+</td>
+<td>
+duplicate cryptographic material role
+</td>
+<td>
+Two handles both supply the same role
+</td>
+</tr>
+<tr>
+<td>
+1314
+</td>
+<td>
+AEAD authentication failed
+</td>
+<td>
+Tampered or truncated ciphertext
+</td>
+</tr>
+<tr>
+<td>
+1315
+</td>
+<td>
+signature verification failed
+</td>
+<td>
+<code>op=verify</code>
+ did not match
+</td>
+</tr>
+<tr>
+<td>
+1316
+</td>
+<td>
+invalid cryptographic operation state
+</td>
+<td>
+Mid-operation 
+<code>Attrib()</code>
+, bad 
+<code>op=</code>
+, empty read
+</td>
+</tr>
+<tr>
+<td>
+1317
+</td>
+<td>
+cryptographic material could not be loaded
+</td>
+<td>
+Unreadable path, parse failure, allocation
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sec-build">
+11. Build integration
+</h2>
+<p>
+Crypto compiles under 
+<code>HAVE_LIBSSL</code>
+, the same guard as TLS. 
+<code>configure --disable-ssl</code>
+ turns both off. 
+<code>--enable-thin</code>
+ disables SSL as part of a minimal build. Otherwise 
+<code>CHECK_OPENSSL</code>
+ probes for the library and headers.
+</p>
+<p>
+<code>&amp;features</code>
+ reports 
+<code>secure sockets layer encryption</code>
+. 
+<code>tests/crypto/Makefile</code>
+ skips the suite when that string is absent. TLS echo tests also require 
+<code>concurrent threads</code>
+.
+</p>
+<p>
+Guards are 
+<code>#if HAVE_LIBSSL</code>
+ in 
+<code>rstructs.h</code>
+, 
+<code>rmacros.h</code>
+, 
+<code>feature.h</code>
+, 
+<code>fsys.r</code>
+, 
+<code>fmisc.r</code>
+, 
+<code>rposix.r</code>
+, and 
+<code>rcrypto.ri</code>
+. TLS helpers (
+<code>create_ssl_context</code>
+, 
+<code>is_ssl_attr</code>
+) and the 
+<code>CryptoFile</code>
+ implementation share 
+<code>src/runtime/rcrypto.ri</code>
+.
+</p>
+<h2 id="sec-status">
+12. Status and remaining work
+</h2>
+<p>
+The language surface described here is implemented: modes 
+<code>e</code>
+ / 
+<code>er</code>
+ / 
+<code>eh</code>
+ / 
+<code>re</code>
+ / 
+<code>we</code>
+, TLS handle reuse, DTLS context selection and handshake, 
+<code>keypass=</code>
+ / 
+<code>verifyPeer=</code>
+ alignment with SSH, and the error numbers in 
+<a href="utr27.html#sec-errors">section 10</a>
+.
+</p>
+<p>
+<strong>
+Digest checkpoint.
+</strong>
+ 
+<code>Attrib(h, &quot;state&quot;)</code>
+ / 
+<code>state=</code>
+ is part of the design for resuming a hash across a process break (
+<a href="utr27.html#sec-attrs-crypto">section 6.2</a>
+). OpenSSL 3 removed the MD_CTX export APIs, so the operation fails with 1316. Ordinary streaming does not need it.
+</p>
+<p>
+<strong>
+Separate configure switch.
+</strong>
+ Crypto cannot be compiled out while leaving TLS sockets on. A 
+<code>Unicon_Crypto</code>
+ / 
+<code>NoCrypto</code>
+ guard driven by 
+<code>--disable-crypto</code>
+ is the obvious next step if a distribution wants encrypted sockets without the new 
+<code>open()</code>
+ modes.
+</p>
+<p>
+<strong>
+``~`` in ``key=``.
+</strong>
+ Not expanded, matching SSH. Callers must expand a leading 
+<code>~/</code>
+ themselves.
+</p>
+<p>
+<strong>
+Asymmetric encrypt / decrypt.
+</strong>
+ The 
+<code>op=</code>
+ set is hash, HMAC, sign, verify, and symmetric encrypt/decrypt. Public-key encryption is not exposed.
+</p>
+<p>
+<strong>
+Trust-on-first-use and key generation
+</strong>
+ are out of scope. Certificates and keys are created out of band.
+</p>
+<h2 id="sec-coverage">
+Appendix: test coverage
+</h2>
+<p>
+Automated tests live under 
+<code>tests/crypto/</code>
+, one program per concern: 
+<code>hash</code>
+, 
+<code>hmac</code>
+, 
+<code>sha512</code>
+, 
+<code>sign</code>
+, 
+<code>encrypt</code>
+, 
+<code>iv</code>
+, 
+<code>freshiv</code>
+, 
+<code>tamper</code>
+, 
+<code>filehash</code>
+, 
+<code>filecrypt</code>
+, 
+<code>filekey</code>
+, 
+<code>filekeyattr</code>
+, 
+<code>filetamper</code>
+, 
+<code>opswitch</code>
+, 
+<code>midattrib</code>
+, 
+<code>badalg</code>
+, 
+<code>badkey</code>
+, 
+<code>badrole</code>
+, 
+<code>badstate</code>
+, 
+<code>badverify</code>
+, plus TLS / DTLS (
+<code>tlsplain</code>
+, 
+<code>tlsverify</code>
+, 
+<code>tlsauth</code>
+, 
+<code>tlsproto</code>
+, 
+<code>tlscipher</code>
+, 
+<code>tlshandle</code>
+, 
+<code>dtls</code>
+, 
+<code>dtlsecho</code>
+). 
+<code>tests/crypto/Makefile</code>
+ skips the suite when OpenSSL is absent, and skips the threaded TLS echo tests when concurrency is absent. Expected output is 
+<code>tests/crypto/stand/*.std</code>
+.
+</p>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-jeffery-utr15" value="1">
+Clinton Jeffery. &quot;How to Write a Unicon Technical Report&quot;. doc/utr/utr15.tex. 2013.
+</li>
+<li id="cite-libssh" value="2">
+The libssh Project. &quot;libssh -- The SSH Library&quot;. https://www.libssh.org/. 2026.
+</li>
+<li id="cite-jeffery-utr13" value="3">
+Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
+</li>
+<li id="cite-openssl" value="4">
+The OpenSSL Project. &quot;OpenSSL -- Cryptography and SSL/TLS Toolkit&quot;. https://www.openssl.org/. 2026.
+</li>
+<li id="cite-algharaibeh-utr26" value="5">
+Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
+</li>
+<li id="cite-rfc2104" value="6">
+H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
+</li>
+</ol></div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="utr27.pdf">pdf</a> | <a href="_sources/utr27.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

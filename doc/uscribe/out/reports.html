@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>uscribe User Guide</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Book contents">
+<a class="sidebar-logo" href="index.html"><img src="_static/uscribe-logo.png" alt="uscribe User Guide"></a>
+<div class="book-title"><a href="index.html">uscribe User Guide</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter chapters; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter chapter list">
+<ol id="nav-toc">
+<li><a href="intro.html">Introduction</a></li>
+<li><a href="install.html">Installation</a></li>
+<li><a href="quickstart.html">Quick Start</a></li>
+<li class="current">Reports</li>
+<li><a href="config.html">Book Configuration</a></li>
+<li><a href="markup.html">Markup Reference</a></li>
+<li><a href="themes.html">Themes</a></li>
+<li><a href="cli.html">Command Line</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<div class="prevnext">
+<a href="quickstart.html">&larr; Quick Start</a>
+<a href="config.html">Book Configuration &rarr;</a>
+</div>
+<h2 id="reports">
+Reports
+</h2>
+<p>
+A 
+<strong>
+report
+</strong>
+ is one paper: one 
+<code>.rst</code>
+ source, one HTML page, one PDF. The left sidebar is that paper's sections (Introduction, Motivation, …). A 
+<strong>
+book
+</strong>
+ (this guide) is the other shape: many chapters, sidebar = chapter list, one combined PDF.
+</p>
+<p>
+If every file in the manifest is a report, uscribe also writes a catalog 
+<code>index.html</code>
+ — a table of links. You can ignore it when you only have one report.
+</p>
+<h3 id="mark-a-file-as-a-report">
+Mark a file as a report
+</h3>
+<p>
+Start the 
+<code>.rst</code>
+ with a field list. 
+<code>:docclass: report</code>
+ (or a 
+<code>:trnumber:</code>
+) selects report layout: masthead, abstract, article PDF, section sidebar.
+</p>
+<pre><code class="language-rst">:title: Report Mode Example
+:author: Uscribe Maintainers
+:trnumber: 0
+:date: 2026-08-07
+:abstract: Minimal fixture for UTR-style report metadata, external
+   links, sub/sup, and raw passthrough.
+:docclass: report
+
+Introduction
+============
+
+</code></pre>
+<p>
+Headings in the body become the sidebar TOC. Explicit labels (
+<code>.. _sec-intro:</code>
+) become 
+<code>#sec-intro</code>
+ jump targets.
+</p>
+<h3 id="one-report">
+One report
+</h3>
+<p>
+Put the paper in its own directory. Author, title, and abstract stay in the 
+<code>.rst</code>
+ field list (above). The manifest is one line. You do not need a per-report 
+<code>.conf</code>
+.
+</p>
+<pre><code class="language-text">my-paper/
+  book.manifest      # one line: paper.rst
+  paper.rst
+  book.conf          # optional: themePath (same file books use)
+</code></pre>
+<p>
+<code>book.manifest</code>
+:
+</p>
+<pre><code class="language-text">paper.rst
+</code></pre>
+<p>
+Build from that directory (defaults pick up 
+<code>book.manifest</code>
+ and, if present, 
+<code>book.conf</code>
+):
+</p>
+<pre><code class="language-sh">uscribe --targetDir=./out
+</code></pre>
+<p>
+Open 
+<strong>
+``paper.html``
+</strong>
+. The sidebar is that paper's sections. 
+<code>index.html</code>
+ is a one-row catalog; you can ignore it.
+</p>
+<p>
+Optional 
+<code>book.conf</code>
+ is only 
+<em>
+build
+</em>
+ settings (theme, logo, 
+<code>themePath</code>
+), not author or abstract. If you omit 
+<code>title</code>
+ there, the sidebar uses the paper's 
+<code>:title:</code>
+.
+</p>
+<p>
+This guide's live fixture lives next to the user-guide 
+<code>book.conf</code>
+, so the Makefile passes 
+<code>--config=report-example.conf</code>
+ to avoid picking up the guide settings. The paper is 
+<a href="ex-one-report/ex-report.html" rel="noopener">ex-report.html</a>
+ (after 
+<code>make -C doc/uscribe</code>
+).
+</p>
+<p>
+Output:
+</p>
+<pre><code class="language-text">out/
+  paper.html       ← the report (section nav)
+  paper.pdf        ← if you passed --format=pdf
+  index.html
+  search.html
+  _static/
+  _sources/
+</code></pre>
+<h3 id="several-reports-and-an-index">
+Several reports and an index
+</h3>
+<p>
+Same layout, more files in the manifest. Each paper is still one HTML page. 
+<code>book.conf</code>
+ 
+<code>title</code>
+ is the 
+<em>
+series
+</em>
+ name on the catalog (and the link back from each paper's sidebar).
+</p>
+<pre><code class="language-text">my-reports/
+  book.manifest
+  book.conf          # title: My Technical Reports
+  paper-a.rst
+  paper-a.bib
+  paper-b.rst
+</code></pre>
+<p>
+<code>book.manifest</code>
+:
+</p>
+<pre><code class="language-text">paper-a.rst
+paper-b.rst
+</code></pre>
+<pre><code class="language-sh">uscribe --targetDir=./out
+</code></pre>
+<p>
+Open 
+<strong>
+``index.html``
+</strong>
+ for the table (number, title, author, date, pdf/txt). Open a row to read that paper; its sidebar is that paper's sections.
+</p>
+<p>
+The Unicon Technical Reports tree is this pattern: 
+<code>doc/utr/utr.manifest</code>
+ and 
+<code>doc/utr/book.conf</code>
+, via 
+<code>make -C doc/utr html</code>
+.
+</p>
+<p>
+Live fixtures in this guide (again using a separate 
+<code>--config</code>
+ because they share a directory with the user guide): 
+<a href="ex-reports/index.html" rel="noopener">catalog index</a>
+, 
+<a href="ex-reports/ex-report.html" rel="noopener">first report</a>
+, 
+<a href="ex-reports/ex-report-b.html" rel="noopener">second report</a>
+. The manifests are 
+<code>report-example.manifest</code>
+ (one file) and 
+<code>reports-example.manifest</code>
+ (two files).
+</p>
+<h3 id="book-vs-report-summary">
+Book vs report (summary)
+</h3>
+<table>
+<thead>
+<tr>
+<th>
+Piece
+</th>
+<th>
+Book
+</th>
+<th>
+Report
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Source
+</td>
+<td>
+many chapters
+</td>
+<td>
+one 
+<code>.rst</code>
+ per paper
+</td>
+</tr>
+<tr>
+<td>
+Sidebar
+</td>
+<td>
+other chapters
+</td>
+<td>
+sections of this paper
+</td>
+</tr>
+<tr>
+<td>
+<code>index.html</code>
+</td>
+<td>
+ordered chapter list
+</td>
+<td>
+catalog table of papers
+</td>
+</tr>
+<tr>
+<td>
+PDF
+</td>
+<td>
+one file for the whole book
+</td>
+<td>
+one file per paper
+</td>
+</tr>
+<tr>
+<td>
+When
+</td>
+<td>
+manuals, this user guide
+</td>
+<td>
+UTR, a standalone paper
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+A mixed manifest (some reports, some book chapters) is unusual. Each report page still gets a section sidebar; book chapters keep the chapter list. Prefer an all-report manifest or an all-book manifest.
+</p>
+<p>
+See 
+<a href="markup.html#markup-reference">Markup Reference</a>
+ for the field-list keys and 
+<a href="cli.html#command-line">Command Line</a>
+ for 
+<code>--format</code>
+ / 
+<code>--manifest</code>
+.
+</p>
+<div class="prevnext">
+<a href="quickstart.html">&larr; Quick Start</a>
+<a href="config.html">Book Configuration &rarr;</a>
+</div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="uscribe-userguide.pdf">pdf</a> | <a href="_sources/reports.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

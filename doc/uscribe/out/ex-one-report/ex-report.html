@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report Mode Example</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Report contents">
+<div class="book-title"><a href="index.html">One Report Example</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter sections; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter section list">
+<ol id="nav-toc">
+<li class="toc-l1"><a href="#introduction">Introduction
+</a></li>
+<li class="toc-l1"><a href="#references">References
+</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<header class="report-masthead">
+<h1 class="report-title">Report Mode Example</h1>
+<p class="report-authors">Uscribe Maintainers</p>
+<p class="report-tr">Unicon Technical Report: 0</p>
+<p class="report-date">2026-08-07</p>
+<p class="report-pdf"><a href="_sources/ex-report.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Minimal fixture for UTR-style report metadata, external links, sub/sup, and raw passthrough.</p>
+</div>
+</header>
+<h2 id="introduction">
+Introduction
+</h2>
+<p>
+See the Unicon site at 
+<a href="http://unicon.org" rel="noopener">unicon.org</a>
+. Water is H
+<sub>2</sub>
+O; e
+<sup>x</sup>
+ grows fast. Cited works include 
+[<a class="cite" href="#cite-unicon-site">1</a>] and 
+[<a class="cite" href="#cite-griswold-1997-ipl">2</a>]. A footnote looks like this
+<sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup>. Inline math 
+<span class="math math-inline">\(E=mc^2\)</span> and a display block:
+</p>
+<div class="math math-display">\[a^2 + b^2 = c^2\]</div>
+
+<!-- raw html ok -->
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-unicon-site" value="1">
+Unicon Project. &quot;The Unicon Programming Language&quot;. http://unicon.org. 2026.
+</li>
+<li id="cite-griswold-1997-ipl" value="2">
+Ralph E. Griswold and Madge T. Griswold. &quot;The Icon programming language&quot;. Peer-to-Peer Communications. 1997.
+</li>
+</ol></div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Uscribe Maintainers. | Powered by uscribe | <a href="ex-report.pdf">pdf</a> | <a href="_sources/ex-report.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

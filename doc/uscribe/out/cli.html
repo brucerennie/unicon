@@ -34,6 +34,7 @@ placeholder="Search..." aria-label="Filter chapter list">
 <li><a href="intro.html">Introduction</a></li>
 <li><a href="install.html">Installation</a></li>
 <li><a href="quickstart.html">Quick Start</a></li>
+<li><a href="reports.html">Reports</a></li>
 <li><a href="config.html">Book Configuration</a></li>
 <li><a href="markup.html">Markup Reference</a></li>
 <li><a href="themes.html">Themes</a></li>
@@ -160,8 +161,10 @@ Output format:
 <p>
 - 
 <code>html</code>
- — one page per chapter plus index/search/themes.   Report manifests get a UTR index table on 
+ — one page per chapter plus index/search/themes.   Report manifests get a catalog table on 
 <code>index.html</code>
+. Each   report page's sidebar lists that report's sections.   See 
+<a href="reports.html#reports">Reports</a>
 . - 
 <code>latex</code>
  — for books, a single 
@@ -244,7 +247,7 @@ HTML
 <ul>
 <li>
 <code>index.html</code>
- — contents landing page (chapter list, or a UTR table with a 
+ — contents landing page (chapter list, or a catalog table of reports with a 
 <strong>
 Formats
 </strong>
@@ -252,7 +255,7 @@ Formats
 <code>pdf</code>
  / 
 <code>txt</code>
- for report collections)
+)
 </li>
 <li>
 <code>search.html</code>

@@ -1,0 +1,1 @@
+window.USCRIBE_SEARCH = [{"file":"ex-report.html","body":"Introduction See the Unicon site at  unicon.org . Water is H 2 O; e x  grows fast. Cited works include   and  . A footnote looks like this . Inline math   and a display block: References ","title":"UTR 0: Report Mode Example"}];
