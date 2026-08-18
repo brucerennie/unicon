@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="basic"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multicast and Socket Attributes in Unicon</title>
+<script>
+(function(){try{var t=localStorage.getItem('uscribe-theme');
+if(t==='basic'||t==='classic'||t==='dark')
+document.documentElement.setAttribute('data-theme',t);
+else t='basic';
+document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.css">');
+}catch(e){document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-basic.css">');}})();
+</script>
+<noscript><link id="theme-css" rel="stylesheet" href="_static/theme-basic.css"></noscript>
+<link rel="stylesheet" href="_static/highlight.css">
+<script defer src="_static/search.js"></script>
+<script defer src="_static/highlight-unicon.js"></script>
+<script defer src="_static/theme-switcher.js"></script>
+</head><body>
+<div class="layout">
+<nav class="sidebar" aria-label="Report contents">
+<div class="book-title"><a href="index.html">Unicon Technical Reports</a></div>
+<label class="search-hint" for="theme-select">Theme</label>
+<select class="search-box" id="theme-select" aria-label="Color theme">
+<option value="basic">basic</option>
+<option value="classic">classic</option>
+<option value="dark">dark</option>
+</select>
+<p class="search-hint">Filter sections; Enter for full search</p>
+<input class="search-box" id="nav-search" type="search" 
+placeholder="Search..." aria-label="Filter section list">
+<ol id="nav-toc">
+<li class="toc-l1"><a href="#sec-intro">1. Introduction
+</a></li>
+<li class="toc-l1"><a href="#sec-motivation">2. Motivation
+</a></li>
+<li class="toc-l1"><a href="#sec-principles">3. Design principles
+</a></li>
+<li class="toc-l1"><a href="#sec-open">4. Opening a multicast socket
+</a></li>
+<li class="toc-l1"><a href="#sec-ssm">5. Source-specific multicast
+</a></li>
+<li class="toc-l1"><a href="#sec-attrs">6. Attributes
+</a></li>
+<li class="toc-l1"><a href="#sec-attrib">7. 
+<code>Attrib()</code>
+ after 
+<code>open()</code>
+</a></li>
+<li class="toc-l1"><a href="#sec-cache">8. Listener cache
+</a></li>
+<li class="toc-l1"><a href="#sec-impl">9. Runtime implementation
+</a></li>
+<li class="toc-l1"><a href="#sec-status">10. Status and remaining work
+</a></li>
+<li class="toc-l1"><a href="#sec-coverage">Appendix: test coverage
+</a></li>
+<li class="toc-l1"><a href="#references">References
+</a></li>
+</ol>
+<p class="search-hint"><a href="search.html">Search page</a></p>
+</nav>
+<div class="main">
+<header class="report-masthead">
+<h1 class="report-title">Multicast and Socket Attributes in Unicon</h1>
+<p class="report-authors">Jafar Al-Gharaibeh</p>
+<p class="report-tr">Unicon Technical Report: 28</p>
+<p class="report-date">June 2026</p>
+<p class="report-pdf"><a href="utr28.pdf">pdf</a> | <a href="_sources/utr28.rst.txt">txt</a></p>
+<div class="report-abstract">
+<p class="report-abstract-label">Abstract</p>
+<p>Unicon could open TCP and UDP sockets, but applications had no way to join a multicast group, pick an interface, or set TTL from the language. This report describes trailing name=value attributes on open(), the same style as SSL and graphics windows, plus Attrib() after open(). Binding a UDP socket to a group address joins that group; source@group or source= selects source-specific multicast. Defaults cover reuse, all-interface IPv4 joins, and outbound interface selection so the common cases need no attributes at all.</p>
+<p class="report-keywords"><span class="report-keywords-label">Keywords:</span> Unicon, multicast, SSM, UDP, socket attributes, Attrib, runtime, technical report.</p>
+</div>
+</header>
+<h2 id="sec-intro">
+1. Introduction
+</h2>
+<p>
+This report describes IP multicast 
+[<a class="cite" href="#cite-rfc1112">7</a>] and the socket-attribute facility it sits on. Trailing arguments to 
+<code>open()</code>
+ on network modes are 
+<code>name=value</code>
+ strings applied with 
+<code>setsockopt(2)</code>
+. After 
+<code>open()</code>
+, 
+<code>Attrib()</code>
+ uses the same names. The language-facing reference lives in 
+<em>
+Programming with Unicon
+</em>
+ 
+[<a class="cite" href="#cite-jeffery-pwu">8</a>] (Chapter 5, &quot;Multicast and Socket Attributes&quot;) and the language reference (
+<code>open</code>
+ trailing attributes, 
+<code>Attrib</code>
+). Automated tests live in 
+<code>tests/posix/mcast.icn</code>
+.
+</p>
+<p>
+The work is part of POSIX networking, not an optional library. A later report covers raw sockets 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>], which reuse these attributes (
+<code>ttl</code>
+, 
+<code>iface</code>
+, 
+<code>join</code>
+) on mode 
+<code>nr</code>
+.
+</p>
+<h2 id="sec-motivation">
+2. Motivation
+</h2>
+<p>
+Unicon's 
+<code>open()</code>
+ already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) 
+[<a class="cite" href="#cite-rfc4607">10</a>] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join 
+<code>239.1.1.1</code>
+, restrict a join to one NIC, or send with a limited TTL. Those operations were not supported.
+</p>
+<p>
+The rest of the I/O API already has the pattern: 
+<code>open()</code>
+ constructs, trailing strings configure (SSL 
+<code>key=</code>
+, window 
+<code>WAttrib</code>
+), 
+<code>Attrib()</code>
+ reads and writes later. Socket options follow that pattern instead of adding 
+<code>setsockopt()</code>
+ as a new global.
+</p>
+<h2 id="sec-principles">
+3. Design principles
+</h2>
+<p>
+<strong>
+Attributes are 
+<code>name=value</code>
+, like SSL.
+</strong>
+ Unknown names fail 
+<code>open()</code>
+ with error 1310 (
+<code>bad socket attribute</code>
+). Booleans are exactly 
+<code>yes</code>
+ or 
+<code>no</code>
+, matching 
+<code>verifyPeer</code>
+.
+</p>
+<pre><code class="language-unicon">procedure main()
+   if open(&quot;:5110&quot;, &quot;nua4&quot;, &quot;bogus=yes&quot;) then
+      write(&quot;oops&quot;)
+   else
+      write(&quot;bogus: &quot;, &amp;errortext)
+   if open(&quot;:5110&quot;, &quot;nua4&quot;, &quot;reuseaddr=1&quot;) then
+      write(&quot;oops&quot;)
+   else
+      write(&quot;numeric boolean: &quot;, &amp;errortext)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">bogus: bad socket attribute
+numeric boolean: bad socket attribute
+</code></pre>
+<p>
+<strong>
+DWIM for the common cases.
+</strong>
+ Binding a UDP socket to a multicast group joins that group. Listeners default to 
+<code>reuseaddr=yes</code>
+. No 
+<code>iface=</code>
+ means join every UP IPv4 interface and send out the first non-loopback IPv4 address (else loopback). Sending to 
+<code>255.255.255.255</code>
+ enables 
+<code>SO_BROADCAST</code>
+. Explicit attributes always override.
+</p>
+<p>
+<strong>
+<code>source@group</code>
+, not 
+<code>group@source</code>
+.
+</strong>
+ The address form matches VLC, ffmpeg, and RFC 4607 
+<code>(S,G)</code>
+ order. Empty either side is invalid.
+</p>
+<p>
+<strong>
+<code>ttl</code>
+ and 
+<code>iface</code>
+, not multicast-only names.
+</strong>
+ Hop limit and interface are used by unicast, multicast, and later raw sockets 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>]. 
+<code>ttl=</code>
+ sets both 
+<code>IP_TTL</code>
+ and 
+<code>IP_MULTICAST_TTL</code>
+ (or the IPv6 hop options). 
+<code>iface=</code>
+ accepts an IPv4 address, a numeric index, or a name (
+<code>en0</code>
+, 
+<code>lo0</code>
+; Windows also maps 
+<code>lo</code>
+ / 
+<code>lo0</code>
+ to 
+<code>loopback_0</code>
+).
+</p>
+<p>
+<strong>
+Order matters.
+</strong>
+ 
+<code>iface=</code>
+ before 
+<code>join=</code>
+ selects the interface used by that join. 
+<code>Attrib()</code>
+ applies a batch of assignments together for the same reason.
+</p>
+<p>
+<strong>
+Cached listeners are aliases; attributes get a new socket.
+</strong>
+ A second 
+<code>open()</code>
+ of the same listener address with no socket attributes returns another file for the cached fd. An open that supplies 
+<code>join=</code>
+ / 
+<code>iface=</code>
+ / and so on creates an independent socket so it cannot retune earlier aliases. Use 
+<code>Attrib()</code>
+ to change options on a live shared handle.
+</p>
+<h2 id="sec-open">
+4. Opening a multicast socket
+</h2>
+<p>
+IP multicast uses UDP (modes 
+<code>nu</code>
+ / 
+<code>nua</code>
+, optionally with 
+<code>4</code>
+ or 
+<code>6</code>
+ for family). A minimal receiver and sender:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local f, r
+   f := open(&quot;239.1.1.1:5000&quot;, &quot;nua&quot;) | stop(&amp;errortext)
+   while r := receive(f) do
+      write(r.addr, &quot;  &quot;, r.msg)
+end
+</code></pre>
+<pre><code class="language-unicon">procedure main()
+   local f, i
+   f := open(&quot;239.1.1.1:5000&quot;, &quot;nu&quot;) | stop(&amp;errortext)
+   every i := 1 to 5 do
+      writes(f, &quot;hello-&quot; || i) &amp; delay(500)
+end
+</code></pre>
+<p>
+The receiver binds the group address, so the runtime joins that group (ASM) and enables port reuse. The sender's destination is the group; without 
+<code>iface=</code>
+, outbound multicast uses the first non-loopback IPv4 address. Kernel multicast loopback stays on, so a local receiver still sees the packets.
+</p>
+<p>
+The same exchange in one process over loopback (this is the shape of 
+<code>tests/posix/mcast.icn</code>
+). 
+<code>iface=127.0.0.1</code>
+ keeps the datagram on loopback even when the host has no multicast route:
+</p>
+<pre><code class="language-unicon">procedure main()
+   local f, s, r
+   f := open(&quot;239.42.42.99:5199&quot;, &quot;nua&quot;, &quot;iface=127.0.0.1&quot;) |
+        stop(&amp;errortext)
+   s := open(&quot;239.42.42.99:5199&quot;, &quot;nu&quot;, &quot;iface=127.0.0.1&quot;) |
+        stop(&amp;errortext)
+   writes(s, &quot;hello-multicast&quot;)
+   if *select(f, 2000) &gt; 0 then {
+      r := receive(f)
+      write(r.msg)
+      }
+   else
+      write(&quot;timeout&quot;)
+   close(s)
+   close(f)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">hello-multicast
+</code></pre>
+<p>
+<code>r.addr</code>
+ is the sender (host plus an ephemeral port). Alpine often does not deliver loopback multicast even when the join succeeds; the test suite treats a missing datagram as success there so CI stays portable.
+</p>
+<p>
+A wildcard bind plus explicit joins is the other shape:
+</p>
+<pre><code class="language-unicon">f := open(&quot;:5000&quot;, &quot;nua&quot;,
+          &quot;iface=192.168.1.10&quot;,
+          &quot;join=239.1.1.1&quot;,
+          &quot;join=232.1.1.1,10.0.0.5&quot;)
+</code></pre>
+<p>
+<code>join=group</code>
+ is ASM; 
+<code>join=group,source</code>
+ is SSM. Attributes may be repeated. Mixing ASM and SSM in one call is allowed. If 
+<code>open()</code>
+ has no 
+<code>4</code>
+ / 
+<code>6</code>
+ flag, a 
+<code>join=</code>
+ group address picks the family so an IPv4 join is not attempted on an IPv6 wildcard socket.
+</p>
+<h2 id="sec-ssm">
+5. Source-specific multicast
+</h2>
+<p>
+Name the source before the group, or pass 
+<code>source=</code>
+ on a socket already bound to the group. Both IPv4 and IPv6 are supported. For IPv6 SSM, pass an explicit 
+<code>iface=</code>
+ (name or index) so the join uses a single interface:
+</p>
+<pre><code class="language-unicon">f := open(&quot;192.168.1.1@239.1.1.1:5000&quot;, &quot;nua&quot;)
+f := open(&quot;239.1.1.1:5000&quot;, &quot;nua&quot;, &quot;source=192.168.1.1&quot;)
+f := open(&quot;::1@ff3e::1:5000&quot;, &quot;nua6&quot;, &quot;iface=lo0&quot;)
+f := open(&quot;ff3e::1:5000&quot;, &quot;nua6&quot;, &quot;iface=lo0&quot;, &quot;source=::1&quot;)
+</code></pre>
+<p>
+On send or connect, 
+<code>source@group:port</code>
+ keeps only the group so the destination is the group address. The source is a receive-side filter, not a send address.
+</p>
+<p>
+IPv6 SSM is a single 
+<code>MCAST_JOIN_SOURCE_GROUP</code>
+ / 
+<code>MCAST_LEAVE_SOURCE_GROUP</code>
+ with no multi-interface walk. Those walks have triggered macOS kernel panics in IPv6 source filter teardown. Already-a-member and already-gone are treated as success.
+</p>
+<h2 id="sec-attrs">
+6. Attributes
+</h2>
+<table>
+<thead>
+<tr>
+<th>
+Attribute
+</th>
+<th>
+Role
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>join=</code>
+</td>
+<td>
+Add membership: 
+<code>group</code>
+ (ASM) or 
+<code>group,source</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>leave=</code>
+</td>
+<td>
+Drop membership; same forms as 
+<code>join</code>
+. Pass
+</td>
+</tr>
+<tr>
+<td>
+<code>source=</code>
+</td>
+<td>
+SSM source for a group bind (repeatable). Set-only.
+</td>
+</tr>
+<tr>
+<td>
+<code>iface=</code>
+</td>
+<td>
+IPv4 address, index, or name. Restricts join and
+</td>
+</tr>
+<tr>
+<td>
+<code>ttl=</code>
+</td>
+<td>
+Unicast and multicast hop limits. Query returns the
+</td>
+</tr>
+<tr>
+<td>
+<code>mcastloop=yes|no</code>
+</td>
+<td>
+Whether the host receives its own multicasts. Kernel
+</td>
+</tr>
+<tr>
+<td>
+<code>reuseaddr=</code>
+ / 
+<code>reuseport=</code>
+</td>
+<td>
+Bind reuse. Listeners default to 
+<code>reuseaddr=yes</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>broadcast=</code>
+</td>
+<td>
+<code>SO_BROADCAST</code>
+. Opening 
+<code>255.255.255.255</code>
+ sets it.
+</td>
+</tr>
+<tr>
+<td>
+<code>rcvbuf=</code>
+ / 
+<code>sndbuf=</code>
+</td>
+<td>
+Buffer sizes in bytes.
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<code>proto</code>
+ and 
+<code>hdrincl</code>
+ are listed in the same table in the runtime; they belong to raw sockets 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>].
+</p>
+<h2 id="sec-attrib">
+7. 
+<code>Attrib()</code>
+ after 
+<code>open()</code>
+</h2>
+<pre><code class="language-unicon">procedure main()
+   local f
+   f := open(&quot;:5110&quot;, &quot;nua4&quot;) | stop(&amp;errortext)
+   Attrib(f, &quot;ttl=4&quot;)
+   write(&quot;ttl=&quot;, Attrib(f, &quot;ttl&quot;))
+   write(&quot;mcastloop=&quot;, Attrib(f, &quot;mcastloop&quot;))
+   write(Attrib(f, &quot;join&quot;) | &quot;join: not queryable&quot;)
+   close(f)
+end
+</code></pre>
+<p>
+Output:
+</p>
+<pre><code class="language-text">ttl=4
+mcastloop=yes
+join: not queryable
+</code></pre>
+<p>
+Assignments in one call are applied together, preserving 
+<code>iface</code>
+ then 
+<code>join</code>
+ order. Bare names produce 
+<code>yes</code>
+ / 
+<code>no</code>
+, an integer, or (for IPv4 
+<code>iface</code>
+) a dotted address. 
+<code>join</code>
+, 
+<code>leave</code>
+, 
+<code>source</code>
+, and 
+<code>proto</code>
+ cannot be queried (
+<code>Attrib(f, &quot;join&quot;)</code>
+ fails; 
+<code>&amp;errortext</code>
+ is empty). Membership changes still use assignment form:
+</p>
+<pre><code class="language-unicon">Attrib(f, &quot;join=239.1.1.2&quot;)
+Attrib(f, &quot;iface=127.0.0.1&quot;, &quot;leave=239.1.1.1&quot;)
+</code></pre>
+<p>
+On some Linux/musl builds 
+<code>getsockopt(IP_MULTICAST_IF)</code>
+ does not recover the interface used at join time. Pass 
+<code>iface=</code>
+ on 
+<code>leave=</code>
+ so 
+<code>IP_DROP_MEMBERSHIP</code>
+ matches the join. Already-not-a-member is success; the runtime also retries 
+<code>INADDR_ANY</code>
+ and each local IPv4 address when a single DROP fails.
+</p>
+<h2 id="sec-cache">
+8. Listener cache
+</h2>
+<p>
+<code>sock_listen</code>
+ still caches the first bind of an address so repeated 
+<code>open()</code>
+ of the same listener is cheap. That cache is a problem if a later 
+<code>open(..., &quot;join=...&quot;)</code>
+ reused the fd and changed memberships for every live alias.
+</p>
+<p>
+Rules:
+</p>
+<ul>
+<li>
+Cache hit, no socket attributes: another 
+<code>File</code>
+ for the same fd (owner refcount). Closing one alias leaves the others until the last handle is closed.
+</li>
+<li>
+Cache hit with attributes: release the pin and create an independent socket (
+<code>reuseaddr</code>
+ makes the second bind succeed). 
+<code>leave=</code>
+ on that socket does not drop the cached alias's membership.
+</li>
+<li>
+Changing options on a shared handle: 
+<code>Attrib()</code>
+ on one of the aliases.
+</li>
+</ul>
+<p>
+A cache-hit open that is not a pure alias only allows additive 
+<code>join=</code>
+ / 
+<code>source=</code>
+; 
+<code>leave=</code>
+ and option changes on that path would retune every live 
+<code>File</code>
+.
+</p>
+<h2 id="sec-impl">
+9. Runtime implementation
+</h2>
+<p>
+All of this lives in 
+<code>src/runtime/rposix.r</code>
+, applied from 
+<code>open()</code>
+ in 
+<code>fsys.r</code>
+ and from 
+<code>Attrib()</code>
+ in 
+<code>fmisc.r</code>
+.
+</p>
+<p>
+<strong>
+Two passes.
+</strong>
+ 
+<code>reuseaddr</code>
+ / 
+<code>reuseport</code>
+ must be set between 
+<code>socket()</code>
+ and 
+<code>bind()</code>
+. Everything else runs after the socket is bound. 
+<code>apply_sock_attrs()</code>
+ takes a 
+<code>prebind</code>
+ flag.
+</p>
+<p>
+<strong>
+Auto-join.
+</strong>
+ After the post-bind pass, a UDP socket bound to a multicast group is joined unless an explicit 
+<code>join=</code>
+ took over. 
+<code>source@group</code>
+ or 
+<code>source=</code>
+ makes that join SSM.
+</p>
+<p>
+<strong>
+IPv4 join without 
+<code>iface=</code>
+.
+</strong>
+ Walk 
+<code>getifaddrs()</code>
+ and 
+<code>IP_ADD_MEMBERSHIP</code>
+ on every UP IPv4 address so same-host and multi-homed receives work without naming a NIC. An explicit 
+<code>iface=</code>
+ joins only that one. Outbound multicast without 
+<code>iface=</code>
+ picks the first non-loopback IPv4 address via 
+<code>IP_MULTICAST_IF</code>
+.
+</p>
+<p>
+<strong>
+IPv6 ASM
+</strong>
+ uses 
+<code>IPV6_JOIN_GROUP</code>
+ / 
+<code>IPV6_LEAVE_GROUP</code>
+ with an ifindex (zero means default). There is no all-iface walk like IPv4.
+</p>
+<p>
+<strong>
+Errors.
+</strong>
+ Unknown attributes and bad booleans are 1310. 
+<code>setsockopt</code>
+ failures fail 
+<code>open()</code>
+ / 
+<code>Attrib()</code>
+ with the system 
+<code>&amp;errortext</code>
+, except idempotent membership errors (already a member / already gone).
+</p>
+<p>
+Mode 
+<code>n</code>
+ with 
+<code>4</code>
+ or 
+<code>6</code>
+ still selects the address family. 
+<code>&quot;nua4&quot;</code>
+ is useful when a join group must match an IPv4 wildcard.
+</p>
+<h2 id="sec-status">
+10. Status and remaining work
+</h2>
+<p>
+The language surface described here is implemented: trailing attributes, implicit ASM/SSM joins, 
+<code>Attrib()</code>
+ join/leave, listener-cache isolation, IPv4 all-iface join, IPv6 SSM with an explicit interface, and the broadcast shortcut.
+</p>
+<p>
+<strong>
+Membership query.
+</strong>
+ 
+<code>Attrib(f, &quot;join&quot;)</code>
+ fails. The kernel does not offer a portable list of current groups.
+</p>
+<p>
+<strong>
+IPv6 all-interface join.
+</strong>
+ IPv4 walks every NIC; IPv6 does not. Callers who need every IPv6 interface must join per 
+<code>iface=</code>
+.
+</p>
+<p>
+<strong>
+IPv6 SSM without 
+<code>iface=</code>
+.
+</strong>
+ Not recommended. The implementation refuses to walk interfaces for IPv6 source filters.
+</p>
+<p>
+<strong>
+Loopback delivery.
+</strong>
+ Alpine (especially under QEMU) often does not deliver loopback multicast even when the join succeeds. 
+<code>tests/posix/mcast.icn</code>
+ still checks membership and treats a missing datagram as success on Alpine so CI stays portable.
+</p>
+<p>
+<strong>
+Windows IPv6 SSM.
+</strong>
+ Membership calls are attempted; 
+<code>loopback_0</code>
+ and UNIX 
+<code>lo</code>
+ / 
+<code>lo0</code>
+ names are mapped. Delivery and option support vary by stack; the test skips cleanly on 
+<code>ENOPROTOOPT</code>
+.
+</p>
+<p>
+<strong>
+Raw sockets
+</strong>
+ 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>] reuse 
+<code>ttl</code>
+ / 
+<code>iface</code>
+ / 
+<code>join</code>
+ on 
+<code>SOCK_RAW</code>
+. That is a separate report.
+</p>
+<h2 id="sec-coverage">
+Appendix: test coverage
+</h2>
+<p>
+<code>tests/posix/mcast.icn</code>
+ runs in one process over loopback, one UDP port per case so a late datagram cannot land on the next receiver. It checks:
+</p>
+<ul>
+<li>
+unknown attributes and numeric booleans fail with 1310
+</li>
+<li>
+explicit 
+<code>join=</code>
+ plus 
+<code>iface=127.0.0.1</code>
+</li>
+<li>
+implicit join by binding the group address
+</li>
+<li>
+SSM via 
+<code>source@group</code>
+ and via 
+<code>source=</code>
+</li>
+<li>
+broadcast open of 
+<code>255.255.255.255</code>
+ (never 
+<code>EACCES</code>
+)
+</li>
+<li>
+<code>Attrib()</code>
+ 
+<code>ttl=</code>
+, 
+<code>join=</code>
+, 
+<code>leave=</code>
+</li>
+<li>
+IPv6 SSM membership via 
+<code>@</code>
+, 
+<code>source=</code>
+, and 
+<code>join=group,source</code>
+ (delivery not required)
+</li>
+<li>
+cache-hit alias vs independent attr open
+</li>
+</ul>
+<p>
+Expected output is 
+<code>tests/posix/stand/mcast.std</code>
+:
+</p>
+<pre><code class="language-text">bogus attribute: bad socket attribute
+numeric boolean: bad socket attribute
+Received hello-multicast
+Received hello-implicit
+Received hello-ssm-at
+Received hello-ssm-source
+broadcast: ok
+ttl=3
+Received hello-attrib
+leave: ok
+ipv6-ssm-at: ok
+ipv6-ssm-source: ok
+ipv6-ssm-join: ok
+cache-attr open: independent
+Received hello-alias
+</code></pre>
+<h2 id="references">
+References
+</h2>
+<div class="bibliography">
+<ol class="bibliography-list">
+<li id="cite-jeffery-utr15" value="1">
+Clinton Jeffery. &quot;How to Write a Unicon Technical Report&quot;. doc/utr/utr15.tex. 2013.
+</li>
+<li id="cite-libssh" value="2">
+The libssh Project. &quot;libssh -- The SSH Library&quot;. https://www.libssh.org/. 2026.
+</li>
+<li id="cite-jeffery-utr13" value="3">
+Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
+</li>
+<li id="cite-openssl" value="4">
+The OpenSSL Project. &quot;OpenSSL -- Cryptography and SSL/TLS Toolkit&quot;. https://www.openssl.org/. 2026.
+</li>
+<li id="cite-algharaibeh-utr26" value="5">
+Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
+</li>
+<li id="cite-rfc2104" value="6">
+H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
+</li>
+<li id="cite-rfc1112" value="7">
+S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
+</li>
+<li id="cite-jeffery-pwu" value="8">
+Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
+</li>
+<li id="cite-algharaibeh-utr29" value="9">
+Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
+</li>
+<li id="cite-rfc4607" value="10">
+H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
+</li>
+<li id="cite-algharaibeh-utr28" value="11">
+Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.
+</li>
+<li id="cite-rfc792" value="12">
+J. Postel. &quot;Internet Control Message Protocol&quot;. RFC 792. 1981.
+</li>
+<li id="cite-rfc2236" value="13">
+W. Fenner. &quot;Internet Group Management Protocol, Version 2&quot;. RFC 2236. 1997.
+</li>
+<li id="cite-rfc3376" value="14">
+B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. &quot;Internet Group Management Protocol, Version 3&quot;. RFC 3376. 2002.
+</li>
+<li id="cite-rfc1071" value="15">
+R. Braden and D. Borman and C. Partridge. &quot;Computing the Internet Checksum&quot;. RFC 1071. 1988.
+</li>
+</ol></div>
+<footer class="footer" role="contentinfo">
+&copy; 2026, Jafar Al-Gharaibeh. | Powered by uscribe | <a href="utr28.pdf">pdf</a> | <a href="_sources/utr28.rst.txt" rel="nofollow">source</a>
+</footer>
+</div></div>
+</body></html>

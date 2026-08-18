@@ -152,7 +152,8 @@ placeholder="Search..." aria-label="Filter section list">
 <p class="report-pdf"><a href="utr26.pdf">pdf</a> | <a href="_sources/utr26.rst.txt">txt</a></p>
 <div class="report-abstract">
 <p class="report-abstract-label">Abstract</p>
-<p>Unicon historically had no native SSH client: programs that needed remote command execution or file transfer shelled out to an external ssh binary. This report describes the current design and implementation: a client that binds libssh and exposes sessions, multiplexed channels, and SFTP through existing language verbs -- open(), read()/write(), receive(), Attrib(), stat(), remove(), and rename() -- rather than a parallel SSH-specific API. The report covers the connection and channel model, authentication and attributes, examples and use cases, the three I/O tiers, interactive shells, SFTP, build integration, and remaining work. Keywords: Unicon, SSH, SFTP, libssh, sockets, runtime, technical report.</p>
+<p>Unicon historically had no native SSH client: programs that needed remote command execution or file transfer shelled out to an external ssh binary. This report describes the current design and implementation: a client that binds libssh and exposes sessions, multiplexed channels, and SFTP through existing language verbs -- open(), read()/write(), receive(), Attrib(), stat(), remove(), and rename() -- rather than a parallel SSH-specific API. The report covers the connection and channel model, authentication and attributes, examples and use cases, the three I/O tiers, interactive shells, SFTP, build integration, and remaining work.</p>
+<p class="report-keywords"><span class="report-keywords-label">Keywords:</span> Unicon, SSH, SFTP, libssh, sockets, runtime, technical report.</p>
 </div>
 </header>
 <h2 id="sec-intro">
@@ -368,7 +369,7 @@ All stream I/O funnels through one dispatch point:
 . SSH adds a third branch for 
 <code>Fs_SSH</code>
 , reading from the arrival-order queue (
-<a href="utr27.html#sec-io">section 8</a>
+<a href="utr29.html#sec-io">section 8</a>
 ) or 
 <code>sftp_read()</code>
 , and writing via 
@@ -1146,7 +1147,7 @@ close(s)
 <p>
 <code>Attrib(c, &quot;stderr&quot;)</code>
  is the other stderr path: it drains bytes accumulated since the previous call, without preserving order against stdout. See 
-<a href="utr27.html#sec-io">section 8</a>
+<a href="utr29.html#sec-io">section 8</a>
 .
 </p>
 <h3 id="sec-ex-channels">
@@ -2021,7 +2022,10 @@ Trust-on-first-use.
 </p>
 <p>
 <strong>
-``~`` in ``key=``.
+<code>~</code>
+ in 
+<code>key=</code>
+.
 </strong>
  Not expanded. The helper and 
 <code>ussh</code>
@@ -2102,6 +2106,33 @@ Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/u
 </li>
 <li id="cite-rfc2104" value="6">
 H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
+</li>
+<li id="cite-rfc1112" value="7">
+S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
+</li>
+<li id="cite-jeffery-pwu" value="8">
+Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
+</li>
+<li id="cite-algharaibeh-utr29" value="9">
+Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
+</li>
+<li id="cite-rfc4607" value="10">
+H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
+</li>
+<li id="cite-algharaibeh-utr28" value="11">
+Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.
+</li>
+<li id="cite-rfc792" value="12">
+J. Postel. &quot;Internet Control Message Protocol&quot;. RFC 792. 1981.
+</li>
+<li id="cite-rfc2236" value="13">
+W. Fenner. &quot;Internet Group Management Protocol, Version 2&quot;. RFC 2236. 1997.
+</li>
+<li id="cite-rfc3376" value="14">
+B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. &quot;Internet Group Management Protocol, Version 3&quot;. RFC 3376. 2002.
+</li>
+<li id="cite-rfc1071" value="15">
+R. Braden and D. Borman and C. Partridge. &quot;Computing the Internet Checksum&quot;. RFC 1071. 1988.
 </li>
 </ol></div>
 <footer class="footer" role="contentinfo">

@@ -89,7 +89,8 @@ placeholder="Search..." aria-label="Filter section list">
 <p class="report-pdf"><a href="utr27.pdf">pdf</a> | <a href="_sources/utr27.rst.txt">txt</a></p>
 <div class="report-abstract">
 <p class="report-abstract-label">Abstract</p>
-<p>Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), close(), and Attrib() interface already used for files, sockets, and SSH sessions. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS. Keywords: Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.</p>
+<p>Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), close(), and Attrib() interface already used for files, sockets, and SSH sessions. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS.</p>
+<p class="report-keywords"><span class="report-keywords-label">Keywords:</span> Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.</p>
 </div>
 </header>
 <h2 id="sec-intro">
@@ -158,7 +159,8 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 </h2>
 <p>
 <strong>
-``e`` is the crypto letter, reused not invented.
+<code>e</code>
+ is the crypto letter, reused not invented.
 </strong>
  Unicon already uses 
 <code>e</code>
@@ -170,7 +172,8 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 </p>
 <p>
 <strong>
-``e`` composes as a modifier.
+<code>e</code>
+ composes as a modifier.
 </strong>
  Mode letters already stack, and several already branch on bits accumulated so far: 
 <code>n</code>
@@ -208,7 +211,9 @@ The open target configures the operation; payload is I/O.
 </p>
 <p>
 <strong>
-Attributes are ``name=value`` strings, or handles.
+Attributes are 
+<code>name=value</code>
+ strings, or handles.
 </strong>
  A string element is parsed as always. A 
 <strong>
@@ -260,7 +265,8 @@ Initialization is lazy.
 </p>
 <p>
 <strong>
-``Attrib()`` reconfigures only in the idle window
+<code>Attrib()</code>
+ reconfigures only in the idle window
 </strong>
  -- before the first 
 <code>write()</code>
@@ -1720,7 +1726,10 @@ Separate configure switch.
 </p>
 <p>
 <strong>
-``~`` in ``key=``.
+<code>~</code>
+ in 
+<code>key=</code>
+.
 </strong>
  Not expanded, matching SSH. Callers must expand a leading 
 <code>~/</code>
@@ -1830,6 +1839,33 @@ Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/u
 </li>
 <li id="cite-rfc2104" value="6">
 H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
+</li>
+<li id="cite-rfc1112" value="7">
+S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
+</li>
+<li id="cite-jeffery-pwu" value="8">
+Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
+</li>
+<li id="cite-algharaibeh-utr29" value="9">
+Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
+</li>
+<li id="cite-rfc4607" value="10">
+H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
+</li>
+<li id="cite-algharaibeh-utr28" value="11">
+Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.
+</li>
+<li id="cite-rfc792" value="12">
+J. Postel. &quot;Internet Control Message Protocol&quot;. RFC 792. 1981.
+</li>
+<li id="cite-rfc2236" value="13">
+W. Fenner. &quot;Internet Group Management Protocol, Version 2&quot;. RFC 2236. 1997.
+</li>
+<li id="cite-rfc3376" value="14">
+B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. &quot;Internet Group Management Protocol, Version 3&quot;. RFC 3376. 2002.
+</li>
+<li id="cite-rfc1071" value="15">
+R. Braden and D. Borman and C. Partridge. &quot;Computing the Internet Checksum&quot;. RFC 1071. 1988.
 </li>
 </ol></div>
 <footer class="footer" role="contentinfo">

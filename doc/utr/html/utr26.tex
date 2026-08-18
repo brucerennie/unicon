@@ -24,7 +24,10 @@
 \vskip 5.5em
 {\bfseries Abstract}\par
 \begin{quote}
-Unicon historically had no native SSH client: programs that needed remote command execution or file transfer shelled out to an external ssh binary. This report describes the current design and implementation: a client that binds libssh and exposes sessions, multiplexed channels, and SFTP through existing language verbs -- open(), read()/write(), receive(), Attrib(), stat(), remove(), and rename() -- rather than a parallel SSH-specific API. The report covers the connection and channel model, authentication and attributes, examples and use cases, the three I/O tiers, interactive shells, SFTP, build integration, and remaining work. Keywords: Unicon, SSH, SFTP, libssh, sockets, runtime, technical report.
+Unicon historically had no native SSH client: programs that needed remote command execution or file transfer shelled out to an external ssh binary. This report describes the current design and implementation: a client that binds libssh and exposes sessions, multiplexed channels, and SFTP through existing language verbs -- open(), read()/write(), receive(), Attrib(), stat(), remove(), and rename() -- rather than a parallel SSH-specific API. The report covers the connection and channel model, authentication and attributes, examples and use cases, the three I/O tiers, interactive shells, SFTP, build integration, and remaining work.
+\end{quote}
+\begin{quote}
+{\bfseries Keywords:} Unicon, SSH, SFTP, libssh, sockets, runtime, technical report.
 \end{quote}
 \vskip 0.8in
 {\large\bfseries
@@ -85,7 +88,7 @@ Status bits live in \texttt{src/h/rmacros.h}. \texttt{Fs\_Encrypt} is \texttt{02
 Attributes are \texttt{"key=value"} strings passed as trailing arguments to \texttt{open()}, parsed in \texttt{create\_ssh\_session()} the same way \texttt{create\_ssl\_context()} parses SSL attributes -- not a fixed argument list. A leading integer, when present, is a connect timeout in milliseconds, as for plain sockets.
 
 
-All stream I/O funnels through one dispatch point: \texttt{u\_read()} / \texttt{u\_write()} in \texttt{src/runtime/rposix.r}, which already branch on \texttt{Fs\_Socket} / \texttt{Fs\_Encrypt}. SSH adds a third branch for \texttt{Fs\_SSH}, reading from the arrival-order queue (\hyperref[utr27-sec-io]{section 8}) or \texttt{sftp\_read()}, and writing via \texttt{ssh\_channel\_write()} or \texttt{sftp\_write()}. Nothing above this dispatch (\texttt{reads()}, \texttt{read()}, and so on) needs its own SSH case, except where a line-oriented helper must not wait for a newline that will never arrive (\hyperref[utr26-sec-partial]{section 9.2}).
+All stream I/O funnels through one dispatch point: \texttt{u\_read()} / \texttt{u\_write()} in \texttt{src/runtime/rposix.r}, which already branch on \texttt{Fs\_Socket} / \texttt{Fs\_Encrypt}. SSH adds a third branch for \texttt{Fs\_SSH}, reading from the arrival-order queue (\hyperref[utr29-sec-io]{section 8}) or \texttt{sftp\_read()}, and writing via \texttt{ssh\_channel\_write()} or \texttt{sftp\_write()}. Nothing above this dispatch (\texttt{reads()}, \texttt{read()}, and so on) needs its own SSH case, except where a line-oriented helper must not wait for a newline that will never arrive (\hyperref[utr26-sec-partial]{section 9.2}).
 
 
 Close is \textbf{explicit, not GC-driven}. The close hook in \texttt{fsys.r} frees SSL resources directly; there is no finalizer during garbage collection. SSH files follow the same convention -- leaking a channel or session means not calling \texttt{close()}, the same as any other file.
@@ -292,7 +295,7 @@ close(s)
 \end{Verbatim}
 
 
-\texttt{Attrib(c,~"stderr")} is the other stderr path: it drains bytes accumulated since the previous call, without preserving order against stdout. See \hyperref[utr27-sec-io]{section 8}.
+\texttt{Attrib(c,~"stderr")} is the other stderr path: it drains bytes accumulated since the previous call, without preserving order against stdout. See \hyperref[utr29-sec-io]{section 8}.
 
 \subsection{6.5 Several channels on one session}
 \label{utr26-sec-ex-channels}
@@ -597,7 +600,7 @@ Guards are \texttt{\#if~HAVE\_LIBSSH} throughout \texttt{rstructs.h}, \texttt{rm
 \textbf{Trust-on-first-use.} Verification is check-only (\texttt{ssh\_session\_is\_known\_server}). A new host fails with 1323 unless the caller uses \texttt{h-} or installs the key in \texttt{known\_hosts} out of band. The runtime does not write the store.
 
 
-\textbf{``\textasciitilde{}`` in ``key=``.} Not expanded. The helper and \texttt{ussh} expand \texttt{\textasciitilde{}/} themselves.
+\textbf{\texttt{\textasciitilde{}} in \texttt{key=}.} Not expanded. The helper and \texttt{ussh} expand \texttt{\textasciitilde{}/} themselves.
 
 \section{Appendix: test coverage}
 \label{utr26-sec-coverage}
@@ -627,6 +630,33 @@ Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 
 
 \bibitem[6]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
+
+\bibitem[7]{cite-rfc1112}
+S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
+
+\bibitem[8]{cite-jeffery-pwu}
+Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
+
+\bibitem[9]{cite-algharaibeh-utr29}
+Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
+
+\bibitem[10]{cite-rfc4607}
+H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
+
+\bibitem[11]{cite-algharaibeh-utr28}
+Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
+
+\bibitem[12]{cite-rfc792}
+J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
+
+\bibitem[13]{cite-rfc2236}
+W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
+
+\bibitem[14]{cite-rfc3376}
+B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
+
+\bibitem[15]{cite-rfc1071}
+R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
 \end{document}

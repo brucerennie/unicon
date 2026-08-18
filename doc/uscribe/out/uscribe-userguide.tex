@@ -371,7 +371,7 @@ If every file in the manifest is a report, uscribe also writes a catalog \texttt
 \section{Mark a file as a report}
 \label{reports-mark-a-file-as-a-report}
 
-Start the \texttt{.rst} with a field list. \texttt{:docclass:~report} (or a \texttt{:trnumber:}) selects report layout: masthead, abstract, article PDF, section sidebar.
+Start the \texttt{.rst} with a field list. \texttt{:docclass:~report} (or a \texttt{:trnumber:}) selects report layout: masthead, abstract, keywords, article PDF, section sidebar.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 :title: Report Mode Example
@@ -417,7 +417,7 @@ uscribe --targetDir=./out
 \end{Verbatim}
 
 
-Open \textbf{``paper.html``}. The sidebar is that paper's sections. \texttt{index.html} is a one-row catalog; you can ignore it.
+Open \textbf{\texttt{paper.html}}. The sidebar is that paper's sections. \texttt{index.html} is a one-row catalog; you can ignore it.
 
 
 Optional \texttt{book.conf} is only \emph{build} settings (theme, logo, \texttt{themePath}), not author or abstract. If you omit \texttt{title} there, the sidebar uses the paper's \texttt{:title:}.
@@ -465,7 +465,7 @@ uscribe --targetDir=./out
 \end{Verbatim}
 
 
-Open \textbf{``index.html``} for the table (number, title, author, date, pdf/txt). Open a row to read that paper; its sidebar is that paper's sections.
+Open \textbf{\texttt{index.html}} for the table (number, title, author, date, pdf/txt). Open a row to read that paper; its sidebar is that paper's sections.
 
 
 The Unicon Technical Reports tree is this pattern: \texttt{doc/utr/utr.manifest} and \texttt{doc/utr/book.conf}, via \texttt{make~-C~doc/utr~html}.
@@ -633,7 +633,7 @@ Characters \texttt{=~-~\textasciitilde{}~\textasciicircum{}} are recognized as u
 \section{Document fields}
 \label{markup-document-fields}
 
-A chapter may start with an RST field list (Docutils bibliographic fields). Repeat \texttt{:author:} for several names. Book chapters show these as a byline under the first heading; omit the fields and nothing is added. Reports also use \texttt{:title:}, \texttt{:trnumber:}, \texttt{:abstract:}, and \texttt{:docclass:} for the cover --- see \hyperref[reports-reports]{Reports} for the one-paper and catalog workflows.
+A chapter may start with an RST field list (Docutils bibliographic fields). Repeat \texttt{:author:} for several names. Book chapters show these as a byline under the first heading; omit the fields and nothing is added. Reports also use \texttt{:title:}, \texttt{:trnumber:}, \texttt{:abstract:}, \texttt{:keywords:}, and \texttt{:docclass:} for the cover --- see \hyperref[reports-reports]{Reports} for the one-paper and catalog workflows.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 :author: Jane Doe

@@ -2,8 +2,8 @@ This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloade
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**utr27.tex
-(./utr27.tex
+**utr29.tex
+(./utr29.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
 (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -274,8 +274,8 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count286
 \l__pdf_internal_box=\box57
 )
-(./utr27.aux)
-\openout1 = `utr27.aux'.
+(./utr29.aux)
+\openout1 = `utr29.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 13.
 LaTeX Font Info:    ... okay on input line 13.
@@ -320,13 +320,18 @@ e
 ))
 Package hyperref Info: Link coloring ON on input line 13.
 
-(./utr27.out) (./utr27.out)
+(./utr29.out) (./utr29.out)
 \@outlinefile=\write4
-\openout4 = `utr27.out'.
+\openout4 = `utr29.out'.
+
+
+Overfull \hbox (54.22887pt too wide) in paragraph at lines 27--28
+\T1/cmr/m/n/12 SOCK_RAW, proto= se-lects the IP pro-to-col num-ber, and writes(
+)/receive()
+ []
 
 LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 3
 5.
-
 (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
@@ -346,36 +351,11 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.71 
+l.68 
       [1]
-Overfull \hbox (15.23016pt too wide) in paragraph at lines 87--88
-\T1/cmtt/m/n/12 open()\T1/cmr/m/n/12 's mode string is scanned char-ac-ter by c
-har-ac-ter in \T1/cmtt/m/n/12 src/runtime/fsys.r\T1/cmr/m/n/12 .
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 89--93
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 93--97
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 97--99
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 99--101
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 101--109
- [] [] [] 
+Overfull \hbox (10.26404pt too wide) in paragraph at lines 73--74
+[]\T1/cmr/bx/n/12 Datagram I/O matches UDP. \T1/cmr/m/n/12 Raw sock-ets are not
+ con-nected. \T1/cmtt/m/n/12 writes()
  []
 
 
@@ -383,178 +363,129 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.113 
-       [2]
-Overfull \hbox (73.57346pt too wide) in alignment at lines 125--129
- [] [] [] [] 
+l.113 \end{longtable}
+                      [2]
+Overfull \hbox (12.89268pt too wide) in paragraph at lines 149--150
+[]\T1/cmr/m/n/12 The last line is the un-priv-i-leged case. With priv-i-leges i
+t prints \T1/cmtt/m/n/12 raw-icmp: ok
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 129--133
- [] [] [] [] 
+Overfull \hbox (112.47752pt too wide) in alignment at lines 156--160
+ [] [] 
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 133--135
- [] [] [] [] 
+Overfull \hbox (112.47752pt too wide) in alignment at lines 160--164
+ [] [] 
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 135--137
- [] [] [] [] 
+Overfull \hbox (112.47752pt too wide) in alignment at lines 164--166
+ [] [] 
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 137--144
- [] [] [] [] 
+Overfull \hbox (112.47752pt too wide) in alignment at lines 166--168
+ [] [] 
  []
 
 
-Overfull \hbox (19.78664pt too wide) in paragraph at lines 155--156
-\T1/cmr/m/n/12 val-ues and un-known names fail (TLS at-tribute er-rors use 1302
-; crypto state/name
+Overfull \hbox (112.47752pt too wide) in alignment at lines 168--175
+ [] [] 
  []
 
 [3]
-Overfull \hbox (194.16191pt too wide) in alignment at lines 189--193
- [] [] [] 
+Overfull \hbox (6.93239pt too wide) in paragraph at lines 189--190
+[]\T1/cmtt/m/n/12 writes() \T1/cmr/m/n/12 calls \T1/cmtt/m/n/12 sock_write()\T1
+/cmr/m/n/12 , which for \T1/cmtt/m/n/12 SOCK_RAW \T1/cmr/m/n/12 (and UDP) does 
+\T1/cmtt/m/n/12 sendto
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 193--197
- [] [] [] 
+Overfull \hbox (7.49402pt too wide) in paragraph at lines 206--207
+\T1/cmr/m/n/12 declar-a-tive en-gine for fixed bi-nary lay-outs. Pro-to-col cla
+sses in-herit \T1/cmtt/m/n/12 PacketSpec
+ []
+
+[4] [5]
+Overfull \hbox (0.30559pt too wide) in paragraph at lines 261--262
+[]\T1/cmtt/m/n/12 set() \T1/cmr/m/n/12 and \T1/cmtt/m/n/12 set_payload() \T1/cm
+r/m/n/12 are chain-able. \T1/cmtt/m/n/12 build(extra, payload, lax)
+ []
+
+[6] [7]
+Overfull \hbox (22.05788pt too wide) in paragraph at lines 339--340
+\T1/cmr/m/n/12 ports carry group records: ASM join/leave and SSM source fil-ter
+s (\T1/cmtt/m/n/12 join_sources\T1/cmr/m/n/12 ,
+ []
+
+[8]
+Overfull \hbox (26.43155pt too wide) in paragraph at lines 401--402
+[]\T1/cmr/m/n/12 Exported con-stants (\T1/cmtt/m/n/12 IGMP_MEMBERSHIP_QUERY\T1/
+cmr/m/n/12 , \T1/cmtt/m/n/12 IGMP_V3_MEMBERSHIP_REPORT\T1/cmr/m/n/12 ,
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 197--199
- [] [] [] 
+Overfull \hbox (19.9777pt too wide) in paragraph at lines 401--402
+\T1/cmtt/m/n/12 IGMP_CHANGE_TO_EXCLUDE_MODE\T1/cmr/m/n/12 , and the rest) are i
+ni-tial-ized on first \T1/cmtt/m/n/12 IgmpPacket
+ []
+
+[9] [10]
+Overfull \hbox (21.12782pt too wide) in paragraph at lines 465--466
+\T1/cmr/m/n/12 un-til \T1/cmtt/m/n/12 sock_close()\T1/cmr/m/n/12 . \T1/cmtt/m/n
+/12 sock_write sendto\T1/cmr/m/n/12 s there. \T1/cmtt/m/n/12 sock_recv \T1/cmr/
+m/n/12 ac-cepts \T1/cmtt/m/n/12 SOCK_DGRAM
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 199--201
- [] [] [] 
+Overfull \hbox (12.56091pt too wide) in paragraph at lines 465--466
+\T1/cmr/m/n/12 and \T1/cmtt/m/n/12 SOCK_RAW\T1/cmr/m/n/12 . \T1/cmtt/m/n/12 pro
+to= \T1/cmr/m/n/12 is skipped in \T1/cmtt/m/n/12 setsockopt \T1/cmr/m/n/12 (al-
+ready con-sumed). \T1/cmtt/m/n/12 hdrincl=
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 201--211
- [] [] [] 
+Overfull \hbox (6.84897pt too wide) in paragraph at lines 476--477
+\T1/cmtt/m/n/12 hdrincl=\T1/cmr/m/n/12 , data-gram \T1/cmtt/m/n/12 writes \T1/c
+mr/m/n/12 / \T1/cmtt/m/n/12 receive\T1/cmr/m/n/12 , Pack-et-Spec, ICMP echo, IG
+MPv2/v3,
  []
 
-[4] [5] [6] [7] [8] [9] [10] [11] [12]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 608.
- [13]
-Overfull \hbox (51.5677pt too wide) in paragraph at lines 617--618
-\T1/cmr/m/n/12 and \T1/cmtt/m/n/12 sig=\T1/cmr/m/n/12 . A change while a di-ges
-t or ci-pher is in flight fails (1316). \T1/cmtt/m/n/12 Attrib(h, "type")
- []
-
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 630--634
- [] [] [] 
- []
-
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 634--638
- [] [] [] 
- []
-
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 638--640
- [] [] [] 
- []
-
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 640--642
- [] [] [] 
- []
-
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 642--651
- [] [] [] 
- []
-
-[14]
-Overfull \hbox (57.18253pt too wide) in paragraph at lines 656--657
-\T1/cmr/m/n/12 Crypto com-piles un-der \T1/cmtt/m/n/12 HAVE_LIBSSL\T1/cmr/m/n/1
-2 , the same guard as TLS. \T1/cmtt/m/n/12 configure --disable-ssl
- []
-
-
-Overfull \hbox (53.76334pt too wide) in paragraph at lines 659--660
-[]\T1/cmtt/m/n/12 &features \T1/cmr/m/n/12 re-ports \T1/cmtt/m/n/12 secure sock
-ets layer encryption\T1/cmr/m/n/12 . \T1/cmtt/m/n/12 tests/crypto/Makefile
- []
-
-
-Overfull \hbox (32.17708pt too wide) in paragraph at lines 662--663
-\T1/cmtt/m/n/12 fsys.r\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 fmisc.r\T1/cmr/m/n/12 , 
-\T1/cmtt/m/n/12 rposix.r\T1/cmr/m/n/12 , and \T1/cmtt/m/n/12 rcrypto.ri\T1/cmr/
-m/n/12 . TLS helpers (\T1/cmtt/m/n/12 create_ssl_context\T1/cmr/m/n/12 ,
- []
-
-
-Overfull \hbox (40.96428pt too wide) in paragraph at lines 662--663
-\T1/cmtt/m/n/12 is_ssl_attr\T1/cmr/m/n/12 ) and the \T1/cmtt/m/n/12 CryptoFile 
-\T1/cmr/m/n/12 im-ple-men-ta-tion share \T1/cmtt/m/n/12 src/runtime/rcrypto.ri\
-T1/cmr/m/n/12 . 
- []
-
-[15]
-Overfull \hbox (1.95982pt too wide) in paragraph at lines 687--688
-\T1/cmtt/m/n/12 filekey\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 filekeyattr\T1/cmr/m/n/
-12 , \T1/cmtt/m/n/12 filetamper\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 opswitch\T1/cmr
-/m/n/12 , \T1/cmtt/m/n/12 midattrib\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 badalg\T1/c
-mr/m/n/12 , \T1/cmtt/m/n/12 badkey\T1/cmr/m/n/12 ,
- []
-
-
-Overfull \hbox (60.74083pt too wide) in paragraph at lines 687--688
-\T1/cmtt/m/n/12 tlsauth\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlsproto\T1/cmr/m/n/12 
-, \T1/cmtt/m/n/12 tlscipher\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlshandle\T1/cmr/m/
-n/12 , \T1/cmtt/m/n/12 dtls\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 dtlsecho\T1/cmr/m/n
-/12 ). \T1/cmtt/m/n/12 tests/crypto/Makefile
- []
-
-
-Overfull \hbox (31.01056pt too wide) in paragraph at lines 687--688
-\T1/cmr/m/n/12 tests when con-cur-rency is ab-sent. Ex-pected out-put is \T1/cm
-tt/m/n/12 tests/crypto/stand/*.std\T1/cmr/m/n/12 . 
- []
-
-
-Underfull \hbox (badness 4779) in paragraph at lines 693--694
+[11]
+Underfull \hbox (badness 4779) in paragraph at lines 536--537
 []\T1/cmr/m/n/12 Clinton Jef-fery. "How to Write a Uni-con Tech-ni-cal Re-port"
 .
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 696--697
+[12]
+Underfull \hbox (badness 10000) in paragraph at lines 539--540
 []\T1/cmr/m/n/12 The lib-ssh Project. "lib-ssh -- The SSH Li-brary".
  []
 
 
-Underfull \hbox (badness 1072) in paragraph at lines 702--703
+Underfull \hbox (badness 1072) in paragraph at lines 545--546
 []\T1/cmr/m/n/12 The OpenSSL Project. "OpenSSL -- Cryp-tog-ra-phy and SSL/TLS
  []
 
-[16] [17] (./utr27.aux)
+[13] [14] (./utr29.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-Package rerunfilecheck Info: File `utr27.out' has not changed.
-(rerunfilecheck)             Checksum: 7E0375729CF18663F8A602A85304139E;3443.
+Package rerunfilecheck Info: File `utr29.out' has not changed.
+(rerunfilecheck)             Checksum: E37408AB8329285FD9A5EE9F069AB4BB;2466.
  ) 
 Here is how much of TeX's memory you used:
- 9803 strings out of 476182
- 150661 string characters out of 5795595
- 1934975 words of memory out of 5000000
- 31638 multiletter control sequences out of 15000+600000
- 568164 words of font info for 54 fonts, out of 8000000 for 9000
+ 9778 strings out of 476182
+ 150348 string characters out of 5795595
+ 1933975 words of memory out of 5000000
+ 31625 multiletter control sequences out of 15000+600000
+ 568188 words of font info for 54 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,79p,1108b,654s stack positions out of 10000i,1000n,20000p,200000b,200000s
- </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1728.60
+ 75i,6n,79p,814b,652s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.60
 0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1095.
 600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti120
 0.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1
@@ -565,10 +496,10 @@ ctt1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
 ec/ecbx1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
 n/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecbx2074.600pk>
-Output written on utr27.pdf (19 pages, 157500 bytes).
+Output written on utr29.pdf (16 pages, 158910 bytes).
 PDF statistics:
- 642 PDF objects out of 1000 (max. 8388607)
- 236 compressed objects within 3 object streams
- 62 named destinations out of 1000 (max. 500000)
- 185 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 623 PDF objects out of 1000 (max. 8388607)
+ 195 compressed objects within 2 object streams
+ 50 named destinations out of 1000 (max. 500000)
+ 137 words of extra memory for PDF output out of 10000 (max. 10000000)
 

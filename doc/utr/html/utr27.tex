@@ -24,7 +24,10 @@
 \vskip 5.5em
 {\bfseries Abstract}\par
 \begin{quote}
-Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), close(), and Attrib() interface already used for files, sockets, and SSH sessions. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS. Keywords: Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.
+Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), close(), and Attrib() interface already used for files, sockets, and SSH sessions. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS.
+\end{quote}
+\begin{quote}
+{\bfseries Keywords:} Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.
 \end{quote}
 \vskip 0.8in
 {\large\bfseries
@@ -58,16 +61,16 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 \section{3. Design principles}
 \label{utr27-sec-principles}
 
-\textbf{``e`` is the crypto letter, reused not invented.} Unicon already uses \texttt{e} for encryption (\texttt{Fs\_Encrypt}). New modes carry that letter rather than adding one letter per operation. \texttt{op=} selects what the handle does.
+\textbf{\texttt{e} is the crypto letter, reused not invented.} Unicon already uses \texttt{e} for encryption (\texttt{Fs\_Encrypt}). New modes carry that letter rather than adding one letter per operation. \texttt{op=} selects what the handle does.
 
 
-\textbf{``e`` composes as a modifier.} Mode letters already stack, and several already branch on bits accumulated so far: \texttt{n} + \texttt{e} is an encrypted socket; \texttt{r} + \texttt{e} / \texttt{w} + \texttt{e} is a file transform; \texttt{e} + \texttt{h} is an in-memory hash; \texttt{e} + \texttt{r} is raw key material rather than a path.
+\textbf{\texttt{e} composes as a modifier.} Mode letters already stack, and several already branch on bits accumulated so far: \texttt{n} + \texttt{e} is an encrypted socket; \texttt{r} + \texttt{e} / \texttt{w} + \texttt{e} is a file transform; \texttt{e} + \texttt{h} is an in-memory hash; \texttt{e} + \texttt{r} is raw key material rather than a path.
 
 
 \textbf{The open target configures the operation; payload is I/O.} Target is never the message being hashed or encrypted. What target means depends on the mode (algorithm name, key path, data file, host:port). Payload always flows through \texttt{write()} / \texttt{read()} / \texttt{reads()}.
 
 
-\textbf{Attributes are ``name=value`` strings, or handles.} A string element is parsed as always. A \textbf{handle} -- the return value of a prior \texttt{open(...,~"e")} -- is a typed attribute that could not survive being flattened into a string. Handles are interpreted by \textbf{role} from their own content (private key, public key, cert, symmetric key), not by position or by an attribute name.
+\textbf{Attributes are \texttt{name=value} strings, or handles.} A string element is parsed as always. A \textbf{handle} -- the return value of a prior \texttt{open(...,~"e")} -- is a typed attribute that could not survive being flattened into a string. Handles are interpreted by \textbf{role} from their own content (private key, public key, cert, symmetric key), not by position or by an attribute name.
 
 
 \textbf{Material comes from a file, raw bytes, or a handle.} A file path is the target under mode \texttt{e}, or \texttt{key=} when the target is already spoken for (\texttt{re} / \texttt{we}, \texttt{n} + \texttt{e}). Raw bytes use mode \texttt{er}. A handle avoids re-parsing.
@@ -76,7 +79,7 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 \textbf{Initialization is lazy.} \texttt{open()} does not create the underlying EVP context until the first \texttt{write()} (or the first transforming \texttt{read()} on a file). A handle that is never used costs nothing. \texttt{read()} finalizes and resets, so the next \texttt{write()} initializes again.
 
 
-\textbf{``Attrib()`` reconfigures only in the idle window} -- before the first \texttt{write()}, or after a \texttt{read()} and before the next \texttt{write()}. Changing \texttt{op=}, \texttt{alg=}, \texttt{cipher=}, or \texttt{iv=} mid-operation fails. Handles are accepted by \texttt{open()} only, not by \texttt{Attrib()}: \texttt{Attrib()} already treats a file argument as a retarget.
+\textbf{\texttt{Attrib()} reconfigures only in the idle window} -- before the first \texttt{write()}, or after a \texttt{read()} and before the next \texttt{write()}. Changing \texttt{op=}, \texttt{alg=}, \texttt{cipher=}, or \texttt{iv=} mid-operation fails. Handles are accepted by \texttt{open()} only, not by \texttt{Attrib()}: \texttt{Attrib()} already treats a file argument as a retarget.
 
 \section{4. Modes}
 \label{utr27-sec-modes}
@@ -670,7 +673,7 @@ The language surface described here is implemented: modes \texttt{e} / \texttt{e
 \textbf{Separate configure switch.} Crypto cannot be compiled out while leaving TLS sockets on. A \texttt{Unicon\_Crypto} / \texttt{NoCrypto} guard driven by \texttt{--disable-crypto} is the obvious next step if a distribution wants encrypted sockets without the new \texttt{open()} modes.
 
 
-\textbf{``\textasciitilde{}`` in ``key=``.} Not expanded, matching SSH. Callers must expand a leading \texttt{\textasciitilde{}/} themselves.
+\textbf{\texttt{\textasciitilde{}} in \texttt{key=}.} Not expanded, matching SSH. Callers must expand a leading \texttt{\textasciitilde{}/} themselves.
 
 
 \textbf{Asymmetric encrypt / decrypt.} The \texttt{op=} set is hash, HMAC, sign, verify, and symmetric encrypt/decrypt. Public-key encryption is not exposed.
@@ -703,6 +706,33 @@ Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 
 
 \bibitem[6]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
+
+\bibitem[7]{cite-rfc1112}
+S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
+
+\bibitem[8]{cite-jeffery-pwu}
+Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
+
+\bibitem[9]{cite-algharaibeh-utr29}
+Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
+
+\bibitem[10]{cite-rfc4607}
+H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
+
+\bibitem[11]{cite-algharaibeh-utr28}
+Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
+
+\bibitem[12]{cite-rfc792}
+J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
+
+\bibitem[13]{cite-rfc2236}
+W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
+
+\bibitem[14]{cite-rfc3376}
+B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
+
+\bibitem[15]{cite-rfc1071}
+R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
 \end{document}

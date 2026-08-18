@@ -2,8 +2,8 @@ This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloade
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**utr27.tex
-(./utr27.tex
+**utr28.tex
+(./utr28.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
 (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -274,8 +274,8 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count286
 \l__pdf_internal_box=\box57
 )
-(./utr27.aux)
-\openout1 = `utr27.aux'.
+(./utr28.aux)
+\openout1 = `utr28.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 13.
 LaTeX Font Info:    ... okay on input line 13.
@@ -320,9 +320,9 @@ e
 ))
 Package hyperref Info: Link coloring ON on input line 13.
 
-(./utr27.out) (./utr27.out)
+(./utr28.out) (./utr28.out)
 \@outlinefile=\write4
-\openout4 = `utr27.out'.
+\openout4 = `utr28.out'.
 
 LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 3
 5.
@@ -339,6 +339,11 @@ LaTeX Font Info:    External font `cmex10' loaded for size
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2]
+Overfull \hbox (10.64127pt too wide) in paragraph at lines 59--60
+\T1/cmr/m/n/12 writes later. Socket op-tions fol-low that pat-tern in-stead of 
+adding \T1/cmtt/m/n/12 setsockopt()
+ []
+
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 64.
 
@@ -346,229 +351,141 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.71 
-      [1]
-Overfull \hbox (15.23016pt too wide) in paragraph at lines 87--88
-\T1/cmtt/m/n/12 open()\T1/cmr/m/n/12 's mode string is scanned char-ac-ter by c
-har-ac-ter in \T1/cmtt/m/n/12 src/runtime/fsys.r\T1/cmr/m/n/12 .
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 89--93
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 93--97
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 97--99
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 99--101
- [] [] [] 
- []
-
-
-Overfull \hbox (173.74466pt too wide) in alignment at lines 101--109
- [] [] [] 
- []
-
-
+l.77 \end{Verbatim}
+                    [1]
 pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.113 
-       [2]
-Overfull \hbox (73.57346pt too wide) in alignment at lines 125--129
- [] [] [] [] 
+l.114 \end{Verbatim}
+                     [2] [3]
+Overfull \hbox (32.59418pt too wide) in paragraph at lines 189--190
+[]\T1/cmr/m/n/12 IPv6 SSM is a sin-gle \T1/cmtt/m/n/12 MCAST_JOIN_SOURCE_GROUP 
+\T1/cmr/m/n/12 / \T1/cmtt/m/n/12 MCAST_LEAVE_SOURCE_GROUP
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 129--133
- [] [] [] [] 
+Overfull \hbox (43.96089pt too wide) in alignment at lines 193--197
+ [] [] 
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 133--135
- [] [] [] [] 
+Overfull \hbox (43.96089pt too wide) in alignment at lines 197--201
+ [] [] 
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 135--137
- [] [] [] [] 
+Overfull \hbox (43.96089pt too wide) in alignment at lines 201--203
+ [] [] 
  []
 
 
-Overfull \hbox (73.57346pt too wide) in alignment at lines 137--144
- [] [] [] [] 
+Overfull \hbox (43.96089pt too wide) in alignment at lines 203--205
+ [] [] 
  []
 
 
-Overfull \hbox (19.78664pt too wide) in paragraph at lines 155--156
-\T1/cmr/m/n/12 val-ues and un-known names fail (TLS at-tribute er-rors use 1302
-; crypto state/name
+Overfull \hbox (43.96089pt too wide) in alignment at lines 205--215
+ [] [] 
  []
 
-[3]
-Overfull \hbox (194.16191pt too wide) in alignment at lines 189--193
- [] [] [] 
- []
-
-
-Overfull \hbox (194.16191pt too wide) in alignment at lines 193--197
- [] [] [] 
- []
-
-
-Overfull \hbox (194.16191pt too wide) in alignment at lines 197--199
- [] [] [] 
- []
-
-
-Overfull \hbox (194.16191pt too wide) in alignment at lines 199--201
- [] [] [] 
- []
-
-
-Overfull \hbox (194.16191pt too wide) in alignment at lines 201--211
- [] [] [] 
- []
-
-[4] [5] [6] [7] [8] [9] [10] [11] [12]
+[4]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 608.
- [13]
-Overfull \hbox (51.5677pt too wide) in paragraph at lines 617--618
-\T1/cmr/m/n/12 and \T1/cmtt/m/n/12 sig=\T1/cmr/m/n/12 . A change while a di-ges
-t or ci-pher is in flight fails (1316). \T1/cmtt/m/n/12 Attrib(h, "type")
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 220.
+
+Overfull \hbox (23.58884pt too wide) in paragraph at lines 244--245
+\T1/cmr/m/n/12 ad-dress. \T1/cmtt/m/n/12 join\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 l
+eave\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 source\T1/cmr/m/n/12 , and \T1/cmtt/m/n/12
+ proto \T1/cmr/m/n/12 can-not be queried (\T1/cmtt/m/n/12 Attrib(f, "join")
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 630--634
- [] [] [] 
+Overfull \hbox (39.59749pt too wide) in paragraph at lines 252--253
+\T1/cmr/m/n/12 cover the in-ter-face used at join time. Pass \T1/cmtt/m/n/12 if
+ace= \T1/cmr/m/n/12 on \T1/cmtt/m/n/12 leave= \T1/cmr/m/n/12 so \T1/cmtt/m/n/12
+ IP_DROP_MEMBERSHIP
+ []
+
+[5]
+Overfull \hbox (21.07419pt too wide) in paragraph at lines 257--258
+\T1/cmr/m/n/12 same lis-tener is cheap. That cache is a prob-lem if a later \T1
+/cmtt/m/n/12 open(..., "join=...")
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 634--638
- [] [] [] 
+Overfull \hbox (1.4687pt too wide) in paragraph at lines 279--280
+\T1/cmtt/m/n/12 bind()\T1/cmr/m/n/12 . Ev-ery-thing else runs af-ter the socket
+ is bound. \T1/cmtt/m/n/12 apply_sock_attrs()
+ []
+
+[6]
+Overfull \hbox (10.39058pt too wide) in paragraph at lines 285--286
+[]\T1/cmr/bx/n/12 IPv4 join with-out \T1/cmtt/m/n/12 iface=\T1/cmr/bx/n/12 . \T
+1/cmr/m/n/12 Walk \T1/cmtt/m/n/12 getifaddrs() \T1/cmr/m/n/12 and \T1/cmtt/m/n/
+12 IP_ADD_MEMBERSHIP
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 638--640
- [] [] [] 
+Overfull \hbox (37.06783pt too wide) in paragraph at lines 285--286
+\T1/cmr/m/n/12 cast with-out \T1/cmtt/m/n/12 iface= \T1/cmr/m/n/12 picks the fi
+rst non-loopback IPv4 ad-dress via \T1/cmtt/m/n/12 IP_MULTICAST_IF\T1/cmr/m/n/1
+2 . 
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 640--642
- [] [] [] 
+Overfull \hbox (9.26169pt too wide) in paragraph at lines 311--312
+\T1/cmr/m/n/12 liver loop-back mul-ti-cast even when the join suc-ceeds. \T1/cm
+tt/m/n/12 tests/posix/mcast.icn
  []
 
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 642--651
- [] [] [] 
- []
-
-[14]
-Overfull \hbox (57.18253pt too wide) in paragraph at lines 656--657
-\T1/cmr/m/n/12 Crypto com-piles un-der \T1/cmtt/m/n/12 HAVE_LIBSSL\T1/cmr/m/n/1
-2 , the same guard as TLS. \T1/cmtt/m/n/12 configure --disable-ssl
- []
-
-
-Overfull \hbox (53.76334pt too wide) in paragraph at lines 659--660
-[]\T1/cmtt/m/n/12 &features \T1/cmr/m/n/12 re-ports \T1/cmtt/m/n/12 secure sock
-ets layer encryption\T1/cmr/m/n/12 . \T1/cmtt/m/n/12 tests/crypto/Makefile
- []
-
-
-Overfull \hbox (32.17708pt too wide) in paragraph at lines 662--663
-\T1/cmtt/m/n/12 fsys.r\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 fmisc.r\T1/cmr/m/n/12 , 
-\T1/cmtt/m/n/12 rposix.r\T1/cmr/m/n/12 , and \T1/cmtt/m/n/12 rcrypto.ri\T1/cmr/
-m/n/12 . TLS helpers (\T1/cmtt/m/n/12 create_ssl_context\T1/cmr/m/n/12 ,
- []
-
-
-Overfull \hbox (40.96428pt too wide) in paragraph at lines 662--663
-\T1/cmtt/m/n/12 is_ssl_attr\T1/cmr/m/n/12 ) and the \T1/cmtt/m/n/12 CryptoFile 
-\T1/cmr/m/n/12 im-ple-men-ta-tion share \T1/cmtt/m/n/12 src/runtime/rcrypto.ri\
-T1/cmr/m/n/12 . 
- []
-
-[15]
-Overfull \hbox (1.95982pt too wide) in paragraph at lines 687--688
-\T1/cmtt/m/n/12 filekey\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 filekeyattr\T1/cmr/m/n/
-12 , \T1/cmtt/m/n/12 filetamper\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 opswitch\T1/cmr
-/m/n/12 , \T1/cmtt/m/n/12 midattrib\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 badalg\T1/c
-mr/m/n/12 , \T1/cmtt/m/n/12 badkey\T1/cmr/m/n/12 ,
- []
-
-
-Overfull \hbox (60.74083pt too wide) in paragraph at lines 687--688
-\T1/cmtt/m/n/12 tlsauth\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlsproto\T1/cmr/m/n/12 
-, \T1/cmtt/m/n/12 tlscipher\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlshandle\T1/cmr/m/
-n/12 , \T1/cmtt/m/n/12 dtls\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 dtlsecho\T1/cmr/m/n
-/12 ). \T1/cmtt/m/n/12 tests/crypto/Makefile
- []
-
-
-Overfull \hbox (31.01056pt too wide) in paragraph at lines 687--688
-\T1/cmr/m/n/12 tests when con-cur-rency is ab-sent. Ex-pected out-put is \T1/cm
-tt/m/n/12 tests/crypto/stand/*.std\T1/cmr/m/n/12 . 
- []
-
-
-Underfull \hbox (badness 4779) in paragraph at lines 693--694
+[7]
+Underfull \hbox (badness 4779) in paragraph at lines 367--368
 []\T1/cmr/m/n/12 Clinton Jef-fery. "How to Write a Uni-con Tech-ni-cal Re-port"
 .
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 696--697
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 370--371
 []\T1/cmr/m/n/12 The lib-ssh Project. "lib-ssh -- The SSH Li-brary".
  []
 
 
-Underfull \hbox (badness 1072) in paragraph at lines 702--703
+Underfull \hbox (badness 1072) in paragraph at lines 376--377
 []\T1/cmr/m/n/12 The OpenSSL Project. "OpenSSL -- Cryp-tog-ra-phy and SSL/TLS
  []
 
-[16] [17] (./utr27.aux)
+[9] [10] (./utr28.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-Package rerunfilecheck Info: File `utr27.out' has not changed.
-(rerunfilecheck)             Checksum: 7E0375729CF18663F8A602A85304139E;3443.
+Package rerunfilecheck Info: File `utr28.out' has not changed.
+(rerunfilecheck)             Checksum: B26222FCC5B7419B51405CD959459B18;1836.
  ) 
 Here is how much of TeX's memory you used:
- 9803 strings out of 476182
- 150661 string characters out of 5795595
- 1934975 words of memory out of 5000000
- 31638 multiletter control sequences out of 15000+600000
- 568164 words of font info for 54 fonts, out of 8000000 for 9000
+ 9760 strings out of 476182
+ 150124 string characters out of 5795595
+ 1932975 words of memory out of 5000000
+ 31616 multiletter control sequences out of 15000+600000
+ 568501 words of font info for 55 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,79p,1108b,654s stack positions out of 10000i,1000n,20000p,200000b,200000s
- </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1728.60
-0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1095.
-600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti120
-0.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1
-200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecb
-x1728.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/e
-ctt1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
-/ecrm1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/
-ec/ecbx1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
-n/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
-pen/ec/ecbx2074.600pk>
-Output written on utr27.pdf (19 pages, 157500 bytes).
+ 75i,6n,79p,568b,658s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.60
+0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1728.
+600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt109
+5.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1
+200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
+t1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/e
+cbx1728.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
+/ectt1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/
+ec/ecrm1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
+n/ec/ecbx1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
+pen/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jkn
+appen/ec/ecbx2074.600pk>
+Output written on utr28.pdf (12 pages, 143177 bytes).
 PDF statistics:
- 642 PDF objects out of 1000 (max. 8388607)
- 236 compressed objects within 3 object streams
- 62 named destinations out of 1000 (max. 500000)
- 185 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 562 PDF objects out of 1000 (max. 8388607)
+ 162 compressed objects within 2 object streams
+ 40 named destinations out of 1000 (max. 500000)
+ 97 words of extra memory for PDF output out of 10000 (max. 10000000)
 
