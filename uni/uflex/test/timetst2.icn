@@ -19,5 +19,5 @@ procedure main(argv)
       }
    close(yyin)
    t2 := &time
-#   write(&errout, "processed ", count, " tokens in ", t2-t1, "ms")
+   write(&errout, "processed ", count, " tokens in ", t2-t1, "ms")
 end

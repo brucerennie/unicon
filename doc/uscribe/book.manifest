@@ -1,0 +1,9 @@
+# uscribe User Guide -- chapter order
+intro.rst
+install.rst
+quickstart.rst
+reports.rst
+config.rst
+markup.rst
+themes.rst
+cli.rst

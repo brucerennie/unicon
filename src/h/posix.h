@@ -26,6 +26,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 #include <pwd.h>
 #include <grp.h>
 #endif                                  /* UNIX */
@@ -33,7 +35,9 @@
 
 #ifdef NT
 
+#include <string.h>   /* _stricmp (fxposix.ri getpw), strlen in String() etc. */
 #include<ws2tcpip.h>
+#include <iphlpapi.h>                   /* if_nametoindex for iface= */
 
 #include <sys/timeb.h>
 #include <sys/locking.h>
@@ -90,6 +94,14 @@ extern char *sys_errlist[];
 #endif
 
 extern stringint signalnames[];
+
+/*
+ * Socket transport type for open()/sock_connect()/sock_listen().
+ * Orthogonal to listener role (Fs_Listen / Fs_Append).
+ */
+#define SOCK_T_STREAM 0                 /* TCP */
+#define SOCK_T_DGRAM  1                 /* UDP */
+#define SOCK_T_RAW    2                 /* SOCK_RAW */
 
 #ifdef IRIS4D
 #include <limits.h>

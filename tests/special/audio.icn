@@ -1,0 +1,24 @@
+#
+# audio.icn - test of Unicon Audio capabilities
+#
+
+procedure main()
+   if not (&features == "Audio") then
+      stop("This program requires Audio.")
+
+   # test a WAV file (alert.wav lives alongside this source under tests/special/)
+   if rv := PlayAudio("alert.wav") then write("alert.wav returned ", image(rv))
+   else write("alert.wav failed")
+   delay(3000)
+
+   # test an MP3...not yet implemented
+
+   # test an OGG
+   if rv := PlayAudio("handclap.ogg") then
+      write("handclap.ogg returned ", image(rv))
+   else write("handclap.ogg failed")
+
+   # insert a delay; the process must live long enough for
+   # the audio thread(s) to run.
+   delay(1000)
+end

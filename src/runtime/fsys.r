@@ -51,6 +51,19 @@ function{0,1} close(f)
       /*
        * Close f, using fclose, pclose, closedir, or wclose as appropriate.
        */
+#if HAVE_LIBSSL
+      if (status & Fs_Crypto) {
+         int rc = 0;
+         if (BlkD(f,File)->fd.cf != NULL) {
+            rc = crypto_close(BlkD(f,File)->fd.cf);
+            BlkLoc(f)->File.fd.cf = NULL;
+            }
+         BlkLoc(f)->File.status = 0;
+         if (rc != 0) { set_errortext(rc); fail; }
+         return f;
+         }
+#endif                                  /* HAVE_LIBSSL */
+
 #ifdef Messaging
       if (status & Fs_Messaging) {
          BlkLoc(f)->File.status = 0;
@@ -59,6 +72,27 @@ function{0,1} close(f)
 #endif                                  /* Messaging */
 
 #ifdef PosixFns
+#if HAVE_LIBSSH
+      /*
+       * SSH session/channel/sftp (with or without Fs_Socket): free the
+       * libssh objects.  Cascade-close of a session invalidates children.
+       */
+      if (status & Fs_SSH) {
+#ifdef Concurrent
+         MUTEX_LOCKID_CONTROLLED(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+         ssh_close_file(BlkD(f,File)->fd.sshf);
+#ifdef Concurrent
+         MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+         BlkLoc(f)->File.fd.sshf = NULL;
+         BlkLoc(f)->File.status = 0;
+         BlkLoc(f)->File.sock_gen = 0;
+         StrLoc(BlkLoc(f)->File.fname) = "closed ssh";
+         StrLen(BlkLoc(f)->File.fname) = 10;
+         return C_integer 0;
+         }
+#endif                                  /* HAVE_LIBSSH */
       if (BlkD(f,File)->status & Fs_Socket) {
 #if HAVE_LIBSSL
         if(status & Fs_Encrypt) {
@@ -71,13 +105,13 @@ function{0,1} close(f)
            }
 #endif                                  /* LIBSSL */
          BlkLoc(f)->File.status = 0;
+         BlkLoc(f)->File.sock_gen = 0;
          StrLoc(BlkLoc(f)->File.fname) = "closed socket";
          StrLen(BlkLoc(f)->File.fname) = 13;
-#if NT
-         return C_integer closesocket((SOCKET)BlkLoc(f)->File.fd.fd);
-#else                                   /* NT */
-         return C_integer close(BlkLoc(f)->File.fd.fd);
-#endif                                  /* NT */
+         /* drop any listener-cache entries pointing at this fd */
+         if (sock_purge(BlkLoc(f)->File.fd.fd))
+            sock_close(BlkLoc(f)->File.fd.fd);
+         return C_integer 0;
          }
 #endif                                  /* PosixFns */
 
@@ -274,6 +308,241 @@ function{0,1} open(fname, spec)
       tended struct descrip filename;
       }
 
+   abstract {
+      return file
+      }
+
+#if HAVE_LIBSSL || HAVE_LIBSSH
+   /*
+    * open() with a file as the first argument:
+    *   - crypto material handle + mode "e": derive an operation (UTR 27)
+    *   - SSH session/channel + "hc"/"hs": open a channel or SFTP on the
+    *     same session (no new handshake).  The second argument is a mode
+    *     string, as for every other open(); 'c' is cmd/channel and 's' is SFTP.
+    */
+   if is:file(fname) then {
+      body {
+#if HAVE_LIBSSH
+         tended struct descrip chanfname;
+         struct SSHfile *chansshf;
+         int chanstatus;
+         int want_sftp = 0, want_cmd = 0;
+         int isdir = 0;
+         word ai, k;
+#endif                                  /* HAVE_LIBSSH */
+         struct b_file *cfl;
+
+#if HAVE_LIBSSL
+         /*
+          * Crypto: open(material_handle, mode, attrs...).  Mode must
+          * contain 'e'; op= selects the operation.
+          */
+         if (BlkD(fname,File)->status & Fs_Crypto) {
+            struct CryptoFile *cf, *src;
+            tended struct descrip cfname;
+            int crypto_op = CRYPTO_OP_MATERIAL;
+            int status = 0;
+            int rc = 0;
+            word a, k;
+            char *p;
+
+            if (is:null(spec) || !cnv:tmp_string(spec, cfname))
+               runerr(103, spec);
+            p = StrLoc(cfname);
+            for (k = 0; k < StrLen(cfname); k++) {
+               switch (p[k]) {
+                  case 'e': case 'E':
+                     status |= Fs_Encrypt | Fs_Crypto;
+                     break;
+                  case 'r': case 'R':
+                     break;
+                  case 'h': case 'H':
+                     if (status & Fs_Encrypt)
+                        crypto_op = CRYPTO_OP_HASH;
+                     break;
+                  }
+               }
+            if (!(status & Fs_Crypto))
+               runerr(209, spec);
+
+            cf = calloc(1, sizeof(struct CryptoFile));
+            if (cf == NULL) { set_errortext(1317); fail; }
+            cf->op = crypto_op;
+
+            for (a = 0; a < n; a++) {
+               tended struct descrip as;
+               char nbuf[64];
+               word eq, vlen;
+               char *v;
+               if (is:null(attr[a]) || is:file(attr[a])) continue;
+               if (!cnv:string(attr[a], as)) continue;
+               for (eq = 0; eq < StrLen(as); eq++)
+                  if (StrLoc(as)[eq] == '=') break;
+               if (eq >= StrLen(as) || eq >= (word)sizeof(nbuf)) continue;
+               memcpy(nbuf, StrLoc(as), eq);
+               nbuf[eq] = '\0';
+               v = StrLoc(as) + eq + 1;
+               vlen = StrLen(as) - eq - 1;
+               if ((rc = crypto_setattr(cf, nbuf, v, vlen)) != 0) {
+                  cryptofile_free(cf); set_errortext(rc); fail;
+                  }
+               }
+
+            if (cf->op == CRYPTO_OP_MATERIAL) {
+               cryptofile_free(cf);
+               set_errortext(1316);
+               fail;
+               }
+
+            src = BlkD(fname,File)->fd.cf;
+            if (src == NULL) { cryptofile_free(cf); set_errortext(1312); fail; }
+            if ((rc = crypto_borrow(cf, src)) != 0) {
+               cryptofile_free(cf); set_errortext(rc); fail;
+               }
+
+            for (a = 0; a < n; a++) {
+               if (is:null(attr[a]) || !is:file(attr[a])) continue;
+               if (!(BlkD(attr[a],File)->status & Fs_Crypto)) {
+                  cryptofile_free(cf); set_errortext(1312); fail;
+                  }
+               if ((rc = crypto_borrow(cf, BlkD(attr[a],File)->fd.cf)) != 0) {
+                  cryptofile_free(cf); set_errortext(rc); fail;
+                  }
+               }
+
+            status |= Fs_Read | Fs_Write;
+            cfname = BlkD(fname,File)->fname;
+            Protect(cfl = alcfile(NULL, status, &cfname), runerr(0));
+            cfl->fd.cf = cf;
+            return file(cfl);
+            }
+#endif                                  /* HAVE_LIBSSL */
+
+#if HAVE_LIBSSH
+         if (!(BlkD(fname,File)->status & Fs_SSH))
+            runerr(103, fname);
+         if (BlkD(fname,File)->fd.sshf == NULL)
+            runerr(103, fname);
+
+         /*
+          * spec is the mode string ("hc", "hs", "hsw", ...).  Trailing
+          * name=value arguments are attributes.  A trailing mode-only
+          * token (no '=') may still carry r/w/a/b, e.g. open(s,"hs",
+          * "path=...", "w").
+          */
+         if (!cnv:tmp_string(spec, filename))
+            runerr(103, spec);
+         chanstatus = Fs_SSH;
+         for (k = 0; k < StrLen(filename); k++) {
+            switch (StrLoc(filename)[k]) {
+               case 'h': case 'H':
+                  break;                /* already an SSH file */
+               case 'c': case 'C':
+                  want_cmd = 1;
+                  break;
+               case 's': case 'S':
+                  want_sftp = 1;
+                  break;
+               case 'r': case 'R':
+                  chanstatus |= Fs_Read;
+                  break;
+               case 'w': case 'W':
+                  chanstatus |= Fs_Write;
+                  break;
+               case 'a': case 'A':
+                  chanstatus |= Fs_Write | Fs_Append;
+                  break;
+               case 'b': case 'B':
+                  chanstatus |= Fs_Read | Fs_Write;
+                  break;
+               case '-':
+                  break;                /* verify flag is session-open only */
+               default:
+                  runerr(209, spec);
+               }
+            }
+         for (ai = 0; ai < n; ai++) {
+            if (is:null(attr[ai]) || !cnv:tmp_string(attr[ai], filename))
+               continue;
+            for (k = 0; k < StrLen(filename); k++)
+               if (StrLoc(filename)[k] == '=')
+                  break;
+            if (k < StrLen(filename))
+               continue;                /* a key=value attribute */
+            for (k = 0; k < StrLen(filename); k++) {
+               switch (StrLoc(filename)[k]) {
+                  case 'r': case 'R': chanstatus |= Fs_Read; break;
+                  case 'w': case 'W': chanstatus |= Fs_Write; break;
+                  case 'a': case 'A': chanstatus |= Fs_Write|Fs_Append; break;
+                  case 'b': case 'B': chanstatus |= Fs_Read|Fs_Write; break;
+                  }
+               }
+            }
+         if (want_cmd && want_sftp) {
+            set_errortext_with_val(1321, "c");
+            fail;
+            }
+         if (!want_cmd && !want_sftp) {
+            set_errortext(1321);
+            fail;
+            }
+         if (!(chanstatus & (Fs_Read|Fs_Write)))
+            chanstatus |= Fs_Read;      /* default to reading */
+
+         if (want_sftp) {
+#ifdef Concurrent
+            MUTEX_LOCKID_CONTROLLED(BlkD(fname,File)->mutexid);
+#endif                                  /* Concurrent */
+            chansshf = create_sftp_file(BlkD(fname,File)->fd.sshf,
+                                        attr, n, chanstatus, &isdir, 0);
+#ifdef Concurrent
+            MUTEX_UNLOCKID(BlkD(fname,File)->mutexid);
+#endif                                  /* Concurrent */
+            if (chansshf == NULL)
+               fail;                    /* &errortext already set */
+            if (isdir)
+               chanstatus = Fs_SSH | Fs_Read | Fs_Directory;
+            else {
+               /*
+                * SFTP regular files are plain streams, not sockets:
+                * reads()/writes() transfer raw bytes.
+                */
+               }
+            }
+         else {
+#ifdef Concurrent
+            MUTEX_LOCKID_CONTROLLED(BlkD(fname,File)->mutexid);
+#endif                                  /* Concurrent */
+            chansshf = create_ssh_channel(BlkD(fname,File)->fd.sshf,
+                                          attr, n);
+#ifdef Concurrent
+            MUTEX_UNLOCKID(BlkD(fname,File)->mutexid);
+#endif                                  /* Concurrent */
+            if (chansshf == NULL)
+               fail;                    /* &errortext already set */
+            chanstatus = Fs_SSH | Fs_Socket | Fs_Read | Fs_Write;
+            }
+
+         chanfname = BlkD(fname,File)->fname;
+         Protect(cfl = alcfile(0, chanstatus, &chanfname), runerr(0));
+         cfl->fd.sshf = chansshf;
+         cfl->sock_gen = 0;
+#ifdef Concurrent
+         /*
+          * Channels on one session share the session's mutex so that
+          * the existing I/O locking serializes them; libssh sessions
+          * are not safe for uncoordinated concurrent access.
+          */
+         cfl->mutexid = BlkD(fname,File)->mutexid;
+#endif                                  /* Concurrent */
+         return file(cfl);
+#else                                   /* HAVE_LIBSSH */
+         runerr(103, fname);
+#endif                                  /* HAVE_LIBSSH */
+         }
+      }
+#endif                                  /* HAVE_LIBSSL || HAVE_LIBSSH */
+
    /*
     * fopen and popen require a C string, but it looks terrible in
     *  error messages, so convert it to a string here and use a local
@@ -287,10 +556,6 @@ function{0,1} open(fname, spec)
     */
    if !def:tmp_string(spec, letr) then
       runerr(103, spec)
-
-   abstract {
-      return file
-      }
 
    body {
       tended char *fnamestr;
@@ -317,6 +582,9 @@ function{0,1} open(fname, spec)
       int is_shortreq = 0;
       int do_verify = 1;
 #endif                                  /* Messaging */
+#if HAVE_LIBSSH
+      int ssh_cmd = 0, ssh_sftp = 0;
+#endif                                  /* HAVE_LIBSSH */
 
 /*
  * The following code is operating-system dependent [@fsys.02].  Make
@@ -332,13 +600,18 @@ Deliberate Syntax Error
 #endif                                  /* MSDOS || ... */
 
 #ifdef PosixFns
-      int is_udp_or_listener = 0;       /* UDP = 1, listener = 2 */
+      int sock_type = SOCK_T_STREAM;    /* TCP / UDP / RAW */
 #endif                                  /* PosixFns */
 #if defined(PosixFns) || defined(Messaging)
       int is_ipv4 = 0;
       int is_ipv6 = 0;
       int af_fam;
 #endif                                  /* PosixFns || Messaging */
+#if HAVE_LIBSSL
+      int crypto_op = CRYPTO_OP_MATERIAL;
+      int crypto_raw = 0;
+      int crypto_file_xform = 0;
+#endif                                  /* HAVE_LIBSSL */
 
 #if UNIX || VMS || NT
       extern FILE *popen(const char*, const char*);
@@ -395,6 +668,20 @@ Deliberate Syntax Error
                status |= Fs_Encrypt;
 #endif                                  /* HAVE_LIBSSL */
                continue;
+            case 'h':
+            case 'H':
+#if HAVE_LIBSSL
+               /* "eh": hash.  Target is an algorithm name. */
+               if (status & Fs_Encrypt) {
+                  status |= Fs_Crypto;
+                  crypto_op = CRYPTO_OP_HASH;
+                  continue;
+                  }
+#endif                                  /* HAVE_LIBSSL */
+#if HAVE_LIBSSH
+               status |= Fs_SSH;
+#endif                                  /* HAVE_LIBSSH */
+               continue;
             case 'a':
             case 'A':
                status |= Fs_Write|Fs_Append;
@@ -405,10 +692,38 @@ Deliberate Syntax Error
                continue;
             case 'c':
             case 'C':
+#if HAVE_LIBSSH
+               /*
+                * After 'h', 'c' is SSH cmd/channel (like 'u' after 'n'
+                * for UDP).  Without a preceding 'h' it remains
+                * create+write.
+                */
+               if (status & Fs_SSH) {
+                  ssh_cmd = 1;
+                  continue;
+                  }
+#endif                                  /* HAVE_LIBSSH */
                status |= Fs_Create|Fs_Write;
                continue;
             case 'r':
             case 'R':
+#ifdef PosixFns
+               /*
+                * After 'n', 'r' means SOCK_RAW (like 'u' for UDP).
+                * Otherwise it remains the ordinary read mode bit.
+                */
+               if (status & Fs_Socket) {
+                  sock_type = SOCK_T_RAW;
+                  continue;
+                  }
+#endif                                  /* PosixFns */
+#if HAVE_LIBSSL
+               /* "er": target is raw key material rather than a path */
+               if (status & Fs_Encrypt) {
+                  crypto_raw = 1;
+                  continue;
+                  }
+#endif                                  /* HAVE_LIBSSL */
                status |= Fs_Read;
                continue;
             case 'w':
@@ -420,6 +735,16 @@ Deliberate Syntax Error
                   continue;
             case 's':
             case 'S':
+#if HAVE_LIBSSH
+               /*
+                * After 'h', 's' is SFTP.  After 'm' it remains
+                * Messaging short-request.  Otherwise ignored.
+                */
+               if (status & Fs_SSH) {
+                  ssh_sftp = 1;
+                  continue;
+                  }
+#endif                                  /* HAVE_LIBSSH */
 #ifdef Messaging
                if (status & Fs_Messaging) {
                   is_shortreq = 1;
@@ -447,7 +772,7 @@ Deliberate Syntax Error
             case 'u':
             case 'U':
 #ifdef PosixFns
-               is_udp_or_listener = 1;
+               sock_type = SOCK_T_DGRAM;
 #endif                                  /* PosixFns */
                if ((status & Fs_Socket)==0)
                   status |= Fs_Untrans;
@@ -480,7 +805,6 @@ Deliberate Syntax Error
 #ifdef PosixFns
                if (status & Fs_Socket) {
                   status |= Fs_Listen | Fs_Append;
-                  is_udp_or_listener = 2;
                   continue;
                   }
 #endif                                  /* PosixFns */
@@ -569,6 +893,27 @@ Deliberate Syntax Error
             }
          }
 
+#if HAVE_LIBSSL
+      /*
+       * Pure crypto modes ("e" / "er" / "eh"): Fs_Encrypt without a
+       * socket, SSH session, or ordinary file r/w intent.
+       * File transforms ("re" / "we"): Fs_Encrypt with r/w — crypto over
+       * the named file (UTR 27).
+       */
+      if ((status & Fs_Encrypt) && !(status & Fs_Socket)
+#if HAVE_LIBSSH
+          && !(status & Fs_SSH)
+#endif                                  /* HAVE_LIBSSH */
+          ) {
+         if (status & (Fs_Read|Fs_Write|Fs_Append|Fs_Create)) {
+            status |= Fs_Crypto;
+            crypto_file_xform = 1;
+            }
+         else
+            status |= Fs_Crypto;
+         }
+#endif                                  /* HAVE_LIBSSL */
+
       /*
        * Construct a mode field for fopen/popen.
        */
@@ -638,6 +983,223 @@ Deliberate Syntax Error
        * Open the file with fopen or popen.
        */
 
+#if HAVE_LIBSSL
+      if (status & Fs_Crypto) {
+         struct CryptoFile *cf = NULL;
+         int rc = 0;
+         word a;
+
+         if (crypto_file_xform) {
+            /*
+             * "re" / "we": target is the data file; key via key= or handle.
+             */
+            char *fmode;
+            int want_read = (status & (Fs_Read|Fs_Write|Fs_Append|Fs_Create))
+                            == Fs_Read;
+
+            cf = calloc(1, sizeof(struct CryptoFile));
+            if (cf == NULL) { set_errortext(1317); fail; }
+            cf->op = CRYPTO_OP_MATERIAL;
+            cf->xform = 1;
+
+            /* Pass 1: attributes except key= (op= must land first). */
+            for (a = 0; a < n; a++) {
+               tended struct descrip as;
+               char nbuf[64];
+               word eq, vlen;
+               char *v;
+               if (is:null(attr[a]) || is:file(attr[a])) continue;
+               if (!cnv:string(attr[a], as)) continue;
+               for (eq = 0; eq < StrLen(as); eq++)
+                  if (StrLoc(as)[eq] == '=') break;
+               if (eq >= StrLen(as) || eq >= (word)sizeof(nbuf)) continue;
+               memcpy(nbuf, StrLoc(as), eq);
+               nbuf[eq] = '\0';
+               if (strcmp(nbuf, "key") == 0) continue;
+               v = StrLoc(as) + eq + 1;
+               vlen = StrLen(as) - eq - 1;
+               if ((rc = crypto_setattr(cf, nbuf, v, vlen)) != 0) {
+                  cryptofile_free(cf); set_errortext(rc); fail;
+                  }
+               }
+            /* Pass 2: key= paths, then handle attributes. */
+            for (a = 0; a < n; a++) {
+               tended struct descrip as;
+               char nbuf[64];
+               word eq, vlen;
+               char *v;
+               if (is:null(attr[a]) || is:file(attr[a])) continue;
+               if (!cnv:string(attr[a], as)) continue;
+               for (eq = 0; eq < StrLen(as); eq++)
+                  if (StrLoc(as)[eq] == '=') break;
+               if (eq >= StrLen(as) || eq >= (word)sizeof(nbuf)) continue;
+               memcpy(nbuf, StrLoc(as), eq);
+               nbuf[eq] = '\0';
+               if (strcmp(nbuf, "key") != 0) continue;
+               v = StrLoc(as) + eq + 1;
+               vlen = StrLen(as) - eq - 1;
+               if ((rc = crypto_setattr(cf, nbuf, v, vlen)) != 0) {
+                  cryptofile_free(cf); set_errortext(rc); fail;
+                  }
+               }
+            for (a = 0; a < n; a++) {
+               if (is:null(attr[a]) || !is:file(attr[a])) continue;
+               if (!(BlkD(attr[a],File)->status & Fs_Crypto)) {
+                  cryptofile_free(cf); set_errortext(1312); fail;
+                  }
+               if ((rc = crypto_borrow(cf, BlkD(attr[a],File)->fd.cf)) != 0) {
+                  cryptofile_free(cf); set_errortext(rc); fail;
+                  }
+               }
+
+            if (cf->op == CRYPTO_OP_MATERIAL) {
+               cryptofile_free(cf); set_errortext(1316); fail;
+               }
+            if (cf->op == CRYPTO_OP_HASH) {
+               if (!want_read) {
+                  cryptofile_free(cf); set_errortext(1316); fail;
+                  }
+               }
+            else if (cf->op == CRYPTO_OP_ENCRYPT) {
+               if (want_read) {
+                  cryptofile_free(cf); set_errortext(1316); fail;
+                  }
+               }
+            else if (cf->op == CRYPTO_OP_DECRYPT) {
+               if (!want_read) {
+                  cryptofile_free(cf); set_errortext(1316); fail;
+                  }
+               }
+            else {
+               cryptofile_free(cf); set_errortext(1316); fail;
+               }
+
+            fmode = want_read ? "rb" : "wb";
+            cf->fp = fopen(fnamestr, fmode);
+            if (cf->fp == NULL) {
+               cryptofile_free(cf);
+               set_syserrortext(errno);
+               fail;
+               }
+
+            /* Preserve r/w intent; binary I/O. */
+            status |= Fs_Untrans;
+            status &= ~(Fs_Read|Fs_Write|Fs_Append|Fs_Create);
+            if (want_read)
+               status |= Fs_Read;
+            else
+               status |= Fs_Write;
+
+            StrLen(filename) = strlen(fnamestr);
+            StrLoc(filename) = fnamestr;
+            Protect(fl = alcfile(NULL, status, &filename), runerr(0));
+            fl->fd.cf = cf;
+            return file(fl);
+            }
+
+         status |= Fs_Read | Fs_Write;
+
+         if (crypto_op == CRYPTO_OP_HASH) {
+            /* "eh": target is the algorithm name */
+            tended char *alg;
+            cf = calloc(1, sizeof(struct CryptoFile));
+            if (cf == NULL) { set_errortext(1317); fail; }
+            cf->op = CRYPTO_OP_HASH;
+            if (!cnv:C_string(fname, alg)) {
+               cryptofile_free(cf); runerr(103, fname);
+               }
+            cf->md = EVP_get_digestbyname(alg);
+            if (cf->md == NULL) {
+               cryptofile_free(cf); set_errortext(1311); fail;
+               }
+            for (a = 0; a < n; a++) {
+               tended struct descrip as;
+               char nbuf[64];
+               word eq, vlen;
+               char *v;
+               if (is:null(attr[a]) || is:file(attr[a])) continue;
+               if (!cnv:string(attr[a], as)) continue;
+               for (eq = 0; eq < StrLen(as); eq++)
+                  if (StrLoc(as)[eq] == '=') break;
+               if (eq >= StrLen(as) || eq >= (word)sizeof(nbuf)) continue;
+               memcpy(nbuf, StrLoc(as), eq);
+               nbuf[eq] = '\0';
+               v = StrLoc(as) + eq + 1;
+               vlen = StrLen(as) - eq - 1;
+               if (strcmp(nbuf, "alg") == 0) continue;
+               if ((rc = crypto_setattr(cf, nbuf, v, vlen)) != 0) {
+                  cryptofile_free(cf); set_errortext(rc); fail;
+                  }
+               }
+            }
+         else {
+            int have_op = 0;
+            for (a = 0; a < n; a++) {
+               tended char *tmps;
+               if (is:null(attr[a]) || is:file(attr[a])) continue;
+               if (!cnv:C_string(attr[a], tmps)) continue;
+               if (strncmp(tmps, "op=", 3) == 0) { have_op = 1; break; }
+               }
+
+            if (!have_op) {
+               cf = crypto_open_material(&fname, crypto_raw, attr, n, &rc);
+               if (cf == NULL) { set_errortext(rc); fail; }
+               }
+            else {
+               cf = calloc(1, sizeof(struct CryptoFile));
+               if (cf == NULL) { set_errortext(1317); fail; }
+               cf->op = CRYPTO_OP_MATERIAL;
+
+               for (a = 0; a < n; a++) {
+                  tended struct descrip as;
+                  char nbuf[64];
+                  word eq, vlen;
+                  char *v;
+                  if (is:null(attr[a]) || is:file(attr[a])) continue;
+                  if (!cnv:string(attr[a], as)) continue;
+                  for (eq = 0; eq < StrLen(as); eq++)
+                     if (StrLoc(as)[eq] == '=') break;
+                  if (eq >= StrLen(as) || eq >= (word)sizeof(nbuf)) continue;
+                  memcpy(nbuf, StrLoc(as), eq);
+                  nbuf[eq] = '\0';
+                  v = StrLoc(as) + eq + 1;
+                  vlen = StrLen(as) - eq - 1;
+                  if ((rc = crypto_setattr(cf, nbuf, v, vlen)) != 0) {
+                     cryptofile_free(cf); set_errortext(rc); fail;
+                     }
+                  }
+               if (cf->op == CRYPTO_OP_MATERIAL) {
+                  cryptofile_free(cf); set_errortext(1316); fail;
+                  }
+
+               {
+                  struct CryptoFile *m;
+                  m = crypto_open_material(&fname, crypto_raw, attr, n, &rc);
+                  if (m == NULL) { cryptofile_free(cf); set_errortext(rc); fail; }
+                  rc = crypto_borrow(cf, m);
+                  cryptofile_free(m);
+                  if (rc != 0) { cryptofile_free(cf); set_errortext(rc); fail; }
+                  }
+
+               for (a = 0; a < n; a++) {
+                  if (is:null(attr[a]) || !is:file(attr[a])) continue;
+                  if (!(BlkD(attr[a],File)->status & Fs_Crypto)) {
+                     cryptofile_free(cf); set_errortext(1312); fail;
+                     }
+                  if ((rc = crypto_borrow(cf, BlkD(attr[a],File)->fd.cf)) != 0) {
+                     cryptofile_free(cf); set_errortext(rc); fail;
+                     }
+                  }
+               }
+            }
+
+         StrLen(filename) = strlen(fnamestr);
+         StrLoc(filename) = fnamestr;
+         Protect(fl = alcfile(NULL, status, &filename), runerr(0));
+         fl->fd.cf = cf;
+         return file(fl);
+         }
+#endif                                  /* HAVE_LIBSSL */
 
 #ifdef Graphics
       if (status & Fs_Window) {
@@ -925,6 +1487,74 @@ Deliberate Syntax Error
 #if HAVE_LIBSSL
         SSL *ssl;
 #endif                                  /* HAVE_LIBSSL */
+#if HAVE_LIBSSH
+         if (status & Fs_SSH) {
+            struct SSHfile *sshf;
+            int isdir = 0;
+            /*
+             * With a channel, Fs_Socket routes stream I/O through the
+             * existing socket dispatch points.  channel=no leaves a
+             * transport-only session (Fs_SSH alone) for later
+             * open(s, "hc"/"hs", ...).  Mode "hs" opens SFTP on the
+             * new session in one step (the returned handle owns it).
+             */
+            if (ssh_cmd && ssh_sftp) {
+               set_errortext_with_val(1321, "c");
+               fail;
+               }
+            sshf = create_ssh_session(fnamestr, attr, n, do_verify,
+                                      ssh_cmd, ssh_sftp);
+            if (sshf == NULL)
+               fail;                    /* &errortext already set */
+            if (ssh_sftp) {
+               struct SSHfile *sftpf;
+               word ai, k;
+               /*
+                * Access can live in spec ("hsw") or in a trailing
+                * mode-only token: open(host, "hs", "path=...", "w").
+                */
+               for (ai = 0; ai < n; ai++) {
+                  if (is:null(attr[ai]) || !cnv:tmp_string(attr[ai], filename))
+                     continue;
+                  for (k = 0; k < StrLen(filename); k++)
+                     if (StrLoc(filename)[k] == '=')
+                        break;
+                  if (k < StrLen(filename))
+                     continue;
+                  for (k = 0; k < StrLen(filename); k++) {
+                     switch (StrLoc(filename)[k]) {
+                        case 'r': case 'R': status |= Fs_Read; break;
+                        case 'w': case 'W': status |= Fs_Write; break;
+                        case 'a': case 'A': status |= Fs_Write|Fs_Append; break;
+                        case 'b': case 'B': status |= Fs_Read|Fs_Write; break;
+                        }
+                     }
+                  }
+               sftpf = create_sftp_file(sshf, attr, n, status, &isdir, 1);
+               if (sftpf == NULL) {
+                  ssh_close_file(sshf);
+                  fail;
+                  }
+               sshf = sftpf;
+               if (isdir)
+                  status = Fs_SSH | Fs_Read | Fs_Directory;
+               else {
+                  status = Fs_SSH | (status & (Fs_Read|Fs_Write|Fs_Append));
+                  if (!(status & (Fs_Read|Fs_Write)))
+                     status |= Fs_Read;
+                  }
+               }
+            else if (sshf->chan != NULL)
+               status |= Fs_Socket | Fs_Read | Fs_Write;
+            StrLen(filename) = strlen(fnamestr);
+            StrLoc(filename) = fnamestr;
+            Protect(fl = alcfile(0, status, &filename), runerr(0));
+            fl->fd.sshf = sshf;
+            fl->sock_gen = 0;
+            return file(fl);
+            }
+         else
+#endif                                  /* HAVE_LIBSSH */
          if (status & Fs_Socket) {
             if (is_ipv4 && is_ipv6)
                af_fam = AF_UNSPEC;
@@ -946,7 +1576,9 @@ Deliberate Syntax Error
 #if HAVE_LIBSSL
                SSL_CTX *ctx;
                if(status & Fs_Encrypt) {
-                  ctx = create_ssl_context(attr, n, TLS_SERVER);
+                  int ssl_type = (sock_type == SOCK_T_DGRAM)
+                     ? DTLS_SERVER : TLS_SERVER;
+                  ctx = create_ssl_context(attr, n, ssl_type, do_verify);
                   if (ctx == NULL) {
                     // errortext is already set
                     fail;
@@ -954,9 +1586,10 @@ Deliberate Syntax Error
                }
 #endif                                  /* HAVE_LIBSSL */
 
-               /* "na" => listen for connections */
+               /* "na"/"nl" => bind (and listen/accept per sock_type) */
                DEC_NARTHREADS;
-               fd = sock_listen(fnamestr, is_udp_or_listener, af_fam);
+               fd = sock_listen(fnamestr, sock_type,
+                                (status & Fs_Listen) != 0, af_fam, attr, n);
                INC_NARTHREADS_CONTROLLED;
 
 #if HAVE_LIBSSL
@@ -965,10 +1598,22 @@ Deliberate Syntax Error
                  ssl = SSL_new(ctx);
                   if (ssl == NULL) {
                     set_ssl_context_errortext(0, NULL);
-                    close(fd);
+                    if (sock_purge(fd))      /* fd may be a cached listener */
+                       sock_close(fd);
                     SSL_CTX_free(ctx);
                     fail;
                   }
+                  if (sock_type == SOCK_T_DGRAM) {
+                     if (!ssl_dtls_accept(ssl, fd)) {
+                        set_ssl_connection_errortext(ssl, -1);
+                        if (sock_purge(fd))
+                           sock_close(fd);
+                        SSL_free(ssl);
+                        SSL_CTX_free(ctx);
+                        fail;
+                        }
+                     }
+                  else {
                   SSL_set_fd(ssl, fd);
                   DEC_NARTHREADS;
                   err = SSL_accept(ssl);
@@ -977,10 +1622,12 @@ Deliberate Syntax Error
                   /*Check for error in accept.*/
                   if (err<1) {
                     set_ssl_connection_errortext(ssl, err);
-                    close(fd);
+                    if (sock_purge(fd))      /* fd may be a cached listener */
+                       sock_close(fd);
                     SSL_free(ssl);
                     SSL_CTX_free(ctx);
                     fail;
+                  }
                   }
 
                }
@@ -991,7 +1638,9 @@ Deliberate Syntax Error
 #if HAVE_LIBSSL
                SSL_CTX *ctx;
                if(status & Fs_Encrypt) {
-                  ctx = create_ssl_context(attr, n, TLS_CLIENT);
+                  int ssl_type = (sock_type == SOCK_T_DGRAM)
+                     ? DTLS_CLIENT : TLS_CLIENT;
+                  ctx = create_ssl_context(attr, n, ssl_type, do_verify);
                   if (ctx == NULL) {
                     // errortext is already set
                     fail;
@@ -1001,13 +1650,18 @@ Deliberate Syntax Error
 
 #if defined(Graphics) || defined(Messaging) || defined(ISQL)
                if (n > 0 && !is:null(attr[0])) {
+                  /*
+                   * A leading integer is a connection timeout; anything
+                   * else is a socket attribute handled in sock_connect().
+                   */
                   if (!cnv:C_integer(attr[0], timeout))
-                     runerr(101, attr[0]);
+                     timeout = 0;
                }
 #endif                                  /* Graphics || Messaging || ISQL */
-               /* connect to a port */
+               /* connect to a port (or raw destination) */
                DEC_NARTHREADS;
-               fd = sock_connect(fnamestr, is_udp_or_listener == 1, timeout, af_fam);
+               fd = sock_connect(fnamestr, sock_type, timeout,
+                                 af_fam, attr, n);
                INC_NARTHREADS_CONTROLLED;
 #if HAVE_LIBSSL
                if(fd > 0 && status & Fs_Encrypt){
@@ -1015,20 +1669,31 @@ Deliberate Syntax Error
                   ssl = SSL_new(ctx);
                   if (ssl == NULL) {
                     set_ssl_context_errortext(0, NULL);
-                    close(fd);
+                    sock_close(fd);
                     SSL_CTX_free(ctx);
                     fail;
                   }
+                  if (sock_type == SOCK_T_DGRAM) {
+                     if (!ssl_dtls_connect(ssl, fd)) {
+                        set_ssl_connection_errortext(ssl, -1);
+                        sock_close(fd);
+                        SSL_free(ssl);
+                        SSL_CTX_free(ctx);
+                        fail;
+                        }
+                     }
+                  else {
                   SSL_set_fd(ssl, fd);
                   err = SSL_connect(ssl);
 
                   /*Check for error in connect.*/
                   if (err<1) {
                     set_ssl_connection_errortext(ssl, err);
-                    close(fd);
+                    sock_close(fd);
                     SSL_free(ssl);
                     SSL_CTX_free(ctx);
                     fail;
+                  }
                   }
                }
 #endif                                  /* HAVE_LIBSSL */
@@ -1039,15 +1704,31 @@ Deliberate Syntax Error
              * read/reads is not allowed on a listener socket, only select
              * read/reads is not allowed on a UDP socket, only receive
              */
-            if (is_udp_or_listener == 2)
+            if (status & Fs_Listen)
                status |= Fs_Socket | Fs_Listen;
-            else if (is_udp_or_listener == 1)
-               status |= Fs_Socket | Fs_Write;
+            else if (sock_type == SOCK_T_DGRAM) {
+               /*
+                * Plain UDP is write-oriented (use receive).  Encrypted
+                * UDP (DTLS) speaks through SSL_read/SSL_write like TLS.
+                */
+#if HAVE_LIBSSL
+               if (status & Fs_Encrypt)
+                  status |= Fs_Socket | Fs_Read | Fs_Write;
+               else
+#endif                                  /* HAVE_LIBSSL */
+                  status |= Fs_Socket | Fs_Write;
+               }
             else
                status |= Fs_Socket | Fs_Read | Fs_Write;
 
             if (!fd) {
-               set_syserrortext(errno);
+               /*
+                * When errno is 0 a more specific &errortext was already
+                * set (bad socket attribute, getaddrinfo failure); don't
+                * overwrite it with strerror(0).
+                */
+               if (errno != 0)
+                  set_syserrortext(errno);
                fail;
                }
 
@@ -1066,6 +1747,16 @@ Deliberate Syntax Error
             else
 #endif                                  /* HAVE_LIBSSL */
               fl->fd.fd = fd;
+#ifdef PosixFns
+            /*
+             * Remember the listener-cache generation so select()/accept
+             * can refuse a descriptor number reused by a later open.
+             */
+            if (status & Fs_Listen)
+               fl->sock_gen = sock_listener_gen(fd);
+            else
+               fl->sock_gen = 0;
+#endif                                  /* PosixFns */
 
             return file(fl);
             }
@@ -1272,12 +1963,78 @@ function{0,1} read(f)
          runerr(212, f);
          }
 
+#if HAVE_LIBSSL
+      if (status & Fs_Crypto) {
+         char *buf;
+         word len;
+         int rc;
+         rc = crypto_read(BlkD(f,File)->fd.cf, &buf, &len);
+         if (rc != 0) { set_errortext(rc); fail; }
+         if (len == 0) fail;
+         Protect(StrLoc(s) = alcstr(buf, len), runerr(0));
+         StrLen(s) = len;
+         return s;
+         }
+#endif                                  /* HAVE_LIBSSL */
+
 /*
  * Should probably move these cases into getstrg() in rsys.r, where
  * the other cases, such as Fs_Messaging, are handled.
  */
 
 #ifdef PosixFns
+#if HAVE_LIBSSH
+       if ((status & Fs_SSH) && !(status & Fs_Directory)) {
+          /*
+           * Channel and SFTP files: line-oriented read via ssh_getstrg.
+           * Binary SFTP transfers should use reads().
+           */
+#ifdef Concurrent
+          MUTEX_LOCKID_CONTROLLED(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+          StrLen(s) = 0;
+          do {
+             DEC_NARTHREADS;
+             if ((slen = sock_getstrg(sbuf, MaxReadStr, &f)) == -1) {
+                INC_NARTHREADS_CONTROLLED;
+#ifdef Concurrent
+                MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+                fail;
+                }
+             INC_NARTHREADS_CONTROLLED;
+             if (slen == -3) {
+#ifdef Concurrent
+                MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+                set_ssh_errortext(BlkD(f,File)->fd.sshf->sess,
+                                  BlkD(f,File)->fd.sshf->sfile ? 1325 : 1324);
+                fail;
+                }
+             if (slen == 1 && *sbuf == '\n')
+                break;
+             rlen = slen < 0 ? (word)MaxReadStr : slen;
+
+             Protect(reserve(Strings, rlen), runerr(0));
+             if (StrLen(s) > 0 && !InRange(strbase,StrLoc(s),strfree)) {
+                Protect(reserve(Strings, StrLen(s)+rlen), runerr(0));
+                Protect((StrLoc(s) = alcstr(StrLoc(s),StrLen(s))), runerr(0));
+                }
+
+             Protect(sptr = alcstr(sbuf,rlen), runerr(0));
+             if (StrLen(s) == 0)
+                StrLoc(s) = sptr;
+             StrLen(s) += rlen;
+             if (StrLoc(s) [ StrLen(s) - 1 ] == '\n') { StrLen(s)--; break; }
+             }
+          while (slen > 0);
+
+#ifdef Concurrent
+          MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+         return s;
+          }
+#endif                                  /* HAVE_LIBSSH */
        if (status & Fs_Socket) {
           StrLen(s) = 0;
           do {
@@ -1289,7 +2046,11 @@ function{0,1} read(f)
                 }
              INC_NARTHREADS_CONTROLLED;
              if (slen == -3) {
-               /* sock_getstrg sets errornumber/text */
+#if HAVE_LIBSSH
+               if (status & Fs_SSH)
+                  set_ssh_errortext(BlkD(f,File)->fd.sshf->sess, 1324);
+#endif                                  /* HAVE_LIBSSH */
+                /* else sock_getstrg already set errornumber/text */
                 fail;
                 }
              if (slen == 1 && *sbuf == '\n')
@@ -1389,6 +2150,14 @@ function{0,1} read(f)
              char *s, *p=sbuf;
              IntVal(amperErrno) = 0;
              slen = 0;
+#if HAVE_LIBSSH
+             if (status & Fs_SSH) {
+                slen = ssh_sftp_readdir(BlkD(f,File)->fd.sshf, sbuf, MaxReadStr);
+                if (slen < 0)
+                   fail;                /* end of dir, or error with text */
+                }
+             else {
+#endif                                  /* HAVE_LIBSSH */
              DEC_NARTHREADS;
              d = readdir((DIR *)fp);
              INC_NARTHREADS_CONTROLLED;
@@ -1401,6 +2170,9 @@ function{0,1} read(f)
                 *p++ = *s++;
              if (slen == MaxReadStr)
                 slen = -2;
+#if HAVE_LIBSSH
+             }
+#endif                                  /* HAVE_LIBSSH */
           }
           else
 #endif
@@ -1546,6 +2318,32 @@ function{0,1} reads(f,i)
       if ((status & Fs_Read) == 0)
          runerr(212, f);
 
+#if HAVE_LIBSSL
+      if (status & Fs_Crypto) {
+         char *buf;
+         word len;
+         int rc;
+         /*
+          * File-transform decrypt/hash: bounded reads.  Pipe crypto
+          * ignores the bound and returns the full finalized result.
+          */
+         if (BlkD(f,File)->fd.cf != NULL && BlkD(f,File)->fd.cf->xform) {
+            rc = crypto_reads(BlkD(f,File)->fd.cf, i, &buf, &len);
+            if (rc != 0) { set_errortext(rc); fail; }
+            if (len == 0) fail;
+            Protect(StrLoc(s) = alcstr(buf, len), runerr(0));
+            StrLen(s) = len;
+            return s;
+            }
+         rc = crypto_read(BlkD(f,File)->fd.cf, &buf, &len);
+         if (rc != 0) { set_errortext(rc); fail; }
+         if (len == 0) fail;
+         Protect(StrLoc(s) = alcstr(buf, len), runerr(0));
+         StrLen(s) = len;
+         return s;
+         }
+#endif                                  /* HAVE_LIBSSL */
+
 #ifdef Messaging
       if (status & Fs_Messaging) {
          struct MFile *mf = BlkLoc(f)->File.fd.mf;
@@ -1619,7 +2417,124 @@ function{0,1} reads(f,i)
 
 
 #ifdef PosixFns
+#if HAVE_LIBSSH
+         if ((status & Fs_SSH) && BlkD(f,File)->fd.sshf != NULL &&
+             BlkD(f,File)->fd.sshf->sfile != NULL) {
+            /*
+             * SFTP regular file: raw byte transfer via sftp_read.
+             * Like sockets/messaging, reads(f,-1) loops until EOF.
+             */
+            int got;
+#ifdef Concurrent
+            MUTEX_LOCKID_CONTROLLED(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+            /* Casting to unsigned lets us use reads(f, -1) */
+            Maxread = (unsigned)i <= MaxReadStr ? i : MaxReadStr;
+            StrLoc(s) = NULL;
+            StrLen(s) = 0;
+            do {
+               if (bytesread > 0) {
+                  if (i >= 0 && i - bytesread <= MaxReadStr)
+                     Maxread = i - bytesread;
+                  else
+                     Maxread = MaxReadStr;
+                  }
+               DEC_NARTHREADS;
+               got = ssh_chan_read(BlkD(f,File)->fd.sshf, sbuf, Maxread, 1);
+               INC_NARTHREADS_CONTROLLED;
+               if (got < 0) {
+#ifdef Concurrent
+                  MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+                  set_ssh_errortext(BlkD(f,File)->fd.sshf->sess, 1325);
+                  fail;
+                  }
+               if (got == 0) {
+#ifdef Concurrent
+                  MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+                  if (bytesread == 0)
+                     fail;              /* EOF with nothing read */
+                  else
+                     return s;
+                  }
+               bytesread += got;
+               rlen = got;
+               Protect(reserve(Strings, StrLen(s) + rlen), runerr(0));
+               if (StrLen(s) > 0 && !InRange(strbase, StrLoc(s), strfree)) {
+                  Protect((StrLoc(s) =
+                           alcstr(StrLoc(s), StrLen(s))), runerr(0));
+                  }
+               Protect(sptr = alcstr(sbuf, rlen), runerr(0));
+               if (StrLen(s) == 0)
+                  StrLoc(s) = sptr;
+               StrLen(s) += rlen;
+               } while ((i == -1) || (bytesread < i));
+#ifdef Concurrent
+            MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+            return s;
+            }
+#endif                                  /* HAVE_LIBSSH */
          if (status & Fs_Socket) {
+#if HAVE_LIBSSH
+            /*
+             * SSH channel (not SFTP): raw byte stream via u_read.
+             * sock_getstrg() is line-oriented and blocks until '\\n', so
+             * an interactive prompt like "host$ " would hang forever
+             * with the bytes stuck inside ssh_getstrg()'s local buffer.
+             * (SFTP regular files are handled above; read() stays
+             * line-oriented via ssh_getstrg.)
+             */
+            if ((status & Fs_SSH) && BlkD(f,File)->fd.sshf != NULL &&
+                BlkD(f,File)->fd.sshf->sfile == NULL &&
+                BlkD(f,File)->fd.sshf->sdir == NULL) {
+               if (i < 0) {
+                  /* reads(f, -1): concatenate until EOF */
+                  tended struct descrip chunk;
+                  StrLen(s) = 0;
+                  StrLoc(s) = "";
+                  for (;;) {
+                     DEC_NARTHREADS;
+                     if (u_read(&f, MaxReadStr, status, &chunk) == 0) {
+                        INC_NARTHREADS_CONTROLLED;
+                        if (StrLen(s) == 0)
+                           fail;
+                        return s;
+                        }
+                     INC_NARTHREADS_CONTROLLED;
+                     Protect(reserve(Strings, StrLen(s) + StrLen(chunk)),
+                             runerr(0));
+                     if (StrLen(s) > 0 &&
+                         !InRange(strbase, StrLoc(s), strfree)) {
+                        Protect((StrLoc(s) =
+                                 alcstr(StrLoc(s), StrLen(s))), runerr(0));
+                        }
+                     if (StrLen(s) == 0)
+                        s = chunk;
+                     else {
+                        Protect(sptr = alcstr(StrLoc(chunk), StrLen(chunk)),
+                                runerr(0));
+                        StrLen(s) += StrLen(chunk);
+                        }
+                     }
+                  }
+               DEC_NARTHREADS;
+               if (u_read(&f, i, status, &s) == 0) {
+                  INC_NARTHREADS_CONTROLLED;
+                  fail;
+                  }
+               INC_NARTHREADS_CONTROLLED;
+               /* reads(f, 0): nonblocking; fail if nothing available */
+               if (i == 0 && StrLen(s) == 0)
+                  fail;
+               return s;
+               }
+#endif                                  /* HAVE_LIBSSH */
+#if HAVE_LIBSSH && defined(Concurrent)
+            if (status & Fs_SSH)
+               MUTEX_LOCKID_CONTROLLED(BlkD(f,File)->mutexid);
+#endif                                  /* HAVE_LIBSSH && Concurrent */
             StrLen(s) = 0;
             Maxread = (i <= MaxReadStr)? i : MaxReadStr;
             do {
@@ -1633,6 +2548,10 @@ function{0,1} reads(f,i)
                if ((slen = sock_getstrg(sbuf, Maxread, &f)) == -1) {
                     /*IntVal(amperErrno) = errno; */
                     INC_NARTHREADS_CONTROLLED;
+#if HAVE_LIBSSH && defined(Concurrent)
+                    if (status & Fs_SSH)
+                       MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* HAVE_LIBSSH && Concurrent */
                     if (bytesread == 0)
                         fail;
                     else
@@ -1640,7 +2559,15 @@ function{0,1} reads(f,i)
                 }
                 INC_NARTHREADS_CONTROLLED;
                 if (slen == -3) {
-                    /* sock_getstrg sets errortext */
+#if HAVE_LIBSSH
+                    if (status & Fs_SSH) {
+#ifdef Concurrent
+                       MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* Concurrent */
+                       set_ssh_errortext(BlkD(f,File)->fd.sshf->sess, 1324);
+                       }
+#endif                                  /* HAVE_LIBSSH */
+                    /* else sock_getstrg sets errortext */
                     fail;
                    }
 
@@ -1660,6 +2587,10 @@ function{0,1} reads(f,i)
                     StrLoc(s) = sptr;
                 StrLen(s) += rlen;
             } while ((i == -1) || (bytesread < i));
+#if HAVE_LIBSSH && defined(Concurrent)
+            if (status & Fs_SSH)
+               MUTEX_UNLOCKID(BlkD(f,File)->mutexid);
+#endif                                  /* HAVE_LIBSSH && Concurrent */
             return s;
         }
 
@@ -1667,7 +2598,8 @@ function{0,1} reads(f,i)
          * implemented after release: all I/O is low-level, no stdio. This
          * makes the Fs_Buff/Fs_Unbuf go away and select will work --
          * correctly. */
-        if (strcmp(StrLoc(BlkD(f,File)->fname), "pipe") != 0) {
+        if (!(status & Fs_Unbuf) &&
+            strcmp(StrLoc(BlkD(f,File)->fname), "pipe") != 0) {
             status |= Fs_Buff;
             BlkLoc(f)->File.status = status;
         }
@@ -1700,6 +2632,18 @@ function{0,1} reads(f,i)
       if ((BlkD(f,File)->status & Fs_Directory) != 0) {
          char *sptr;
          struct dirent *de;
+#if HAVE_LIBSSH
+         if (BlkD(f,File)->status & Fs_SSH) {
+            char dbuf[MaxReadStr];
+            int dlen = ssh_sftp_readdir(BlkD(f,File)->fd.sshf, dbuf, MaxReadStr);
+            if (dlen < 0)
+               fail;                    /* end of dir, or error with text */
+            if (dlen > i)
+               dlen = i;
+            Protect(sptr = alcstr(dbuf, dlen), runerr(0));
+            return string(dlen, sptr);
+            }
+#endif                                  /* HAVE_LIBSSH */
          DEC_NARTHREADS;
          de = readdir((DIR*) fp);
          INC_NARTHREADS_CONTROLLED;
@@ -1821,16 +2765,37 @@ end
 
 "remove(s) - remove the file named s."
 
-function{0,1} remove(s)
+function{0,1} remove(s, path)
+
+   abstract {
+      return null
+      }
+
+#if HAVE_LIBSSH
+   /*
+    * remove(session, path): unlink a remote file over SFTP.  The
+    * leading-optional-file-argument idiom (like write(f, ...)); with a
+    * plain string first argument this is the ordinary local remove.
+    */
+   if is:file(s) then {
+      body {
+         tended char *rpath;
+         if (!(BlkD(s,File)->status & Fs_SSH) || BlkD(s,File)->fd.sshf == NULL)
+            runerr(103, s);
+         if (!cnv:C_string(path, rpath))
+            runerr(103, path);
+         if (ssh_sftp_unlink(BlkD(s,File)->fd.sshf, rpath) != 0)
+            fail;                       /* &errortext already set */
+         return nulldesc;
+         }
+      }
+#endif                                  /* HAVE_LIBSSH */
 
    /*
     * Make a C-style string out of s
     */
    if !cnv:C_string(s) then
       runerr(103,s)
-   abstract {
-      return null
-      }
 
    inline {
 #if !ConcurrentCOMPILER
@@ -1854,7 +2819,32 @@ end
 
 "rename(s1,s2) - rename the file named s1 to have the name s2."
 
-function{0,1} rename(s1,s2)
+function{0,1} rename(s1,s2,s3)
+
+   abstract {
+      return null
+      }
+
+#if HAVE_LIBSSH
+   /*
+    * rename(session, from, to): rename a remote file over SFTP,
+    * via the same leading-optional-session-argument idiom as remove().
+    */
+   if is:file(s1) then {
+      body {
+         tended char *rfrom, *rto;
+         if (!(BlkD(s1,File)->status & Fs_SSH) || BlkD(s1,File)->fd.sshf == NULL)
+            runerr(103, s1);
+         if (!cnv:C_string(s2, rfrom))
+            runerr(103, s2);
+         if (!cnv:C_string(s3, rto))
+            runerr(103, s3);
+         if (ssh_sftp_rename(BlkD(s1,File)->fd.sshf, rfrom, rto) != 0)
+            fail;                       /* &errortext already set */
+         return nulldesc;
+         }
+      }
+#endif                                  /* HAVE_LIBSSH */
 
    /*
     * Make C-style strings out of s1 and s2
@@ -1863,10 +2853,6 @@ function{0,1} rename(s1,s2)
       runerr(103,s1)
    if !cnv:C_string(s2) then
       runerr(103,s2)
-
-   abstract {
-      return null
-      }
 
    body {
       if (rename(s1,s2) == 0) return nulldesc;
@@ -2140,8 +3126,11 @@ function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
          while ((s = strstr(s, ">")) != NULL) {
             /*
              * If &> or >& then redirect both stdout and stderr.
+             * Do not treat the '>' in "2>&1" as >& (s[1]=='&'); that would
+             * capture "1" as the filename and break "> file 2>&1".
              */
-            if (((s - cmdline > 0) && s[-1] == '&') || (s[1]=='&')) {
+            if (((s - cmdline > 0) && s[-1] == '&') ||
+                ((s[1] == '&') && (s - cmdline <= 0 || s[-1] != '2'))) {
 
                if ((s - cmdline > 0) && s[-1] == '&') { /* &> */
                   s[-1] = '\0';
@@ -2294,19 +3283,17 @@ function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
             execl("/bin/sh", "sh", "-c", cmdline, (char *)0);
             }
          else {
-            if (execvp(margv[0], margv) == -1) {
-               free(margv);
-               }
+            execvp(margv[0], margv);
             }
 
           /*
-           * If we returned.... this is the child, so failure is no good;
-           * stop with a runtime error so at least the user will get some
-           * indication of the problem.
+           * Exec failed (shell or target).  Do not call runerr(500) in this child:
+           * after vfork() it shares the parent's address space until exec, and running
+           * the Icon error path corrupts memory (often run-time error 302).  Do not
+           * free(margv) here either — that would free the parent's allocation.
+           * Exit 127 matches common shell convention for "command not found".
            */
-          IntVal(amperErrno) = errno;
-          runerr(500);
-          break;
+          _exit(127);
       case -1:
          if (margv) free(margv);
          set_syserrortext(errno);
@@ -2603,6 +3590,9 @@ end
    /*
     * Append a newline to the file.
     */
+#if HAVE_LIBSSL
+   if (!(status & Fs_Crypto)) {
+#endif                                  /* HAVE_LIBSSL */
 #ifdef Graphics
    pollctr >>= 1;
    pollctr++;
@@ -2652,6 +3642,19 @@ end
       else
 #endif                                  /* Messaging */
 #ifdef PosixFns
+#if HAVE_LIBSSH
+      if (status & Fs_SSH) {
+         if (ssh_file_write(f.sshf, "\n", 1) < 0) {
+            MUTEX_UNLOCKID(fblk->mutexid);
+#if terminate
+            syserr("ssh write failed in stop()");
+#else
+            fail;                    /* &errortext already set */
+#endif
+          }
+         }
+      else
+#endif                                  /* HAVE_LIBSSH */
       if (status & Fs_Socket) {
          if (sock_write(f.fd, "\n", 1) < 0){
             MUTEX_UNLOCKID(fblk->mutexid);
@@ -2667,6 +3670,9 @@ end
 #endif                                  /* PosixFns */
          putc('\n', f.fp);
 
+#if HAVE_LIBSSL
+      } /* !(status & Fs_Crypto) */
+#endif                                  /* HAVE_LIBSSL */
 #endif                                  /* nl */
 
    /*
@@ -2683,7 +3689,14 @@ end
 #endif
 
 #ifdef PosixFns
-      if (!(status & Fs_Socket)) {
+      if (!(status & (Fs_Socket
+#if HAVE_LIBSSH
+                      | Fs_SSH
+#endif
+#if HAVE_LIBSSL
+                      | Fs_Crypto
+#endif
+         ))) {
 #endif                                  /* PosixFns */
 
 #if HAVE_LIBZ
@@ -2896,6 +3909,27 @@ function {1} name(x[nargs])
                         else
 #endif                                  /* Messaging */
 #ifdef PosixFns
+#if HAVE_LIBSSL
+                        if (status & Fs_Crypto)
+                           ; /* no newline between crypto writes */
+                        else
+#endif                                  /* HAVE_LIBSSL */
+#if HAVE_LIBSSH
+                        if (status & Fs_SSH) {
+                           if (ssh_file_write(f.sshf, "\n", 1) < 0){
+#ifdef Concurrent
+                              if (fblk)
+                              MUTEX_UNLOCKID(fblk->mutexid);
+#endif                                  /* Concurrent */
+#if terminate
+                              syserr("ssh write failed in stop()");
+#else
+                              fail;
+#endif
+                             }
+                        }
+                        else
+#endif                                  /* HAVE_LIBSSH */
                         if (status & Fs_Socket) {
                            if (sock_write(f.fd, "\n", 1) < 0){
 #ifdef Concurrent
@@ -3011,6 +4045,34 @@ function {1} name(x[nargs])
 #endif                                  /* Messaging */
 
 #ifdef PosixFns
+#if HAVE_LIBSSL
+                     if (status & Fs_Crypto) {
+                        int rc = crypto_write(f.cf, StrLoc(t), StrLen(t));
+                        if (rc != 0) {
+                           MUTEX_UNLOCKID(fblk->mutexid);
+#if terminate
+                           syserr("crypto write failed in stop()");
+#else
+                           set_errortext(rc);
+                           fail;
+#endif
+                           }
+                        }
+                     else
+#endif                                  /* HAVE_LIBSSL */
+#if HAVE_LIBSSH
+                     if (status & Fs_SSH) {
+                        if (ssh_file_write(f.sshf, StrLoc(t), StrLen(t)) < 0) {
+                           MUTEX_UNLOCKID(fblk->mutexid);
+#if terminate
+                           syserr("ssh write failed in stop()");
+#else
+                           fail;        /* &errortext already set */
+#endif
+                           }
+                        }
+                     else
+#endif                                  /* HAVE_LIBSSH */
                      if (status & Fs_Socket) {
 #if HAVE_LIBSSL
                         if(status & Fs_Encrypt) {

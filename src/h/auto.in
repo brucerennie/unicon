@@ -206,6 +206,9 @@
 /* Define to 1 if you have the `sqlite3' library (-lsqlite3). */
 #undef HAVE_LIBSQLITE3
 
+/* Define to 1 if you have lib ssh */
+#undef HAVE_LIBSSH
+
 /* Define to 1 if you have lib ssl */
 #undef HAVE_LIBSSL
 
@@ -435,6 +438,9 @@
 
 /* Enable Operator Overloading */
 #undef OVLD
+
+/* OpenBSD OS */
+#undef OpenBSD
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

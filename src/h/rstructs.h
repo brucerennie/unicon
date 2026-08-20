@@ -115,6 +115,126 @@ struct b_unicset {
    };
 #endif                          /* Unicode */
 
+#if HAVE_LIBSSH
+/*
+ * One tagged chunk of SSH channel traffic, kept in true arrival order.
+ * The libssh data/exit-status callbacks append chunks as messages are
+ * parsed off the wire -- the only way to preserve stdout/stderr
+ * ordering, since the plain channel-read API buffers the two streams
+ * separately.  Plain reads consume stdout chunks; Attrib(c,"stderr")
+ * drains stderr chunks; receive(c) pops whatever is at the head.
+ */
+#define SSH_CHUNK_STDOUT 0
+#define SSH_CHUNK_STDERR 1
+#define SSH_CHUNK_EXIT   2
+
+struct SSHchunk {
+   struct SSHchunk *next;
+   int tag;                     /* SSH_CHUNK_* */
+   int off;                     /* stdout bytes already consumed by reads */
+   int len;
+   char data[1];                /* allocated to hold len bytes */
+   };
+
+/*
+ * Per-file SSH state.  Allocated with malloc (like the Messaging MFile)
+ * so pointers to it are stable across garbage collections; freed by the
+ * close hook, never by the collector.
+ *
+ * One file opened as an SSH session owns the ssh_session; channels
+ * opened on it share that session and link themselves into the owner's
+ * children list so that closing the session can close every channel
+ * derived from it.
+ */
+struct SSHfile {
+   ssh_session sess;            /* connection (owned by the session file) */
+   ssh_channel chan;            /* NULL unless this is an exec/shell channel */
+   sftp_session sftp;           /* the session's sftp subsystem, shared by
+                                 * every sftp file/dir; created lazily and
+                                 * freed by the owner */
+   sftp_file sfile;             /* non-NULL for an open sftp regular file */
+   sftp_dir sdir;               /* non-NULL for an open sftp directory */
+   struct SSHfile *parent;      /* session owner; NULL if this is the owner */
+   struct SSHfile *children;    /* head of channel list (session owner only) */
+   struct SSHfile *next;        /* sibling link in the owner's channel list */
+   int nl_pending;              /* line reads: a '\n' was seen but not yet consumed */
+   struct SSHchunk *qhead;      /* arrival-order event queue */
+   struct SSHchunk *qtail;
+   word q_stdout;               /* unconsumed stdout bytes in the queue */
+   void *cbs;                   /* registered ssh_channel_callbacks */
+   int eof_seen;                /* remote sent EOF on the channel */
+   int exit_seen;               /* exit_status below is valid */
+   int exit_status;
+   int closed;                  /* set when cascade-invalidated by close()
+                                 * of the owning session; Unicon file still
+                                 * holds this SSHfile until its own close */
+   };
+#endif                                  /* HAVE_LIBSSH */
+
+#if HAVE_LIBSSL
+/*
+ * Cryptographic handle (UTR 27).  Material handles hold parsed keys and
+ * certificates; operation handles accumulate via write() and finalize on
+ * read().  Allocated with malloc like SSHfile; freed by close/cryptofile_free.
+ */
+#define CRYPTO_ROLE_NONE    0
+#define CRYPTO_ROLE_PRIVKEY 01
+#define CRYPTO_ROLE_PUBKEY  02
+#define CRYPTO_ROLE_CERT    04
+#define CRYPTO_ROLE_SYMKEY  010
+
+#define CRYPTO_OP_MATERIAL  0
+#define CRYPTO_OP_HASH      1
+#define CRYPTO_OP_HMAC      2
+#define CRYPTO_OP_SIGN      3
+#define CRYPTO_OP_VERIFY    4
+#define CRYPTO_OP_ENCRYPT   5
+#define CRYPTO_OP_DECRYPT   6
+
+struct CryptoFile {
+   int op;                     /* CRYPTO_OP_* */
+   int roles;                  /* CRYPTO_ROLE_* bitmask */
+
+   EVP_PKEY *pkey;
+   X509     *cert;
+   struct stack_st_X509 *chain;  /* STACK_OF(X509); RTT-safe spelling */
+   unsigned char *symkey;
+   int symkeylen;
+
+   const EVP_MD     *md;
+   const EVP_CIPHER *cipher;
+   unsigned char *iv;
+   int ivlen;
+   unsigned char *sig;
+   int siglen;
+
+   EVP_MD_CTX     *mdctx;
+   EVP_CIPHER_CTX *cctx;
+   EVP_PKEY_CTX   *pkctx;
+   int initialized;            /* 0 = idle, safe to reconfigure */
+
+   unsigned char *out;         /* result drained by read() */
+   int outlen, outcap;
+   int out_off;                /* start of unread bytes in out[] */
+
+   unsigned char *in;          /* decrypt: raw ciphertext until read() */
+   int inlen, incap;
+
+   struct b_file *parent;      /* material handle borrowed from, if any */
+
+   /*
+    * File-transform mode ("re" / "we"): crypto over an underlying FILE*.
+    * Pipe handles leave fp NULL.
+    */
+   FILE *fp;
+   int xform;                  /* 1 = re/we file transform */
+   int sealed;                 /* finalize done (hash/encrypt/decrypt) */
+   int iv_ready;               /* encrypt: IV written; decrypt: IV consumed */
+   unsigned char taghold[16];  /* decrypt AEAD: held-back tag bytes */
+   int taghold_len;
+};
+#endif                                  /* HAVE_LIBSSL */
+
 /*
  * This union was pulled out of struct b_file and made non-anonymous
  * in order to eliminate an error in some version of gcc on amd64.
@@ -141,7 +261,11 @@ union f {
 #endif                                  /* PseudoPty */
 #if HAVE_LIBSSL
     SSL *ssl;
+    struct CryptoFile *cf;
 #endif                                  /* HAVE_LIBSSL */
+#if HAVE_LIBSSH
+    struct SSHfile *sshf;
+#endif                                  /* HAVE_LIBSSH */
    int fd;        /*   other int-based file descriptor */
    };
 
@@ -152,6 +276,9 @@ struct b_file {                 /* file block */
 #ifdef Concurrent
    word mutexid;
 #endif                          /* Concurrent */
+#ifdef PosixFns
+   word sock_gen;               /* listener-cache generation; 0 = none */
+#endif                          /* PosixFns */
    struct descrip fname;        /*   file name (string qualifier) */
    };
 

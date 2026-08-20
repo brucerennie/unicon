@@ -67,6 +67,11 @@
 
 #if HAVE_LIBSSL
   #define Fs_Encrypt   0200000000      /* encrypted sockets */
+  #define Fs_Crypto   01000000000      /* cryptographic context (hash/sign/...) */
+#endif
+
+#if HAVE_LIBSSH
+  #define Fs_SSH       0400000000     /* ssh session/channel */
 #endif
 
 #endif                                  /* PosixFns */

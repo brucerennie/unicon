@@ -316,8 +316,29 @@ typedef int DIR;
 #endif                                  /* PosixFns */
 
 #if HAVE_LIBSSL
-typedef int SSL_CTX, SSL;
+typedef int SSL_CTX, SSL, SSL_METHOD;
+typedef int BIO, EVP_PKEY, EVP_MD, EVP_CIPHER, EVP_MD_CTX, EVP_CIPHER_CTX;
+typedef int EVP_PKEY_CTX, X509;
+typedef int /* STACK_OF(X509) */ stack_st_X509;
 #endif                                  /* LIBSSL */
+
+#if HAVE_LIBSSH
+typedef int ssh_session, ssh_channel, ssh_key, sftp_session, sftp_file, sftp_dir;
+typedef int sftp_attributes;
+typedef int uint32_t;
+/*
+ * rtt only needs to parse member accesses on the callbacks struct;
+ * the generated C sees the real definition from libssh/callbacks.h.
+ */
+struct ssh_channel_callbacks_struct {
+   size_t size;
+   void *userdata;
+   void *channel_data_function;
+   void *channel_eof_function;
+   void *channel_exit_status_function;
+   };
+typedef struct ssh_channel_callbacks_struct *ssh_channel_callbacks;
+#endif                                  /* HAVE_LIBSSH */
 
 #ifdef Concurrent
        typedef int pthread_key_t, sigset_t;
@@ -374,6 +395,7 @@ typedef int OggVorbis_File, vorbis_info;
 typedef int stringint, inst;
 #endif
 
+/* stdarg: RTT stubs the name only; keep out of rttmain add_tdef(). */
 typedef int va_list, siptr;
 
 /*

@@ -12,6 +12,7 @@ This page indexes manuals, technical reports, and HTML shipped under `doc/` in t
   - [Unicode reference data (for UTF-8 / UTR work)](#unicode-reference-data-for-utf-8-utr-work)
 - [Other documentation](#other-documentation)
   - [General Unicon pages](#general-unicon-pages)
+  - [uscribe user guide](#uscribe-user-guide)
   - [Icon 9.3 legacy](#icon-93-legacy)
   - [UDB — Unicon debugger](#udb-unicon-debugger)
 - [Building PDFs from LaTeX](#building-pdfs-from-latex)
@@ -41,6 +42,11 @@ Implementation-oriented LaTeX (parts 1–3, appendices) for *The Icon Programmin
 
 ## Unicon Technical Reports (UTRs)
 
+On GitHub Pages the RST report catalog is at
+[doc/utr/html/](utr/html/)
+(e.g. `https://…/unicon/doc/utr/html/`). RST sources listed in
+`utr/utr.manifest` are built by `make -C doc/utr html`.
+
 Numbered project reports (UTR #1, UTR #2, …). HTML, PDF, and office exports may live under `doc/utr/`, `doc/unicon/`, or `doc/udb/` depending on age and format. The [Technical Reports](https://unicon.sourceforge.io/reports.html) page on [unicon.sourceforge.io](https://unicon.sourceforge.io/) lists reports with links to PDFs/HTML on unicon.org and elsewhere.
 
 Standard Markdown tables use equal column widths, so a narrow “#” column still wastes space. Each report below is one line: **UTR #N** — format links — *title*.
@@ -60,6 +66,10 @@ Standard Markdown tables use equal column widths, so a narrow “#” column sti
 - **UTR #13** — [OpenDocument](utr/utr13.odt) — *The Unicon Messaging Facilities*
 - **UTR #14** — [Word](utr/utr14.docx) — *Unicon Threads User's Guide and Reference Manual*
 - **UTR #21** — [HTML](utr/utr21.html) — *Configuring and Building Version 13 of Unicon*
+- **UTR #26** — [RST](utr/utr26.rst), [HTML](utr/html/utr26.html) — *Native SSH and SFTP Support in Unicon* (libssh-backed client)
+- **UTR #27** — [RST](utr/utr27.rst), [HTML](utr/html/utr27.html) — *Cryptographic Facilities in Unicon* (hash, HMAC, sign, encrypt, TLS/DTLS)
+- **UTR #28** — [RST](utr/utr28.rst), [HTML](utr/html/utr28.html) — *Multicast and Socket Attributes in Unicon* (``open()`` attrs, ASM/SSM, ``Attrib()``)
+- **UTR #29** — [RST](utr/utr29.rst), [HTML](utr/html/utr29.html) — *Raw Sockets and Packet Layouts in Unicon* (mode ``nr``, PacketSpec, ICMP, IGMP)
 
 ### Unicode reference data (for UTF-8 / UTR work)
 
@@ -87,6 +97,26 @@ Pages that are not a single numbered UTR (guides, indexes, examples).
 | [simple.html](unicon/simple.html), [simp.html](unicon/simp.html) | *A Simple Example — Using the CGI Icon Library* |
 
 *Location in tree: `doc/unicon/`.*
+
+### uscribe user guide
+
+HTML user guide for *uscribe* (Unicon’s book documentation generator).
+On GitHub Pages the built guide is at
+[doc/uscribe/out/](uscribe/out/index.html)
+(e.g. `https://…/unicon/doc/uscribe/out/`). Sources are RST; build
+locally with:
+
+```sh
+make -C doc/uscribe
+# open doc/uscribe/out/index.html
+```
+
+- [Built HTML (Pages)](uscribe/out/index.html) — generated user guide
+- [PDF](uscribe/out/uscribe-userguide.pdf) — same guide as a single PDF
+- [README](uscribe/README.md) — build notes
+- [`*.rst` sources](uscribe/) — manual chapters
+
+*Location in tree: `doc/uscribe/`. Tool sources: `uni/uscribe/`.*
 
 ### Icon 9.3 legacy
 

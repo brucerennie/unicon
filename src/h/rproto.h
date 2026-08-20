@@ -869,9 +869,6 @@ int checkOpenConsole( FILE *w, char *s );
 
       void waitkey(FILE *w);
 
-
-      /* defined in src/common */
-      int pathOpenHandle(char *fname, char *mode);
       void closelog();
 
 #endif                          /* MSWindows */
@@ -977,6 +974,7 @@ void closetmpfiles();
 int is_internal(char *s);
 int StartupWinSocket(void);
 void stat2rec                   (struct _stat *st, dptr dp, struct b_record **rp);
+dptr make_pwd_nt                (char *name, C_integer uid, C_integer gid, dptr result);
 #else                                   /* NT */
 void stat2rec                   (struct stat *st, dptr dp, struct b_record **rp);
 dptr make_pwd                   (struct passwd *pw, dptr result);
@@ -985,7 +983,14 @@ dptr make_group                 (struct group *pw, dptr result);
 
 dptr rec_structor               (char *s);
 dptr rec_structor3d             (char *type);
-int sock_connect                (char *s, int udp, int timeout, int af_fam);
+int sock_connect                (char *s, int sock_type, int timeout, int af_fam, dptr attr, int nattr);
+int apply_sock_attrs            (int s, int prebind, dptr attr, int nattr,
+                                 char *autojoin, char *autosource,
+                                 int join_only);
+int sattrib                     (int s, char *str, long len, dptr answer,
+                                 char *abuf);
+int sock_attrs_af               (dptr attr, int nattr);
+int is_sock_attr                (char *name);
 int sock_getstrg                (char *buf, int maxi, dptr file);
 int getmodefd                   (int fd, char *mode);
 int getmodenam                  (char *path, char *mode);
@@ -999,11 +1004,18 @@ dptr make_group                 (struct group *pw, dptr result);
 dptr make_host                  (struct hostent *pw, dptr result);
 
 dptr make_host_from_addrinfo(char *name, struct addrinfo *inforesult, dptr result);
-struct addrinfo *uni_getaddrinfo(char* addr, char* p, int is_udp, int family);
+struct addrinfo *uni_getaddrinfo(char* addr, char* p, int sock_type, int family);
 void            set_gaierrortext(int i);
 
 dptr make_serv                  (struct servent *pw, dptr result);
-int sock_listen                 (char *s, int udp, int af_fam);
+int sock_listen                 (char *s, int sock_type, int keep_listener,
+                                 int af_fam, dptr attr, int nattr);
+void sock_close                 (int fd);
+int sock_pin                    (int fd, word gen);
+void sock_release               (int fd);
+int sock_purge                  (int fd);
+void sock_unclaim               (int fd, word gen);
+word sock_listener_gen          (int fd);
 int sock_name                   (int sock, char* addr, char* addrbuf, int bufsize);
 int sock_me                     (int sock, char* addrbuf, int bufsize);
 int sock_send                   (char* addr, char* msg, int msglen, int af_fam);
@@ -1016,6 +1028,15 @@ dptr u_read                     (dptr f, int n, int fstatus, dptr d);
 void dup_fds                    (dptr d_stdin, dptr d_stdout, dptr d_stderr);
 int set_if_selectable           (struct descrip *f, fd_set *fdsp, int *n);
 void post_if_ready              (dptr ldp, dptr f, fd_set *fdsp);
+#if NT
+int win_crt_selectable          (unsigned int status);
+int win_crt_pending             (struct b_file *fp);
+struct b_list *findactivecrt    (struct b_list *lcs);
+int win_console_set_raw         (int fd, int raw);
+#endif                                  /* NT */
+#if UNIX
+int unix_tty_set_raw            (int fd, int raw);
+#endif                                  /* UNIX */
 #endif                                  /* PosixFns */
 
 #if COMPILER
@@ -1143,17 +1164,58 @@ int checkTypeInt (dptr da1, dptr da2, word n );
 
 char * getenv_var(const char *name);
 
+/* defined unguarded in errmsg.r; used by socket and SSL attribute code */
+void set_errortext_with_val(int i, char* errval);
+
 #if HAVE_LIBSSL
 #define TLS_SERVER 1
 #define TLS_CLIENT 2
 #define DTLS_SERVER 3
 #define DTLS_CLIENT 4
 
-SSL_CTX* create_ssl_context(dptr attr, int n, int type);
+SSL_CTX* create_ssl_context(dptr attr, int n, int type, int do_verify);
+int is_ssl_attr(char *name);
 int set_ssl_connection_errortext(SSL *ssl, int err);
 void set_ssl_context_errortext(int err, char* errtext);
-void set_errortext_with_val(int i, char* errval);
+int ssl_dtls_accept(SSL *ssl, int fd);
+int ssl_dtls_connect(SSL *ssl, int fd);
+int sock_udp_connect_saved(int fd);
+
+struct CryptoFile *crypto_open_material(dptr target, int israw, dptr attr,
+                                        int nattr, int *rc);
+int   crypto_write   (struct CryptoFile *cf, char *buf, word len);
+int   crypto_read    (struct CryptoFile *cf, char **bufp, word *lenp);
+int   crypto_reads   (struct CryptoFile *cf, word maxlen,
+                      char **bufp, word *lenp);
+int   crypto_close   (struct CryptoFile *cf);
+void  cryptofile_free    (struct CryptoFile *cf);
+int   crypto_setattr (struct CryptoFile *cf, char *name, char *val, word vlen);
+int   crypto_merge   (struct CryptoFile *cf, char *name, char *val);
+int   crypto_borrow  (struct CryptoFile *op, struct CryptoFile *src);
+int   crypto_getstate(struct CryptoFile *cf, char **blobp, word *lenp);
+char *crypto_rolename(struct CryptoFile *cf);
 #endif                                  /* HAVE_LIBSSL */
+
+#if HAVE_LIBSSH
+void set_ssh_errortext(ssh_session sess, int err);
+struct SSHfile *create_ssh_session(char *fnamestr, dptr attr, int n, int do_verify,
+                                   int ssh_cmd, int ssh_sftp);
+struct SSHfile *create_ssh_channel(struct SSHfile *sf, dptr attr, int n);
+void ssh_close_file(struct SSHfile *sshf);
+int ssh_file_write(struct SSHfile *sshf, char *s, word n);
+int ssh_getstrg(char *buf, int maxi, struct SSHfile *sshf);
+int ssh_pump(struct SSHfile *sshf, int block, int want_stdout);
+int ssh_chan_read(struct SSHfile *sshf, char *buf, int n, int block);
+int ssh_file_pending(struct b_file *fp);
+void ssh_drain_stderr(struct SSHfile *sshf, dptr d);
+struct SSHfile *create_sftp_file(struct SSHfile *sf, dptr attr, int n,
+                                 int status, int *isdir, int as_owner);
+int ssh_sftp_readdir(struct SSHfile *sshf, char *buf, int maxi);
+int ssh_sftp_stat_rec(struct SSHfile *sf, char *path, int use_fstat,
+                      struct descrip *dp, struct b_record **rp);
+int ssh_sftp_unlink(struct SSHfile *sf, char *path);
+int ssh_sftp_rename(struct SSHfile *sf, char *from, char *to);
+#endif                                  /* HAVE_LIBSSH */
 
 #ifdef GenericBSD
 /* in common/save.c */

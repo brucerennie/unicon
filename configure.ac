@@ -98,6 +98,11 @@ case $host_os in
         unicon_os="aix"
         AC_DEFINE([UNIX], [1], [Unix platform])
         ;;
+     *openbsd*)
+        unicon_os="openbsd"
+	AC_DEFINE([UNIX], [1], [Unix platform])
+	AC_DEFINE([OpenBSD], [1], [OpenBSD OS])
+        ;;
      *bsd*)
         # freebsd for now
         unicon_os="freebsd"
@@ -130,6 +135,9 @@ AC_ARG_ENABLE([graphics3d],
 AC_ARG_ENABLE([multiprograms],
 	[AS_HELP_STRING([--disable-multiprograms], [No multi programs support])],
 			[multiprograms=$enableval], [multiprograms=on])
+AC_ARG_ENABLE([native-coswitch],
+	[AS_HELP_STRING([--disable-native-coswitch], [Use pthread-based coswitch instead of native rswitch (asm/C)])],
+			[native_coswitch=$enableval], [native_coswitch=yes])
 AC_ARG_ENABLE([concurrency],
 	[AS_HELP_STRING([--disable-concurrency], [No concurrent thread support])],
 			[concurrency=$enableval], [concurrency=on])
@@ -142,6 +150,9 @@ AC_ARG_ENABLE([database],
 AC_ARG_ENABLE([ssl],
 	[AS_HELP_STRING([--disable-ssl], [No SSL support])],
 			[ssl=$enableval], [ssl=on])
+AC_ARG_ENABLE([ssh],
+	[AS_HELP_STRING([--disable-ssh], [No SSH support])],
+			[ssh=$enableval], [ssh=on])
 AC_ARG_ENABLE([audio],
 	[AS_HELP_STRING([--disable-audio], [No audio support])],
 			[audio=$enableval], [audio=on])
@@ -497,6 +508,9 @@ case $unicon_host in
      *aix*)
        ;;
      *bsd*)
+      # Like Linux: iconx must export rt symbols so dlopen'd libcfunc.so can bind cnv_* etc.
+      LDFLAGS="$LDFLAGS -rdynamic "
+      RLINK="-rdynamic -Wl,-E "
         ;;
      *macos*)
        LDDYN="-Xlinker -undefined -Xlinker dynamic_lookup -shared "
@@ -511,7 +525,8 @@ case $unicon_host in
        DASHG="-G"
        LDFLAGS="$LDFLAGS --static -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
        CPPFLAGS="$CPPFLAGS --static -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
-       LIBS="$LIBS -lgdi32 -lws2_32"
+       # crypt32 is required when statically linking OpenSSL (and thus libssh).
+       LIBS="$LIBS -lgdi32 -lws2_32 -liphlpapi -lcrypt32"
 
        WSTKLDFLAG="-Xlinker --stack -Xlinker 8192000"
        WGLIBS="-lopengl32 -lglu32 -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lwinmm"
@@ -684,6 +699,10 @@ if test "x$thin" = "xyes"; then
       ssl=no
    fi
 
+   if test "x$ssh" = "xon"; then
+      ssh=no
+   fi
+
    if test "x$multiprograms" = "xon"; then
       multiprograms=no
    fi
@@ -839,7 +858,11 @@ fi
 # Co-expression switch: path relative to TOPDIR (see Makedefs.in RSWITCH_SRC).  We do not copy
 # into src/common/rswitch.[csS]; leftover files from older configure runs are removed by
 # distclean/Pure in the top Makefile.
-if test -f "$srcdir/src/asm/$unicon_host-rswitch.s"; then
+if test "x$native_coswitch" = "xno"; then
+    echo "Native coswitch disabled, build will use pthreadcoswitch.c"
+    AC_DEFINE([NoNativeCoswitch], [1], [No Native Coswitch])
+    RSWITCH_REL=src/common/pthreadcoswitch.c
+elif test -f "$srcdir/src/asm/$unicon_host-rswitch.s"; then
     echo "Native coswitch (assembler) available for $unicon_host"
     RSWITCH_REL=src/asm/$unicon_host-rswitch.s
 elif test -f "$srcdir/src/asm/$unicon_host-rswitch.c"; then
@@ -851,6 +874,9 @@ else
     RSWITCH_REL=src/common/pthreadcoswitch.c
 fi
 AC_SUBST([RSWITCH_REL])
+if test "x$RSWITCH_REL" = "xsrc/common/pthreadcoswitch.c" && test "x$concurrency" = "xno"; then
+  AC_MSG_ERROR([pthread-based co-expression switching requires concurrency])
+fi
 
 if ! test "x$plugins" = "xno"; then
   AC_SEARCH_LIBS([dlopen], [dl dld],
@@ -909,6 +935,10 @@ if ! test "x$ssl" = "xno" ; then
    CHECK_OPENSSL()
 else
    AC_DEFINE([NoDatabase], [1], [No Database])
+fi
+
+if ! test "x$ssh" = "xno" ; then
+   CHECK_LIBSSH()
 fi
 
 # autoconf does this too late, so just do it now...
@@ -1208,6 +1238,21 @@ else
   stmp=" ! SSL"
 fi
 
+# want ssh
+if test "x$ssh" = "xyes" || test "x$ssh" = "xon" ; then
+  if test "x$cv_libssh"      = "xyes" ; then
+     sshtmp=" + SSH                : +ssh"
+  else
+     if test "x$ssh" = "xyes" ; then
+        AC_MSG_ERROR("ssh requires libssh-dev or equivalent")
+     fi
+     sshtmp=" - SSH                : -ssh"
+  fi
+else
+#disabled ssh
+  sshtmp=" ! SSH"
+fi
+
 revision=`./config/scripts/version.sh "revision"`
 
 san_summary=""
@@ -1251,6 +1296,7 @@ $atmp
 $vtmp
 $dtmp
 $stmp
+$sshtmp
 EOF
 
 

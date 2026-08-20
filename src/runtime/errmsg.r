@@ -68,100 +68,32 @@ void set_gaierrortext(int i)
 }
 #endif                          /* HAVE_GETADDRINFO */
 
-#if HAVE_LIBSSL
+
+#if HAVE_LIBSSH
 /*
- * set &errornumber and &errortext based on error values from openssl.
+ * set &errornumber and &errortext from a libssh session error.
+ * err is one of the 132x SSH error codes from the errtab above,
+ * used as &errornumber and as the fallback message when the
+ * session has no error string of its own.
  */
-void set_ssl_context_errortext(int err, char* errval)
-{
-   int buflen = 0;
-   char* sslerr;
-   CURTSTATE();
-
-   if (err != 0)
-     k_errornumber = err;
-   else
-     k_errornumber = 1301;
-
-   if (errval != NULL) {
-     buflen = strlen(errval);
-     if ((StrLoc(k_errorvalue) = alcstr(NULL, buflen)) != NULL) {
-       strcpy(StrLoc(k_errorvalue), errval);
-       have_errval = 1;
-       StrLen(k_errorvalue) = buflen;
-     }
-   }
-
-   sslerr = (char *) ERR_reason_error_string(ERR_get_error());
-
-   if (sslerr != NULL) {
-     buflen = strlen(sslerr);
-     if ((StrLoc(k_errortext) = alcstr(NULL, buflen)) != NULL) {
-       strcpy(StrLoc(k_errortext), sslerr);
-       StrLen(k_errortext) = buflen;
-     }
-   }
-   else
-     set_errortext(1301);
-
-
-}
-
-int set_ssl_connection_errortext(SSL *ssl, int err)
+void set_ssh_errortext(ssh_session sess, int err)
 {
    int buflen;
-   char* buf;
-   char buf2[32];
+   char *buf = NULL;
    CURTSTATE();
 
-   err = SSL_get_error(ssl, err);
    k_errornumber = err;
-   switch (err) {
-   case SSL_ERROR_WANT_WRITE  : snprintf(buf2, 32, "SSL_ERROR_WANT_WRITE"); break;
-   case SSL_ERROR_WANT_READ   : snprintf(buf2, 32 ,"SSL_ERROR_WANT_READ"); break;
-   case SSL_ERROR_WANT_ACCEPT : snprintf(buf2, 32 ,"SSL_ERROR_WANT_ACCEPT"); break;
-   case SSL_ERROR_WANT_CONNECT: snprintf(buf2, 32 ,"SSL_ERROR_WANT_CONNECT"); break;
-   case SSL_ERROR_SYSCALL     :
-     if (errno == 0) {
-       /*
-        * OpenSSL bug: an enexpcted EOF from peer, see:
-        * https://www.openssl.org/docs/man1.1.1/man3/SSL_get_error.html
-        */
-       snprintf(buf2, 32 ,"unexpected EOF from peer");
-     }
-     else {
-       set_syserrortext(errno);
-       return err;
-     }
-
-     break;
-   case SSL_ERROR_ZERO_RETURN : return err; /* EOF */
-   case SSL_ERROR_SSL         : snprintf(buf2, 32 ,"SSL_ERROR_SSL"); break;
-   default                    : snprintf(buf2, 32 ,"SSL_ERROR_OTHER"); break;
+   if (sess != NULL)
+      buf = (char *) ssh_get_error(sess);
+   if (buf == NULL || *buf == '\0') {
+      set_errortext(err);
+      return;
    }
-
-
-#ifdef DEVMODE_DEBUG
-   {
-     char buf3[1024];
-     ERR_error_string_n(ERR_get_error(), buf3 , 1024);
-     printf("\n%s\n", buf3);
-   }
-#endif                          /* DEVMODE_DEBUG */
-
-   buf = (char *) ERR_reason_error_string(ERR_get_error());
-   if (buf == NULL)
-     buf = buf2;
-
    buflen = strlen(buf);
-   if ((StrLoc(k_errortext) = alcstr(NULL, buflen)) != NULL) {
-     strcpy(StrLoc(k_errortext), buf);
-     StrLen(k_errortext) = buflen;
-   }
-
-   return err;
+   if ((StrLoc(k_errortext) = alcstr(buf, buflen)) != NULL)
+      StrLen(k_errortext) = buflen;
 }
-#endif                          /* HAVE_LIBSSL */
+#endif                          /* HAVE_LIBSSH */
 
 /*
  * set &errno and &errortext based on a system call failure that set errno.

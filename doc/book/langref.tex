@@ -1903,6 +1903,38 @@ hyperbolic tangent of \texttt{r}. Arguments are given in radians.
 
 \bigskip
 \hrule\vspace{0.1cm}
+\index{Attrib}
+\noindent
+{\bf Attrib(x, ...) : x* } \hfill {\bf get or set attributes}
+
+\noindent
+\texttt{Attrib()} gets or sets attributes of its first argument.
+For a network socket file, trailing string arguments use the same
+\texttt{"\textit{name}"} / \texttt{"\textit{name}=\textit{value}"} form
+as \texttt{open()} socket attributes and \texttt{WAttrib()}: assignments
+set options (including \texttt{join}/\texttt{leave} for multicast
+memberships); bare names query the current value except for
+\texttt{join}, \texttt{leave}, and \texttt{source}, which fail.
+Boolean values are \texttt{yes}/\texttt{no}; numeric values are
+integers. Socket attributes do not require the Concurrent build
+feature.
+For an SSH channel file, \texttt{Attrib(c, "exitstatus")} produces the
+remote command's exit status (and fails until it has arrived),
+\texttt{Attrib(c, "stderr")} returns stderr bytes accumulated since the
+previous such call, and \texttt{Attrib(c, "eof")} produces 1 once remote
+EOF has been seen.
+For a cryptographic handle, \texttt{Attrib(h, "type")} reports the
+material role; assignments such as \texttt{op=}, \texttt{alg=},
+\texttt{cipher=}, \texttt{iv=}, and \texttt{sig=} are allowed only in
+the idle window between operations. Digest checkpoint
+\texttt{Attrib(h, "state")}~/~\texttt{Attrib(h, "state=\textit{blob}")}
+is not supported with OpenSSL~3.
+For a co-expression or list, integer attribute codes from
+\texttt{threadh.icn} query or set thread inbox/outbox and channel limits
+(see Chapter~8; requires Concurrent).
+
+\bigskip
+\hrule\vspace{0.1cm}
 \index{bal}
 \noindent
 {\bf bal(cs:\&cset, cs:'(', cs:')', s, i, i) : integer* } \hfill {\bf balance string}
@@ -2866,8 +2898,17 @@ connection from a UDP network socket\\
 TCP network socket \\
  \ \ \ \ \texttt{"nu"\ \ \ \ }connect to a
 UDP network socket\\
+ \ \ \ \ \texttt{"nr"\ \ \ \ }open a raw
+IP socket (\texttt{SOCK\_RAW}; requires \texttt{proto=})\\
  \ \ \ \ \texttt{"e"\ \ \ \ } use SSL/TLS protocol to
-encrypt the network socket\\
+encrypt the network socket; alone or as
+\texttt{"er"}/\texttt{"eh"}, also open cryptographic
+handles (hash/HMAC/sign/encrypt; see Chapter~6).
+With a file read/write mode, \texttt{"re"}~/~\texttt{"we"} open a
+file-transform crypto handle. With UDP
+(\texttt{"nue"}~/~\texttt{"naue"}), encrypt means DTLS.\\
+ \ \ \ \ \texttt{"h"\ \ \ \ } open an SSH client
+session (requires \texttt{libssh}; see Chapter~6)\\
  \ \ \ \ \texttt{"m"\ \ \ \ }connect to a
 messaging server (HTTP, HTTPS, SMTP, POP, ...)\\
  \ \ \ \ \texttt{"o"\ \ \ \ }open an
@@ -2898,12 +2939,41 @@ domain socket. If the host name is null, it represents the current
 host. Mode \texttt{"n"} allows an optional third parameter,
 an integer timeout (in milliseconds) after which \texttt{open()} fails
 if no connection has been established by that time.
+Trailing arguments may also be \texttt{"\textit{name}=\textit{value}"}
+socket attributes (\texttt{join}, \texttt{leave}, \texttt{source},
+\texttt{iface}, \texttt{ttl}, \texttt{mcastloop},
+\texttt{reuseaddr}, \texttt{reuseport}, \texttt{broadcast},
+\texttt{rcvbuf}, \texttt{sndbuf}, \texttt{proto}, \texttt{hdrincl});
+boolean values are \texttt{yes} or \texttt{no}. \texttt{iface}
+accepts an IPv4 address, a numeric interface index, or (on UNIX) an
+interface name; when omitted, a multicast join covers every UP IPv4
+interface and a multicast send uses the first non-loopback IPv4
+address (else loopback). \texttt{ttl} sets unicast and multicast hop
+limits; \texttt{mcastloop} controls delivery of the host's own
+multicasts (default on); \texttt{rcvbuf}/\texttt{sndbuf} take a byte
+size. Listeners default to \texttt{reuseaddr=yes}; multicast binds
+also get \texttt{reuseport=yes} where available. Binding a UDP socket
+to a multicast group joins that group; \texttt{source@group:port} or
+\texttt{source=} performs a source-specific join instead (IPv4 and
+IPv6; for IPv6 SSM prefer an explicit \texttt{iface=}). Sending to
+\texttt{255.255.255.255} enables broadcast.
+Mode \texttt{"nr"} opens a raw IP socket and requires
+\texttt{proto=\textit{name{\textbar}n}} (for example \texttt{icmp},
+\texttt{igmp}, or 0--255); the host argument is a bare address with
+no port. Optional \texttt{hdrincl=yes} sets \texttt{IP\_HDRINCL}.
+Packet bytes are built by the application (see package \texttt{net}
+/ \texttt{PacketSpec} in Chapter~5). The same attributes can be read
+or changed after \texttt{open()} with \texttt{Attrib()} (except
+\texttt{proto}, which is fixed at \texttt{socket()} time). See
+Chapter~5 for examples.
 
 For a UDP socket, there is not really a connection, but any writes to
 that file will send a datagram to that address, so that the address
 doesn't have to be specified each time. Also,
-\texttt{read()} or \texttt{reads()} cannot be performed on a UDP
-socket; use receive. UDP sockets must be in the INET domain; the
+\texttt{read()} or \texttt{reads()} cannot be performed on a plain UDP
+socket; use receive. Encrypted UDP (DTLS, modes \texttt{"nue"}~/~\texttt{"naue"})
+uses \texttt{write}/\texttt{read} through the SSL layer like TLS.
+UDP sockets must be in the INET domain; the
 address must have a colon. 
 
 For a DBM database, only one modifier character may be used: if
@@ -2927,6 +2997,37 @@ For 2D and 3D windows, attribute values may be specified in the
 following arguments to \texttt{open()}. \texttt{open()} fails if a
 window cannot be opened or an attribute cannot be set to a requested
 value.
+
+When opening an SSH session (mode \texttt{"h"}), the first argument is a
+host or \texttt{user@host}, optionally with \texttt{:port} (same form as
+socket addresses; IPv6 uses \texttt{[addr]:port}). Trailing attributes
+include \texttt{user=}, \texttt{key=}, \texttt{keypass=},
+\texttt{password=}, \texttt{hostkeyfile=}, \texttt{cmd=} (requires mode
+\texttt{"hc"}),
+\texttt{term=}/\texttt{cols=}/\texttt{rows=} (interactive PTY), and
+\texttt{channel=} (\texttt{yes}/\texttt{no}; \texttt{channel=no} is a
+transport-only session), and \texttt{verifyPeer=} (\texttt{yes}/\texttt{no}).
+Mode \texttt{"h-"} or \texttt{verifyPeer=no} skips host-key verification.
+\texttt{open(s, "hc", ...)} on an existing SSH file opens another channel on
+the same session; \texttt{open(s, "hs", "path=\textit{path}", ...)}
+opens a remote file or directory over SFTP. See Chapter~6.
+
+When opening a cryptographic handle (modes \texttt{"e"}, \texttt{"er"},
+or \texttt{"eh"}, without a network \texttt{"n"}), the first argument is
+a digest name (\texttt{"eh"}), a key/certificate path, a raw key string
+(\texttt{"er"}), or another crypto handle that supplies material.
+Trailing attributes include \texttt{op=} (\texttt{hash}, \texttt{hmac},
+\texttt{sign}, \texttt{verify}, \texttt{encrypt}, \texttt{decrypt}),
+\texttt{alg=}, \texttt{cipher=}, \texttt{iv=}, \texttt{sig=}, and
+\texttt{keypass=} (key-file passphrase; \texttt{password=} is an alias).
+Defaults are \texttt{sha256} and \texttt{aes-256-gcm}.
+Modes \texttt{"re"} and \texttt{"we"} take a data-file path as the
+target and obtain key material from \texttt{key=} or a handle attribute.
+Encrypted sockets (\texttt{"ne"}, \texttt{"nue"}, \ldots) also accept
+crypto material handles as attributes so identity can be reused across
+connections. Mode \texttt{"ne-"} or \texttt{verifyPeer=no} skips peer
+certificate verification; \texttt{keypass=} unlocks an encrypted
+private key. See Chapter~6.
 
 \bigskip\hrule\vspace{0.1cm}
 \index{opmask}
@@ -3115,7 +3216,11 @@ or fails if the conversion cannot be performed.
 to the port associated with \texttt{f}, waiting if necessary. The
 returned value is a record of type \texttt{posix\_message(addr, msg)},
 containing the address of the sender and the contents of the message
-respectively. 
+respectively. For an SSH channel file, \texttt{receive(c)} instead
+yields the next channel event in arrival order: \texttt{addr} is
+\texttt{"stdout"}, \texttt{"stderr"}, or \texttt{"exit"}, and
+\texttt{msg} holds the data (the exit status as a string for
+\texttt{"exit"}).
 
 \bigskip\hrule\vspace{0.1cm}
 \index{remove}
@@ -3124,7 +3229,8 @@ respectively.
 
 \noindent
 \index{remove file}\index{file!remove}\texttt{remove(s)} removes the
-file named \texttt{s}.
+file named \texttt{s}. \texttt{remove(s, path)} removes a remote path
+over SFTP when \texttt{s} is an SSH session file.
 
 \bigskip\hrule\vspace{0.1cm}
 \index{rename}
@@ -3133,7 +3239,8 @@ file named \texttt{s}.
 
 \noindent
 \index{file!rename}\texttt{rename(s1,s2)} renames the file named
-\texttt{s1} to have the name \texttt{s2}.
+\texttt{s1} to have the name \texttt{s2}. \texttt{rename(s, from, to)}
+renames a remote path over SFTP when \texttt{s} is an SSH session file.
 
 \bigskip\hrule\vspace{0.1cm}
 \index{repl}
@@ -3385,7 +3492,10 @@ integers that may be formatted with the \texttt{ctime()} and
 listing option of the UNIX \texttt{ls(1)} command. For example,
 \texttt{"-rwxrwsr-x"} represents a plain
 file with a mode of 2775 (octal). \texttt{stat(f)} fails if filename or
-path \texttt{f} does not exist.
+path \texttt{f} does not exist. \texttt{stat(c)} on an open SFTP file
+uses the remote file handle; \texttt{stat(s, path)} stats a remote path
+on SSH session \texttt{s} without opening it. Fields the SFTP server
+did not send are null rather than zero.
 
 \bigskip\hrule\vspace{0.1cm}
 \index{staticnames}
@@ -4996,6 +5106,20 @@ length\\
 1306 \ \ \ \ \ \ \ cipher error\\
 1307 \ \ \ \ \ \ \ private key and certificate mismatch\\
 1308 \ \ \ \ \ \ \ unknown protocol\\
+1310 \ \ \ \ \ \ \ bad socket attribute\\
+1311 \ \ \ \ \ \ \ unknown cryptographic algorithm or cipher\\
+1312 \ \ \ \ \ \ \ cryptographic handle lacks required material\\
+1313 \ \ \ \ \ \ \ duplicate cryptographic material role\\
+1314 \ \ \ \ \ \ \ AEAD authentication failed\\
+1315 \ \ \ \ \ \ \ signature verification failed\\
+1316 \ \ \ \ \ \ \ invalid cryptographic operation state\\
+1317 \ \ \ \ \ \ \ cryptographic material could not be loaded\\
+1320 \ \ \ \ \ \ \ SSH error\\
+1321 \ \ \ \ \ \ \ bad ssh attribute\\
+1322 \ \ \ \ \ \ \ SSH authentication error\\
+1323 \ \ \ \ \ \ \ SSH host key verification error\\
+1324 \ \ \ \ \ \ \ SSH channel error\\
+1325 \ \ \ \ \ \ \ SFTP error\\
 
 \subsection*{System errors}
 

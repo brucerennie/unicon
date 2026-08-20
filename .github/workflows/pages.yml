@@ -1,44 +1,64 @@
-# GitHub Pages (single _site/ artifact); built by config/scripts/gh-pages/build-gh-pages-site.sh:
-#   Shared nav + CSS under config/scripts/gh-pages/; assets at /unicon/assets/site.css
-#   README.md → index.html; doc/** mirrored; doc/README.md → doc/index.html
-#   CONTRIBUTING / COPYING → .md + .html; config/editor/**; doc/book, doc/icon, doc/ib indexes
-#   Link pass: internal .md/COPYING/README paths → /unicon/… HTML routes
+# GitHub Pages site under /unicon/ (github.io project pages).
 #
-# Pages must use THIS workflow (pandoc + nav). If Settings → Pages → Build: Deployment
-# source is a branch instead of "GitHub Actions", GitHub serves Jekyll-rendered README
-# (no top nav, theme style.css). Fix: Settings → Pages → set Source to GitHub Actions.
-# https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
+# Built by config/scripts/gh-pages/build-gh-pages-site.sh (pandoc + nav).
+# Also builds the uscribe user guide (doc/uscribe) so generated HTML
+# and uscribe-userguide.pdf are included under doc/uscribe/out/, and
+# RST Unicon Technical Reports (make -C doc/utr html) under doc/utr/html/.
 #
-# Pull requests run build only (no deploy) so you can verify before merge.
+# Upstream (uniconproject/unicon): a push to master/main builds the site
+# and publishes it with actions/deploy-pages. Generated HTML is not in
+# git, so "Deploy from a branch → master" cannot serve it (Jekyll on the
+# source tree also cannot). Settings → Pages → Source: GitHub Actions.
+#
+# Forks: still push the same tree to that fork's gh-pages branch
+# (peaceiris), e.g. https://jafaral.github.io/unicon/ — set the fork's
+# Pages source to branch gh-pages / (root).
+#
+# Fork PRs against upstream: GITHUB_TOKEN cannot publish the project
+# site. Preview on the fork after a push there (forks may still use a
+# gh-pages branch). The project site updates when the PR merges to
+# master.
 
 name: Pages
 
 on:
   push:
+    # Upstream deploys only from master/main (job if). Forks deploy any branch.
     branches:
-      - master
-      - main
+      - '**'
     paths:
       - 'README.md'
       - 'CONTRIBUTING.md'
       - 'COPYING'
       - 'doc/**'
+      - 'uni/uscribe/**'
       - 'config/editor/**'
       - 'config/scripts/gh-pages/**'
       - '.github/workflows/pages.yml'
+      - 'debian/control'
+      - 'configure.ac'
+      - 'Makefile'
+      - 'Makedefs*'
   pull_request:
+    types: [opened, synchronize, reopened]
     paths:
       - 'README.md'
       - 'CONTRIBUTING.md'
       - 'COPYING'
       - 'doc/**'
+      - 'uni/uscribe/**'
       - 'config/editor/**'
       - 'config/scripts/gh-pages/**'
       - '.github/workflows/pages.yml'
+      - 'debian/control'
+      - 'configure.ac'
+      - 'Makefile'
+      - 'Makedefs*'
   workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: pages-${{ github.event.pull_request.number || github.ref }}
@@ -46,29 +66,89 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository == 'uniconproject/unicon'
+    if: >-
+      (
+        github.repository == 'uniconproject/unicon' ||
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch'
+      ) &&
+      (
+        github.repository != 'uniconproject/unicon' ||
+        github.event_name != 'push' ||
+        github.ref == 'refs/heads/master' ||
+        github.ref == 'refs/heads/main'
+      )
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install Pandoc
-        run: sudo apt-get update && sudo apt-get install -y pandoc
+      - name: Install Pandoc and TeX (uscribe PDF)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc \
+            texlive-latex-recommended texlive-latex-extra \
+            texlive-fonts-recommended
+
+      - name: Install Unicon build dependencies
+        run: |
+          sudo apt-get install -q -y devscripts equivs
+          sudo mk-build-deps --install debian/control
+
+      - name: Configure Unicon (no graphics/iconc; enough for uscribe)
+        run: ./configure --disable-graphics --disable-iconc
+
+      - name: Build Unicon
+        run: make -j"$(nproc)"
+
+      - name: Build uscribe user guide HTML and PDF
+        run: |
+          make -C doc/uscribe html pdf
+          test -f doc/uscribe/out/index.html
+          test -f doc/uscribe/out/uscribe-userguide.pdf
+
+      - name: Build RST Unicon Technical Reports
+        run: |
+          make -C doc/utr pdf-rst
+          make -C doc/utr html
+          test -f doc/utr/html/index.html
+          # Every RST report in utr.manifest must have been rendered.
+          while read -r src; do
+            case "$src" in
+              ''|\#*) continue ;;
+            esac
+            base="${src%.rst}"
+            test -f "doc/utr/html/${base}.html"
+          done < doc/utr/utr.manifest
 
       - name: Build site
+        env:
+          UNICON_SITE_PREFIX: /unicon
         run: bash config/scripts/gh-pages/build-gh-pages-site.sh _site
 
-      - name: Upload site artifact (for deploy job)
+      - name: Upload site artifact
         uses: actions/upload-artifact@v4
         with:
           name: site
           path: _site
           retention-days: 3
 
-  deploy:
-    if: github.repository == 'uniconproject/unicon' && github.event_name != 'pull_request'
+  deploy-production:
+    # uniconproject: publish the master/main (or dispatch) build via Pages.
+    if: >-
+      github.repository == 'uniconproject/unicon' &&
+      github.event_name != 'pull_request' &&
+      (
+        github.ref == 'refs/heads/master' ||
+        github.ref == 'refs/heads/main' ||
+        github.event_name == 'workflow_dispatch'
+      )
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages-production-${{ github.repository }}
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
@@ -82,14 +162,104 @@ jobs:
           name: site
           path: _site
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  deploy-fork:
+    # Forks: any push/dispatch → that fork's gh-pages branch.
+    if: >-
+      github.repository != 'uniconproject/unicon' &&
+      github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages-gh-pages-${{ github.repository }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site
+
+      - name: Deploy to gh-pages (site root)
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          keep_files: true
+          commit_message: "Deploy Pages ${{ github.sha }}"
+
+  # Fork PRs cannot publish uniconproject.github.io; point authors at the fork.
+  skip-preview-fork:
+    if: >-
+      github.repository == 'uniconproject/unicon' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Note fork preview location
+        env:
+          FORK_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
+        run: |
+          echo "### Pages preview skipped on upstream"
+          echo "This fork PR does not publish https://uniconproject.github.io/unicon/"
+          echo "The project site updates when the PR merges to master."
+          echo "Live preview (after push to the fork with Pages enabled):"
+          echo "  https://${FORK_OWNER}.github.io/unicon/"
+          echo "  https://${FORK_OWNER}.github.io/unicon/doc/uscribe/out/"
+          echo "  https://${FORK_OWNER}.github.io/unicon/doc/utr/html/"
+
+      - name: Comment that fork PR preview was skipped
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+            const owner = context.payload.pull_request.head.repo.owner.login;
+            const forkSite = `https://${owner}.github.io/unicon/`;
+            const guide = `${forkSite}doc/uscribe/out/`;
+            const utr = `${forkSite}doc/utr/html/`;
+            const marker = '<!-- pages-pr-preview-skipped -->';
+            const body =
+              `${marker}\n` +
+              `### Pages preview skipped on upstream\n\n` +
+              `This PR is from a fork, so it cannot publish ` +
+              `https://uniconproject.github.io/unicon/.\n\n` +
+              `The project site updates when this merges to \`master\`. ` +
+              `For a live preview, push to your fork (Actions enabled; ` +
+              `Pages → Deploy from a branch \`gh-pages\` / (root)). ` +
+              `Site:\n` +
+              `- ${forkSite}\n` +
+              `- uscribe guide: ${guide}\n` +
+              `- Technical reports (RST): ${utr}\n`;
+
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+              });
+              if (comments.some(c => c.body && c.body.includes(marker))) return;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body,
+              });
+            } catch (err) {
+              core.warning(
+                `Could not comment on PR #${pr} (fork PRs often lack ` +
+                `pull-requests: write): ${err.message}`
+              );
+            }

@@ -779,10 +779,12 @@ enable_option_checking
 enable_graphics
 enable_graphics3d
 enable_multiprograms
+enable_native_coswitch
 enable_concurrency
 enable_pattern
 enable_database
 enable_ssl
+enable_ssh
 enable_audio
 enable_voip
 enable_plugins
@@ -824,6 +826,7 @@ with_jvoip
 with_odbc
 with_pthread
 with_ssl
+with_libssh
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1462,10 +1465,14 @@ Optional Features:
   --disable-graphics      No graphics subsystem
   --disable-graphics3d    No 3D graphics support
   --disable-multiprograms No multi programs support
+  --disable-native-coswitch
+                          Use pthread-based coswitch instead of native rswitch
+                          (asm/C)
   --disable-concurrency   No concurrent thread support
   --disable-pattern       No pattern type support
   --disable-database      No database support
   --disable-ssl           No SSL support
+  --disable-ssh           No SSH support
   --disable-audio         No audio support
   --disable-voip          No VOIP support
   --disable-plugins       No loadfunc or plugins support
@@ -1525,6 +1532,7 @@ Optional Packages:
   --with-odbc[=DIR]       Use odbc package (DIR: custom library path)
   --with-pthread[=DIR]    Use pthread package (DIR: custom library path)
   --with-ssl[=DIR]        Use ssl package (DIR: custom library path)
+  --with-libssh[=DIR]     Use libssh package (DIR: custom library path)
 
 Some influential environment variables:
   CC          C compiler command
@@ -3551,6 +3559,15 @@ printf "%s\n" "#define SUN 1" >>confdefs.h
 printf "%s\n" "#define UNIX 1" >>confdefs.h
 
         ;;
+     *openbsd*)
+        unicon_os="openbsd"
+
+printf "%s\n" "#define UNIX 1" >>confdefs.h
+
+
+printf "%s\n" "#define OpenBSD 1" >>confdefs.h
+
+        ;;
      *bsd*)
         # freebsd for now
         unicon_os="freebsd"
@@ -3608,6 +3625,14 @@ else $as_nop
   multiprograms=on
 fi
 
+# Check whether --enable-native-coswitch was given.
+if test ${enable_native_coswitch+y}
+then :
+  enableval=$enable_native_coswitch; native_coswitch=$enableval
+else $as_nop
+  native_coswitch=yes
+fi
+
 # Check whether --enable-concurrency was given.
 if test ${enable_concurrency+y}
 then :
@@ -3638,6 +3663,14 @@ then :
   enableval=$enable_ssl; ssl=$enableval
 else $as_nop
   ssl=on
+fi
+
+# Check whether --enable-ssh was given.
+if test ${enable_ssh+y}
+then :
+  enableval=$enable_ssh; ssh=$enableval
+else $as_nop
+  ssh=on
 fi
 
 # Check whether --enable-audio was given.
@@ -6042,11 +6075,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++11 features" >&5
 printf %s "checking for $CXX option to enable C++11 features... " >&6; }
-if test ${ac_cv_prog_cxx_cxx11+y}
+if test ${ac_cv_prog_cxx_11+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_cxx11=no
+  ac_cv_prog_cxx_11=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -6088,11 +6121,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++98 features" >&5
 printf %s "checking for $CXX option to enable C++98 features... " >&6; }
-if test ${ac_cv_prog_cxx_cxx98+y}
+if test ${ac_cv_prog_cxx_98+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_cxx98=no
+  ac_cv_prog_cxx_98=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -9023,6 +9056,9 @@ case $unicon_host in
      *aix*)
        ;;
      *bsd*)
+      # Like Linux: iconx must export rt symbols so dlopen'd libcfunc.so can bind cnv_* etc.
+      LDFLAGS="$LDFLAGS -rdynamic "
+      RLINK="-rdynamic -Wl,-E "
         ;;
      *macos*)
        LDDYN="-Xlinker -undefined -Xlinker dynamic_lookup -shared "
@@ -9037,7 +9073,8 @@ case $unicon_host in
        DASHG="-G"
        LDFLAGS="$LDFLAGS --static -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
        CPPFLAGS="$CPPFLAGS --static -mnop-fun-dllimport -mwin32 -DPTW32_STATIC_LIB "
-       LIBS="$LIBS -lgdi32 -lws2_32"
+       # crypt32 is required when statically linking OpenSSL (and thus libssh).
+       LIBS="$LIBS -lgdi32 -lws2_32 -liphlpapi -lcrypt32"
 
        WSTKLDFLAG="-Xlinker --stack -Xlinker 8192000"
        WGLIBS="-lopengl32 -lglu32 -lkernel32 -luser32 -lgdi32 -lcomdlg32 -lwinmm"
@@ -9208,6 +9245,10 @@ if test "x$thin" = "xyes"; then
 
    if test "x$ssl" = "xon"; then
       ssl=no
+   fi
+
+   if test "x$ssh" = "xon"; then
+      ssh=no
    fi
 
    if test "x$multiprograms" = "xon"; then
@@ -12691,7 +12732,13 @@ fi
 # Co-expression switch: path relative to TOPDIR (see Makedefs.in RSWITCH_SRC).  We do not copy
 # into src/common/rswitch.[csS]; leftover files from older configure runs are removed by
 # distclean/Pure in the top Makefile.
-if test -f "$srcdir/src/asm/$unicon_host-rswitch.s"; then
+if test "x$native_coswitch" = "xno"; then
+    echo "Native coswitch disabled, build will use pthreadcoswitch.c"
+
+printf "%s\n" "#define NoNativeCoswitch 1" >>confdefs.h
+
+    RSWITCH_REL=src/common/pthreadcoswitch.c
+elif test -f "$srcdir/src/asm/$unicon_host-rswitch.s"; then
     echo "Native coswitch (assembler) available for $unicon_host"
     RSWITCH_REL=src/asm/$unicon_host-rswitch.s
 elif test -f "$srcdir/src/asm/$unicon_host-rswitch.c"; then
@@ -12705,6 +12752,9 @@ printf "%s\n" "#define NoNativeCoswitch 1" >>confdefs.h
     RSWITCH_REL=src/common/pthreadcoswitch.c
 fi
 
+if test "x$RSWITCH_REL" = "xsrc/common/pthreadcoswitch.c" && test "x$concurrency" = "xno"; then
+  as_fn_error $? "pthread-based co-expression switching requires concurrency" "$LINENO" 5
+fi
 
 if ! test "x$plugins" = "xno"; then
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
@@ -16370,6 +16420,21 @@ fi
 
 
 if test "x$with_ssl" != "xno"; then
+  # Homebrew keeps OpenSSL under a keg-only prefix (not on default -I/-L).
+  if test "x$ssl_HOME" = "x"; then
+    if test -f /opt/homebrew/opt/openssl/include/openssl/ssl.h; then
+      ssl_HOME=/opt/homebrew/opt/openssl
+    elif test -f /usr/local/opt/openssl/include/openssl/ssl.h; then
+      ssl_HOME=/usr/local/opt/openssl
+    elif test -f /usr/local/include/openssl/ssl.h; then
+      ssl_HOME=/usr/local
+    fi
+  fi
+  # MinGW --static builds need Windows system libs that OpenSSL references.
+  ssl_extralibs=
+  if test "x$unicon_os" = "xwindows"; then
+    ssl_extralibs="-lcrypt32 -lws2_32 -lgdi32 -ladvapi32 -luser32"
+  fi
 
 if test  x${ssl_HOME} != "x"
 then
@@ -16562,7 +16627,7 @@ do
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib ${ssl_extralibs} $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"
 then :
@@ -16826,7 +16891,7 @@ do
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -lcrypto ${ssl_extralibs} $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"
 then :
@@ -17091,7 +17156,7 @@ do
     ac_res="none required"
   else
     ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    LIBS="-l$ac_lib -lcrypto ${ssl_extralibs} $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"
 then :
@@ -17170,6 +17235,316 @@ fi
 else
 
 printf "%s\n" "#define NoDatabase 1" >>confdefs.h
+
+fi
+
+if ! test "x$ssh" = "xno" ; then
+
+
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if libssh is wanted" >&5
+printf %s "checking if libssh is wanted... " >&6; }
+
+# Check whether --with-libssh was given.
+if test ${with_libssh+y}
+then :
+  withval=$with_libssh; if test x$withval != xno ; then
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+      if test x$withval != xyes ; then
+         libssh_HOME="$withval"
+      fi
+    else
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    fi
+else $as_nop
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+fi
+
+
+
+if test "x$with_libssh" != "xno"; then
+
+  # FreeBSD and Homebrew keep headers under a non-default prefix.
+  # Without -I/-L, later compiles can miss <libssh/libssh.h>.
+  if test "x$libssh_HOME" = "x"; then
+    if test -f /usr/local/include/libssh/libssh.h; then
+      libssh_HOME=/usr/local
+    elif test -f /opt/homebrew/include/libssh/libssh.h; then
+      libssh_HOME=/opt/homebrew
+    fi
+  fi
+  # libssh depends on OpenSSL; MinGW --static also needs Windows system libs.
+  ssh_extralibs=
+  if test "x$unicon_os" = "xwindows"; then
+    ssh_extralibs="-lssl -lcrypto -lcrypt32 -lws2_32 -lgdi32"
+  fi
+
+if test  x${libssh_HOME} != "x"
+then
+
+	TMP_CPPFLAGS=$CPPFLAGS
+ 	TMP_LDFLAGS=$LDFLAGS
+ 	TMP_CFLAGS=$CFLAGS
+ 	TMP_LIBS=$LIBS
+
+	for part in -I${libssh_HOME}/include
+  	do
+		FOUND=
+		for itm in $CPPFLAGS -a -z $FOUND
+    		do
+			if test $itm = $part
+      			then
+				FOUND=1
+      			fi
+    		done
+
+		if test -z $FOUND ; then
+	   	   CPPFLAGS="$CPPFLAGS $part"
+		fi
+	done
+
+  	for part in -L${libssh_HOME}/lib
+  	do
+		FOUND=
+		for itm in $LDFLAGS -a -z $FOUND
+    		do
+			if test $itm = $part
+      			then
+				FOUND=1
+      			fi
+    		done
+
+		if test -z $FOUND ; then
+	   	   LDFLAGS="$LDFLAGS $part"
+		fi
+	done
+
+
+	cv_libthislib_h=yes
+	       for ac_header in libssh/libssh.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "libssh/libssh.h" "ac_cv_header_libssh_libssh_h" "$ac_includes_default"
+if test "x$ac_cv_header_libssh_libssh_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSSH_LIBSSH_H 1" >>confdefs.h
+
+else $as_nop
+  cv_libthislib_h=no
+fi
+
+done
+	if test x$cv_libthislib_h == xno ;  then
+
+	CFLAGS=$TMP_CFLAGS
+	LDFLAGS=$TMP_LDFLAGS
+	CPPFLAGS=$TMP_CPPFLAGS
+ 	LIBS=$TMP_LIBS
+
+
+	TMP_CPPFLAGS=$CPPFLAGS
+ 	TMP_LDFLAGS=$LDFLAGS
+ 	TMP_CFLAGS=$CFLAGS
+ 	TMP_LIBS=$LIBS
+
+	for part in -I${libssh_HOME}
+  	do
+		FOUND=
+		for itm in $CPPFLAGS -a -z $FOUND
+    		do
+			if test $itm = $part
+      			then
+				FOUND=1
+      			fi
+    		done
+
+		if test -z $FOUND ; then
+	   	   CPPFLAGS="$CPPFLAGS $part"
+		fi
+	done
+
+  	for part in -L${libssh_HOME}
+  	do
+		FOUND=
+		for itm in $LDFLAGS -a -z $FOUND
+    		do
+			if test $itm = $part
+      			then
+				FOUND=1
+      			fi
+    		done
+
+		if test -z $FOUND ; then
+	   	   LDFLAGS="$LDFLAGS $part"
+		fi
+	done
+
+
+	fi
+else
+
+	TMP_CPPFLAGS=$CPPFLAGS
+ 	TMP_LDFLAGS=$LDFLAGS
+ 	TMP_CFLAGS=$CFLAGS
+ 	TMP_LIBS=$LIBS
+
+	for part in
+  	do
+		FOUND=
+		for itm in $CPPFLAGS -a -z $FOUND
+    		do
+			if test $itm = $part
+      			then
+				FOUND=1
+      			fi
+    		done
+
+		if test -z $FOUND ; then
+	   	   CPPFLAGS="$CPPFLAGS $part"
+		fi
+	done
+
+  	for part in
+  	do
+		FOUND=
+		for itm in $LDFLAGS -a -z $FOUND
+    		do
+			if test $itm = $part
+      			then
+				FOUND=1
+      			fi
+    		done
+
+		if test -z $FOUND ; then
+	   	   LDFLAGS="$LDFLAGS $part"
+		fi
+	done
+
+
+fi
+        ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	# If we have multiple headers, any missing one will set this to no
+	cv_libthislib_h=yes
+               for ac_header in libssh/libssh.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "libssh/libssh.h" "ac_cv_header_libssh_libssh_h" "$ac_includes_default"
+if test "x$ac_cv_header_libssh_libssh_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LIBSSH_LIBSSH_H 1" >>confdefs.h
+
+else $as_nop
+  cv_libthislib_h=no
+fi
+
+done
+	if test x$cv_libthislib_h != xno ;  then
+	  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing ssh_new" >&5
+printf %s "checking for library containing ssh_new... " >&6; }
+if test ${ac_cv_search_ssh_new+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char ssh_new ();
+int
+main (void)
+{
+return ssh_new ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' ssh
+do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib ${ssh_extralibs} $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_search_ssh_new=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext
+  if test ${ac_cv_search_ssh_new+y}
+then :
+  break
+fi
+done
+if test ${ac_cv_search_ssh_new+y}
+then :
+
+else $as_nop
+  ac_cv_search_ssh_new=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_ssh_new" >&5
+printf "%s\n" "$ac_cv_search_ssh_new" >&6; }
+ac_res=$ac_cv_search_ssh_new
+if test "$ac_res" != no
+then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  cv_libssh=yes
+	      if test -n HAVE_LIBSSH ; then
+
+printf "%s\n" "#define HAVE_LIBSSH 1" >>confdefs.h
+
+	      fi
+
+else $as_nop
+  cv_libssh=no
+
+
+	CFLAGS=$TMP_CFLAGS
+	LDFLAGS=$TMP_LDFLAGS
+	CPPFLAGS=$TMP_CPPFLAGS
+ 	LIBS=$TMP_LIBS
+
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for lib ssh in (${libssh_HOME})" >&5
+printf %s "checking for lib ssh in (${libssh_HOME})... " >&6; }
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: failed" >&5
+printf "%s\n" "failed" >&6; }
+
+fi
+
+        else
+
+
+	CFLAGS=$TMP_CFLAGS
+	LDFLAGS=$TMP_LDFLAGS
+	CPPFLAGS=$TMP_CPPFLAGS
+ 	LIBS=$TMP_LIBS
+
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for lib ssh in (${libssh_HOME})" >&5
+printf %s "checking for lib ssh in (${libssh_HOME})... " >&6; }
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: failed" >&5
+printf "%s\n" "failed" >&6; }
+
+	fi
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+fi
 
 fi
 
@@ -19200,6 +19575,21 @@ else
   stmp=" ! SSL"
 fi
 
+# want ssh
+if test "x$ssh" = "xyes" || test "x$ssh" = "xon" ; then
+  if test "x$cv_libssh"      = "xyes" ; then
+     sshtmp=" + SSH                : +ssh"
+  else
+     if test "x$ssh" = "xyes" ; then
+        as_fn_error $? "\"ssh requires libssh-dev or equivalent\"" "$LINENO" 5
+     fi
+     sshtmp=" - SSH                : -ssh"
+  fi
+else
+#disabled ssh
+  sshtmp=" ! SSH"
+fi
+
 revision=`./config/scripts/version.sh "revision"`
 
 san_summary=""
@@ -19243,6 +19633,7 @@ $atmp
 $vtmp
 $dtmp
 $stmp
+$sshtmp
 EOF
 
 

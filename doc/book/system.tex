@@ -9,7 +9,9 @@ with the operating system. This chapter shows how to
   \item Launch and interact with other programs
   \item Handle abnormal events that would otherwise terminate your program
   \item Write \index{Internet}Internet \index{client}client and
-    \index{server}server applications.
+    \index{server}server applications, including multicast and
+    raw IP sockets
+  \item Hash, sign, and encrypt data with OpenSSL-backed crypto handles
 \end{itemize}
 
 \section{The Role of the System Interface}
@@ -772,6 +774,258 @@ use a standard Internet protocol, you should check first to see if the
 protocol is built-in to the language as part of the messaging
 facilities, described in the next section.
 
+\subsection*{Multicast and Socket Attributes}
+\index{multicast}\index{socket attributes}
+Network calls to \texttt{open()} accept trailing
+\texttt{"\textit{name}=\textit{value}"} attributes, in the same style as
+SSL and graphics windows. Boolean attributes take \texttt{yes} or
+\texttt{no}. Unknown attributes fail the \texttt{open()} with error
+1310 (\texttt{bad socket attribute}).
+A second \texttt{open()} of the same listener address with no socket
+attributes returns another file handle for the cached socket. An open
+that supplies attributes (\texttt{join=}, \texttt{leave=},
+\texttt{iface=}, and so on) gets its own socket instead, so it cannot
+retune earlier aliases; use \texttt{Attrib()} to change options or leave
+a group on a live shared handle. Closing one alias leaves the others
+usable until the last handle is closed.
+
+\index{IP multicast}IP multicast uses UDP. The common cases need no
+attributes at all: binding a UDP socket to a multicast group address
+joins that group (any-source multicast, ASM), and listeners default to
+\texttt{reuseaddr=yes} so a restarted server can rebind its port.
+When \texttt{iface=} is omitted, a join covers every UP IPv4
+interface, and a multicast send uses the first non-loopback IPv4
+address (or loopback if that is all the host has); kernel multicast
+loopback remains on by default, so a local receiver still sees the
+packets. Sending to the limited broadcast address
+\texttt{255.255.255.255} enables \texttt{SO\_BROADCAST} automatically.
+
+Here is a minimal receiver that joins a group and prints each
+datagram, and a matching sender. Run the receiver in one terminal and
+the sender in another:
+
+\iconcode{
+procedure main() \\
+\>   local f, r \\
+\>   f := open("239.1.1.1:5000", "nua") {\textbar} stop(\&errortext) \\
+\>   while r := receive(f) do \\
+\>\>\>write(r.addr, "  ", r.msg) \\
+end
+}
+
+\iconcode{
+procedure main() \\
+\>   local f, i \\
+\>   f := open("239.1.1.1:5000", "nu") {\textbar} stop(\&errortext) \\
+\>   every i := 1 to 5 do \\
+\>\>\>writes(f, "hello-" {\textbar}{\textbar} i) \& delay(500) \\
+end
+}
+
+For \index{SSM}source-specific multicast (SSM), name the source before
+the group with \texttt{@} --- \texttt{source@group}, matching common
+tooling and RFC~4607 \texttt{(S,G)} order --- or pass a
+\texttt{source=} attribute on a socket already bound to the group.
+Both IPv4 and IPv6 are supported; for IPv6 SSM, pass an explicit
+\texttt{iface=} (name or index) so the join uses a single interface:
+
+\iconcode{
+\>   f := open("192.168.1.1@239.1.1.1:5000", "nua") \\
+\>   f := open("239.1.1.1:5000", "nua", "source=192.168.1.1") \\
+\>   f := open("::1@ff3e::1:5000", "nua6", "iface=lo0") \\
+\>   f := open("ff3e::1:5000", "nua6", "iface=lo0", "source=::1")
+}
+
+When binding a wildcard address (or joining additional groups), use
+\texttt{join=} attributes. The form \texttt{join=\textit{group}} is ASM;
+\texttt{join=\textit{group},\textit{source}} is SSM. Attributes may be
+repeated, and ASM and SSM joins may be mixed in the same call. An
+explicit \texttt{iface=} restricts join and send to one interface
+instead of the defaults above; the value may be an IPv4 address, a
+numeric interface index, or an interface name such as \texttt{en0} or
+\texttt{eth0}. An \texttt{iface=} before a \texttt{join=} selects the
+interface used by that join:
+
+\iconcode{
+\>   f := open(":5000", "nua", \\
+\>\>\>"iface=192.168.1.10", \\
+\>\>\>"join=239.1.1.1", \\
+\>\>\>"join=232.1.1.1,10.0.0.5")
+}
+
+The remaining socket attributes are:
+
+\begin{description}
+\item[\texttt{reuseaddr=yes{\textbar}no}]
+Allows the local address to be reused while a previous binding is
+still in \texttt{TIME\_WAIT}. Listeners default to \texttt{yes} on
+UNIX.
+\item[\texttt{reuseport=yes{\textbar}no}]
+Where the platform provides \texttt{SO\_REUSEPORT}, allows several
+sockets to bind the same address and port (useful when sharing a
+multicast group among processes). Multicast binds enable it by
+default when available.
+\item[\texttt{broadcast=yes{\textbar}no}]
+Enables sending to the limited broadcast address. Opening
+\texttt{255.255.255.255} sets this automatically.
+\item[\texttt{ttl=\textit{n}}]
+Sets both the unicast and multicast hop limits (IPv4 TTL /
+IPv6 hops) to integer \texttt{\textit{n}}.
+\item[\texttt{mcastloop=yes{\textbar}no}]
+Controls whether a host receives its own multicast transmissions.
+The kernel default is \texttt{yes}.
+\item[\texttt{rcvbuf=\textit{n}}, \texttt{sndbuf=\textit{n}}]
+Set the socket receive and send buffer sizes in bytes.
+\end{description}
+
+Explicit attributes always override the defaults. On send or connect,
+a \texttt{source@group:port} address keeps only the group so the
+destination is the group address.
+
+After \texttt{open()}, the same attributes can be read or changed with
+\index{Attrib()}\texttt{Attrib()}, using the same
+\texttt{"\textit{name}"} / \texttt{"\textit{name}=\textit{value}"} style
+as \texttt{WAttrib()}:
+
+\iconcode{
+\>   Attrib(f, "ttl=4") \\
+\>   write(Attrib(f, "ttl")) \\
+\>   Attrib(f, "join=239.1.1.2") \\
+\>   Attrib(f, "iface=127.0.0.1", "leave=239.1.1.1")
+}
+
+\texttt{join} and \texttt{leave} add or drop memberships on an existing
+socket (forms match \texttt{open()}: \texttt{group} or
+\texttt{group,source}); pass \texttt{iface=} before \texttt{leave=}
+when the membership was joined on a specific interface. Memberships
+cannot be queried. Bare names for the other attributes return
+\texttt{yes}/\texttt{no}, an integer, or (for IPv4 \texttt{iface}) a
+dotted address; \texttt{source} cannot be queried either.
+
+\subsection*{Raw Sockets}
+\index{raw socket}\index{SOCK\_RAW}
+Mode \texttt{"nr"} opens an IP-level \index{raw IP}raw socket
+(\texttt{SOCK\_RAW}). Unlike TCP and UDP, the application supplies
+(and receives) upper-layer protocol bytes --- ICMP, IGMP, OSPF, PIM,
+and so on --- while the kernel still builds the IP header unless
+header inclusion is requested. Raw sockets usually require elevated
+privileges (root or administrator).
+
+The \texttt{proto=} attribute is required and selects the IP protocol
+number passed to \texttt{socket()}. Symbolic names include
+\texttt{icmp}, \texttt{igmp}, \texttt{ospf}, \texttt{pim}, and
+\texttt{gre}; any integer from 0 to 255 is also accepted. The first
+argument to \texttt{open()} is a bare host or address (no
+\texttt{:port}): raw destinations are hosts, not transport endpoints.
+IPv6 literals are accepted as hosts and are not misparsed as
+\texttt{host:port}.
+
+\iconcode{
+\>   f := open("8.8.8.8", "nr", "proto=icmp", "ttl=64") {\textbar} \\
+\>\>\>\>stop(\&errortext) \\
+\>   writes(f, icmp\_bytes) \\
+\>   r := receive(f) \\
+\>   write(r.addr, "  ", *r.msg, " bytes")
+}
+
+On many platforms a raw receive buffer includes the IPv4 header in
+front of the protocol message; strip it (or use a library helper)
+before decoding the upper layer. The optional \texttt{hdrincl=yes}
+attribute sets \texttt{IP\_HDRINCL} so writes may supply a complete
+IP header as well --- useful for crafted packets, but not required
+for ordinary ICMP or IGMP.
+
+The runtime does not build protocol payloads. Use
+\texttt{import~net} and the \texttt{PacketSpec} layouts in
+\texttt{uni/lib} (see below), or assemble the bytes yourself.
+
+\subsection*{PacketSpec and package net}
+\index{PacketSpec}\index{package net}\index{ICMP}\index{IGMP}
+The Unicon library module \texttt{packetspec} (package \texttt{net})
+provides a small declarative engine for fixed binary layouts:
+\texttt{field()}, \texttt{ipv4\_field()}, \texttt{checksum\_field()},
+\texttt{set()}/\texttt{build()}/\texttt{decode()}, and
+\texttt{describe()} for REPL discovery. Layer-1 helpers pack and
+unpack network-order integers (\texttt{u8}/\texttt{u16}/\texttt{u32}/
+\texttt{u64}) and IPv4 addresses (\texttt{ipv4}/\texttt{ipv4\_raw}/
+\texttt{to\_ipv4}/\texttt{get\_ipv4}). Internet checksums use
+\texttt{inet\_cksum()}; \texttt{checksum\_field()} may exclude a
+byte range from the sum. Fields marked with \texttt{require()}
+must be supplied before \texttt{build()}, unless
+\texttt{relax()} or \texttt{build(..., lax)} is used (for
+crafting incomplete test packets).
+
+Protocol classes inherit \texttt{PacketSpec} and override
+\texttt{define()} to declare their header. The library currently
+includes ICMP echo (\texttt{icmp.icn}) and IGMPv2/v3
+(\texttt{igmp.icn}):
+
+\begin{description}
+\item[\texttt{IcmpEchoRequest} / \texttt{IcmpEchoReply}]
+\texttt{echo(id, seq, payload)} or chainable
+\texttt{set("id",~…)\allowbreak.set("seq",~…)\allowbreak.build()};
+\texttt{match\_echo(pkt, id, seq)} succeeds on a matching type~0
+reply after stripping the IPv4 header from a raw receive buffer.
+\item[\texttt{Ping}]
+Session wrapper: \texttt{Ping(host)} opens
+\texttt{proto=icmp}, and \texttt{echo()} sends a request and waits
+for a matching reply (returns a table with \texttt{rtt} and
+\texttt{addr}).
+\item[\texttt{Igmpv2Query} / \texttt{Igmpv2Report} / \texttt{Igmpv2Leave}]
+Eight-octet IGMPv2 messages (RFC~2236); report/leave require
+\texttt{group}.
+\item[\texttt{Igmpv3Query} / \texttt{Igmpv3Report}]
+IGMPv3 queries with source lists and membership reports with group
+records (RFC~3376), including convenience methods
+\texttt{join}/\texttt{leave}/\texttt{join\_sources} for ASM and SSM.
+\item[\texttt{Igmp}]
+Session wrapper: \texttt{Igmp()} opens \texttt{proto=igmp};
+\texttt{recv()} returns a classified table (\texttt{kind},
+\texttt{addr}, \ldots); \texttt{report}/\texttt{leave}/\texttt{join}
+send common messages.
+\end{description}
+
+A minimal ICMP echo with the session wrapper:
+
+\iconcode{
+import net \\
+\\
+procedure main() \\
+\>   local p, v \\
+\>   p := Ping("8.8.8.8") {\textbar} stop(\&errortext) \\
+\>   write(p.describe()) \\
+\>   if v := p.echo() then \\
+\>\>\>write("rtt=", v["rtt"], " from ", v["addr"]) \\
+\>   p.close() \\
+end
+}
+
+The same exchange with an explicit raw socket and PacketSpec:
+
+\iconcode{
+import net \\
+\\
+procedure main() \\
+\>   local f, req, reply, id, pkt, r \\
+\>   req := IcmpEchoRequest() \\
+\>   reply := IcmpEchoReply() \\
+\>   id := iand(?100000 {\textbar} 1, 16rFFFF) \\
+\>   f := open("8.8.8.8", "nr", "proto=icmp", "ttl=64") {\textbar} \\
+\>\>\>\>stop(\&errortext) \\
+\>   pkt := req.set("id", id).set("seq", 1).build(, "unicon") \\
+\>   writes(f, pkt) \\
+\>   r := receive(f) \\
+\>   if reply.match\_echo(r.msg, id, 1) then \\
+\>\>\>write("reply from ", r.addr) \\
+\>   close(f) \\
+end
+}
+
+Ready-made programs in \texttt{uni/progs} exercise the same path:
+\texttt{uping} is an ICMP ping client, and \texttt{uigmp} is a raw
+IGMP sniffer. Both need privileges for \texttt{SOCK\_RAW}. See
+Chapter~14 for short usage notes.
+
 \subsection*{Secure Sockets}
 
 Unicon offers secure sockets to encrypt data when using the TCP/UDP protocols.
@@ -801,6 +1055,180 @@ procedure main() \\
 \>   close(sock) \\
 end
 }
+
+Mode \texttt{"ne-"} or \texttt{verifyPeer=no} skips peer certificate
+verification. \texttt{keypass=} unlocks an encrypted private key.
+
+\subsection*{Secure Shell (SSH)}
+
+When Unicon is built with \texttt{libssh}, mode \texttt{"h"} opens an
+\index{SSH}SSH client session. The first argument is a host name or
+\texttt{user@host}, optionally with \texttt{:port} (the same
+\texttt{host:port} form as socket \texttt{open()}; IPv6 uses
+\texttt{[addr]:port}). Trailing
+\texttt{"\textit{name}=\textit{value}"} attributes select authentication
+and channel behavior. Connection failures fail with \texttt{\&errortext}
+set (they do not abort), matching the SSL connect path.
+
+\iconcode{
+procedure main() \\
+\>   s := open("user@router.example", "hc", "key=~/.ssh/id\_rsa", \\
+\>\>\>\>"cmd=show version") {\textbar} stop(\&errortext) \\
+\>   while write(read(s)) \\
+\>   write("exit status: ", Attrib(s, "exitstatus")) \\
+\>   close(s) \\
+end
+}
+
+Attributes include \texttt{user=},
+\texttt{key=} (private key path), \texttt{keypass=} (passphrase for an
+encrypted key), \texttt{password=} (login password),
+\texttt{hostkeyfile=} (known\_hosts path), \texttt{cmd=} (remote
+command; requires mode \texttt{"hc"}), and \texttt{channel=} (\texttt{yes}/\texttt{no}). Interactive
+shells also accept \texttt{term=} (terminal type; default \$TERM or
+\texttt{xterm}), \texttt{cols=}, and \texttt{rows=} (PTY size; default
+from the local tty, else 80$\times$24). With neither
+\texttt{key=} nor \texttt{password=}, the default identities and a
+running agent are tried. Mode \texttt{"h-"} or \texttt{verifyPeer=no}
+skips host-key verification (\texttt{verifyPeer=} overrides the mode
+flag, as on TLS).
+Without \texttt{cmd=}, mode \texttt{"h"} opens an interactive shell on a PTY.
+Use \texttt{net::ssh\_interactive(s)} (Unicon class library) to attach
+the local tty: raw mode, \texttt{select} mux with \texttt{\&input}, and
+display CRLF mapping. \texttt{channel=no} opens an authenticated session with no channel
+(useful for SFTP or later \texttt{open(s, "hc")} / \texttt{open(s, "hs")} handles);
+\texttt{channel=yes} is the default. Combining \texttt{channel=no} with
+mode \texttt{"hc"} or \texttt{cmd=} fails. The default port is 22 when \texttt{:port} is
+omitted.
+
+A second \texttt{open(s, ...)} on an existing SSH file opens another
+channel or SFTP handle on the same session (no new handshake). The
+second argument is a mode string: \texttt{"hc"} for an extra
+shell or exec channel (\texttt{cmd=} selects exec), \texttt{"hs"} for
+SFTP. Closing the session invalidates every handle derived from it.
+
+\iconcode{
+\>   s := open("user@host", "h", "key=id\_rsa") {\textbar} stop(\&errortext) \\
+\>   c1 := open(s, "hc", "cmd=uname -a") \\
+\>   c2 := open(s, "hc", "cmd=uptime")
+}
+
+Ordinary \texttt{read}/\texttt{writes} use the remote standard streams.
+\texttt{Attrib(c, "exitstatus")}, \texttt{Attrib(c, "stderr")}, and
+\texttt{Attrib(c, "eof")} report the command's exit status, stderr
+accumulated since the previous call, and whether remote EOF has arrived.
+\texttt{receive(c)} yields ordered events as
+\texttt{posix\_message} records whose \texttt{addr} is
+\texttt{"stdout"}, \texttt{"stderr"}, or \texttt{"exit"}.
+
+SFTP uses the same session. Mode \texttt{"hs"} with
+\texttt{path=} transfers a remote file (or lists a remote directory,
+with the same auto-detect behavior as a local directory open).
+\texttt{reads}/\texttt{writes} transfer raw bytes.
+\texttt{stat(s, path)}, \texttt{remove(s, path)}, and
+\texttt{rename(s, from, to)} extend the usual builtins with a leading
+SSH session argument.
+
+\iconcode{
+\>   s := open("user@host", "h", "key=id\_rsa", "channel=no") {\textbar} stop(\&errortext) \\
+\>   c := open(s, "hs", "path=/tmp/out.bin", "w") {\textbar} stop(\&errortext) \\
+\>   writes(c, ReadBytes("local.bin")) \\
+\>   close(c) \\
+\>   info := stat(s, "/tmp/out.bin") \\
+\>   write("remote size: ", info.size) \\
+\>   close(s)
+}
+
+\subsection*{Cryptographic Facilities}
+
+When Unicon is built with OpenSSL (already required for secure sockets),
+modes \texttt{"e"}, \texttt{"er"}, and \texttt{"eh"} also open
+\index{cryptography}cryptographic handles for hashing, HMAC, signing,
+verification, and symmetric encryption. These are distinct from TLS
+socket mode \texttt{"ne"}: the first argument is an algorithm name, a
+key or certificate path, a raw key string (\texttt{"er"}), or another
+crypto handle that supplies material. Trailing
+\texttt{"\textit{name}=\textit{value}"} attributes select the operation
+and parameters. Failures set \texttt{\&errortext} and do not abort.
+
+\iconcode{
+import crypto\\
+\\
+procedure main() \\
+\>   h := open("sha256", "eh") {\textbar} stop(\&errortext) \\
+\>   write(h, "abc") \\
+\>   write("digest=", hexbytes(read(h), 1)) \\
+\>   close(h) \\
+end
+}
+
+Mode \texttt{"eh"} hashes; the target is the digest name
+(\texttt{sha256}, \texttt{sha512}, \ldots). Writes accumulate input;
+\texttt{read()} finalizes and resets so the handle can be reused.
+HMAC and public-key operations use mode \texttt{"e"} (or
+\texttt{"er"} for an inline symmetric key) with \texttt{op=}:
+
+\iconcode{
+\>   k := open("secret-key-bytes", "er") \\
+\>   m := open(k, "e", "op=hmac", "alg=sha256") \\
+\>   write(m, "message") \\
+\>   mac := read(m) \\
+\>   close(m); close(k)
+}
+
+\iconcode{
+\>   key := open("client.key", "e") \\
+\>   cert := open("client.crt", "e") \\
+\>   signer := open(key, "e", "op=sign", "alg=sha256") \\
+\>   verifier := open(cert, "e", "op=verify", "alg=sha256") \\
+\>   write(signer, "payload"); sig := read(signer) \\
+\>   Attrib(verifier, "sig=" || sig) \\
+\>   write(verifier, "payload") \\
+\>   write(if read(verifier) then "ok" else "fail")
+}
+
+Symmetric encrypt/decrypt defaults to \texttt{aes-256-gcm}. With no
+\texttt{iv=}, a fresh IV is chosen per message and prefixed on the
+ciphertext; an explicit \texttt{iv=} omits that prefix. Package
+\texttt{crypto} (Unicon class library) supplies \texttt{hexencode}~/
+\texttt{hexbytes}, \texttt{hexdecode}, and base64 helpers for dumping
+binary digests and keys.
+
+Modes \texttt{"we"} and \texttt{"re"} apply the same operations to a
+named file: writes encrypt (finalized on \texttt{close()}), reads
+decrypt or hash. The key is given with \texttt{key=} or a material
+handle attribute rather than as the open target.
+
+\iconcode{
+\>   f := open("secrets.dat", "we", "op=encrypt", "key=aes.key") \\
+\>   writes(f, plaintext); close(f) \\
+\>   f := open("secrets.dat", "re", "op=decrypt", "key=aes.key") \\
+\>   while chunk := reads(f, 4096) do put(pending, chunk) \\
+\>   if \textbackslash\&errornumber then \{ /* AEAD auth failed */ \}
+}
+
+Encrypted TCP remains mode \texttt{"ne"}; encrypted UDP (DTLS) uses
+\texttt{"nue"}~/~\texttt{"naue"}. Material handles from mode
+\texttt{"e"} may be passed as attributes so certs and keys are parsed
+once and reused across connections:
+
+\iconcode{
+\>   id := open("client.pem", "e") \\
+\>   conn := open("host:443", "ne", id, "verifyPeer=no") \\
+\>   conn := open("host:443", "ne-", id)  \# same as verifyPeer=no
+}
+
+Useful attributes include \texttt{op=} (\texttt{hash}, \texttt{hmac},
+\texttt{sign}, \texttt{verify}, \texttt{encrypt}, \texttt{decrypt}),
+\texttt{alg=} (digest name), \texttt{cipher=}, \texttt{iv=},
+\texttt{sig=} (for verify), and \texttt{keypass=} (key-file passphrase;
+\texttt{password=} is an alias). Mode \texttt{"ne-"} is the same as
+\texttt{verifyPeer=no}. \texttt{Attrib()} may change them only in
+the idle window between operations; a change while a digest or cipher
+is in flight fails. \texttt{Attrib(h, "type")} reports the material
+role (\texttt{symkey}, \texttt{key}, \texttt{cert}, \ldots).
+Digest checkpoint \texttt{state}~/~\texttt{state=} is not available
+with OpenSSL~3 (the MD\_CTX export APIs were removed).
 
 \section{Messaging Facilities}
 
