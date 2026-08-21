@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.20)  20 AUG 2026 16:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.21)  21 AUG 2026 07:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -460,12 +460,17 @@ Underfull \hbox (badness 4779) in paragraph at lines 536--537
  []
 
 [12]
-Underfull \hbox (badness 10000) in paragraph at lines 539--540
+Underfull \hbox (badness 10000) in paragraph at lines 542--543
+[]\T1/cmr/m/n/12 Unicode Con-sor-tium. "The Uni-code Stan-dard".
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 548--549
 []\T1/cmr/m/n/12 The lib-ssh Project. "lib-ssh -- The SSH Li-brary".
  []
 
 
-Underfull \hbox (badness 1072) in paragraph at lines 545--546
+Underfull \hbox (badness 1072) in paragraph at lines 554--555
 []\T1/cmr/m/n/12 The OpenSSL Project. "OpenSSL -- Cryp-tog-ra-phy and SSL/TLS
  []
 
@@ -478,13 +483,13 @@ Package rerunfilecheck Info: File `utr29.out' has not changed.
 (rerunfilecheck)             Checksum: E37408AB8329285FD9A5EE9F069AB4BB;2466.
  ) 
 Here is how much of TeX's memory you used:
- 9778 strings out of 476182
- 150348 string characters out of 5795595
- 1933975 words of memory out of 5000000
- 31625 multiletter control sequences out of 15000+600000
+ 9782 strings out of 476182
+ 150442 string characters out of 5795595
+ 1932975 words of memory out of 5000000
+ 31627 multiletter control sequences out of 15000+600000
  568188 words of font info for 54 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,79p,814b,652s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,815b,652s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.60
 0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1095.
 600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti120
@@ -496,10 +501,10 @@ ctt1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
 ec/ecbx1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
 n/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecbx2074.600pk>
-Output written on utr29.pdf (16 pages, 158910 bytes).
+Output written on utr29.pdf (16 pages, 159026 bytes).
 PDF statistics:
- 623 PDF objects out of 1000 (max. 8388607)
- 195 compressed objects within 2 object streams
- 50 named destinations out of 1000 (max. 500000)
+ 625 PDF objects out of 1000 (max. 8388607)
+ 197 compressed objects within 2 object streams
+ 52 named destinations out of 1000 (max. 500000)
  137 words of extra memory for PDF output out of 10000 (max. 10000000)
 

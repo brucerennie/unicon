@@ -53,7 +53,7 @@ The feature is optional in the same sense as TLS. A build with OpenSSL reports \
 \section{2. Motivation}
 \label{utr27-sec-motivation}
 
-Unicon already links OpenSSL [4] for mode \texttt{n} with \texttt{e} -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to leave the language. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through; loading a key once and signing many messages is the same pattern as opening an SSH session once and deriving channels [5].
+Unicon already links OpenSSL [7] for mode \texttt{n} with \texttt{e} -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to leave the language. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through; loading a key once and signing many messages is the same pattern as opening an SSH session once and deriving channels [2].
 
 
 No new external dependency is introduced. The implementation uses OpenSSL's EVP interface, which the encrypted-socket support already requires.
@@ -144,7 +144,7 @@ Mode \texttt{-} skips peer verification on TLS (\texttt{ne-}) and SSH (\texttt{h
 \end{longtable}
 
 
-HMAC is the construction of RFC 2104 [6] over the digest named by \texttt{alg=}. Algorithm and cipher names are OpenSSL's own (\texttt{sha256}, \texttt{aes-256-gcm}) and are passed through rather than mapped to a Unicon-defined set.
+HMAC is the construction of RFC 2104 [8] over the digest named by \texttt{alg=}. Algorithm and cipher names are OpenSSL's own (\texttt{sha256}, \texttt{aes-256-gcm}) and are passed through rather than mapped to a Unicon-defined set.
 
 
 Defaults are \texttt{alg=sha256} and \texttt{cipher=aes-256-gcm}.
@@ -692,46 +692,52 @@ Automated tests live under \texttt{tests/crypto/}, one program per concern: \tex
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-libssh}
-The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
-
-\bibitem[3]{cite-jeffery-utr13}
-Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
-
-\bibitem[4]{cite-openssl}
-The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
-
-\bibitem[5]{cite-algharaibeh-utr26}
+\bibitem[2]{cite-algharaibeh-utr26}
 Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
 
-\bibitem[6]{cite-rfc2104}
+\bibitem[3]{cite-unicode-standard}
+Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
+
+\bibitem[4]{cite-unicon-utf8lib}
+Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
+
+\bibitem[5]{cite-libssh}
+The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
+
+\bibitem[6]{cite-jeffery-utr13}
+Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
+
+\bibitem[7]{cite-openssl}
+The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
+
+\bibitem[8]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[7]{cite-rfc1112}
+\bibitem[9]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[8]{cite-jeffery-pwu}
+\bibitem[10]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
 
-\bibitem[9]{cite-algharaibeh-utr29}
+\bibitem[11]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[10]{cite-rfc4607}
+\bibitem[12]{cite-rfc4607}
 H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
-\bibitem[11]{cite-algharaibeh-utr28}
+\bibitem[13]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[12]{cite-rfc792}
+\bibitem[14]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[13]{cite-rfc2236}
+\bibitem[15]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[14]{cite-rfc3376}
+\bibitem[16]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[15]{cite-rfc1071}
+\bibitem[17]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
