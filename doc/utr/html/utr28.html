@@ -44,8 +44,7 @@ placeholder="Search..." aria-label="Filter section list">
 </a></li>
 <li class="toc-l1"><a href="#sec-attrib">7. 
 <code>Attrib()</code>
- after 
-<code>open()</code>
+ and status peek
 </a></li>
 <li class="toc-l1"><a href="#sec-cache">8. Listener cache
 </a></li>
@@ -65,11 +64,11 @@ placeholder="Search..." aria-label="Filter section list">
 <h1 class="report-title">Multicast and Socket Attributes in Unicon</h1>
 <p class="report-authors">Jafar Al-Gharaibeh</p>
 <p class="report-tr">Unicon Technical Report: 28</p>
-<p class="report-date">June 2026</p>
+<p class="report-date">August 2026</p>
 <p class="report-pdf"><a href="utr28.pdf">pdf</a> | <a href="_sources/utr28.rst.txt">txt</a></p>
 <div class="report-abstract">
 <p class="report-abstract-label">Abstract</p>
-<p>Unicon could open TCP and UDP sockets, but applications had no way to join a multicast group, pick an interface, or set TTL from the language. This report describes trailing name=value attributes on open(), the same style as SSL and graphics windows, plus Attrib() after open(). Binding a UDP socket to a group address joins that group; source@group or source= selects source-specific multicast. Defaults cover reuse, all-interface IPv4 joins, and outbound interface selection so the common cases need no attributes at all.</p>
+<p>Unicon could open TCP and UDP sockets, but applications had no way to join a multicast group, pick an interface, or set TTL from the language. This report describes trailing name=value attributes on open(), the same style as SSL and graphics windows, plus Attrib() after open() for mutation and f[&quot;name&quot;] / key(f) for status. Binding a UDP socket to a group address joins that group; source@group or source= selects source-specific multicast. Defaults cover reuse, all-interface IPv4 joins, and outbound interface selection so the common cases need no attributes at all.</p>
 <p class="report-keywords"><span class="report-keywords-label">Keywords:</span> Unicon, multicast, SSM, UDP, socket attributes, Attrib, runtime, technical report.</p>
 </div>
 </header>
@@ -78,7 +77,7 @@ placeholder="Search..." aria-label="Filter section list">
 </h2>
 <p>
 This report describes IP multicast 
-[<a class="cite" href="#cite-rfc1112">9</a>] and the socket-attribute facility it sits on. Trailing arguments to 
+[<a class="cite" href="#cite-rfc1112">7</a>] and the socket-attribute facility it sits on. Trailing arguments to 
 <code>open()</code>
  on network modes are 
 <code>name=value</code>
@@ -93,17 +92,21 @@ This report describes IP multicast
 Programming with Unicon
 </em>
  
-[<a class="cite" href="#cite-jeffery-pwu">10</a>] (Chapter 5, &quot;Multicast and Socket Attributes&quot;) and the language reference (
+[<a class="cite" href="#cite-jeffery-pwu">8</a>] (Chapter 5, &quot;Multicast and Socket Attributes&quot;) and the language reference (
 <code>open</code>
  trailing attributes, 
 <code>Attrib</code>
+, subscript peek, 
+<code>key()</code>
 ). Automated tests live in 
 <code>tests/posix/mcast.icn</code>
+ and 
+<code>tests/posix/sockpeek.icn</code>
 .
 </p>
 <p>
 The work is part of POSIX networking, not an optional library. A later report covers raw sockets 
-[<a class="cite" href="#cite-algharaibeh-utr29">11</a>], which reuse these attributes (
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>], which reuse these attributes (
 <code>ttl</code>
 , 
 <code>iface</code>
@@ -120,7 +123,7 @@ The work is part of POSIX networking, not an optional library. A later report co
 Unicon's 
 <code>open()</code>
  already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) 
-[<a class="cite" href="#cite-rfc4607">12</a>] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join 
+[<a class="cite" href="#cite-rfc4607">10</a>] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join 
 <code>239.1.1.1</code>
 , restrict a join to one NIC, or send with a limited TTL. Those operations were not supported.
 </p>
@@ -133,7 +136,9 @@ The rest of the I/O API already has the pattern:
 <code>WAttrib</code>
 ), 
 <code>Attrib()</code>
- reads and writes later. Socket options follow that pattern instead of adding 
+ mutates later, and 
+<code>f[&quot;name&quot;]</code>
+ peeks status. Socket options follow that pattern instead of adding 
 <code>setsockopt()</code>
  as a new global.
 </p>
@@ -208,7 +213,7 @@ DWIM for the common cases.
 , not multicast-only names.
 </strong>
  Hop limit and interface are used by unicast, multicast, and later raw sockets 
-[<a class="cite" href="#cite-algharaibeh-utr29">11</a>]. 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>]. 
 <code>ttl=</code>
  sets both 
 <code>IP_TTL</code>
@@ -426,7 +431,9 @@ IPv4 address, index, or name. Restricts join and
 <code>ttl=</code>
 </td>
 <td>
-Unicast and multicast hop limits. Query returns the
+Unicast and multicast hop limits. 
+<code>f[&quot;ttl&quot;]</code>
+ peeks
 </td>
 </tr>
 <tr>
@@ -476,21 +483,23 @@ Buffer sizes in bytes.
  and 
 <code>hdrincl</code>
  are listed in the same table in the runtime; they belong to raw sockets 
-[<a class="cite" href="#cite-algharaibeh-utr29">11</a>].
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>].
 </p>
 <h2 id="sec-attrib">
 7. 
 <code>Attrib()</code>
- after 
-<code>open()</code>
+ and status peek
 </h2>
 <pre><code class="language-unicon">procedure main()
-   local f
+   local f, g
    f := open(&quot;:5110&quot;, &quot;nua4&quot;) | stop(&amp;errortext)
    Attrib(f, &quot;ttl=4&quot;)
-   write(&quot;ttl=&quot;, Attrib(f, &quot;ttl&quot;))
-   write(&quot;mcastloop=&quot;, Attrib(f, &quot;mcastloop&quot;))
-   write(Attrib(f, &quot;join&quot;) | &quot;join: not queryable&quot;)
+   write(&quot;ttl=&quot;, f[&quot;ttl&quot;])
+   write(&quot;mcastloop=&quot;, f[&quot;mcastloop&quot;])
+   if g := f[&quot;groups&quot;] then
+      every write(!g)
+   else
+      write(&quot;groups: unpopulated&quot;)
    close(f)
 end
 </code></pre>
@@ -499,32 +508,190 @@ Output:
 </p>
 <pre><code class="language-text">ttl=4
 mcastloop=yes
-join: not queryable
+groups: unpopulated
 </code></pre>
 <p>
 Assignments in one call are applied together, preserving 
 <code>iface</code>
  then 
 <code>join</code>
- order. Bare names produce 
-<code>yes</code>
- / 
-<code>no</code>
-, an integer, or (for IPv4 
-<code>iface</code>
-) a dotted address. 
+ order. Status is peeked with 
+<code>f[&quot;name&quot;]</code>
+; 
+<code>Attrib()</code>
+ only assigns. Unknown names raise
+</p>
+<ol start="1310">
+<li>
+An unpopulated field fails. Boolean fields that answered
+</li>
+</ol>
+<p>
+succeed with 
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+ (never 
+<code>&quot;no&quot;</code>
+). 
+<code>key(f)</code>
+ generates every answerable field. 
+<code>f[&quot;*&quot;]</code>
+ snapshots those fields under one lock. Peeking a closed handle is error 174. 
+<code>key(f)</code>
+ that has not yet produced a name also raises 174 if the handle is already closed. After the first suspend, 
+<code>close()</code>
+ makes the generator fail instead of raising, so a walk does not turn a mid-generation close into an error.
+</p>
+<p>
+TCP, UDP, multicast, and raw sockets share one peek table (
+<code>sock_peek</code>
+). 
 <code>join</code>
 , 
 <code>leave</code>
-, 
-<code>source</code>
 , and 
+<code>source</code>
+ are verbs, not peek fields. 
 <code>proto</code>
- cannot be queried (
-<code>Attrib(f, &quot;join&quot;)</code>
- fails; 
-<code>&amp;errortext</code>
- is empty). Membership changes still use assignment form:
+ is stored at 
+<code>socket()</code>
+ time on raw sockets 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>]. 
+<code>f[&quot;groups&quot;]</code>
+ is a list of joined groups (SSM as 
+<code>source@group</code>
+); a single group is still a list of length 1.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Name
+</th>
+<th>
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>ttl</code>
+</td>
+<td>
+Hop limit (integer), typically 
+<code>1</code>
+ .. 
+<code>255</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>iface</code>
+</td>
+<td>
+Dotted IPv4 address (
+<code>127.0.0.1</code>
+) or IPv6 ifindex (
+<code>1</code>
+)
+</td>
+</tr>
+<tr>
+<td>
+<code>groups</code>
+</td>
+<td>
+List of joined groups, e.g. 
+<code>239.1.1.1</code>
+; SSM as
+</td>
+</tr>
+<tr>
+<td>
+<code>mcastloop</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>reuseaddr</code>
+ / 
+<code>reuseport</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+ (
+<code>reuseport</code>
+ may be unpopulated)
+</td>
+</tr>
+<tr>
+<td>
+<code>broadcast</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>rcvbuf</code>
+ / 
+<code>sndbuf</code>
+</td>
+<td>
+Buffer sizes in bytes (integers)
+</td>
+</tr>
+<tr>
+<td>
+<code>proto</code>
+</td>
+<td>
+IP protocol number: 
+<code>1</code>
+ (ICMP), 
+<code>2</code>
+ (IGMP), 
+<code>89</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>hdrincl</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+; typical on raw sockets
+</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-unicon">f := open(&quot;:5110&quot;, &quot;nua4&quot;) | stop(&amp;errortext)
+Attrib(f, &quot;ttl=4&quot;)
+Attrib(f, &quot;iface=127.0.0.1&quot;, &quot;join=239.1.1.1&quot;)
+Attrib(f, &quot;iface=127.0.0.1&quot;, &quot;join=239.1.1.2&quot;)
+write(&quot;ttl=&quot;, f[&quot;ttl&quot;])
+every g := !f[&quot;groups&quot;] do
+   write(&quot;joined &quot;, g)
+every k := key(f) do
+   write(&quot;field &quot;, k)
+close(f)
+</code></pre>
+<p>
+Membership changes still use assignment form:
 </p>
 <pre><code class="language-unicon">Attrib(f, &quot;join=239.1.1.2&quot;)
 Attrib(f, &quot;iface=127.0.0.1&quot;, &quot;leave=239.1.1.1&quot;)
@@ -698,8 +865,16 @@ The language surface described here is implemented: trailing attributes, implici
 Membership query.
 </strong>
  
-<code>Attrib(f, &quot;join&quot;)</code>
- fails. The kernel does not offer a portable list of current groups.
+<code>f[&quot;groups&quot;]</code>
+ is a list of groups joined through 
+<code>open()</code>
+ or 
+<code>Attrib()</code>
+ 
+<code>join=</code>
+ / 
+<code>source=</code>
+. The kernel still has no portable membership dump; this is runtime-tracked state.
 </p>
 <p>
 <strong>
@@ -744,7 +919,7 @@ Windows IPv6 SSM.
 Raw sockets
 </strong>
  
-[<a class="cite" href="#cite-algharaibeh-utr29">11</a>] reuse 
+[<a class="cite" href="#cite-algharaibeh-utr29">9</a>] reuse 
 <code>ttl</code>
  / 
 <code>iface</code>
@@ -810,6 +985,16 @@ cache-hit alias vs independent attr open
 </li>
 </ul>
 <p>
+<code>tests/posix/sockpeek.icn</code>
+ checks 
+<code>f[&quot;ttl&quot;]</code>
+, 
+<code>f[&quot;groups&quot;]</code>
+ as a list after two joins, and 
+<code>key(f)</code>
+.
+</p>
+<p>
 Expected output is 
 <code>tests/posix/stand/mcast.std</code>
 :
@@ -838,52 +1023,46 @@ References
 <li id="cite-jeffery-utr15" value="1">
 Clinton Jeffery. &quot;How to Write a Unicon Technical Report&quot;. doc/utr/utr15.tex. 2013.
 </li>
-<li id="cite-algharaibeh-utr26" value="2">
-Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
-</li>
-<li id="cite-unicode-standard" value="3">
-Unicode Consortium. &quot;The Unicode Standard&quot;. https://www.unicode.org/versions/latest/. 2026.
-</li>
-<li id="cite-unicon-utf8lib" value="4">
-Unicon Project. &quot;UTF-8 class library&quot;. uni/lib/utf8.icn.
-</li>
-<li id="cite-libssh" value="5">
+<li id="cite-libssh" value="2">
 The libssh Project. &quot;libssh -- The SSH Library&quot;. https://www.libssh.org/. 2026.
 </li>
-<li id="cite-jeffery-utr13" value="6">
+<li id="cite-jeffery-utr13" value="3">
 Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
 </li>
-<li id="cite-openssl" value="7">
+<li id="cite-openssl" value="4">
 The OpenSSL Project. &quot;OpenSSL -- Cryptography and SSL/TLS Toolkit&quot;. https://www.openssl.org/. 2026.
 </li>
-<li id="cite-rfc2104" value="8">
+<li id="cite-algharaibeh-utr26" value="5">
+Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
+</li>
+<li id="cite-rfc2104" value="6">
 H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
 </li>
-<li id="cite-rfc1112" value="9">
+<li id="cite-rfc1112" value="7">
 S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
 </li>
-<li id="cite-jeffery-pwu" value="10">
+<li id="cite-jeffery-pwu" value="8">
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
 </li>
-<li id="cite-algharaibeh-utr29" value="11">
+<li id="cite-algharaibeh-utr29" value="9">
 Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
 </li>
-<li id="cite-rfc4607" value="12">
+<li id="cite-rfc4607" value="10">
 H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
 </li>
-<li id="cite-algharaibeh-utr28" value="13">
+<li id="cite-algharaibeh-utr28" value="11">
 Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.
 </li>
-<li id="cite-rfc792" value="14">
+<li id="cite-rfc792" value="12">
 J. Postel. &quot;Internet Control Message Protocol&quot;. RFC 792. 1981.
 </li>
-<li id="cite-rfc2236" value="15">
+<li id="cite-rfc2236" value="13">
 W. Fenner. &quot;Internet Group Management Protocol, Version 2&quot;. RFC 2236. 1997.
 </li>
-<li id="cite-rfc3376" value="16">
+<li id="cite-rfc3376" value="14">
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. &quot;Internet Group Management Protocol, Version 3&quot;. RFC 3376. 2002.
 </li>
-<li id="cite-rfc1071" value="17">
+<li id="cite-rfc1071" value="15">
 R. Braden and D. Borman and C. Partridge. &quot;Computing the Internet Checksum&quot;. RFC 1071. 1988.
 </li>
 </ol></div>

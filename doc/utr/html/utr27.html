@@ -48,6 +48,12 @@ placeholder="Search..." aria-label="Filter section list">
 </a></li>
 <li class="toc-l2"><a href="#sec-attrs-shared">6.3 Shared names with SSH
 </a></li>
+<li class="toc-l2"><a href="#sec-peek">6.4 Status peek (
+<code>[ ]</code>
+ and 
+<code>key()</code>
+)
+</a></li>
 <li class="toc-l1"><a href="#sec-handles">7. Material handles
 </a></li>
 <li class="toc-l1"><a href="#sec-examples">8. Examples
@@ -89,7 +95,7 @@ placeholder="Search..." aria-label="Filter section list">
 <p class="report-pdf"><a href="utr27.pdf">pdf</a> | <a href="_sources/utr27.rst.txt">txt</a></p>
 <div class="report-abstract">
 <p class="report-abstract-label">Abstract</p>
-<p>Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), close(), and Attrib() interface already used for files, sockets, and SSH sessions. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS.</p>
+<p>Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), and close() interface already used for files and sockets, with ``[ ]`` for status and Attrib() for idle-window mutation. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS.</p>
 <p class="report-keywords"><span class="report-keywords-label">Keywords:</span> Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.</p>
 </div>
 </header>
@@ -122,6 +128,8 @@ Programming with Unicon
 <code>ne</code>
  / 
 <code>nue</code>
+, subscript peek, 
+<code>key()</code>
 ). Automated tests live under 
 <code>tests/crypto/</code>
 .
@@ -144,12 +152,12 @@ The feature is optional in the same sense as TLS. A build with OpenSSL reports
 </h2>
 <p>
 Unicon already links OpenSSL 
-[<a class="cite" href="#cite-openssl">7</a>] for mode 
+[<a class="cite" href="#cite-openssl">4</a>] for mode 
 <code>n</code>
  with 
 <code>e</code>
  -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to leave the language. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through; loading a key once and signing many messages is the same pattern as opening an SSH session once and deriving channels 
-[<a class="cite" href="#cite-algharaibeh-utr26">2</a>].
+[<a class="cite" href="#cite-algharaibeh-utr26">5</a>].
 </p>
 <p>
 No new external dependency is introduced. The implementation uses OpenSSL's EVP interface, which the encrypted-socket support already requires.
@@ -608,7 +616,7 @@ Symmetric decrypt
 </table>
 <p>
 HMAC is the construction of RFC 2104 
-[<a class="cite" href="#cite-rfc2104">8</a>] over the digest named by 
+[<a class="cite" href="#cite-rfc2104">6</a>] over the digest named by 
 <code>alg=</code>
 . Algorithm and cipher names are OpenSSL's own (
 <code>sha256</code>
@@ -702,7 +710,11 @@ Trust store
 <code>ciphers1.3=</code>
 </td>
 <td>
-TLS 1.2 (and earlier) list, and TLS 1.3 suites
+TLS 1.2 list (e.g. 
+<code>HIGH</code>
+, 
+<code>ECDHE-RSA-AES256-GCM-SHA384</code>
+)
 </td>
 </tr>
 <tr>
@@ -714,6 +726,8 @@ TLS 1.2 (and earlier) list, and TLS 1.3 suites
 <td>
 Protocol version bounds, e.g. 
 <code>TLS1.2</code>
+, 
+<code>TLS1.3</code>
 </td>
 </tr>
 <tr>
@@ -743,7 +757,9 @@ Socket attributes (
 <code>join</code>
 , 
 <code>proto</code>
-, ...) are applied separately and are unaffected.
+, ...) are applied separately and are unaffected. Live-session status is 
+<a href="utr27.html#sec-peek">section 6.4</a>
+.
 </p>
 <h3 id="sec-attrs-crypto">
 6.2 Crypto attributes
@@ -768,7 +784,15 @@ Used with
 <code>op=</code>
 </td>
 <td>
-Operation name
+Operation: 
+<code>hash</code>
+, 
+<code>hmac</code>
+, 
+<code>sign</code>
+, 
+<code>verify</code>
+,
 </td>
 <td>
 All data-pipe and file-transform ops
@@ -779,9 +803,9 @@ All data-pipe and file-transform ops
 <code>alg=</code>
 </td>
 <td>
-Digest / signature algorithm (default 
+Digest name passed to OpenSSL (default 
 <code>sha256</code>
-)
+;
 </td>
 <td>
 <code>hash</code>
@@ -800,7 +824,7 @@ Digest / signature algorithm (default
 <td>
 Symmetric cipher (default 
 <code>aes-256-gcm</code>
-)
+; also
 </td>
 <td>
 <code>encrypt</code>
@@ -877,21 +901,6 @@ Passphrase for an encrypted key file
 Material load
 </td>
 </tr>
-<tr>
-<td>
-<code>state</code>
- / 
-<code>state=</code>
-</td>
-<td>
-Digest checkpoint; not available with OpenSSL 3
-</td>
-<td>
-<code>hash</code>
-, 
-<code>hmac</code>
-</td>
-</tr>
 </tbody>
 </table>
 <p>
@@ -915,25 +924,9 @@ Without
 <code>decrypt</code>
  reads that prefix. Supplying 
 <code>iv=</code>
- opts out -- useful for a wire format that does not prepend an IV, or for test vectors -- and hands uniqueness back to the caller. The default cipher is AEAD; the runtime appends the authentication tag after the ciphertext.
-</p>
-<p>
-<code>Attrib(h, &quot;type&quot;)</code>
- reports the material role (
-<code>symkey</code>
-, 
-<code>key</code>
-, 
-<code>cert</code>
-, ...). 
-<code>Attrib(h, &quot;state&quot;)</code>
- is the designed checkpoint for resuming a hash across a process break: it snapshots in-progress digest state without finalizing or resetting. The blob is 
-<strong>
-opaque and not portable
-</strong>
- (OpenSSL version and provider), must be restored into the same algorithm, and for 
-<code>hmac</code>
- is key-equivalent secret material (length-extension). Ordinary streaming does not need it. OpenSSL 3 removed the MD_CTX export APIs, so the operation currently fails with 1316.
+ opts out -- useful for a wire format that does not prepend an IV, or for test vectors -- and hands uniqueness back to the caller. The default cipher is AEAD; the runtime appends the authentication tag after the ciphertext. Status peeks are 
+<a href="utr27.html#sec-peek">section 6.4</a>
+.
 </p>
 <h3 id="sec-attrs-shared">
 6.3 Shared names with SSH
@@ -964,6 +957,571 @@ opaque and not portable
 <code>known_hosts</code>
 ).
 </p>
+<h3 id="sec-peek">
+6.4 Status peek (
+<code>[ ]</code>
+ and 
+<code>key()</code>
+)
+</h3>
+<p>
+<code>h[&quot;name&quot;]</code>
+ / 
+<code>conn[&quot;name&quot;]</code>
+ is a non-destructive get. 
+<code>Attrib()</code>
+ only assigns in the idle window (
+<code>op=</code>
+, 
+<code>alg=</code>
+, 
+<code>sig=</code>
+, ...); a bare name is not a query. Unknown names raise 1302 on a crypto handle and 1326 on a TLS socket. An unpopulated field fails. A boolean field that 
+<em>
+did
+</em>
+ answer succeeds: 
+<code>&quot;yes&quot;</code>
+ for true, 
+<code>&amp;null</code>
+ for false -- never 
+<code>&quot;no&quot;</code>
+, which would make 
+<code>if h[&quot;expired&quot;]</code>
+ succeed on a valid certificate. 
+<code>key(h)</code>
+ generates every 
+<em>
+answerable
+</em>
+ field, including false booleans, so any 
+<code>k</code>
+ from 
+<code>key(h)</code>
+ makes 
+<code>h[k]</code>
+ succeed. Dump with 
+<code>image(h[k])</code>
+ so 
+<code>&amp;null</code>
+ is visible.
+</p>
+<p>
+<code>h[&quot;*&quot;]</code>
+ returns a table of those same fields captured under one lock. No status field is named 
+<code>*</code>
+. Peeking a closed handle is error 174. 
+<code>key(h)</code>
+ that has not yet produced a name also raises 174 if the handle is already closed. After the first suspend, 
+<code>close()</code>
+ makes the generator fail instead of raising, so a walk does not turn a mid-generation close into an error.
+</p>
+<p>
+<code>h[&quot;type&quot;]</code>
+ is a role label (
+<code>key</code>
+, 
+<code>cert</code>
+, 
+<code>key,cert</code>
+), not a list. 
+<code>h[&quot;san&quot;]</code>
+ and 
+<code>conn[&quot;san&quot;]</code>
+ are lists of SAN strings (
+<code>DNS:host</code>
+, 
+<code>IP:1.2.3.4</code>
+). 
+<code>conn[&quot;certchain&quot;]</code>
+ is a list of PEM strings. A single item is still a list of length 1. 
+<code>h[&quot;op&quot;]</code>
+ is always populated on an operation handle.
+</p>
+<p>
+<strong>
+Material
+</strong>
+ (mode 
+<code>e</code>
+ / 
+<code>er</code>
+, no 
+<code>op=</code>
+).
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Name
+</th>
+<th>
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code>
+</td>
+<td>
+<code>key</code>
+, 
+<code>pubkey</code>
+, 
+<code>cert</code>
+, 
+<code>symkey</code>
+, or a
+</td>
+</tr>
+<tr>
+<td>
+<code>alg</code>
+</td>
+<td>
+Public-key algorithm: 
+<code>rsaEncryption</code>
+,
+</td>
+</tr>
+<tr>
+<td>
+<code>keysize</code>
+</td>
+<td>
+Size in bits (integer), e.g. 
+<code>2048</code>
+, 
+<code>256</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>subject</code>
+ / 
+<code>issuer</code>
+</td>
+<td>
+Certificate DN, OpenSSL oneline
+</td>
+</tr>
+<tr>
+<td>
+<code>san</code>
+</td>
+<td>
+List of Subject Alternative Names (
+<code>DNS:localhost</code>
+,
+</td>
+</tr>
+<tr>
+<td>
+<code>notbefore</code>
+ / 
+<code>notafter</code>
+</td>
+<td>
+Validity timestamps (
+<code>2024-01-01T00:00:00Z</code>
+)
+</td>
+</tr>
+<tr>
+<td>
+<code>expired</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>fingerprint</code>
+</td>
+<td>
+SHA-256 of the cert or public key (hex)
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+Certificate names fail on a key-only handle.
+</p>
+<p>
+<strong>
+Hash
+</strong>
+ (
+<code>eh</code>
+, or 
+<code>op=hash</code>
+).
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Name
+</th>
+<th>
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>op</code>
+</td>
+<td>
+<code>hash</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>alg</code>
+</td>
+<td>
+Digest name: 
+<code>SHA256</code>
+ (default), 
+<code>SHA512</code>
+, 
+<code>SHA1</code>
+,
+</td>
+</tr>
+<tr>
+<td>
+<code>hash</code>
+</td>
+<td>
+Current digest / MAC / signature bytes without
+</td>
+</tr>
+<tr>
+<td>
+<code>bytecount</code>
+</td>
+<td>
+Bytes written so far (integer)
+</td>
+</tr>
+<tr>
+<td>
+<code>blocksize</code>
+ / 
+<code>digestsize</code>
+</td>
+<td>
+Algorithm sizes (integers); SHA-256 is 64 / 32
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<strong>
+HMAC, sign, verify.
+</strong>
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Name
+</th>
+<th>
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>op</code>
+</td>
+<td>
+<code>hmac</code>
+, 
+<code>sign</code>
+, or 
+<code>verify</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>hash</code>
+</td>
+<td>
+Running HMAC or signature bytes (same copy-and-finalize
+</td>
+</tr>
+<tr>
+<td>
+<code>alg</code>
+</td>
+<td>
+Digest used for HMAC or for the signature: 
+<code>SHA256</code>
+,
+</td>
+</tr>
+<tr>
+<td>
+<code>bytecount</code>
+</td>
+<td>
+Bytes written (integer)
+</td>
+</tr>
+<tr>
+<td>
+<code>verified</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+ after a verify; unpopulated before
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<strong>
+Encrypt / decrypt.
+</strong>
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Name
+</th>
+<th>
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>op</code>
+</td>
+<td>
+<code>encrypt</code>
+ or 
+<code>decrypt</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>cipher</code>
+</td>
+<td>
+Symmetric cipher: 
+<code>AES-256-GCM</code>
+ (default),
+</td>
+</tr>
+<tr>
+<td>
+<code>iv</code>
+</td>
+<td>
+IV that was set or generated (bytes)
+</td>
+</tr>
+<tr>
+<td>
+<code>bytecount</code>
+</td>
+<td>
+Bytes processed (integer)
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+<strong>
+TLS socket
+</strong>
+ (after handshake). These are not 
+<code>open()</code>
+ attributes.
+</p>
+<table>
+<thead>
+<tr>
+<th>
+Name
+</th>
+<th>
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>cipher</code>
+</td>
+<td>
+Negotiated suite: 
+<code>TLS_AES_256_GCM_SHA384</code>
+,
+</td>
+</tr>
+<tr>
+<td>
+<code>version</code>
+</td>
+<td>
+<code>TLSv1.3</code>
+, 
+<code>TLSv1.2</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>alpn</code>
+</td>
+<td>
+Selected protocol: 
+<code>h2</code>
+, 
+<code>http/1.1</code>
+; unpopulated if none
+</td>
+</tr>
+<tr>
+<td>
+<code>peercert</code>
+</td>
+<td>
+Peer certificate as PEM
+</td>
+</tr>
+<tr>
+<td>
+<code>certchain</code>
+</td>
+<td>
+List of PEMs
+</td>
+</tr>
+<tr>
+<td>
+<code>subject</code>
+ / 
+<code>issuer</code>
+</td>
+<td>
+Peer DN, e.g. 
+<code>/CN=host.example</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>san</code>
+</td>
+<td>
+Peer SANs as a list (
+<code>DNS:host.example</code>
+)
+</td>
+</tr>
+<tr>
+<td>
+<code>notbefore</code>
+ / 
+<code>notafter</code>
+ / 
+<code>expired</code>
+</td>
+<td>
+Peer validity; 
+<code>expired</code>
+ is 
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>certverified</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+. Always populated: with
+</td>
+</tr>
+<tr>
+<td>
+<code>verifyresult</code>
+</td>
+<td>
+<code>ok</code>
+, 
+<code>expired</code>
+, 
+<code>self-signed</code>
+, 
+<code>untrusted-CA</code>
+,
+</td>
+</tr>
+<tr>
+<td>
+<code>hostnamematch</code>
+</td>
+<td>
+<code>&quot;yes&quot;</code>
+ or 
+<code>&amp;null</code>
+: did CN/SAN match the requested
+</td>
+</tr>
+</tbody>
+</table>
+<p>
+Handshake failure means 
+<code>open()</code>
+ failed; there is no handle to subscript. Distinguish expired / untrusted CA / hostname mismatch / no shared cipher / protocol version via 
+<code>&amp;errornumber</code>
+ 1320--1325. 
+<code>alert</code>
+ and 
+<code>handshakestate</code>
+ are not peek fields.
+</p>
+<pre><code class="language-unicon">cert := open(&quot;client.crt&quot;, &quot;e&quot;) | stop(&amp;errortext)
+write(&quot;material &quot;, cert[&quot;type&quot;], &quot; &quot;, cert[&quot;subject&quot;])
+every name := !cert[&quot;san&quot;] do
+   write(&quot;  SAN &quot;, name)
+every k := key(cert) do
+   write(&quot;  &quot;, k)
+
+h := open(&quot;sha256&quot;, &quot;eh&quot;) | stop(&amp;errortext)
+write(h, &quot;abc&quot;)
+write(&quot;op=&quot;, h[&quot;op&quot;], &quot; peek hash *&quot;, *h[&quot;hash&quot;])
+close(h)
+
+conn := open(&quot;host:443&quot;, &quot;ne&quot;, &quot;ca=unicon-ca.crt&quot;) | stop(&amp;errortext)
+write(conn[&quot;cipher&quot;], &quot; &quot;, conn[&quot;version&quot;])
+every pem := !conn[&quot;certchain&quot;] do
+   write(*pem, &quot; byte PEM&quot;)
+close(conn)
+</code></pre>
 <h2 id="sec-handles">
 7. Material handles
 </h2>
@@ -985,7 +1543,7 @@ c  := open(&quot;bundle.pem&quot;, &quot;e&quot;, &quot;type=cert&quot;)
 </code></pre>
 <p>
 A raw key is still a file value; 
-<code>Attrib(h, &quot;type&quot;)</code>
+<code>h[&quot;type&quot;]</code>
  reports the role:
 </p>
 <pre><code class="language-unicon">procedure main()
@@ -993,7 +1551,7 @@ A raw key is still a file value;
    k := open(&quot;sixteen-byte-key-material-here!!&quot;, &quot;er&quot;) |
       stop(&amp;errortext)
    write(type(k))
-   write(Attrib(k, &quot;type&quot;))
+   write(k[&quot;type&quot;])
    close(k)
 end
 </code></pre>
@@ -1408,6 +1966,21 @@ keyh  := open(&quot;client.key&quot;, &quot;e&quot;)
 conn  := open(&quot;host:443&quot;, &quot;ne&quot;, certh, keyh)
 </code></pre>
 <p>
+After a handshake, 
+<code>conn[&quot;cipher&quot;]</code>
+ peeks the negotiated suite and 
+<code>conn[&quot;certchain&quot;]</code>
+ is a list of peer certificates as PEM strings; see 
+<a href="utr27.html#sec-peek">section 6.4</a>
+ (
+<code>tests/crypto/tlspeek.icn</code>
+). 
+<code>certh[&quot;type&quot;]</code>
+ / 
+<code>keyh[&quot;type&quot;]</code>
+ are material-handle peeks, not session fields.
+</p>
+<p>
 Encrypted UDP (DTLS) uses 
 <code>&quot;nue&quot;</code>
  / 
@@ -1476,9 +2049,9 @@ On
 <code>iv=</code>
 , and 
 <code>sig=</code>
-. A change while a digest or cipher is in flight fails (1316). 
-<code>Attrib(h, &quot;type&quot;)</code>
- is a query. Handles are not valid 
+. A change while a digest or cipher is in flight fails (1316). Status gets are 
+<a href="utr27.html#sec-peek">section 6.4</a>
+. Handles are not valid 
 <code>Attrib()</code>
  values.
 </p>
@@ -1700,18 +2273,6 @@ The language surface described here is implemented: modes
 </p>
 <p>
 <strong>
-Digest checkpoint.
-</strong>
- 
-<code>Attrib(h, &quot;state&quot;)</code>
- / 
-<code>state=</code>
- is part of the design for resuming a hash across a process break (
-<a href="utr27.html#sec-attrs-crypto">section 6.2</a>
-). OpenSSL 3 removed the MD_CTX export APIs, so the operation fails with 1316. Ordinary streaming does not need it.
-</p>
-<p>
-<strong>
 Separate configure switch.
 </strong>
  Crypto cannot be compiled out while leaving TLS sockets on. A 
@@ -1792,8 +2353,6 @@ Automated tests live under
 , 
 <code>badrole</code>
 , 
-<code>badstate</code>
-, 
 <code>badverify</code>
 , plus TLS / DTLS (
 <code>tlsplain</code>
@@ -1807,6 +2366,8 @@ Automated tests live under
 <code>tlscipher</code>
 , 
 <code>tlshandle</code>
+, 
+<code>tlspeek</code>
 , 
 <code>dtls</code>
 , 
@@ -1825,52 +2386,46 @@ References
 <li id="cite-jeffery-utr15" value="1">
 Clinton Jeffery. &quot;How to Write a Unicon Technical Report&quot;. doc/utr/utr15.tex. 2013.
 </li>
-<li id="cite-algharaibeh-utr26" value="2">
-Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
-</li>
-<li id="cite-unicode-standard" value="3">
-Unicode Consortium. &quot;The Unicode Standard&quot;. https://www.unicode.org/versions/latest/. 2026.
-</li>
-<li id="cite-unicon-utf8lib" value="4">
-Unicon Project. &quot;UTF-8 class library&quot;. uni/lib/utf8.icn.
-</li>
-<li id="cite-libssh" value="5">
+<li id="cite-libssh" value="2">
 The libssh Project. &quot;libssh -- The SSH Library&quot;. https://www.libssh.org/. 2026.
 </li>
-<li id="cite-jeffery-utr13" value="6">
+<li id="cite-jeffery-utr13" value="3">
 Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
 </li>
-<li id="cite-openssl" value="7">
+<li id="cite-openssl" value="4">
 The OpenSSL Project. &quot;OpenSSL -- Cryptography and SSL/TLS Toolkit&quot;. https://www.openssl.org/. 2026.
 </li>
-<li id="cite-rfc2104" value="8">
+<li id="cite-algharaibeh-utr26" value="5">
+Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
+</li>
+<li id="cite-rfc2104" value="6">
 H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
 </li>
-<li id="cite-rfc1112" value="9">
+<li id="cite-rfc1112" value="7">
 S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
 </li>
-<li id="cite-jeffery-pwu" value="10">
+<li id="cite-jeffery-pwu" value="8">
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
 </li>
-<li id="cite-algharaibeh-utr29" value="11">
+<li id="cite-algharaibeh-utr29" value="9">
 Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
 </li>
-<li id="cite-rfc4607" value="12">
+<li id="cite-rfc4607" value="10">
 H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
 </li>
-<li id="cite-algharaibeh-utr28" value="13">
+<li id="cite-algharaibeh-utr28" value="11">
 Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.
 </li>
-<li id="cite-rfc792" value="14">
+<li id="cite-rfc792" value="12">
 J. Postel. &quot;Internet Control Message Protocol&quot;. RFC 792. 1981.
 </li>
-<li id="cite-rfc2236" value="15">
+<li id="cite-rfc2236" value="13">
 W. Fenner. &quot;Internet Group Management Protocol, Version 2&quot;. RFC 2236. 1997.
 </li>
-<li id="cite-rfc3376" value="16">
+<li id="cite-rfc3376" value="14">
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. &quot;Internet Group Management Protocol, Version 3&quot;. RFC 3376. 2002.
 </li>
-<li id="cite-rfc1071" value="17">
+<li id="cite-rfc1071" value="15">
 R. Braden and D. Borman and C. Partridge. &quot;Computing the Internet Checksum&quot;. RFC 1071. 1988.
 </li>
 </ol></div>

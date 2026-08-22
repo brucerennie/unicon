@@ -45,7 +45,7 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr29-sec-intro}
 
-This report describes raw IP sockets in Unicon: how a handle is opened, how datagrams are sent and received, how protocol bytes are built and decoded, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. Socket attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}, and the rest) are the multicast facility [13]; this report adds mode \texttt{nr} and the packet library on top of that. The language-facing reference lives in \emph{Programming with Unicon} [10] (Chapter 5, "Raw Sockets" and "PacketSpec and package net"; Chapter 14, \texttt{uping} and \texttt{uigmp}) and the language reference (\texttt{open} mode \texttt{nr}, attributes \texttt{proto} and \texttt{hdrincl}). Automated plumbing tests live in \texttt{tests/posix/raw\_sock.icn}.
+This report describes raw IP sockets in Unicon: how a handle is opened, how datagrams are sent and received, how protocol bytes are built and decoded, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. Socket attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}, and the rest) are the multicast facility [11]; this report adds mode \texttt{nr} and the packet library on top of that. The language-facing reference lives in \emph{Programming with Unicon} [8] (Chapter 5, "Raw Sockets" and "PacketSpec and package net"; Chapter 14, \texttt{uping} and \texttt{uigmp}) and the language reference (\texttt{open} mode \texttt{nr}, attributes \texttt{proto} and \texttt{hdrincl}, subscript peek). Automated plumbing and peek tests live in \texttt{tests/posix/raw\_sock.icn}.
 
 
 Raw sockets are part of the POSIX network facility, not an optional library bind. A build without POSIX networking has no \texttt{n} modes at all. Opening \texttt{SOCK\_RAW} usually needs elevated privileges (root or administrator); that is an operating-system restriction, not a Unicon one.
@@ -53,7 +53,7 @@ Raw sockets are part of the POSIX network facility, not an optional library bind
 \section{2. Motivation}
 \label{utr29-sec-motivation}
 
-TCP and UDP cover most application protocols. Diagnostic and control traffic sits one layer down: ICMP echo [14], IGMP membership [15] [16], OSPF, GRE, PIM. Those messages are IP protocol payloads, not port-addressed transport streams. ICMP, IGMP, and other raw IP protocols were not supported.
+TCP and UDP cover most application protocols. Diagnostic and control traffic sits one layer down: ICMP echo [12], IGMP membership [13] [14], OSPF, GRE, PIM. Those messages are IP protocol payloads, not port-addressed transport streams. ICMP, IGMP, and other raw IP protocols were not supported.
 
 
 The rest of Unicon networking already treats \texttt{open()} as the constructor and \texttt{Attrib()} as the option verb. Raw sockets follow that pattern instead of adding \texttt{rawsocket()} or a parallel packet API. Payload construction is a library problem: the runtime delivers bytes, and \texttt{PacketSpec} names the fields.
@@ -64,13 +64,13 @@ The rest of Unicon networking already treats \texttt{open()} as the constructor 
 \textbf{\texttt{r} after \texttt{n} is the socket type, like \texttt{u} for UDP.} Mode letter \texttt{r} remains ordinary read mode unless a preceding \texttt{n} has already marked the handle as a network socket. Then \texttt{"nr"} means \texttt{SOCK\_RAW}, the same way \texttt{"nu"} means \texttt{SOCK\_DGRAM}. \texttt{"rn"} is not a raw socket: \texttt{r} is consumed as read mode before \texttt{n} is seen.
 
 
-\textbf{\texttt{proto=} is required and is fixed at \texttt{socket()} time.} The third argument to \texttt{socket(2)} is the IP protocol number. There is no useful default: ICMP, IGMP, and OSPF are different sockets. A missing, empty, or unknown \texttt{proto=} is error 1310 (\texttt{bad~socket~attribute}). \texttt{Attrib(f,~"proto")} cannot query or change it afterwards.
+\textbf{\texttt{proto=} is required and is fixed at \texttt{socket()} time.} The third argument to \texttt{socket(2)} is the IP protocol number. There is no useful default: ICMP, IGMP, and OSPF are different sockets. A missing, empty, or unknown \texttt{proto=} is error 1310 (\texttt{bad~socket~attribute}). \texttt{f["proto"]} peeks the protocol number stored at \texttt{open()}; \texttt{Attrib()} cannot change it.
 
 
 \textbf{The runtime does not build protocol payloads.} Writes send whatever bytes the caller supplies. Receives return whatever the kernel delivered, often including an IPv4 header on Linux. \texttt{import~net} and \texttt{PacketSpec} (or hand-assembled strings) fill that gap.
 
 
-\textbf{Datagram I/O matches UDP.} Raw sockets are not connected. \texttt{writes()} uses \texttt{sendto(2)} with the destination saved at \texttt{open()}. Incoming packets use \texttt{receive()}, which returns a record with \texttt{addr} and \texttt{msg}, not \texttt{read()} / \texttt{reads()}.
+\textbf{Datagram I/O matches UDP.} Raw sockets are not connected. \texttt{writes()} uses \texttt{sendto(2)} with the destination saved at \texttt{open()}. Incoming packets use \texttt{receive()}, which returns a record with \texttt{addr}, \texttt{msg}, \texttt{saddr}, \texttt{daddr}, and (for IPv4 raw datagrams that include a header) \texttt{ttl} and \texttt{proto}. Those extra fields are also available as \texttt{r.ttl} / \texttt{r.saddr}. Use \texttt{receive()}, not \texttt{read()} / \texttt{reads()}.
 
 
 \textbf{Two layers for callers.} Session wrappers (\texttt{Ping}, \texttt{Igmp}) hide mode letters for the common cases. PacketSpec classes are there when the program must craft or classify bytes itself.
@@ -148,10 +148,10 @@ raw-icmp: Operation not permitted
 
 The last line is the unprivileged case. With privileges it prints \texttt{raw-icmp:~ok} (or the test suite's \texttt{plumbing-ok}).
 
-\section{5. Attributes}
+\section{5. Attributes and status peek}
 \label{utr29-sec-attrs}
 
-Trailing \texttt{open()} arguments are the same \texttt{name=value} socket attributes used for TCP and UDP [13]. Booleans are exactly \texttt{yes} or \texttt{no}. \texttt{ttl} and \texttt{iface} were named for this sharing: hop limit and interface are not multicast-only knobs.
+Trailing \texttt{open()} arguments are the same \texttt{name=value} socket attributes used for TCP and UDP [11]. Booleans are exactly \texttt{yes} or \texttt{no}. \texttt{ttl} and \texttt{iface} were named for this sharing: hop limit and interface are not multicast-only knobs.
 
 \begin{longtable}{ll}
 \hline
@@ -166,7 +166,7 @@ Attribute & Role on a raw socket \\
 \endfoot
 \hline
 \endlastfoot
-\texttt{proto=} & Required. Consumed at \texttt{socket()}. Not queryable. \\
+\texttt{proto=} & Required. Consumed at \texttt{socket()}. Peek with \\
 \texttt{hdrincl=yes} & Sets \texttt{IP\_HDRINCL} so writes may include a complete IPv4 \\
 \texttt{ttl=} & Unicast and multicast hop limits (\texttt{IP\_TTL} / \\
 \texttt{rcvbuf=} / \texttt{sndbuf=} & Socket buffer sizes in bytes. \\
@@ -175,7 +175,38 @@ Attribute & Role on a raw socket \\
 \end{longtable}
 
 
-\texttt{Attrib(f,~"ttl=4")} and \texttt{Attrib(f,~"ttl")} use the same names after \texttt{open()}. \texttt{proto} remains create-time only. \texttt{hdrincl} can be read back as \texttt{yes} / \texttt{no}.
+\texttt{Attrib(f,~"ttl=4")} sets hop limits after \texttt{open()}. Status uses the same \texttt{[~]} / \texttt{key()} get as UDP [11]: unknown names raise 1310, unpopulated fields fail, \texttt{Attrib()} only assigns. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed; after the first suspend, \texttt{close()} makes the generator fail instead of raising. Raw sockets add \texttt{proto} (fixed at \texttt{socket()}) and \texttt{hdrincl}.
+
+\begin{longtable}{ll}
+\hline
+Name & Value \\
+\hline
+\endfirsthead
+\hline
+Name & Value \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\texttt{proto} & IP protocol number from \texttt{proto=}: \texttt{1} (\texttt{icmp}), \\
+\texttt{hdrincl} & \texttt{"yes"} or \texttt{\&null} \\
+\texttt{ttl} & Hop limit (integer), e.g. \texttt{64} \\
+\texttt{iface} & Outbound / join interface, e.g. \texttt{127.0.0.1} \\
+\texttt{groups} & List of joined groups, e.g. \texttt{239.1.1.1}; unpopulated \\
+\texttt{mcastloop} / \texttt{reuseaddr} / \texttt{reuseport} / & \texttt{"yes"} or \texttt{\&null} \\
+\texttt{rcvbuf} / \texttt{sndbuf} & Buffer sizes in bytes (integers) \\
+\end{longtable}
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+f := open("127.0.0.1", "nr", "proto=icmp") | stop(&errortext)
+write("proto=", f["proto"])
+write("ttl=", f["ttl"] | "unpopulated")
+every k := key(f) do
+   write("field ", k)
+close(f)
+\end{Verbatim}
 
 \section{6. Send and receive}
 \label{utr29-sec-io}
@@ -189,7 +220,7 @@ write(r.addr, "  ", *r.msg, " bytes")
 \texttt{writes()} calls \texttt{sock\_write()}, which for \texttt{SOCK\_RAW} (and UDP) does \texttt{sendto} to the \texttt{addrinfo} saved at \texttt{open()}. There is no \texttt{connect(2)}. Changing the destination means opening another handle (or, with \texttt{hdrincl=yes}, putting the destination in a supplied IP header).
 
 
-\texttt{receive()} peeks with \texttt{MSG\_PEEK} into a 2K buffer, then consumes with \texttt{recvfrom}. If the peek fills 2K, the consume uses a 64K buffer so a large datagram is not truncated. The result is a record: \texttt{addr} is the peer (often \texttt{a.b.c.d:0} for raw IPv4), \texttt{msg} is the byte string.
+\texttt{receive()} peeks with \texttt{MSG\_PEEK} into a 2K buffer, then consumes with \texttt{recvfrom}. If the peek fills 2K, the consume uses a 64K buffer so a large datagram is not truncated. The result is a \texttt{posix\_message}: \texttt{addr} is the peer (often \texttt{a.b.c.d:0} for raw IPv4), \texttt{msg} is the byte string. \texttt{saddr} / \texttt{daddr} use the usual IP-header names: on an IPv4 raw receive they are the header source and destination; on UDP, \texttt{saddr} is the numeric peer address and \texttt{daddr} is unpopulated. When the receive buffer starts with an IPv4 header, \texttt{ttl} and \texttt{proto} are that header's hop limit and protocol; otherwise those fields are null.
 
 
 On many IPv4 stacks a raw receive buffer starts with the IP header, then the protocol message. Linux ICMP is the usual example. Strip it before decoding ICMP or IGMP (\hyperref[utr29-sec-packetspec]{section 7}). IPv6 raw sockets typically deliver the upper layer only; there is no IPv6 header-strip helper yet.
@@ -206,7 +237,7 @@ As with UDP, \texttt{read()} / \texttt{reads()} are the wrong verbs for datagram
 Module \texttt{packetspec} (package \texttt{net}, \texttt{uni/lib/packetspec.icn}) is a small declarative engine for fixed binary layouts. Protocol classes inherit \texttt{PacketSpec} and override \texttt{define()}.
 
 
-Layer-1 helpers pack and unpack network-order integers (\texttt{u8} / \texttt{u16} / \texttt{u32} / \texttt{u64} and the matching \texttt{get\_u*} readers) and IPv4 addresses (\texttt{ipv4} / \texttt{to\_ipv4} / \texttt{get\_ipv4}). \texttt{inet\_cksum()} is RFC 1071 [17].
+Layer-1 helpers pack and unpack network-order integers (\texttt{u8} / \texttt{u16} / \texttt{u32} / \texttt{u64} and the matching \texttt{get\_u*} readers) and IPv4 addresses (\texttt{ipv4} / \texttt{to\_ipv4} / \texttt{get\_ipv4}). \texttt{inet\_cksum()} is RFC 1071 [15].
 
 \subsection{7.1 Declaring a layout}
 \label{utr29-sec-ps-fields}
@@ -268,7 +299,7 @@ type=8 id=1 seq=2
 \section{8. ICMP echo}
 \label{utr29-sec-icmp}
 
-\texttt{uni/lib/icmp.icn} adds echo request (type 8) and echo reply (type 0) [14] on top of \texttt{PacketSpec}:
+\texttt{uni/lib/icmp.icn} adds echo request (type 8) and echo reply (type 0) [12] on top of \texttt{PacketSpec}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 PacketSpec
@@ -510,6 +541,8 @@ missing, empty, and unknown \texttt{proto=} fail with 1310
 \texttt{hdrincl=maybe} is rejected
 \item 
 without a preceding \texttt{n}, mode \texttt{"r"} still opens a file for reading
+\item 
+when \texttt{SOCK\_RAW} is allowed, \texttt{f["proto"]} is 1 after \texttt{proto=icmp} and \texttt{key(f)} yields populated names (privilege denial still prints \texttt{raw-peek:ok} / \texttt{raw-key:ok} so the \texttt{.std} stays portable)
 \end{itemize}
 
 Expected output is \texttt{tests/posix/stand/raw\_sock.std}:
@@ -524,6 +557,8 @@ raw-ospf: plumbing-ok
 raw-numeric: plumbing-ok
 bad-hdrincl: bad socket attribute
 read-mode-r: ok
+raw-peek:ok
+raw-key:ok
 \end{Verbatim}
 
 
@@ -535,52 +570,46 @@ On an unprivileged account the \texttt{raw-*} lines still print \texttt{plumbing
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[3]{cite-unicode-standard}
-Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
-
-\bibitem[4]{cite-unicon-utf8lib}
-Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
-
-\bibitem[5]{cite-libssh}
+\bibitem[2]{cite-libssh}
 The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
 
-\bibitem[6]{cite-jeffery-utr13}
+\bibitem[3]{cite-jeffery-utr13}
 Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 
-\bibitem[7]{cite-openssl}
+\bibitem[4]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[8]{cite-rfc2104}
+\bibitem[5]{cite-algharaibeh-utr26}
+Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
+
+\bibitem[6]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[9]{cite-rfc1112}
+\bibitem[7]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[10]{cite-jeffery-pwu}
+\bibitem[8]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
 
-\bibitem[11]{cite-algharaibeh-utr29}
+\bibitem[9]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[12]{cite-rfc4607}
+\bibitem[10]{cite-rfc4607}
 H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
-\bibitem[13]{cite-algharaibeh-utr28}
+\bibitem[11]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[14]{cite-rfc792}
+\bibitem[12]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[15]{cite-rfc2236}
+\bibitem[13]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[16]{cite-rfc3376}
+\bibitem[14]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[17]{cite-rfc1071}
+\bibitem[15]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}

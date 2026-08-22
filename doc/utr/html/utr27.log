@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.21)  21 AUG 2026 07:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.22)  22 AUG 2026 01:53
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -346,8 +346,9 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.71 
-      [1]
+l.70 ...configures the operation; payload is I/O.}
+                                                   Target is never the messa...
+[1]
 Overfull \hbox (15.23016pt too wide) in paragraph at lines 87--88
 \T1/cmtt/m/n/12 open()\T1/cmr/m/n/12 's mode string is scanned char-ac-ter by c
 har-ac-ter in \T1/cmtt/m/n/12 src/runtime/fsys.r\T1/cmr/m/n/12 .
@@ -383,8 +384,8 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.113 
-       [2]
+l.109 \end{longtable}
+                      [2]
 Overfull \hbox (73.57346pt too wide) in alignment at lines 125--129
  [] [] [] [] 
  []
@@ -415,93 +416,205 @@ Overfull \hbox (19.78664pt too wide) in paragraph at lines 155--156
 ; crypto state/name
  []
 
+
+Overfull \hbox (61.7302pt too wide) in alignment at lines 162--166
+ [] [] 
+ []
+
+
+Overfull \hbox (61.7302pt too wide) in alignment at lines 166--170
+ [] [] 
+ []
+
+
+Overfull \hbox (61.7302pt too wide) in alignment at lines 170--172
+ [] [] 
+ []
+
+
+Overfull \hbox (61.7302pt too wide) in alignment at lines 172--174
+ [] [] 
+ []
+
+
+Overfull \hbox (61.7302pt too wide) in alignment at lines 174--182
+ [] [] 
+ []
+
 [3]
-Overfull \hbox (194.16191pt too wide) in alignment at lines 189--193
+Overfull \hbox (161.93645pt too wide) in alignment at lines 189--193
  [] [] [] 
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 193--197
+Overfull \hbox (161.93645pt too wide) in alignment at lines 193--197
  [] [] [] 
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 197--199
+Overfull \hbox (161.93645pt too wide) in alignment at lines 197--199
  [] [] [] 
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 199--201
+Overfull \hbox (161.93645pt too wide) in alignment at lines 199--201
  [] [] [] 
  []
 
 
-Overfull \hbox (194.16191pt too wide) in alignment at lines 201--211
+Overfull \hbox (161.93645pt too wide) in alignment at lines 201--210
  [] [] [] 
  []
 
-[4] [5] [6] [7] [8] [9] [10] [11] [12]
+[4]
+Overfull \hbox (36.65514pt too wide) in paragraph at lines 235--236
+\T1/cmtt/m/n/12 conn["san"] \T1/cmr/m/n/12 are lists of SAN strings (\T1/cmtt/m
+/n/12 DNS:host\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 IP:1.2.3.4\T1/cmr/m/n/12 ). \T1/
+cmtt/m/n/12 conn["certchain"]
+ []
+
+
+Overfull \hbox (20.49448pt too wide) in alignment at lines 240--244
+ [] [] 
+ []
+
+
+Overfull \hbox (20.49448pt too wide) in alignment at lines 244--248
+ [] [] 
+ []
+
+
+Overfull \hbox (20.49448pt too wide) in alignment at lines 248--250
+ [] [] 
+ []
+
+
+Overfull \hbox (20.49448pt too wide) in alignment at lines 250--252
+ [] [] 
+ []
+
+
+Overfull \hbox (20.49448pt too wide) in alignment at lines 252--261
+ [] [] 
+ []
+
+[5]
+Overfull \hbox (15.79425pt too wide) in alignment at lines 269--273
+ [] [] 
+ []
+
+
+Overfull \hbox (15.79425pt too wide) in alignment at lines 273--277
+ [] [] 
+ []
+
+
+Overfull \hbox (15.79425pt too wide) in alignment at lines 277--279
+ [] [] 
+ []
+
+
+Overfull \hbox (15.79425pt too wide) in alignment at lines 279--281
+ [] [] 
+ []
+
+
+Overfull \hbox (15.79425pt too wide) in alignment at lines 281--287
+ [] [] 
+ []
+
+
+Overfull \hbox (85.04117pt too wide) in alignment at lines 337--341
+ [] [] 
+ []
+
+
+Overfull \hbox (85.04117pt too wide) in alignment at lines 341--345
+ [] [] 
+ []
+
+
+Overfull \hbox (85.04117pt too wide) in alignment at lines 345--347
+ [] [] 
+ []
+
+
+Overfull \hbox (85.04117pt too wide) in alignment at lines 347--349
+ [] [] 
+ []
+
+
+Overfull \hbox (85.04117pt too wide) in alignment at lines 349--361
+ [] [] 
+ []
+
+[6] [7] [8] [9] [10] [11] [12] [13] [14] [15]
+Overfull \hbox (73.32443pt too wide) in paragraph at lines 762--763
+[]\T1/cmr/m/n/12 After a hand-shake, \T1/cmtt/m/n/12 conn["cipher"] \T1/cmr/m/n
+/12 peeks the ne-go-ti-ated suite and \T1/cmtt/m/n/12 conn["certchain"]
+ []
+
+
+Overfull \hbox (58.01056pt too wide) in paragraph at lines 762--763
+\T1/cmr/m/n/12 is a list of peer cer-tifi-cates as PEM strings; see [][]sec-tio
+n 6.4[][] (\T1/cmtt/m/n/12 tests/crypto/tlspeek.icn\T1/cmr/m/n/12 ).
+ []
+
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <17.28> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 608.
- [13]
-Overfull \hbox (51.5677pt too wide) in paragraph at lines 617--618
-\T1/cmr/m/n/12 and \T1/cmtt/m/n/12 sig=\T1/cmr/m/n/12 . A change while a di-ges
-t or ci-pher is in flight fails (1316). \T1/cmtt/m/n/12 Attrib(h, "type")
- []
-
-
-Overfull \hbox (168.8444pt too wide) in alignment at lines 630--634
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 767.
+[16]
+Overfull \hbox (168.8444pt too wide) in alignment at lines 789--793
  [] [] [] 
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 634--638
+Overfull \hbox (168.8444pt too wide) in alignment at lines 793--797
  [] [] [] 
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 638--640
+Overfull \hbox (168.8444pt too wide) in alignment at lines 797--799
  [] [] [] 
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 640--642
+Overfull \hbox (168.8444pt too wide) in alignment at lines 799--801
  [] [] [] 
  []
 
 
-Overfull \hbox (168.8444pt too wide) in alignment at lines 642--651
+Overfull \hbox (168.8444pt too wide) in alignment at lines 801--810
  [] [] [] 
  []
 
-[14]
-Overfull \hbox (57.18253pt too wide) in paragraph at lines 656--657
+
+Overfull \hbox (57.18253pt too wide) in paragraph at lines 815--816
 \T1/cmr/m/n/12 Crypto com-piles un-der \T1/cmtt/m/n/12 HAVE_LIBSSL\T1/cmr/m/n/1
 2 , the same guard as TLS. \T1/cmtt/m/n/12 configure --disable-ssl
  []
 
 
-Overfull \hbox (53.76334pt too wide) in paragraph at lines 659--660
+Overfull \hbox (53.76334pt too wide) in paragraph at lines 818--819
 []\T1/cmtt/m/n/12 &features \T1/cmr/m/n/12 re-ports \T1/cmtt/m/n/12 secure sock
 ets layer encryption\T1/cmr/m/n/12 . \T1/cmtt/m/n/12 tests/crypto/Makefile
  []
 
 
-Overfull \hbox (32.17708pt too wide) in paragraph at lines 662--663
+Overfull \hbox (32.17708pt too wide) in paragraph at lines 821--822
 \T1/cmtt/m/n/12 fsys.r\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 fmisc.r\T1/cmr/m/n/12 , 
 \T1/cmtt/m/n/12 rposix.r\T1/cmr/m/n/12 , and \T1/cmtt/m/n/12 rcrypto.ri\T1/cmr/
 m/n/12 . TLS helpers (\T1/cmtt/m/n/12 create_ssl_context\T1/cmr/m/n/12 ,
  []
 
 
-Overfull \hbox (40.96428pt too wide) in paragraph at lines 662--663
+Overfull \hbox (40.96428pt too wide) in paragraph at lines 821--822
 \T1/cmtt/m/n/12 is_ssl_attr\T1/cmr/m/n/12 ) and the \T1/cmtt/m/n/12 CryptoFile 
 \T1/cmr/m/n/12 im-ple-men-ta-tion share \T1/cmtt/m/n/12 src/runtime/rcrypto.ri\
 T1/cmr/m/n/12 . 
  []
 
-[15]
-Overfull \hbox (1.95982pt too wide) in paragraph at lines 687--688
+[17]
+Overfull \hbox (1.95982pt too wide) in paragraph at lines 843--844
 \T1/cmtt/m/n/12 filekey\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 filekeyattr\T1/cmr/m/n/
 12 , \T1/cmtt/m/n/12 filetamper\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 opswitch\T1/cmr
 /m/n/12 , \T1/cmtt/m/n/12 midattrib\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 badalg\T1/c
@@ -509,56 +622,51 @@ mr/m/n/12 , \T1/cmtt/m/n/12 badkey\T1/cmr/m/n/12 ,
  []
 
 
-Overfull \hbox (60.74083pt too wide) in paragraph at lines 687--688
-\T1/cmtt/m/n/12 tlsauth\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlsproto\T1/cmr/m/n/12 
-, \T1/cmtt/m/n/12 tlscipher\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlshandle\T1/cmr/m/
+Overfull \hbox (60.74083pt too wide) in paragraph at lines 843--844
+\T1/cmtt/m/n/12 tlsproto\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlscipher\T1/cmr/m/n/1
+2 , \T1/cmtt/m/n/12 tlshandle\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 tlspeek\T1/cmr/m/
 n/12 , \T1/cmtt/m/n/12 dtls\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 dtlsecho\T1/cmr/m/n
 /12 ). \T1/cmtt/m/n/12 tests/crypto/Makefile
  []
 
 
-Overfull \hbox (31.01056pt too wide) in paragraph at lines 687--688
+Overfull \hbox (31.01056pt too wide) in paragraph at lines 843--844
 \T1/cmr/m/n/12 tests when con-cur-rency is ab-sent. Ex-pected out-put is \T1/cm
 tt/m/n/12 tests/crypto/stand/*.std\T1/cmr/m/n/12 . 
  []
 
 
-Underfull \hbox (badness 4779) in paragraph at lines 693--694
+Underfull \hbox (badness 4779) in paragraph at lines 849--850
 []\T1/cmr/m/n/12 Clinton Jef-fery. "How to Write a Uni-con Tech-ni-cal Re-port"
 .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 699--700
-[]\T1/cmr/m/n/12 Unicode Con-sor-tium. "The Uni-code Stan-dard".
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 705--706
+Underfull \hbox (badness 10000) in paragraph at lines 852--853
 []\T1/cmr/m/n/12 The lib-ssh Project. "lib-ssh -- The SSH Li-brary".
  []
 
-
-Underfull \hbox (badness 1072) in paragraph at lines 711--712
+[18]
+Underfull \hbox (badness 1072) in paragraph at lines 858--859
 []\T1/cmr/m/n/12 The OpenSSL Project. "OpenSSL -- Cryp-tog-ra-phy and SSL/TLS
  []
 
-[16] [17] (./utr27.aux)
+[19] (./utr27.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `utr27.out' has not changed.
-(rerunfilecheck)             Checksum: 7E0375729CF18663F8A602A85304139E;3443.
+(rerunfilecheck)             Checksum: EF7CFE255922ED09517620DE98A78C56;3686.
  ) 
 Here is how much of TeX's memory you used:
- 9807 strings out of 476182
- 150755 string characters out of 5795595
- 1934975 words of memory out of 5000000
- 31640 multiletter control sequences out of 15000+600000
+ 9818 strings out of 476182
+ 150784 string characters out of 5795595
+ 1936975 words of memory out of 5000000
+ 31645 multiletter control sequences out of 15000+600000
  568164 words of font info for 54 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,79p,1108b,654s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,1108b,652s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1728.60
 0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1095.
 600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti120
@@ -570,10 +678,10 @@ ctt1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
 ec/ecbx1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
 n/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecbx2074.600pk>
-Output written on utr27.pdf (19 pages, 157625 bytes).
+Output written on utr27.pdf (21 pages, 171978 bytes).
 PDF statistics:
- 644 PDF objects out of 1000 (max. 8388607)
- 238 compressed objects within 3 object streams
- 64 named destinations out of 1000 (max. 500000)
- 185 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 692 PDF objects out of 1000 (max. 8388607)
+ 255 compressed objects within 3 object streams
+ 70 named destinations out of 1000 (max. 500000)
+ 193 words of extra memory for PDF output out of 10000 (max. 10000000)
 

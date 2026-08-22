@@ -189,7 +189,7 @@ Ensure the installer puts \texttt{pdflatex} on your \texttt{PATH}, then open a n
 \subsection{What uscribe LaTeX output needs}
 \label{install-what-uscribe-latex-output-needs}
 
-Generated \texttt{STEM.tex} uses a small set of packages (\texttt{graphicx}, \texttt{hyperref}, \texttt{xcolor}, \texttt{fancyvrb}, \texttt{booktabs}, \texttt{longtable}). \texttt{multirow} is loaded when the \texttt{.sty} is installed (needed for grid-table row spans). A latex recommended install is usually enough; GitHub Pages installs \texttt{texlive-latex-extra} so the user-guide PDF build has the full set. If \texttt{pdflatex} stops with \texttt{File~...sty~not~found}, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
+Generated \texttt{STEM.tex} uses a small set of packages (\texttt{graphicx}, \texttt{hyperref}, \texttt{xcolor}, \texttt{fancyvrb}, \texttt{booktabs}, \texttt{longtable}). \texttt{multirow} is loaded when the \texttt{.sty} is installed (needed for grid-table row spans). A latex recommended install is usually enough; GitHub Pages installs \texttt{texlive-latex-extra} so the user-guide PDF build has the full set. If \texttt{pdflatex} stops with \texttt{File~…sty~not~found}, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
 
 
 SVG figures are not embedded in PDF; convert them to PDF or PNG, or accept the boxed placeholder uscribe emits for \texttt{.svg} paths.
@@ -363,7 +363,7 @@ A report (one paper) or a catalog of reports uses the same tools with a differen
 \chapter{Reports}
 \label{reports-reports}
 
-A \textbf{report} is one paper: one \texttt{.rst} source, one HTML page, one PDF. The left sidebar is that paper's sections (Introduction, Motivation, ...). A \textbf{book} (this guide) is the other shape: many chapters, sidebar = chapter list, one combined PDF.
+A \textbf{report} is one paper: one \texttt{.rst} source, one HTML page, one PDF. The left sidebar is that paper's sections (Introduction, Motivation, …). A \textbf{book} (this guide) is the other shape: many chapters, sidebar = chapter list, one combined PDF.
 
 
 If every file in the manifest is a report, uscribe also writes a catalog \texttt{index.html} --- a table of links. You can ignore it when you only have one report.
@@ -546,7 +546,7 @@ Book title: HTML \texttt{<title>}, sidebar heading, index heading, and the LaTeX
 \section{copyright}
 \label{config-copyright}
 
-Book-wide footer text after (c) on HTML pages (for example \texttt{2026,~Jafar~Al-Gharaibeh}). This is not a chapter byline; a chapter \texttt{:copyright:} field is separate (see \hyperref[markup-markup-reference]{Markup Reference}). CLI: \texttt{--copyright}.
+Book-wide footer text after © on HTML pages (for example \texttt{2026,~Jafar~Al-Gharaibeh}). This is not a chapter byline; a chapter \texttt{:copyright:} field is separate (see \hyperref[markup-markup-reference]{Markup Reference}). CLI: \texttt{--copyright}.
 
 \section{logo}
 \label{config-logo}
@@ -566,7 +566,7 @@ Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a cus
 \section{themePath}
 \label{config-themepath}
 
-Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). Also accepted as \texttt{themepath} or \texttt{theme\_path}. If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. CLI: \texttt{--themePath}.
+Directory that contains theme subdirectories (\texttt{DIR/basic/static}, …). Also accepted as \texttt{themepath} or \texttt{theme\_path}. If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. CLI: \texttt{--themePath}.
 
 \section{docclass}
 \label{config-docclass}
@@ -1029,7 +1029,7 @@ Snippets under \texttt{includes/} can be pulled into any chapter with \texttt{..
 \end{quote}
 
 
-Pull a real \texttt{.icn} file as a listing. Language defaults from the extension (\texttt{.icn} -> \texttt{unicon}); override with \texttt{:language:}:
+Pull a real \texttt{.icn} file as a listing. Language defaults from the extension (\texttt{.icn} → \texttt{unicon}); override with \texttt{:language:}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 # Shared sample for literalinclude demos
@@ -1050,7 +1050,7 @@ The same file, only the body between markers:
 \section{Unicon listings}
 \label{markup-unicon-listings}
 
-\texttt{code-block} languages \texttt{unicon}, \texttt{icon}, and \texttt{icn} get Unicon syntax highlighting in HTML (via \texttt{highlight-unicon.js}). Other languages are emitted as plain \texttt{<pre><code~class="language-...">} without Unicon highlighting --- use \texttt{sh} for shell, \texttt{rst} or \texttt{text} for markup samples. \texttt{literalinclude} of \texttt{.icn} files uses the same highlighting.
+\texttt{code-block} languages \texttt{unicon}, \texttt{icon}, and \texttt{icn} get Unicon syntax highlighting in HTML (via \texttt{highlight-unicon.js}). Other languages are emitted as plain \texttt{<pre><code~class="language-…">} without Unicon highlighting --- use \texttt{sh} for shell, \texttt{rst} or \texttt{text} for markup samples. \texttt{literalinclude} of \texttt{.icn} files uses the same highlighting.
 
 
 Example Unicon program as it appears in the built book:
@@ -1127,7 +1127,7 @@ themes/
 \end{Verbatim}
 
 
-To add a custom theme, create \texttt{themes/mytheme/static/book.css} and pass \texttt{--theme=mytheme}. Keep the same HTML class names (\texttt{.sidebar}, \texttt{.main}, \texttt{.tok-keyword}, ...) so shared scripts keep working.
+To add a custom theme, create \texttt{themes/mytheme/static/book.css} and pass \texttt{--theme=mytheme}. Keep the same HTML class names (\texttt{.sidebar}, \texttt{.main}, \texttt{.tok-keyword}, …) so shared scripts keep working.
 
 
 See \texttt{themes/README.md} in the source tree for layout details.
@@ -1158,7 +1158,7 @@ Book title for \texttt{<title>}, the sidebar heading, the index page, and the La
 
 \item[**--copyright=TEXT**]
 
-Optional footer copyright (text after (c)), e.g. \texttt{2026,~Jafar~Al-Gharaibeh}. HTML only. Every HTML page always ends with \texttt{Powered~by~uscribe}; chapter pages also link \textbf{pdf} (the book PDF from \texttt{--name}, or a sibling PDF for reports) and \textbf{source} (\texttt{\_sources/name.rst.txt}, viewable as plain text in the browser).
+Optional footer copyright (text after ©), e.g. \texttt{2026,~Jafar~Al-Gharaibeh}. HTML only. Every HTML page always ends with \texttt{Powered~by~uscribe}; chapter pages also link \textbf{pdf} (the book PDF from \texttt{--name}, or a sibling PDF for reports) and \textbf{source} (\texttt{\_sources/name.rst.txt}, viewable as plain text in the browser).
 
 \item[**--name=STEM**]
 
@@ -1185,7 +1185,7 @@ Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a cus
 
 \item[**--themePath=DIR**]
 
-Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. HTML only.
+Directory that contains theme subdirectories (\texttt{DIR/basic/static}, …). If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. HTML only.
 
 \end{description}
 
@@ -1210,6 +1210,6 @@ Directory that contains theme subdirectories (\texttt{DIR/basic/static}, ...). I
 \section{Exit status}
 \label{cli-exit-status}
 
-Usage errors and missing files call \texttt{stop()} (non-zero). A successful build prints \texttt{wrote~...} lines for each output file.
+Usage errors and missing files call \texttt{stop()} (non-zero). A successful build prints \texttt{wrote~…} lines for each output file.
 
 \end{document}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.21)  21 AUG 2026 07:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.22)  22 AUG 2026 01:53
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -427,9 +427,10 @@ Chapter 5.
 
 
 ]
-Overfull \hbox (66.22343pt too wide) in paragraph at lines 549--550
-\T1/cmr/m/n/10.95 Book-wide footer text af-ter (c) on HTML pages (for ex-am-ple
- \T1/cmtt/m/n/10.95 2026, Jafar Al-Gharaibeh\T1/cmr/m/n/10.95 ).
+Overfull \hbox (65.00694pt too wide) in paragraph at lines 549--550
+\T1/cmr/m/n/10.95 Book-wide footer text af-ter \TS1/cmr/m/n/10.95 © \T1/cmr/m/n
+/10.95 on HTML pages (for ex-am-ple \T1/cmtt/m/n/10.95 2026, Jafar Al-Gharaibeh
+\T1/cmr/m/n/10.95 ).
  []
 
 
@@ -531,10 +532,10 @@ Package rerunfilecheck Info: File `uscribe-userguide.out' has not changed.
 (rerunfilecheck)             Checksum: 4293C91667108A0C99398AA4FBDC9038;8173.
  ) 
 Here is how much of TeX's memory you used:
- 9991 strings out of 476182
- 154008 string characters out of 5795595
+ 9994 strings out of 476182
+ 154056 string characters out of 5795595
  1937975 words of memory out of 5000000
- 31766 multiletter control sequences out of 15000+600000
+ 31769 multiletter control sequences out of 15000+600000
  572082 words of font info for 62 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,6n,79p,621b,656s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -551,9 +552,9 @@ n/ec/ecsl1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecrm1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jkn
 appen/ec/ecbx1095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/j
 knappen/ec/ecbx2488.600pk>
-Output written on uscribe-userguide.pdf (33 pages, 2108188 bytes).
+Output written on uscribe-userguide.pdf (33 pages, 2108864 bytes).
 PDF statistics:
- 1083 PDF objects out of 1200 (max. 8388607)
+ 1084 PDF objects out of 1200 (max. 8388607)
  545 compressed objects within 6 object streams
  109 named destinations out of 1000 (max. 500000)
  507 words of extra memory for PDF output out of 10000 (max. 10000000)

@@ -24,7 +24,7 @@
 \vskip 5.5em
 {\bfseries Abstract}\par
 \begin{quote}
-Unicon historically had no native SSH client: programs that needed remote command execution or file transfer shelled out to an external ssh binary. This report describes the current design and implementation: a client that binds libssh and exposes sessions, multiplexed channels, and SFTP through existing language verbs -- open(), read()/write(), receive(), Attrib(), stat(), remove(), and rename() -- rather than a parallel SSH-specific API. The report covers the connection and channel model, authentication and attributes, examples and use cases, the three I/O tiers, interactive shells, SFTP, build integration, and remaining work.
+Unicon historically had no native SSH client: programs that needed remote command execution or file transfer shelled out to an external ssh binary. This report describes the current design and implementation: a client that binds libssh and exposes sessions, multiplexed channels, and SFTP through existing language verbs -- open(), read()/write(), receive(), subscript peek, stat(), remove(), and rename() -- rather than a parallel SSH-specific API. The report covers the connection and channel model, authentication and attributes, examples and use cases, the three I/O tiers, interactive shells, SFTP, build integration, and remaining work.
 \end{quote}
 \begin{quote}
 {\bfseries Keywords:} Unicon, SSH, SFTP, libssh, sockets, runtime, technical report.
@@ -45,7 +45,7 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr26-sec-intro}
 
-This report describes the current design and implementation of native SSH in the Unicon runtime: how a session is opened, how additional channels and SFTP handles are derived from it, how stream I/O, ordered events, and metadata operations are exposed, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. The language-facing reference lives in \emph{Programming with Unicon} (Chapter 6, "Secure Shell") and the language reference (\texttt{open} mode \texttt{h}, \texttt{Attrib}, \texttt{receive}, \texttt{stat} / \texttt{remove} / \texttt{rename}). \hyperref[utr27-sec-examples]{section 6} collects examples by mode and use case. Automated tests live in \texttt{tests/posix/ssh.icn}.
+This report describes the current design and implementation of native SSH in the Unicon runtime: how a session is opened, how additional channels and SFTP handles are derived from it, how stream I/O, ordered events, and metadata operations are exposed, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. The language-facing reference lives in \emph{Programming with Unicon} (Chapter 6, "Secure Shell") and the language reference (\texttt{open} mode \texttt{h}, subscript peek, \texttt{key()}, \texttt{receive}, \texttt{stat} / \texttt{remove} / \texttt{rename}). \hyperref[utr27-sec-examples]{section 6} collects examples by mode and use case. Automated tests live in \texttt{tests/posix/ssh.icn}.
 
 
 The feature is optional. A build with libssh present reports \texttt{secure~shell} in \texttt{\&features} (the \texttt{\_SSH} feature flag). Without the library, mode \texttt{h} is ignored and the SSH paths are compiled out, as with other optional features.
@@ -58,7 +58,7 @@ Unicon programs that needed SSH previously relied on \texttt{popen()} or pipes t
 \subsection{2.1 Library choice}
 \label{utr26-sec-prior}
 
-Two C libraries were considered. \textbf{libssh} (LGPL) supports both client and server, modern key exchange and host keys, and true non-blocking I/O via \texttt{poll(2)}. \textbf{libssh2} (BSD) is client-only and cannot be used fully non-blocking. The implementation binds \textbf{libssh} [5], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (\hyperref[utr26-sec-receive]{section 8.3}).
+Two C libraries were considered. \textbf{libssh} (LGPL) supports both client and server, modern key exchange and host keys, and true non-blocking I/O via \texttt{poll(2)}. \textbf{libssh2} (BSD) is client-only and cannot be used fully non-blocking. The implementation binds \textbf{libssh} [2], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (\hyperref[utr26-sec-receive]{section 8.3}).
 
 
 A full protocol reimplementation (Paramiko, Go's \texttt{x/crypto/ssh}) would mean owning crypto primitives and protocol-drift / CVE tracking indefinitely. Binding to libssh via the existing C runtime avoids that.
@@ -71,7 +71,7 @@ Python (Paramiko) and Go (\texttt{x/crypto/ssh}) both treat "new session" as sug
 \subsection{2.3 Why not Messaging}
 \label{utr26-sec-messaging}
 
-The Messaging facility (HTTP/POP/SMTP, \texttt{rmsg.r}, libtp) [6] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (\texttt{exec} / \texttt{shell} / \texttt{sftp} as concurrent channels) also does not map onto Messaging's request/response verb model (\texttt{GET} / \texttt{POST} / \texttt{RETR}). SSH does not route through \texttt{ssh://} URIs or \texttt{Mopen()}. It uses the \texttt{h} mode character and plain \texttt{user@host} string parsing, independent of the Messaging/URI subsystem.
+The Messaging facility (HTTP/POP/SMTP, \texttt{rmsg.r}, libtp) [3] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (\texttt{exec} / \texttt{shell} / \texttt{sftp} as concurrent channels) also does not map onto Messaging's request/response verb model (\texttt{GET} / \texttt{POST} / \texttt{RETR}). SSH does not route through \texttt{ssh://} URIs or \texttt{Mopen()}. It uses the \texttt{h} mode character and plain \texttt{user@host} string parsing, independent of the Messaging/URI subsystem.
 
 \section{3. Architectural grounding}
 \label{utr26-sec-arch}
@@ -94,7 +94,7 @@ All stream I/O funnels through one dispatch point: \texttt{u\_read()} / \texttt{
 Close is \textbf{explicit, not GC-driven}. The close hook in \texttt{fsys.r} frees SSL resources directly; there is no finalizer during garbage collection. SSH files follow the same convention -- leaking a channel or session means not calling \texttt{close()}, the same as any other file.
 
 
-\texttt{receive()} already returns a general-purpose \texttt{posix\_message} record (fields \texttt{addr} and \texttt{msg}) for UDP and raw datagrams. SSH reuses that type for an ordered stdout/stderr/exit-status event stream (\hyperref[utr26-sec-receive]{section 8.3}).
+\texttt{receive()} already returns a general-purpose \texttt{posix\_message} record (\texttt{addr}, \texttt{msg}, \texttt{saddr}, \texttt{daddr}, \texttt{ttl}, \texttt{proto}) for UDP and raw datagrams. SSH reuses that type for an ordered stdout/stderr/exit-status event stream, using \texttt{addr} and \texttt{msg} (\hyperref[utr26-sec-receive]{section 8.3}).
 
 
 \texttt{stat(f)} already \texttt{type\_case}s on its argument (string path versus open file). SFTP extends both branches (\hyperref[utr26-sec-sftp-meta]{section 11.3}). \texttt{remove()} and \texttt{rename()} gain an optional leading session argument, matching the existing Unicon idiom that many functions take an optional leading file or window (\texttt{write("hello")} versus \texttt{write(f,~"hello")}).
@@ -152,7 +152,7 @@ c := open(s, "hc", "cmd=show version")
 \section{5. Attributes and authentication}
 \label{utr26-sec-attrs}
 
-Trailing \texttt{open()} arguments are \texttt{name=value} strings. Empty values and unknown names fail (error 1321). Boolean-style attributes without a value are not accepted -- every attribute must contain \texttt{=}. SFTP is selected by mode character \texttt{s} after \texttt{h} (\texttt{"hs"}), not by a valueless attribute.
+Trailing \texttt{open()} arguments are \texttt{name=value} strings. Empty values and unknown names fail (error 1331). Boolean-style attributes without a value are not accepted -- every attribute must contain \texttt{=}. SFTP is selected by mode character \texttt{s} after \texttt{h} (\texttt{"hs"}), not by a valueless attribute.
 
 \begin{longtable}{lll}
 \hline
@@ -234,7 +234,7 @@ leading integer & attribute (timeout) & Connect timeout in milliseconds \\
 \end{longtable}
 
 
-\texttt{channel=no} with \texttt{hc} or \texttt{cmd=} fails (error 1321). \texttt{cmd=} without \texttt{c} also fails.
+\texttt{channel=no} with \texttt{hc} or \texttt{cmd=} fails (error 1331). \texttt{cmd=} without \texttt{c} also fails.
 
 \subsection{6.2 Interactive shell}
 \label{utr26-sec-ex-shell}
@@ -258,14 +258,14 @@ end
 \subsection{6.3 Remote command}
 \label{utr26-sec-ex-cmd}
 
-Mode \texttt{"hc"} with \texttt{cmd=} runs one command and returns its stdout through ordinary \texttt{read()} / \texttt{reads()}. \texttt{Attrib(c,~"exitstatus")} is the remote exit code once it has arrived:
+Mode \texttt{"hc"} with \texttt{cmd=} runs one command and returns its stdout through ordinary \texttt{read()} / \texttt{reads()}. \texttt{c["exitstatus"]} is the remote exit code once it has arrived:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 procedure main()
    s := open("user@host", "hc", "key=/home/user/.ssh/id_ed25519",
              "cmd=uname -a") | stop(&errortext)
    while write(read(s))
-   write("exit status: ", Attrib(s, "exitstatus"))
+   write("exit status: ", s["exitstatus"])
    close(s)
 end
 \end{Verbatim}
@@ -295,7 +295,7 @@ close(s)
 \end{Verbatim}
 
 
-\texttt{Attrib(c,~"stderr")} is the other stderr path: it drains bytes accumulated since the previous call, without preserving order against stdout. See \hyperref[utr29-sec-io]{section 8}.
+\texttt{c["stderr"]} is the other stderr path: it peeks the current accumulated buffer, without preserving order against stdout. See \hyperref[utr29-sec-io]{section 8}.
 
 \subsection{6.5 Several channels on one session}
 \label{utr26-sec-ex-channels}
@@ -372,7 +372,7 @@ Channels that share a session serialize on the session mutex (\hyperref[utr26-se
 \section{7. Error handling}
 \label{utr26-sec-errors}
 
-Connection and channel failures \textbf{fail}, they do not \texttt{runerr}. This matches the SSL connect path: set \texttt{\&errortext}, tear down what was allocated, and fail, so callers write \texttt{if~s~:=~open(...)~then~...~else~...}. Runtime errors are reserved for type mistakes (passing a non-SSH file to \texttt{open(s,~"hc")}, a bad \texttt{Attrib} name on an SSH file).
+Connection and channel failures \textbf{fail}, they do not \texttt{runerr}. This matches the SSL connect path: set \texttt{\&errortext}, tear down what was allocated, and fail, so callers write \texttt{if~s~:=~open(...)~then~...~else~...}. Runtime errors are reserved for type mistakes (passing a non-SSH file to \texttt{open(s,~"hc")}, a bad peek name on an SSH file).
 
 
 Error numbers, defined in \texttt{src/runtime/data.r}:
@@ -390,18 +390,18 @@ Number & Text & Typical cause \\
 \endfoot
 \hline
 \endlastfoot
-1320 & SSH error & Connect failure, allocation, bad host string \\
-1321 & bad ssh attribute & Unknown name, empty value, \texttt{cmd=} without \texttt{c}, \texttt{channel=no} with \texttt{hc} \\
-1322 & SSH authentication error & No method succeeded \\
-1323 & SSH host key verification error & Server not in \texttt{known\_hosts} (when verifying) \\
-1324 & SSH channel error & Channel open, I/O, or a closed/cascaded handle \\
-1325 & SFTP error & SFTP subsystem, path, or transfer failure \\
+1330 & SSH error & Connect failure, allocation, bad host string \\
+1331 & bad ssh attribute & Unknown name, empty value, \texttt{cmd=} without \texttt{c}, \texttt{channel=no} with \texttt{hc} \\
+1332 & SSH authentication error & No method succeeded \\
+1333 & SSH host key verification error & Server not in \texttt{known\_hosts} (when verifying) \\
+1334 & SSH channel error & Channel open, I/O, or a closed/cascaded handle \\
+1335 & SFTP error & SFTP subsystem, path, or transfer failure \\
 \end{longtable}
 
 
 \texttt{set\_ssh\_errortext()} appends libssh's own message where available. Blocking libssh calls run under \texttt{DEC\_NARTHREADS}; \texttt{\&errortext} is set only after the thread is re-registered, because Unicon allocation is not allowed while unregistered.
 
-\section{8. I/O: streams, \texttt{Attrib()}, and \texttt{receive()}}
+\section{8. I/O: streams, peek fields, and \texttt{receive()}}
 \label{utr26-sec-io}
 
 Three tiers, layered simple-default to full-fidelity. All three share one per-channel event queue populated by libssh callbacks (\hyperref[utr26-sec-queue]{section 8.4}).
@@ -418,33 +418,92 @@ Writes to a channel call \texttt{ssh\_channel\_write()} and retry short writes. 
 \item 
 SFTP regular files use \texttt{sftp\_write()} on the same path.
 \end{enumerate}
-\subsection{8.2 \texttt{Attrib()} for exit status, stderr, and EOF}
+\subsection{8.2 Peek fields (\texttt{[~]} and \texttt{key()})}
 \label{utr26-sec-attrib}
 
-\texttt{Attrib()} already exists generically -- documented as "read/write attributes (threads, sockets, ...)" -- and is already used for socket options. SSH channels add three query-only names:
+Status on SSH files is a non-destructive peek through \texttt{[~]}, not \texttt{Attrib()}. \texttt{Attrib()} has no SSH setters. Unknown names raise 1331. An unpopulated field fails. Boolean fields that answered succeed with \texttt{"yes"} or \texttt{\&null} (never \texttt{"no"}). \texttt{key(c)} generates every answerable field, including false booleans. \texttt{c["*"]} snapshots those fields under one lock. Peeking a closed handle is error 174; \texttt{close()} keeps the original name so \texttt{image(c)} remains \texttt{file(user@host)}. \texttt{key(c)} that has not yet produced a name also raises 174 if the handle is already closed. After the first suspend, \texttt{close()} makes the generator fail instead of raising, so a walk does not turn a mid-generation close into an error. The same split as messaging: \texttt{!} generates content, \texttt{key()} generates names. Channels keep line-generating \texttt{!} (they carry \texttt{Fs\_Socket}). Transport-only sessions (\texttt{channel=no}) are not line streams; \texttt{!s} fails.
 
-\begin{itemize}
-\item 
-\texttt{Attrib(c,~"exitstatus")} -- the remote command's exit status, as an integer. \textbf{Fails until the exit-status callback has fired.} The implementation pumps the channel until that happens or the channel is done with no status. Preferring callback state over libssh's blocking \texttt{get\_exit\_*} helpers avoids version-sensitive fallbacks once callbacks are registered. This reuses the ordinary Unicon "fail = not ready" idiom, the same as \texttt{read()} failing at EOF.
-\item 
-\texttt{Attrib(c,~"stderr")} -- drains \textbf{only new bytes since the last call} (a live incremental accessor, not a cumulative snapshot). Not gated on EOF: reading partial stderr mid-run is safe and useful. Returns a possibly empty string.
-\item 
-\texttt{Attrib(c,~"eof")} -- \texttt{1} once the remote sent EOF, else \texttt{0}. Useful when a caller is multiplexing with \texttt{select()} and needs to distinguish "no stdout yet" from "channel finished."
-\end{itemize}
 
-Unknown names on an SSH file raise 1321.
+A few fields are lists: one item is still a list of length 1. Walk members with \texttt{!s["authmethods"]}.
+
+
+\textbf{Channel} (exec, shell, or SFTP handle). \texttt{c["type"]} is \texttt{channel} or \texttt{sftp}.
+
+\begin{longtable}{ll}
+\hline
+Name & Value \\
+\hline
+\endfirsthead
+\hline
+Name & Value \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\texttt{type} & \texttt{channel} or \texttt{sftp} \\
+\texttt{exitstatus} & Integer remote exit code. **Fails until the exit-status \\
+\texttt{stderr} & Accumulated stderr (a peek, not a drain). Fails if empty. \\
+\texttt{eof} & \texttt{"yes"} once the remote sent EOF, else \texttt{\&null}. \\
+\texttt{bytesread} / \texttt{byteswritten} & Running counters (integers). \\
+\end{longtable}
+
+
+\textbf{Session} (the authenticated connection, including \texttt{channel=no}).
+
+\begin{longtable}{ll}
+\hline
+Name & Value \\
+\hline
+\endfirsthead
+\hline
+Name & Value \\
+\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\texttt{type} & \texttt{session} \\
+\texttt{fingerprint} & Server host-key SHA-256, e.g. \texttt{SHA256:x3Gnt...} \\
+\texttt{authmethods} & List of method names (\texttt{publickey}, \texttt{password}, \\
+\texttt{cipher} & Negotiated inbound cipher: \\
+\texttt{kex} & Key-exchange algorithm: \texttt{curve25519-sha256}, \\
+\texttt{mac} & Inbound MAC: \texttt{hmac-sha2-256}, \texttt{hmac-sha2-512} \\
+\texttt{serverbanner} & Server identification string, e.g. \texttt{SSH-2.0-OpenSSH\_9.6} \\
+\texttt{connected} & \texttt{"yes"} or \texttt{\&null} \\
+\end{longtable}
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+s := open("user@host", "h", "key=id_rsa", "channel=no") |
+   stop(&errortext)
+write("type=", s["type"], " kex=", s["kex"])
+every m := !s["authmethods"] do
+   write("auth ", m)
+every k := key(s) do
+   write("session field ", k)
+
 c := open(s, "hc", "cmd=apply-config /tmp/newconfig.json")
-while line := reads(c) do process(line)
-if \\Attrib(c, "exitstatus") = 0 then write("ok")
-else write("failed: " || Attrib(c, "stderr"))
+while line := reads(c) do
+   process(line)
+if \\c["exitstatus"] = 0 then
+   write("ok")
+else
+   write("failed: " || (c["stderr"] | ""))
+every k := key(c) do
+   write("channel field ", k)
+close(c)
+close(s)
 \end{Verbatim}
+
+
+Preferring callback state over libssh's blocking \texttt{get\_exit\_*} helpers avoids version-sensitive fallbacks once callbacks are registered. Failing until the status is ready reuses the ordinary Unicon "fail = not ready" idiom, the same as \texttt{read()} failing at EOF.
 
 \subsection{8.3 \texttt{receive()} for ordered events}
 \label{utr26-sec-receive}
 
-A command can produce interleaved stdout and stderr where the caller needs to know \emph{when} an stderr message occurred relative to stdout. Neither \texttt{reads()} (stdout only) nor \texttt{Attrib(c,~"stderr")} (a separate drain) can preserve that.
+A command can produce interleaved stdout and stderr where the caller needs to know \emph{when} an stderr message occurred relative to stdout. Neither \texttt{reads()} (stdout only) nor \texttt{c["stderr"]} (a separate peek) can preserve that.
 
 
 \texttt{receive(c)} on an SSH channel yields the next queued event as a \texttt{posix\_message} whose \texttt{addr} is \texttt{"stdout"}, \texttt{"stderr"}, or \texttt{"exit"} and whose \texttt{msg} is the payload. The exit status is kept as a \textbf{string} so \texttt{receive()}'s return type stays uniform across every kind of file it can be called on; Unicon's \texttt{=} already coerces numeric strings.
@@ -468,7 +527,7 @@ while m := receive(c) do
 Preserving cross-stream order requires libssh's \textbf{callback API} (\texttt{ssh\_channel\_callbacks}, with a \texttt{channel\_data\_function} receiving an \texttt{is\_stderr} flag) -- not \texttt{ssh\_channel\_poll()} / \texttt{ssh\_channel\_read()}, which buffer stdout and stderr separately and lose interleaving. Callbacks are registered \textbf{before} the channel is opened so early data cannot land in libssh's own buffers.
 
 
-Each callback appends a tagged chunk (\texttt{SSH\_CHUNK\_STDOUT} / \texttt{STDERR} / \texttt{EXIT}) to a heap-allocated linked list on the \texttt{SSHfile}. Callbacks can fire inside blocking libssh calls made while the thread is unregistered (\texttt{DEC\_NARTHREADS}), where Unicon allocation is not allowed. \texttt{ssh\_pump()} drives \texttt{ssh\_channel\_poll\_timeout()} so the callbacks run. Stream reads consume stdout chunks; \texttt{Attrib(c,~"stderr")} drains stderr chunks; \texttt{receive()} pops whatever is at the head. One mechanism, three accessors.
+Each callback appends a tagged chunk (\texttt{SSH\_CHUNK\_STDOUT} / \texttt{STDERR} / \texttt{EXIT}) to a heap-allocated linked list on the \texttt{SSHfile}. Callbacks can fire inside blocking libssh calls made while the thread is unregistered (\texttt{DEC\_NARTHREADS}), where Unicon allocation is not allowed. \texttt{ssh\_pump()} drives \texttt{ssh\_channel\_poll\_timeout()} so the callbacks run. Stream reads consume stdout chunks; \texttt{c["stderr"]} peeks stderr chunks; \texttt{receive()} pops whatever is at the head. One mechanism, three accessors.
 
 \section{9. Interactive shells and \texttt{select()}}
 \label{utr26-sec-interactive}
@@ -597,7 +656,7 @@ Guards are \texttt{\#if~HAVE\_LIBSSH} throughout \texttt{rstructs.h}, \texttt{rm
 \textbf{Timeouts.} TCP-connect timeout is the leading integer attribute. There is no separate handshake+auth timeout beyond what that covers, and no exec timeout -- a stuck command blocks until \texttt{close()}, matching ordinary blocking sockets.
 
 
-\textbf{Trust-on-first-use.} Verification is check-only (\texttt{ssh\_session\_is\_known\_server}). A new host fails with 1323 unless the caller uses \texttt{h-} or installs the key in \texttt{known\_hosts} out of band. The runtime does not write the store.
+\textbf{Trust-on-first-use.} Verification is check-only (\texttt{ssh\_session\_is\_known\_server}). A new host fails with 1333 unless the caller uses \texttt{h-} or installs the key in \texttt{known\_hosts} out of band. The runtime does not write the store.
 
 
 \textbf{\texttt{\textasciitilde{}} in \texttt{key=}.} Not expanded. The helper and \texttt{ussh} expand \texttt{\textasciitilde{}/} themselves.
@@ -605,7 +664,7 @@ Guards are \texttt{\#if~HAVE\_LIBSSH} throughout \texttt{rstructs.h}, \texttt{rm
 \section{Appendix: test coverage}
 \label{utr26-sec-coverage}
 
-\texttt{tests/posix/ssh.icn} is deterministic without a server: it checks that \texttt{\&features} reports \texttt{secure~shell}, and that bad attributes, \texttt{channel=maybe}, \texttt{channel=no} combined with \texttt{hc}/\texttt{cmd=}, \texttt{cmd=} without mode \texttt{c}, and a connect to a closed local port all fail with \texttt{\&errortext} set. A live round-trip runs only when \texttt{UNICON\_SSH\_TESTHOST} is set (host or \texttt{user@host}), with optional \texttt{UNICON\_SSH\_TESTPORT}, \texttt{UNICON\_SSH\_TESTKEY}, \texttt{UNICON\_SSH\_KNOWNHOSTS}, and \texttt{UNICON\_SSH\_SFTPPATH}. The live path covers exec stdout, \texttt{Attrib(c,~"exitstatus")}, \texttt{receive()} event tags, partial-line \texttt{reads()} of a \texttt{printf} with no newline, and SFTP write/read/stat/remove of a binary payload.
+\texttt{tests/posix/ssh.icn} is deterministic without a server: it checks that \texttt{\&features} reports \texttt{secure~shell}, and that bad attributes, \texttt{channel=maybe}, \texttt{channel=no} combined with \texttt{hc}/\texttt{cmd=}, \texttt{cmd=} without mode \texttt{c}, and a connect to a closed local port all fail with \texttt{\&errortext} set. A live round-trip runs only when \texttt{UNICON\_SSH\_TESTHOST} is set (host or \texttt{user@host}), with optional \texttt{UNICON\_SSH\_TESTPORT}, \texttt{UNICON\_SSH\_TESTKEY}, \texttt{UNICON\_SSH\_KNOWNHOSTS}, and \texttt{UNICON\_SSH\_SFTPPATH}. The live path covers exec stdout, \texttt{c["exitstatus"]}, \texttt{receive()} event tags, partial-line \texttt{reads()} of a \texttt{printf} with no newline, and SFTP write/read/stat/remove of a binary payload.
 
 
 \texttt{tests/posix/Makefile} skips the test when the feature is absent. Expected default output is \texttt{tests/posix/stand/ssh.std}.
@@ -616,52 +675,46 @@ Guards are \texttt{\#if~HAVE\_LIBSSH} throughout \texttt{rstructs.h}, \texttt{rm
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[3]{cite-unicode-standard}
-Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
-
-\bibitem[4]{cite-unicon-utf8lib}
-Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
-
-\bibitem[5]{cite-libssh}
+\bibitem[2]{cite-libssh}
 The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
 
-\bibitem[6]{cite-jeffery-utr13}
+\bibitem[3]{cite-jeffery-utr13}
 Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 
-\bibitem[7]{cite-openssl}
+\bibitem[4]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[8]{cite-rfc2104}
+\bibitem[5]{cite-algharaibeh-utr26}
+Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
+
+\bibitem[6]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[9]{cite-rfc1112}
+\bibitem[7]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[10]{cite-jeffery-pwu}
+\bibitem[8]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
 
-\bibitem[11]{cite-algharaibeh-utr29}
+\bibitem[9]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[12]{cite-rfc4607}
+\bibitem[10]{cite-rfc4607}
 H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
-\bibitem[13]{cite-algharaibeh-utr28}
+\bibitem[11]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[14]{cite-rfc792}
+\bibitem[12]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[15]{cite-rfc2236}
+\bibitem[13]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[16]{cite-rfc3376}
+\bibitem[14]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[17]{cite-rfc1071}
+\bibitem[15]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
