@@ -27,18 +27,34 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li><a href="install.html">Installation</a></li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="config.html">Book Configuration</a></li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li><a href="themes.html">Themes</a></li>
-<li class="current">Command Line</li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="current toc-l1"><a href="cli.html">Command Line
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#synopsis"><span class="toc-num">8.1</span>Synopsis
+</a>
+</li>
+<li class="toc-sec"><a href="#options"><span class="toc-num">8.2</span>Options
+</a>
+</li>
+<li class="toc-sec"><a href="#outputs"><span class="toc-num">8.3</span>Outputs
+</a>
+</li>
+<li class="toc-sec"><a href="#exit-status"><span class="toc-num">8.4</span>Exit status
+</a>
+</li>
+</ol>
+</li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -163,7 +179,15 @@ Output format:
 <code>html</code>
  — one page per chapter plus index/search/themes.   Report manifests get a catalog table on 
 <code>index.html</code>
-. Each   report page's sidebar lists that report's sections.   See 
+. Each   report page's sidebar lists that report's sections. Book   chapter pages list every chapter and expand the current   chapter with a numbered local TOC (
+<code>1.1</code>
+, 
+<code>2.3.1</code>
+, …).   Tree lines are off unless 
+<code>toctree: true</code>
+ in 
+<code>book.conf</code>
+.   See 
 <a href="reports.html#reports">Reports</a>
 . - 
 <code>latex</code>
@@ -246,6 +270,7 @@ HTML
 </p>
 <ul>
 <li>
+<p>
 <code>index.html</code>
  — contents landing page (chapter list, or a catalog table of reports with a 
 <strong>
@@ -256,18 +281,24 @@ Formats
  / 
 <code>txt</code>
 )
+</p>
 </li>
 <li>
+<p>
 <code>search.html</code>
  + 
 <code>searchindex.js</code>
  — full-text search
+</p>
 </li>
 <li>
+<p>
 <code>_static/</code>
  — theme CSS, search JS, highlighter, theme switcher
+</p>
 </li>
 <li>
+<p>
 <code>_sources/</code>
  — chapter sources as 
 <code>name.rst.txt</code>
@@ -280,6 +311,7 @@ txt
 source
 </strong>
 )
+</p>
 </li>
 </ul>
 <p>

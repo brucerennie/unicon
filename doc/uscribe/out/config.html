@@ -27,18 +27,61 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li><a href="install.html">Installation</a></li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li class="current">Book Configuration</li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li><a href="themes.html">Themes</a></li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="current toc-l1"><a href="config.html">Book Configuration
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#how-the-file-is-found"><span class="toc-num">5.1</span>How the file is found
+</a>
+</li>
+<li class="toc-sec"><a href="#file-format"><span class="toc-num">5.2</span>File format
+</a>
+</li>
+<li class="toc-sec"><a href="#title"><span class="toc-num">5.3</span>title
+</a>
+</li>
+<li class="toc-sec"><a href="#copyright"><span class="toc-num">5.4</span>copyright
+</a>
+</li>
+<li class="toc-sec"><a href="#logo"><span class="toc-num">5.5</span>logo
+</a>
+</li>
+<li class="toc-sec"><a href="#name"><span class="toc-num">5.6</span>name
+</a>
+</li>
+<li class="toc-sec"><a href="#theme"><span class="toc-num">5.7</span>theme
+</a>
+</li>
+<li class="toc-sec"><a href="#themepath"><span class="toc-num">5.8</span>themePath
+</a>
+</li>
+<li class="toc-sec"><a href="#docclass"><span class="toc-num">5.9</span>docclass
+</a>
+</li>
+<li class="toc-sec"><a href="#frontmatter"><span class="toc-num">5.10</span>frontmatter
+</a>
+</li>
+<li class="toc-sec"><a href="#toctree"><span class="toc-num">5.11</span>toctree
+</a>
+</li>
+<li class="toc-sec"><a href="#not-in-book-conf"><span class="toc-num">5.12</span>Not in book.conf
+</a>
+</li>
+<li class="toc-sec"><a href="#this-guide"><span class="toc-num">5.13</span>This guide
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -68,16 +111,22 @@ How the file is found
 </h3>
 <ol start="1">
 <li>
+<p>
 <code>--config=FILE</code>
  if you pass it (the file must exist).
+</p>
 </li>
 <li>
+<p>
 Otherwise 
 <code>book.conf</code>
  in the same directory as the manifest.
+</p>
 </li>
 <li>
+<p>
 If that file is missing, uscribe continues with CLI values and built-in defaults.
+</p>
 </li>
 </ol>
 <p>
@@ -249,6 +298,40 @@ A report is one HTML page and one PDF. The sidebar on that page is the report's 
 <a href="reports.html#reports">Reports</a>
 .
 </p>
+<h3 id="frontmatter">
+frontmatter
+</h3>
+<p>
+How many leading chapters are unnumbered front matter (a preface before chapter 1). Default 
+<code>0</code>
+. When set, the HTML sidebar numbers sections as 
+<code>1.1</code>
+, 
+<code>2.3.1</code>
+, … matching the Word outline, and the PDF uses 
+<code>\\frontmatter</code>
+ for those chapters, then the table of contents, then 
+<code>\\mainmatter</code>
+.
+</p>
+<h3 id="toctree">
+toctree
+</h3>
+<p>
+Sidebar tree lines (vertical spine and ticks) on the current chapter's section list. Default off: numbers and indentation only. Set 
+<code>toctree: true</code>
+ (also 
+<code>yes</code>
+ / 
+<code>on</code>
+ / 
+<code>1</code>
+; aliases 
+<code>toc-tree</code>
+, 
+<code>toc_tree</code>
+) to draw the lines.
+</p>
 <h3 id="not-in-book-conf">
 Not in book.conf
 </h3>
@@ -261,6 +344,7 @@ build
 </p>
 <ul>
 <li>
+<p>
 <code>--format</code>
  — 
 <code>html</code>
@@ -268,20 +352,25 @@ build
 <code>latex</code>
 , or 
 <code>pdf</code>
+</p>
 </li>
 <li>
+<p>
 <code>--targetDir</code>
  — output directory (default 
 <code>./htmlBook</code>
  or 
 <code>./latexBook</code>
 )
+</p>
 </li>
 <li>
+<p>
 <code>--manifest</code>
  — chapter list (default 
 <code>book.manifest</code>
 )
+</p>
 </li>
 </ul>
 <h3 id="this-guide">

@@ -27,18 +27,51 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li class="current">Installation</li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="config.html">Book Configuration</a></li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li><a href="themes.html">Themes</a></li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="current toc-l1"><a href="install.html">Installation
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#requirements"><span class="toc-num">2.1</span>Requirements
+</a>
+</li>
+<li class="toc-sec"><a href="#tex-pdf-dependencies-by-platform"><span class="toc-num">2.2</span>TeX / PDF dependencies by platform
+</a>
+<ol class="toc-local">
+<li class="toc-sub"><a href="#macos-homebrew"><span class="toc-num">2.2.1</span>macOS (Homebrew)
+</a></li>
+<li class="toc-sub"><a href="#debian-ubuntu"><span class="toc-num">2.2.2</span>Debian / Ubuntu
+</a></li>
+<li class="toc-sub"><a href="#fedora-rhel-family"><span class="toc-num">2.2.3</span>Fedora / RHEL-family
+</a></li>
+<li class="toc-sub"><a href="#arch-linux"><span class="toc-num">2.2.4</span>Arch Linux
+</a></li>
+<li class="toc-sub"><a href="#windows"><span class="toc-num">2.2.5</span>Windows
+</a></li>
+<li class="toc-sub"><a href="#what-uscribe-latex-output-needs"><span class="toc-num">2.2.6</span>What uscribe LaTeX output needs
+</a></li>
+</ol>
+</li>
+<li class="toc-sec"><a href="#build-uscribe"><span class="toc-num">2.3</span>Build uscribe
+</a>
+</li>
+<li class="toc-sec"><a href="#verify"><span class="toc-num">2.4</span>Verify
+</a>
+</li>
+<li class="toc-sec"><a href="#build-this-manual"><span class="toc-num">2.5</span>Build this manual
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -60,9 +93,11 @@ Required
 </p>
 <ul>
 <li>
+<p>
 A built Unicon tree (
 <code>./configure &amp;&amp; make</code>
  from the unicon sources)
+</p>
 </li>
 </ul>
 <p>
@@ -72,6 +107,7 @@ Optional (PDF only)
 </p>
 <ul>
 <li>
+<p>
 A TeX engine on your 
 <code>PATH</code>
 : 
@@ -85,6 +121,7 @@ A TeX engine on your
  (
 <code>.tex</code>
  only) do not need TeX.
+</p>
 </li>
 </ul>
 <p>
@@ -184,11 +221,21 @@ Generated
 <code>booktabs</code>
 , 
 <code>longtable</code>
+, 
+<code>array</code>
 ). 
 <code>multirow</code>
  is loaded when the 
 <code>.sty</code>
- is installed (needed for grid-table row spans). A latex recommended install is usually enough; GitHub Pages installs 
+ is installed (needed for grid-table row spans). 
+<code>caption</code>
+ is loaded when present so Word-style 
+<code>Figure N</code>
+ / 
+<code>Table N</code>
+ captions can use 
+<code>\\caption*</code>
+; without it uscribe falls back to a centered paragraph. A latex recommended install is usually enough; GitHub Pages installs 
 <code>texlive-latex-extra</code>
  so the user-guide PDF build has the full set. If 
 <code>pdflatex</code>
@@ -217,7 +264,17 @@ That compiles the
 <code>./uscribe</code>
 , and installs a copy to 
 <code>../../bin/uscribe</code>
-.
+. A top-level 
+<code>make install</code>
+ also installs 
+<code>uscribe</code>
+ into 
+<code>$(bindir)</code>
+ alongside 
+<code>unicon</code>
+, 
+<code>udb</code>
+, and the other addon tools.
 </p>
 <p>
 Regenerate Make dependencies after adding 

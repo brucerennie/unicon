@@ -27,18 +27,52 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li><a href="install.html">Installation</a></li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="config.html">Book Configuration</a></li>
-<li class="current">Markup Reference</li>
-<li><a href="themes.html">Themes</a></li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="current toc-l1"><a href="markup.html">Markup Reference
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#headings"><span class="toc-num">6.1</span>Headings
+</a>
+</li>
+<li class="toc-sec"><a href="#document-fields"><span class="toc-num">6.2</span>Document fields
+</a>
+</li>
+<li class="toc-sec"><a href="#paragraphs-and-lists"><span class="toc-num">6.3</span>Paragraphs and lists
+</a>
+</li>
+<li class="toc-sec"><a href="#definition-lists"><span class="toc-num">6.4</span>Definition lists
+</a>
+</li>
+<li class="toc-sec"><a href="#tables"><span class="toc-num">6.5</span>Tables
+</a>
+</li>
+<li class="toc-sec"><a href="#labels-and-cross-references"><span class="toc-num">6.6</span>Labels and cross-references
+</a>
+</li>
+<li class="toc-sec"><a href="#inline-markup"><span class="toc-num">6.7</span>Inline markup
+</a>
+</li>
+<li class="toc-sec"><a href="#directives"><span class="toc-num">6.8</span>Directives
+</a>
+</li>
+<li class="toc-sec"><a href="#include-literalinclude"><span class="toc-num">6.9</span>Include / literalinclude
+</a>
+</li>
+<li class="toc-sec"><a href="#unicon-listings"><span class="toc-num">6.10</span>Unicon listings
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -71,8 +105,8 @@ Subsection
 </code></pre>
 <p>
 Characters 
-<code>= - ~ ^</code>
- are recognized as underline styles. Heading level follows the underline character. The underline length must be greater than or equal to the title length.
+<code>= - ~ ^ &quot;</code>
+ are recognized as underline styles (chapter through heading 5). Heading level follows the underline character. The underline length must be greater than or equal to the title length.
 </p>
 <h3 id="document-fields">
 Document fields
@@ -123,7 +157,11 @@ Blank lines separate paragraphs. Bullet lists use
 <code>1) </code>
  or auto-number 
 <code>#. </code>
-. Indented continuation lines belong to the current item.
+. Indented continuation lines belong to the current item. Nested lists, 
+<code>.. note::</code>
+, and 
+<code>.. code-block::</code>
+ indented under an item are parsed as that item's body (a blank line between items is allowed).
 </p>
 <p>
 Source:
@@ -137,23 +175,71 @@ Rendered:
 </p>
 <ol start="1">
 <li>
+<p>
 Install the 
 <code>uscribe</code>
  binary (
 <a href="install.html#installation">Installation</a>
 )
+</p>
 </li>
 <li>
+<p>
 Write a tiny book (
 <a href="quickstart.html#quick-start">Quick Start</a>
 )
+</p>
 </li>
 <li>
+<p>
 Pick a theme (
 <a href="themes.html#themes">Themes</a>
 )
+</p>
 </li>
 </ol>
+<p>
+A list item can also hold a nested listing:
+</p>
+<pre><code class="language-rst">- Default mode prompt:
+
+  .. code-block:: text
+
+     admin@r0&gt;
+
+- Configure mode is a nested list of its own:
+
+  - enter with ``config``
+  - leave with ``end``
+</code></pre>
+<ul>
+<li>
+<p>
+Default mode prompt:
+</p>
+<pre><code class="language-text">admin@r0&gt;
+</code></pre>
+</li>
+<li>
+<p>
+Configure mode is a nested list of its own:
+</p>
+<ul>
+<li>
+<p>
+enter with 
+<code>config</code>
+</p>
+</li>
+<li>
+<p>
+leave with 
+<code>end</code>
+</p>
+</li>
+</ul>
+</li>
+</ul>
 <h3 id="definition-lists">
 Definition lists
 </h3>
@@ -214,7 +300,7 @@ Simple
 <code>=</code>
  column separators. The first row is the header. PDF output uses 
 <code>longtable</code>
- so tables can break across pages.
+ with wrapping paragraph columns so long identifiers and prose stay within the page.
 </p>
 <p>
 Source:
@@ -380,7 +466,9 @@ List tables
 </strong>
  use the 
 <code>list-table</code>
- directive:
+ directive. The optional argument is the table caption (shown under the table in HTML, and as a LaTeX caption). Word-style labels such as 
+<code>Figure 6: …</code>
+ are kept as written:
 </p>
 <p>
 Source:
@@ -466,16 +554,22 @@ Live refs (explicit label and display-text form):
 </p>
 <ul>
 <li>
+<p>
 plain: 
 <a href="markup.html#stable-labels">Stable labels</a>
+</p>
 </li>
 <li>
+<p>
 with display text: 
 <a href="markup.html#stable-labels">Jump here</a>
+</p>
 </li>
 <li>
+<p>
 chapter: 
 <a href="install.html#installation">Installation</a>
+</p>
 </li>
 </ul>
 <p>
@@ -494,20 +588,26 @@ Inline markup
 </h3>
 <ul>
 <li>
+<p>
 single asterisks for 
 <em>
 emphasis
 </em>
+</p>
 </li>
 <li>
+<p>
 double asterisks for 
 <strong>
 strong
 </strong>
+</p>
 </li>
 <li>
+<p>
 backticks for 
 <code>inline literals</code>
+</p>
 </li>
 </ul>
 <h3 id="directives">
@@ -534,10 +634,14 @@ Admonition bodies can hold nested blocks:
 </p>
 <ul>
 <li>
+<p>
 a bullet list
+</p>
 </li>
 <li>
+<p>
 and even a nested tip
+</p>
 </li>
 </ul>
 <div class="admonition tip">
@@ -567,11 +671,13 @@ Also:
 .
 </p>
 <p>
-Figures take a caption (numbered in HTML/LaTeX) and optional 
-<code>:name:</code>
- / preceding 
-<code>.. _label:</code>
-:
+Figures take a caption. If the caption already starts with 
+<code>Figure N</code>
+ or 
+<code>Table N</code>
+, HTML and LaTeX keep that label instead of adding another number. Uncaptioned 
+<code>.. image::</code>
+ is not numbered.
 </p>
 <pre><code class="language-rst">.. _logo-figure:
 
@@ -583,9 +689,7 @@ Figures take a caption (numbered in HTML/LaTeX) and optional
 </code></pre>
 <figure class="figure logo" id="logo-figure">
 <img src="images/uscribe-logo.png" alt="uscribe logo">
-<figcaption>Figure 1
-: The uscribe mark.
-</figcaption>
+<figcaption>Figure 1: The uscribe mark.</figcaption>
 </figure>
 <p>
 See 
@@ -688,9 +792,19 @@ Unicon listings
 <code>icn</code>
  get Unicon syntax highlighting in HTML (via 
 <code>highlight-unicon.js</code>
-). Other languages are emitted as plain 
+). 
+<code>json</code>
+ is highlighted the same way (strings, numbers, 
+<code>true</code>
+ / 
+<code>false</code>
+ / 
+<code>null</code>
+, and 
+<code>//</code>
+ comments in JSONC samples). Other languages are emitted as plain 
 <code>&lt;pre&gt;&lt;code class=&quot;language-…&quot;&gt;</code>
- without Unicon highlighting — use 
+ without extra highlighting — use 
 <code>sh</code>
  for shell, 
 <code>rst</code>
@@ -700,7 +814,7 @@ Unicon listings
 <code>literalinclude</code>
  of 
 <code>.icn</code>
- files uses the same highlighting.
+ files uses the same Unicon highlighting.
 </p>
 <p>
 Example Unicon program as it appears in the built book:

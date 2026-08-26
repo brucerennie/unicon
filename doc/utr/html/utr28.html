@@ -77,7 +77,7 @@ placeholder="Search..." aria-label="Filter section list">
 </h2>
 <p>
 This report describes IP multicast 
-[<a class="cite" href="#cite-rfc1112">7</a>] and the socket-attribute facility it sits on. Trailing arguments to 
+[<a class="cite" href="#cite-rfc1112">6</a>] and the socket-attribute facility it sits on. Trailing arguments to 
 <code>open()</code>
  on network modes are 
 <code>name=value</code>
@@ -92,7 +92,7 @@ This report describes IP multicast
 Programming with Unicon
 </em>
  
-[<a class="cite" href="#cite-jeffery-pwu">8</a>] (Chapter 5, &quot;Multicast and Socket Attributes&quot;) and the language reference (
+[<a class="cite" href="#cite-jeffery-pwu">7</a>] (Chapter 5, &quot;Multicast and Socket Attributes&quot;) and the language reference (
 <code>open</code>
  trailing attributes, 
 <code>Attrib</code>
@@ -104,18 +104,6 @@ Programming with Unicon
 <code>tests/posix/sockpeek.icn</code>
 .
 </p>
-<p>
-The work is part of POSIX networking, not an optional library. A later report covers raw sockets 
-[<a class="cite" href="#cite-algharaibeh-utr29">9</a>], which reuse these attributes (
-<code>ttl</code>
-, 
-<code>iface</code>
-, 
-<code>join</code>
-) on mode 
-<code>nr</code>
-.
-</p>
 <h2 id="sec-motivation">
 2. Motivation
 </h2>
@@ -123,24 +111,11 @@ The work is part of POSIX networking, not an optional library. A later report co
 Unicon's 
 <code>open()</code>
  already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) 
-[<a class="cite" href="#cite-rfc4607">10</a>] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join 
+[<a class="cite" href="#cite-rfc4607">8</a>] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join a multicast group like 
 <code>239.1.1.1</code>
-, restrict a join to one NIC, or send with a limited TTL. Those operations were not supported.
-</p>
-<p>
-The rest of the I/O API already has the pattern: 
-<code>open()</code>
- constructs, trailing strings configure (SSL 
-<code>key=</code>
-, window 
-<code>WAttrib</code>
-), 
-<code>Attrib()</code>
- mutates later, and 
-<code>f[&quot;name&quot;]</code>
- peeks status. Socket options follow that pattern instead of adding 
-<code>setsockopt()</code>
- as a new global.
+, restrict a join to one NIC, or send with a limited TTL like 
+<code>ttl=3</code>
+. These options were not supported.
 </p>
 <h2 id="sec-principles">
 3. Design principles
@@ -149,7 +124,7 @@ The rest of the I/O API already has the pattern:
 <strong>
 Attributes are 
 <code>name=value</code>
-, like SSL.
+, like graphics windows.
 </strong>
  Unknown names fail 
 <code>open()</code>
@@ -168,7 +143,7 @@ Attributes are
       write(&quot;oops&quot;)
    else
       write(&quot;bogus: &quot;, &amp;errortext)
-   if open(&quot;:5110&quot;, &quot;nua4&quot;, &quot;reuseaddr=1&quot;) then
+   if open(&quot;:5110&quot;, &quot;nua4&quot;, &quot;reuseaddr=yes&quot;) then
       write(&quot;oops&quot;)
    else
       write(&quot;numeric boolean: &quot;, &amp;errortext)
@@ -197,8 +172,6 @@ DWIM for the common cases.
 <p>
 <strong>
 <code>source@group</code>
-, not 
-<code>group@source</code>
 .
 </strong>
  The address form matches VLC, ffmpeg, and RFC 4607 
@@ -212,7 +185,7 @@ DWIM for the common cases.
 <code>iface</code>
 , not multicast-only names.
 </strong>
- Hop limit and interface are used by unicast, multicast, and later raw sockets 
+ Hop limit and interface are used by unicast, multicast, and raw sockets 
 [<a class="cite" href="#cite-algharaibeh-utr29">9</a>]. 
 <code>ttl=</code>
  sets both 
@@ -323,7 +296,7 @@ Output:
 </code></pre>
 <p>
 <code>r.addr</code>
- is the sender (host plus an ephemeral port). Alpine often does not deliver loopback multicast even when the join succeeds; the test suite treats a missing datagram as success there so CI stays portable.
+ is the sender (host plus an ephemeral port).
 </p>
 <p>
 A wildcard bind plus explicit joins is the other shape:
@@ -478,13 +451,6 @@ Buffer sizes in bytes.
 </tr>
 </tbody>
 </table>
-<p>
-<code>proto</code>
- and 
-<code>hdrincl</code>
- are listed in the same table in the runtime; they belong to raw sockets 
-[<a class="cite" href="#cite-algharaibeh-utr29">9</a>].
-</p>
 <h2 id="sec-attrib">
 7. 
 <code>Attrib()</code>
@@ -517,13 +483,13 @@ Assignments in one call are applied together, preserving
 <code>join</code>
  order. Status is peeked with 
 <code>f[&quot;name&quot;]</code>
-; 
-<code>Attrib()</code>
- only assigns. Unknown names raise
+. Unknown names raise
 </p>
 <ol start="1310">
 <li>
+<p>
 An unpopulated field fails. Boolean fields that answered
+</p>
 </li>
 </ol>
 <p>
@@ -531,17 +497,13 @@ succeed with
 <code>&quot;yes&quot;</code>
  or 
 <code>&amp;null</code>
- (never 
-<code>&quot;no&quot;</code>
-). 
+. 
 <code>key(f)</code>
  generates every answerable field. 
 <code>f[&quot;*&quot;]</code>
  snapshots those fields under one lock. Peeking a closed handle is error 174. 
 <code>key(f)</code>
- that has not yet produced a name also raises 174 if the handle is already closed. After the first suspend, 
-<code>close()</code>
- makes the generator fail instead of raising, so a walk does not turn a mid-generation close into an error.
+ that has not yet produced a name also raises 174 if the handle is already closed.
 </p>
 <p>
 TCP, UDP, multicast, and raw sockets share one peek table (
@@ -725,21 +687,27 @@ Rules:
 </p>
 <ul>
 <li>
+<p>
 Cache hit, no socket attributes: another 
 <code>File</code>
  for the same fd (owner refcount). Closing one alias leaves the others until the last handle is closed.
+</p>
 </li>
 <li>
+<p>
 Cache hit with attributes: release the pin and create an independent socket (
 <code>reuseaddr</code>
  makes the second bind succeed). 
 <code>leave=</code>
  on that socket does not drop the cached alias's membership.
+</p>
 </li>
 <li>
+<p>
 Changing options on a shared handle: 
 <code>Attrib()</code>
  on one of the aliases.
+</p>
 </li>
 </ul>
 <p>
@@ -938,31 +906,42 @@ Appendix: test coverage
 </p>
 <ul>
 <li>
+<p>
 unknown attributes and numeric booleans fail with 1310
+</p>
 </li>
 <li>
+<p>
 explicit 
 <code>join=</code>
  plus 
 <code>iface=127.0.0.1</code>
+</p>
 </li>
 <li>
+<p>
 implicit join by binding the group address
+</p>
 </li>
 <li>
+<p>
 SSM via 
 <code>source@group</code>
  and via 
 <code>source=</code>
+</p>
 </li>
 <li>
+<p>
 broadcast open of 
 <code>255.255.255.255</code>
  (never 
 <code>EACCES</code>
 )
+</p>
 </li>
 <li>
+<p>
 <code>Attrib()</code>
  
 <code>ttl=</code>
@@ -970,8 +949,10 @@ broadcast open of
 <code>join=</code>
 , 
 <code>leave=</code>
+</p>
 </li>
 <li>
+<p>
 IPv6 SSM membership via 
 <code>@</code>
 , 
@@ -979,9 +960,12 @@ IPv6 SSM membership via
 , and 
 <code>join=group,source</code>
  (delivery not required)
+</p>
 </li>
 <li>
+<p>
 cache-hit alias vs independent attr open
+</p>
 </li>
 </ul>
 <p>
@@ -1032,37 +1016,34 @@ Clinton Jeffery. &quot;The Unicon Messaging Facilities&quot;. doc/utr/utr13.odt.
 <li id="cite-openssl" value="4">
 The OpenSSL Project. &quot;OpenSSL -- Cryptography and SSL/TLS Toolkit&quot;. https://www.openssl.org/. 2026.
 </li>
-<li id="cite-algharaibeh-utr26" value="5">
-Jafar Al-Gharaibeh. &quot;Native SSH and SFTP Support in Unicon&quot;. doc/utr/utr26.rst. 2026.
-</li>
-<li id="cite-rfc2104" value="6">
+<li id="cite-rfc2104" value="5">
 H. Krawczyk and M. Bellare and R. Canetti. &quot;HMAC: Keyed-Hashing for Message Authentication&quot;. RFC 2104. 1997.
 </li>
-<li id="cite-rfc1112" value="7">
+<li id="cite-rfc1112" value="6">
 S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
 </li>
-<li id="cite-jeffery-pwu" value="8">
+<li id="cite-jeffery-pwu" value="7">
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
+</li>
+<li id="cite-rfc4607" value="8">
+H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
 </li>
 <li id="cite-algharaibeh-utr29" value="9">
 Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
 </li>
-<li id="cite-rfc4607" value="10">
-H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
-</li>
-<li id="cite-algharaibeh-utr28" value="11">
+<li id="cite-algharaibeh-utr28" value="10">
 Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.
 </li>
-<li id="cite-rfc792" value="12">
+<li id="cite-rfc792" value="11">
 J. Postel. &quot;Internet Control Message Protocol&quot;. RFC 792. 1981.
 </li>
-<li id="cite-rfc2236" value="13">
+<li id="cite-rfc2236" value="12">
 W. Fenner. &quot;Internet Group Management Protocol, Version 2&quot;. RFC 2236. 1997.
 </li>
-<li id="cite-rfc3376" value="14">
+<li id="cite-rfc3376" value="13">
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. &quot;Internet Group Management Protocol, Version 3&quot;. RFC 3376. 2002.
 </li>
-<li id="cite-rfc1071" value="15">
+<li id="cite-rfc1071" value="14">
 R. Braden and D. Borman and C. Partridge. &quot;Computing the Internet Checksum&quot;. RFC 1071. 1988.
 </li>
 </ol></div>

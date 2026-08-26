@@ -6,9 +6,20 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{fancyvrb}
+\IfFileExists{fvextra.sty}{%
+  \usepackage{fvextra}%
+  \fvset{breaklines=true,breakanywhere=true}%
+}{}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{array}
 \IfFileExists{multirow.sty}{\usepackage{multirow}}{}
+\IfFileExists{caption.sty}{%
+  \usepackage{caption}%
+  \newcommand{\uscribecaptionstar}[1]{\caption*{##1}}%
+}{%
+  \newcommand{\uscribecaptionstar}[1]{{\centering\small ##1\par}}%
+}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 \title{uscribe User Guide}
 \author{}
@@ -23,27 +34,43 @@
 \end{titlepage}
 \tableofcontents
 \clearpage
+\mainmatter
 \chapter{Introduction}
 \label{intro-introduction}
 
 \emph{uscribe} is a prose/book documentation generator for Unicon. It reads a small RST-like markup, builds a doctree, resolves cross-chapter references, and writes themed HTML (and optionally LaTeX/PDF) for Unicon documentation and books.
 
 
-This manual is the user guide for uscribe itself. Sources live under \texttt{doc/uscribe/} in the unicon tree and are built \emph{with} uscribe.
+This manual is the user guide for uscribe itself. Sources live under \texttt{doc/\allowbreak{}uscribe/\allowbreak{}} in the unicon tree and are built \emph{with} uscribe.
 
 \section{What uscribe is for}
 \label{intro-what-uscribe-is-for}
 \begin{itemize}
 \item 
+
 Multi-chapter books and manuals (ordered by a manifest file)
+
+
 \item 
-Standalone reports (UTR-style): one HTML page per report, section navigation in the sidebar, and a catalog \texttt{index.html} of links
+
+Standalone reports (UTR-style): one HTML page per report, section navigation in the sidebar, and a catalog \texttt{index.\allowbreak{}html} of links
+
+
 \item 
-HTML output with sidebar navigation, search, and selectable themes
+
+HTML output with sidebar navigation (chapters, plus the current chapter's sections), search, and selectable themes
+
+
 \item 
+
 Unicon code samples with syntax highlighting
+
+
 \item 
+
 Images and simple admonitions
+
+
 \end{itemize}
 
 It is \textbf{not} a full RST/docutils toolchain. The markup subset is intentionally small; extend the parser as real documents need more.
@@ -51,7 +78,7 @@ It is \textbf{not} a full RST/docutils toolchain. The markup subset is intention
 \section{A taste of Unicon highlighting}
 \label{intro-a-taste-of-unicon-highlighting}
 
-Mark listings with \texttt{..~code-block::~unicon} (also \texttt{icon} or \texttt{icn}). In HTML they are highlighted client-side:
+Mark listings with \texttt{.\allowbreak{}.\allowbreak{}~code-\allowbreak{}block::~unicon} (also \texttt{icon} or \texttt{icn}). In HTML they are highlighted client-side:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 procedure greet(who)
@@ -70,25 +97,46 @@ See \hyperref[markup-markup-reference]{Markup Reference} for the full dialect, \
 \section{Relation to unidoc}
 \label{intro-relation-to-unidoc}
 
-\texttt{uni/unidoc/} extracts API docs from Unicon source comments. \emph{uscribe} is a separate tool for authored prose. They can coexist; a future \texttt{..~api::} bridge may connect them.
+\texttt{uni/\allowbreak{}unidoc/\allowbreak{}} extracts API docs from Unicon source comments. \emph{uscribe} is a separate tool for authored prose. They can coexist; a future \texttt{.\allowbreak{}.\allowbreak{}~api::} bridge may connect them.
 
 \section{How to read this guide}
 \label{intro-how-to-read-this-guide}
 \begin{itemize}
 \item 
+
 \hyperref[install-installation]{Installation} --- build and install the \texttt{uscribe} binary
+
+
 \item 
+
 \hyperref[quickstart-quick-start]{Quick Start} --- generate HTML from a tiny book
+
+
 \item 
+
 \hyperref[reports-reports]{Reports} --- one paper, or several papers plus a catalog index
+
+
 \item 
-\hyperref[config-book-configuration]{Book Configuration} --- \texttt{book.conf} keys, defaults, and CLI overrides
+
+\hyperref[config-book-configuration]{Book Configuration} --- \texttt{book.\allowbreak{}conf} keys, defaults, and CLI overrides
+
+
 \item 
+
 \hyperref[markup-markup-reference]{Markup Reference} --- headings, lists, inline markup, directives
+
+
 \item 
+
 \hyperref[themes-themes]{Themes} --- basic, classic, dark, and the in-page switcher
+
+
 \item 
+
 \hyperref[cli-command-line]{Command Line} --- CLI options
+
+
 \end{itemize}
 \clearpage
 \chapter{Installation}
@@ -100,14 +148,20 @@ See \hyperref[markup-markup-reference]{Markup Reference} for the full dialect, \
 
 \begin{itemize}
 \item 
-A built Unicon tree (\texttt{./configure~\&\&~make} from the unicon sources)
+
+A built Unicon tree (\texttt{.\allowbreak{}/\allowbreak{}configure~\&\&~make} from the unicon sources)
+
+
 \end{itemize}
 
 \textbf{Optional (PDF only)}
 
 \begin{itemize}
 \item 
-A TeX engine on your \texttt{PATH}: \texttt{pdflatex}, \texttt{xelatex}, or \texttt{lualatex}. uscribe picks the first one it finds. HTML and \texttt{--format=latex} (\texttt{.tex} only) do not need TeX.
+
+A TeX engine on your \texttt{PATH}: \texttt{pdflatex}, \texttt{xelatex}, or \texttt{lualatex}. uscribe picks the first one it finds. HTML and \texttt{-\allowbreak{}-\allowbreak{}format=latex} (\texttt{.\allowbreak{}tex} only) do not need TeX.
+
+
 \end{itemize}
 
 There is no Homebrew or apt package literally named \texttt{pdflatex}; that name is a program shipped inside a TeX distribution. Install one of the packages below, then confirm:
@@ -136,7 +190,7 @@ brew install --cask mactex
 \end{Verbatim}
 
 
-After BasicTeX or MacTeX, restart the terminal (or run \texttt{eval~"\$(/usr/libexec/path\_helper)"}) so the new binaries are on \texttt{PATH}.
+After BasicTeX or MacTeX, restart the terminal (or run \texttt{eval~"\$(/\allowbreak{}usr/\allowbreak{}libexec/\allowbreak{}path\_\allowbreak{}helper)"}) so the new binaries are on \texttt{PATH}.
 
 \subsection{Debian / Ubuntu}
 \label{install-debian-ubuntu}
@@ -189,10 +243,10 @@ Ensure the installer puts \texttt{pdflatex} on your \texttt{PATH}, then open a n
 \subsection{What uscribe LaTeX output needs}
 \label{install-what-uscribe-latex-output-needs}
 
-Generated \texttt{STEM.tex} uses a small set of packages (\texttt{graphicx}, \texttt{hyperref}, \texttt{xcolor}, \texttt{fancyvrb}, \texttt{booktabs}, \texttt{longtable}). \texttt{multirow} is loaded when the \texttt{.sty} is installed (needed for grid-table row spans). A latex recommended install is usually enough; GitHub Pages installs \texttt{texlive-latex-extra} so the user-guide PDF build has the full set. If \texttt{pdflatex} stops with \texttt{File~…sty~not~found}, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
+Generated \texttt{STEM.\allowbreak{}tex} uses a small set of packages (\texttt{graphicx}, \texttt{hyperref}, \texttt{xcolor}, \texttt{fancyvrb}, \texttt{booktabs}, \texttt{longtable}, \texttt{array}). \texttt{multirow} is loaded when the \texttt{.\allowbreak{}sty} is installed (needed for grid-table row spans). \texttt{caption} is loaded when present so Word-style \texttt{Figure~N} / \texttt{Table~N} captions can use \texttt{\textbackslash{}\textbackslash{}caption*}; without it uscribe falls back to a centered paragraph. A latex recommended install is usually enough; GitHub Pages installs \texttt{texlive-\allowbreak{}latex-\allowbreak{}extra} so the user-guide PDF build has the full set. If \texttt{pdflatex} stops with \texttt{File~…sty~not~found}, install the matching TeX Live or MiKTeX package (or a larger scheme) and retry.
 
 
-SVG figures are not embedded in PDF; convert them to PDF or PNG, or accept the boxed placeholder uscribe emits for \texttt{.svg} paths.
+SVG figures are not embedded in PDF; convert them to PDF or PNG, or accept the boxed placeholder uscribe emits for \texttt{.\allowbreak{}svg} paths.
 
 \section{Build uscribe}
 \label{install-build-uscribe}
@@ -205,10 +259,10 @@ make
 \end{Verbatim}
 
 
-That compiles the \texttt{uscribe} package, links \texttt{./uscribe}, and installs a copy to \texttt{../../bin/uscribe}.
+That compiles the \texttt{uscribe} package, links \texttt{.\allowbreak{}/\allowbreak{}uscribe}, and installs a copy to \texttt{.\allowbreak{}.\allowbreak{}/\allowbreak{}.\allowbreak{}.\allowbreak{}/\allowbreak{}bin/\allowbreak{}uscribe}. A top-level \texttt{make~install} also installs \texttt{uscribe} into \texttt{\$(bindir)} alongside \texttt{unicon}, \texttt{udb}, and the other addon tools.
 
 
-Regenerate Make dependencies after adding \texttt{.icn} files:
+Regenerate Make dependencies after adding \texttt{.\allowbreak{}icn} files:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 make deps
@@ -242,18 +296,18 @@ make pdf
 \end{Verbatim}
 
 
-\texttt{make~latex} writes \texttt{out/uscribe-userguide.tex} without running a TeX engine. \texttt{make~pdf} writes the \texttt{.tex} and runs the engine twice (TOC and cross-references).
+\texttt{make~latex} writes \texttt{out/\allowbreak{}uscribe-\allowbreak{}userguide.\allowbreak{}tex} without running a TeX engine. \texttt{make~pdf} writes the \texttt{.\allowbreak{}tex} and runs the engine twice (TOC and cross-references).
 
 \clearpage
 \chapter{Quick Start}
 \label{quickstart-quick-start}
 
-A uscribe project is a directory of chapter \texttt{.rst} files, a manifest that lists them in reading order, and usually a \texttt{book.conf} for book-wide title, logo, and PDF name.
+A uscribe project is a directory of chapter \texttt{.\allowbreak{}rst} files, a manifest that lists them in reading order, and usually a \texttt{book.\allowbreak{}conf} for book-wide title, logo, and PDF name.
 
 \section{1. Create a manifest}
 \label{quickstart-1-create-a-manifest}
 
-\texttt{book.manifest} (name is conventional; any path works):
+\texttt{book.\allowbreak{}manifest} (name is conventional; any path works):
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 # comments and blank lines are ignored
@@ -265,7 +319,7 @@ chapter2.rst
 \section{2. Write chapters}
 \label{quickstart-2-write-chapters}
 
-Underline-style headings, paragraphs, lists, and directives. Example \texttt{chapter1.rst}:
+Underline-style headings, paragraphs, lists, and directives. Example \texttt{chapter1.\allowbreak{}rst}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 First Chapter
@@ -305,7 +359,7 @@ end
 \section{3. Book settings}
 \label{quickstart-3-book-settings}
 
-\texttt{book.conf} next to the manifest (optional; CLI overrides). Full key list: \hyperref[config-book-configuration]{Book Configuration}.
+\texttt{book.\allowbreak{}conf} next to the manifest (optional; CLI overrides). Full key list: \hyperref[config-book-configuration]{Book Configuration}.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 title: My Book
@@ -323,10 +377,10 @@ uscribe --targetDir=./out
 \end{Verbatim}
 
 
-Or from a project \texttt{Makefile} patterned on \texttt{doc/uscribe/Makefile}.
+Or from a project \texttt{Makefile} patterned on \texttt{doc/\allowbreak{}uscribe/\allowbreak{}Makefile}.
 
 
-Open \texttt{out/index.html}. Use the sidebar for chapters, search, and theme switching.
+Open \texttt{out/\allowbreak{}index.\allowbreak{}html}. Use the sidebar for chapters (and the current chapter's sections), search, and theme switching.
 
 \section{5. Build PDF (optional)}
 \label{quickstart-5-build-pdf-optional}
@@ -338,23 +392,41 @@ uscribe --format=pdf --targetDir=./out
 \end{Verbatim}
 
 
-Or \texttt{make~pdf}. Output is \texttt{out/STEM.pdf} from the \texttt{name} key (default stem \texttt{book}). This user guide uses \texttt{name:~uscribe-userguide}. SVG figures are not embedded; convert them to PDF or PNG for TeX.
+Or \texttt{make~pdf}. Output is \texttt{out/\allowbreak{}STEM.\allowbreak{}pdf} from the \texttt{name} key (default stem \texttt{book}). This user guide uses \texttt{name:~uscribe-\allowbreak{}userguide}. SVG figures are not embedded; convert them to PDF or PNG for TeX.
 
 \section{Where files go}
 \label{quickstart-where-files-go}
 \begin{itemize}
 \item 
-\texttt{*.rst} --- chapter sources
+
+\texttt{*.\allowbreak{}rst} --- chapter sources
+
+
 \item 
-\texttt{*.manifest} --- chapter order
+
+\texttt{*.\allowbreak{}manifest} --- chapter order
+
+
 \item 
-\texttt{book.conf} --- book title, logo, copyright, PDF name, theme
+
+\texttt{book.\allowbreak{}conf} --- book title, logo, copyright, PDF name, theme
+
+
 \item 
-\texttt{images/} --- figures (copied into \texttt{out/images/})
+
+\texttt{images/\allowbreak{}} --- figures (copied into \texttt{out/\allowbreak{}images/\allowbreak{}})
+
+
 \item 
-\texttt{out/} --- generated HTML and/or \texttt{STEM.tex} / \texttt{STEM.pdf}
+
+\texttt{out/\allowbreak{}} --- generated HTML and/or \texttt{STEM.\allowbreak{}tex} / \texttt{STEM.\allowbreak{}pdf}
+
+
 \item 
-\texttt{themes/} --- built-in skins shared across projects (HTML)
+
+\texttt{themes/\allowbreak{}} --- built-in skins shared across projects (HTML)
+
+
 \end{itemize}
 
 A report (one paper) or a catalog of reports uses the same tools with a different manifest. See \hyperref[reports-reports]{Reports}.
@@ -363,15 +435,15 @@ A report (one paper) or a catalog of reports uses the same tools with a differen
 \chapter{Reports}
 \label{reports-reports}
 
-A \textbf{report} is one paper: one \texttt{.rst} source, one HTML page, one PDF. The left sidebar is that paper's sections (Introduction, Motivation, …). A \textbf{book} (this guide) is the other shape: many chapters, sidebar = chapter list, one combined PDF.
+A \textbf{report} is one paper: one \texttt{.\allowbreak{}rst} source, one HTML page, one PDF. The left sidebar is that paper's sections (Introduction, Motivation, …). A \textbf{book} (this guide) is the other shape: many chapters, sidebar = chapter list, one combined PDF.
 
 
-If every file in the manifest is a report, uscribe also writes a catalog \texttt{index.html} --- a table of links. You can ignore it when you only have one report.
+If every file in the manifest is a report, uscribe also writes a catalog \texttt{index.\allowbreak{}html} --- a table of links. You can ignore it when you only have one report.
 
 \section{Mark a file as a report}
 \label{reports-mark-a-file-as-a-report}
 
-Start the \texttt{.rst} with a field list. \texttt{:docclass:~report} (or a \texttt{:trnumber:}) selects report layout: masthead, abstract, keywords, article PDF, section sidebar.
+Start the \texttt{.\allowbreak{}rst} with a field list. \texttt{:docclass:~report} (or a \texttt{:trnumber:}) selects report layout: masthead, abstract, keywords, article PDF, section sidebar.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 :title: Report Mode Example
@@ -388,12 +460,12 @@ Introduction
 \end{Verbatim}
 
 
-Headings in the body become the sidebar TOC. Explicit labels (\texttt{..~\_sec-intro:}) become \texttt{\#sec-intro} jump targets.
+Headings in the body become the sidebar TOC. Explicit labels (\texttt{.\allowbreak{}.\allowbreak{}~\_\allowbreak{}sec-\allowbreak{}intro:}) become \texttt{\#sec-\allowbreak{}intro} jump targets.
 
 \section{One report}
 \label{reports-one-report}
 
-Put the paper in its own directory. Author, title, and abstract stay in the \texttt{.rst} field list (above). The manifest is one line. You do not need a per-report \texttt{.conf}.
+Put the paper in its own directory. Author, title, and abstract stay in the \texttt{.\allowbreak{}rst} field list (above). The manifest is one line. You do not need a per-report \texttt{.\allowbreak{}conf}.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 my-paper/
@@ -403,27 +475,27 @@ my-paper/
 \end{Verbatim}
 
 
-\texttt{book.manifest}:
+\texttt{book.\allowbreak{}manifest}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 paper.rst
 \end{Verbatim}
 
 
-Build from that directory (defaults pick up \texttt{book.manifest} and, if present, \texttt{book.conf}):
+Build from that directory (defaults pick up \texttt{book.\allowbreak{}manifest} and, if present, \texttt{book.\allowbreak{}conf}):
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 uscribe --targetDir=./out
 \end{Verbatim}
 
 
-Open \textbf{\texttt{paper.html}}. The sidebar is that paper's sections. \texttt{index.html} is a one-row catalog; you can ignore it.
+Open \textbf{\texttt{paper.\allowbreak{}html}}. The sidebar is that paper's sections. \texttt{index.\allowbreak{}html} is a one-row catalog; you can ignore it.
 
 
-Optional \texttt{book.conf} is only \emph{build} settings (theme, logo, \texttt{themePath}), not author or abstract. If you omit \texttt{title} there, the sidebar uses the paper's \texttt{:title:}.
+Optional \texttt{book.\allowbreak{}conf} is only \emph{build} settings (theme, logo, \texttt{themePath}), not author or abstract. If you omit \texttt{title} there, the sidebar uses the paper's \texttt{:title:}.
 
 
-This guide's live fixture lives next to the user-guide \texttt{book.conf}, so the Makefile passes \texttt{--config=report-example.conf} to avoid picking up the guide settings. The paper is \href{ex-one-report/ex-report.html}{ex-report.html} (after \texttt{make~-C~doc/uscribe}).
+This guide's live fixture lives next to the user-guide \texttt{book.\allowbreak{}conf}, so the Makefile passes \texttt{-\allowbreak{}-\allowbreak{}config=report-\allowbreak{}example.\allowbreak{}conf} to avoid picking up the guide settings. The paper is \href{ex-one-report/ex-report.html}{ex-report.html} (after \texttt{make~-\allowbreak{}C~doc/\allowbreak{}uscribe}).
 
 
 Output:
@@ -441,7 +513,7 @@ out/
 \section{Several reports and an index}
 \label{reports-several-reports-and-an-index}
 
-Same layout, more files in the manifest. Each paper is still one HTML page. \texttt{book.conf} \texttt{title} is the \emph{series} name on the catalog (and the link back from each paper's sidebar).
+Same layout, more files in the manifest. Each paper is still one HTML page. \texttt{book.\allowbreak{}conf} \texttt{title} is the \emph{series} name on the catalog (and the link back from each paper's sidebar).
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 my-reports/
@@ -453,7 +525,7 @@ my-reports/
 \end{Verbatim}
 
 
-\texttt{book.manifest}:
+\texttt{book.\allowbreak{}manifest}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 paper-a.rst
@@ -465,17 +537,17 @@ uscribe --targetDir=./out
 \end{Verbatim}
 
 
-Open \textbf{\texttt{index.html}} for the table (number, title, author, date, pdf/txt). Open a row to read that paper; its sidebar is that paper's sections.
+Open \textbf{\texttt{index.\allowbreak{}html}} for the table (number, title, author, date, pdf/txt). Open a row to read that paper; its sidebar is that paper's sections.
 
 
-The Unicon Technical Reports tree is this pattern: \texttt{doc/utr/utr.manifest} and \texttt{doc/utr/book.conf}, via \texttt{make~-C~doc/utr~html}.
+The Unicon Technical Reports tree is this pattern: \texttt{doc/\allowbreak{}utr/\allowbreak{}utr.\allowbreak{}manifest} and \texttt{doc/\allowbreak{}utr/\allowbreak{}book.\allowbreak{}conf}, via \texttt{make~-\allowbreak{}C~doc/\allowbreak{}utr~html}.
 
 
-Live fixtures in this guide (again using a separate \texttt{--config} because they share a directory with the user guide): \href{ex-reports/index.html}{catalog index}, \href{ex-reports/ex-report.html}{first report}, \href{ex-reports/ex-report-b.html}{second report}. The manifests are \texttt{report-example.manifest} (one file) and \texttt{reports-example.manifest} (two files).
+Live fixtures in this guide (again using a separate \texttt{-\allowbreak{}-\allowbreak{}config} because they share a directory with the user guide): \href{ex-reports/index.html}{catalog index}, \href{ex-reports/ex-report.html}{first report}, \href{ex-reports/ex-report-b.html}{second report}. The manifests are \texttt{report-\allowbreak{}example.\allowbreak{}manifest} (one file) and \texttt{reports-\allowbreak{}example.\allowbreak{}manifest} (two files).
 
 \section{Book vs report (summary)}
 \label{reports-book-vs-report-summary}
-\begin{longtable}{lll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}}
 \hline
 Piece & Book & Report \\
 \hline
@@ -488,9 +560,9 @@ Piece & Book & Report \\
 \endfoot
 \hline
 \endlastfoot
-Source & many chapters & one \texttt{.rst} per paper \\
+Source & many chapters & one \texttt{.\allowbreak{}rst} per paper \\
 Sidebar & other chapters & sections of this paper \\
-\texttt{index.html} & ordered chapter list & catalog table of papers \\
+\texttt{index.\allowbreak{}html} & ordered chapter list & catalog table of papers \\
 PDF & one file for the whole book & one file per paper \\
 When & manuals, this user guide & UTR, a standalone paper \\
 \end{longtable}
@@ -499,26 +571,35 @@ When & manuals, this user guide & UTR, a standalone paper \\
 A mixed manifest (some reports, some book chapters) is unusual. Each report page still gets a section sidebar; book chapters keep the chapter list. Prefer an all-report manifest or an all-book manifest.
 
 
-See \hyperref[markup-markup-reference]{Markup Reference} for the field-list keys and \hyperref[cli-command-line]{Command Line} for \texttt{--format} / \texttt{--manifest}.
+See \hyperref[markup-markup-reference]{Markup Reference} for the field-list keys and \hyperref[cli-command-line]{Command Line} for \texttt{-\allowbreak{}-\allowbreak{}format} / \texttt{-\allowbreak{}-\allowbreak{}manifest}.
 
 \clearpage
 \chapter{Book Configuration}
 \label{config-book-configuration}
 
-Book-wide settings live in \texttt{book.conf}. Chapter order lives in \texttt{book.manifest}. Per-chapter author, date, and copyright live in the RST field list (see \hyperref[markup-markup-reference]{Markup Reference}). Build invocation (\texttt{--format}, \texttt{--targetDir}) stays on the command line.
+Book-wide settings live in \texttt{book.\allowbreak{}conf}. Chapter order lives in \texttt{book.\allowbreak{}manifest}. Per-chapter author, date, and copyright live in the RST field list (see \hyperref[markup-markup-reference]{Markup Reference}). Build invocation (\texttt{-\allowbreak{}-\allowbreak{}format}, \texttt{-\allowbreak{}-\allowbreak{}targetDir}) stays on the command line.
 
 \section{How the file is found}
 \label{config-how-the-file-is-found}
 \begin{enumerate}
 \item 
-\texttt{--config=FILE} if you pass it (the file must exist).
+
+\texttt{-\allowbreak{}-\allowbreak{}config=FILE} if you pass it (the file must exist).
+
+
 \item 
-Otherwise \texttt{book.conf} in the same directory as the manifest.
+
+Otherwise \texttt{book.\allowbreak{}conf} in the same directory as the manifest.
+
+
 \item 
+
 If that file is missing, uscribe continues with CLI values and built-in defaults.
+
+
 \end{enumerate}
 
-With the usual defaults (\texttt{book.manifest} in the current directory), a book directory only needs:
+With the usual defaults (\texttt{book.\allowbreak{}manifest} in the current directory), a book directory only needs:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 uscribe --targetDir=./out
@@ -533,48 +614,58 @@ One \texttt{key:~value} per line. Keys are case-insensitive. Blank lines and \te
 Unknown keys print a warning on standard error and are ignored. Values do not wrap to the next line.
 
 
-\texttt{logo} and \texttt{themePath} are paths. Relative paths are resolved against the directory that contains \texttt{book.conf}, not against the process current working directory. Absolute paths are left as-is.
+\texttt{logo} and \texttt{themePath} are paths. Relative paths are resolved against the directory that contains \texttt{book.\allowbreak{}conf}, not against the process current working directory. Absolute paths are left as-is.
 
 
-Command-line options override the file. The Makefile for this guide passes \texttt{--theme} so \texttt{make~classic} can change the initial skin without editing \texttt{book.conf}.
+Command-line options override the file. The Makefile for this guide passes \texttt{-\allowbreak{}-\allowbreak{}theme} so \texttt{make~classic} can change the initial skin without editing \texttt{book.\allowbreak{}conf}.
 
 \section{title}
 \label{config-title}
 
-Book title: HTML \texttt{<title>}, sidebar heading, index heading, and the LaTeX \texttt{\textbackslash{}\textbackslash{}title} / title page. Default if unset: \texttt{Untitled~Book}. CLI: \texttt{--title}.
+Book title: HTML \texttt{<title>}, sidebar heading, index heading, and the LaTeX \texttt{\textbackslash{}\textbackslash{}title} / title page. Default if unset: \texttt{Untitled~Book}. CLI: \texttt{-\allowbreak{}-\allowbreak{}title}.
 
 \section{copyright}
 \label{config-copyright}
 
-Book-wide footer text after © on HTML pages (for example \texttt{2026,~Jafar~Al-Gharaibeh}). This is not a chapter byline; a chapter \texttt{:copyright:} field is separate (see \hyperref[markup-markup-reference]{Markup Reference}). CLI: \texttt{--copyright}.
+Book-wide footer text after © on HTML pages (for example \texttt{2026,\allowbreak{}~Jafar~Al-\allowbreak{}Gharaibeh}). This is not a chapter byline; a chapter \texttt{:copyright:} field is separate (see \hyperref[markup-markup-reference]{Markup Reference}). CLI: \texttt{-\allowbreak{}-\allowbreak{}copyright}.
 
 \section{logo}
 \label{config-logo}
 
-Image file. HTML copies it to \texttt{targetDir/\_static/} and shows it in the sidebar. LaTeX / PDF copies it next to the \texttt{.tex} and places it on the title page (page 1), not as a numbered figure. CLI: \texttt{--logo}.
+Image file. HTML copies it to \texttt{targetDir/\allowbreak{}\_\allowbreak{}static/\allowbreak{}} and shows it in the sidebar. LaTeX / PDF copies it next to the \texttt{.\allowbreak{}tex} and places it on the title page (page 1), not as a numbered figure. CLI: \texttt{-\allowbreak{}-\allowbreak{}logo}.
 
 \section{name}
 \label{config-name}
 
-Basename for the book \texttt{.tex} / \texttt{.pdf} (and the HTML footer \textbf{pdf} link). A trailing \texttt{.pdf} or \texttt{.tex} is stripped. Letters, digits, \texttt{\_}, and \texttt{-} only. Default: \texttt{book}. Ignored for report collections (one PDF per report, named like the HTML stem). CLI: \texttt{--name}.
+Basename for the book \texttt{.\allowbreak{}tex} / \texttt{.\allowbreak{}pdf} (and the HTML footer \textbf{pdf} link). A trailing \texttt{.\allowbreak{}pdf} or \texttt{.\allowbreak{}tex} is stripped. Letters, digits, \texttt{\_\allowbreak{}}, and \texttt{-\allowbreak{}} only. Default: \texttt{book}. Ignored for report collections (one PDF per report, named like the HTML stem). CLI: \texttt{-\allowbreak{}-\allowbreak{}name}.
 
 \section{theme}
 \label{config-theme}
 
-Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a custom name under \texttt{themePath}). Default: \texttt{basic}. Readers can still switch skins in the sidebar. Ignored for LaTeX / PDF. CLI: \texttt{--theme}.
+Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a custom name under \texttt{themePath}). Default: \texttt{basic}. Readers can still switch skins in the sidebar. Ignored for LaTeX / PDF. CLI: \texttt{-\allowbreak{}-\allowbreak{}theme}.
 
 \section{themePath}
 \label{config-themepath}
 
-Directory that contains theme subdirectories (\texttt{DIR/basic/static}, …). Also accepted as \texttt{themepath} or \texttt{theme\_path}. If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. CLI: \texttt{--themePath}.
+Directory that contains theme subdirectories (\texttt{DIR/\allowbreak{}basic/\allowbreak{}static}, …). Also accepted as \texttt{themepath} or \texttt{theme\_\allowbreak{}path}. If omitted, uscribe searches \texttt{.\allowbreak{}/\allowbreak{}themes}, \texttt{.\allowbreak{}.\allowbreak{}/\allowbreak{}themes}, and \texttt{themes}. CLI: \texttt{-\allowbreak{}-\allowbreak{}themePath}.
 
 \section{docclass}
 \label{config-docclass}
 
-\texttt{book} (default) or \texttt{report}. Report mode is usually selected per chapter with \texttt{:docclass:~report} or \texttt{:trnumber:}; this key forces the class for every chapter. Also accepted as \texttt{doc\_class} or \texttt{doc-class}. CLI: \texttt{--docclass}.
+\texttt{book} (default) or \texttt{report}. Report mode is usually selected per chapter with \texttt{:docclass:~report} or \texttt{:trnumber:}; this key forces the class for every chapter. Also accepted as \texttt{doc\_\allowbreak{}class} or \texttt{doc-\allowbreak{}class}. CLI: \texttt{-\allowbreak{}-\allowbreak{}docclass}.
 
 
-A report is one HTML page and one PDF. The sidebar on that page is the report's sections. \texttt{index.html} is a catalog of links. Workflow and live examples: \hyperref[reports-reports]{Reports}.
+A report is one HTML page and one PDF. The sidebar on that page is the report's sections. \texttt{index.\allowbreak{}html} is a catalog of links. Workflow and live examples: \hyperref[reports-reports]{Reports}.
+
+\section{frontmatter}
+\label{config-frontmatter}
+
+How many leading chapters are unnumbered front matter (a preface before chapter 1). Default \texttt{0}. When set, the HTML sidebar numbers sections as \texttt{1.\allowbreak{}1}, \texttt{2.\allowbreak{}3.\allowbreak{}1}, … matching the Word outline, and the PDF uses \texttt{\textbackslash{}\textbackslash{}frontmatter} for those chapters, then the table of contents, then \texttt{\textbackslash{}\textbackslash{}mainmatter}.
+
+\section{toctree}
+\label{config-toctree}
+
+Sidebar tree lines (vertical spine and ticks) on the current chapter's section list. Default off: numbers and indentation only. Set \texttt{toctree:~true} (also \texttt{yes} / \texttt{on} / \texttt{1}; aliases \texttt{toc-\allowbreak{}tree}, \texttt{toc\_\allowbreak{}tree}) to draw the lines.
 
 \section{Not in book.conf}
 \label{config-not-in-book-conf}
@@ -583,11 +674,20 @@ These stay on the command line because they describe one \emph{build}, not the b
 
 \begin{itemize}
 \item 
-\texttt{--format} --- \texttt{html}, \texttt{latex}, or \texttt{pdf}
+
+\texttt{-\allowbreak{}-\allowbreak{}format} --- \texttt{html}, \texttt{latex}, or \texttt{pdf}
+
+
 \item 
-\texttt{--targetDir} --- output directory (default \texttt{./htmlBook} or \texttt{./latexBook})
+
+\texttt{-\allowbreak{}-\allowbreak{}targetDir} --- output directory (default \texttt{.\allowbreak{}/\allowbreak{}htmlBook} or \texttt{.\allowbreak{}/\allowbreak{}latexBook})
+
+
 \item 
-\texttt{--manifest} --- chapter list (default \texttt{book.manifest})
+
+\texttt{-\allowbreak{}-\allowbreak{}manifest} --- chapter list (default \texttt{book.\allowbreak{}manifest})
+
+
 \end{itemize}
 \section{This guide}
 \label{config-this-guide}
@@ -606,7 +706,7 @@ themePath: ../../uni/uscribe/themes
 \end{Verbatim}
 
 
-Chapter order is \texttt{book.manifest} in the same directory.
+Chapter order is \texttt{book.\allowbreak{}manifest} in the same directory.
 
 \clearpage
 \chapter{Markup Reference}
@@ -628,7 +728,7 @@ Subsection
 \end{Verbatim}
 
 
-Characters \texttt{=~-~\textasciitilde{}~\textasciicircum{}} are recognized as underline styles. Heading level follows the underline character. The underline length must be greater than or equal to the title length.
+Characters \texttt{=~-\allowbreak{}~\textasciitilde{}~\textasciicircum{}~"} are recognized as underline styles (chapter through heading 5). Heading level follows the underline character. The underline length must be greater than or equal to the title length.
 
 \section{Document fields}
 \label{markup-document-fields}
@@ -646,12 +746,12 @@ Chapter Title
 \end{Verbatim}
 
 
-Book-wide title, logo, theme, and PDF name belong in \texttt{book.conf} (see \hyperref[config-book-configuration]{Book Configuration}). They are not chapter fields.
+Book-wide title, logo, theme, and PDF name belong in \texttt{book.\allowbreak{}conf} (see \hyperref[config-book-configuration]{Book Configuration}). They are not chapter fields.
 
 \section{Paragraphs and lists}
 \label{markup-paragraphs-and-lists}
 
-Blank lines separate paragraphs. Bullet lists use \texttt{-} or \texttt{*} with a following space. Numbered lists use \texttt{1.~} / \texttt{1)~} or auto-number \texttt{\#.~}. Indented continuation lines belong to the current item.
+Blank lines separate paragraphs. Bullet lists use \texttt{-\allowbreak{}} or \texttt{*} with a following space. Numbered lists use \texttt{1.\allowbreak{}~} / \texttt{1)~} or auto-number \texttt{\#.\allowbreak{}~}. Indented continuation lines belong to the current item. Nested lists, \texttt{.\allowbreak{}.\allowbreak{}~note::}, and \texttt{.\allowbreak{}.\allowbreak{}~code-\allowbreak{}block::} indented under an item are parsed as that item's body (a blank line between items is allowed).
 
 
 Source:
@@ -667,12 +767,65 @@ Rendered:
 
 \begin{enumerate}
 \item 
+
 Install the \texttt{uscribe} binary (\hyperref[install-installation]{Installation})
+
+
 \item 
+
 Write a tiny book (\hyperref[quickstart-quick-start]{Quick Start})
+
+
 \item 
+
 Pick a theme (\hyperref[themes-themes]{Themes})
+
+
 \end{enumerate}
+
+A list item can also hold a nested listing:
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+- Default mode prompt:
+
+  .. code-block:: text
+
+     admin@r0>
+
+- Configure mode is a nested list of its own:
+
+  - enter with ``config``
+  - leave with ``end``
+\end{Verbatim}
+
+\begin{itemize}
+\item 
+
+Default mode prompt:
+
+\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+admin@r0>
+\end{Verbatim}
+
+
+\item 
+
+Configure mode is a nested list of its own:
+
+\begin{itemize}
+\item 
+
+enter with \texttt{config}
+
+
+\item 
+
+leave with \texttt{end}
+
+
+\end{itemize}
+
+\end{itemize}
 \section{Definition lists}
 \label{markup-definition-lists}
 
@@ -711,7 +864,7 @@ Names the HTML skin (\texttt{basic}, \texttt{classic}, or \texttt{dark}).
 \section{Tables}
 \label{markup-tables}
 
-\textbf{Simple} tables use \texttt{=} column separators. The first row is the header. PDF output uses \texttt{longtable} so tables can break across pages.
+\textbf{Simple} tables use \texttt{=} column separators. The first row is the header. PDF output uses \texttt{longtable} with wrapping paragraph columns so long identifiers and prose stay within the page.
 
 
 Source:
@@ -729,7 +882,7 @@ pdf    run a TeX engine
 
 Rendered:
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Flag & Meaning \\
 \hline
@@ -748,7 +901,7 @@ pdf & run a TeX \\
 \end{longtable}
 
 
-\textbf{Grid} tables use \texttt{+---+} borders; a border with \texttt{=} marks the header. Omit an internal \texttt{|} to span columns:
+\textbf{Grid} tables use \texttt{+-\allowbreak{}-\allowbreak{}-\allowbreak{}+} borders; a border with \texttt{=} marks the header. Omit an internal \texttt{|} to span columns:
 
 
 Source:
@@ -766,7 +919,7 @@ Source:
 
 Rendered:
 
-\begin{longtable}{lll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}}
 \hline
 Left & Mid & Right \\
 \hline
@@ -779,8 +932,8 @@ Left & Mid & Right \\
 \endfoot
 \hline
 \endlastfoot
-A & \multicolumn{2}{l}{B spanning two} \\
-\multicolumn{2}{l}{C spanning two} & D \\
+A & \multicolumn{2}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*2/3+2\tabcolsep*(2-1)\relax}}{B spanning two} \\
+\multicolumn{2}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*2/3+2\tabcolsep*(2-1)\relax}}{C spanning two} & D \\
 \end{longtable}
 
 
@@ -802,7 +955,7 @@ Source:
 
 Rendered:
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Flag & Meaning \\
 \hline
@@ -820,7 +973,7 @@ latex & book.tex \\
 \end{longtable}
 
 
-\textbf{List tables} use the \texttt{list-table} directive:
+\textbf{List tables} use the \texttt{list-\allowbreak{}table} directive. The optional argument is the table caption (shown under the table in HTML, and as a LaTeX caption). Word-style labels such as \texttt{Figure~6:~…} are kept as written:
 
 
 Source:
@@ -840,7 +993,7 @@ Source:
 
 Rendered:
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Flag & Meaning \\
 \hline
@@ -860,7 +1013,7 @@ pdf & run a TeX engine \\
 \section{Labels and cross-references}
 \label{markup-labels-and-cross-references}
 
-Place \texttt{..~\_name:} immediately before a heading, figure, or table. Pass 1 collects explicit labels and title slugs; pass 2 turns ref roles into \texttt{chapter.html\#anchor} links.
+Place \texttt{.\allowbreak{}.\allowbreak{}~\_\allowbreak{}name:} immediately before a heading, figure, or table. Pass 1 collects explicit labels and title slugs; pass 2 turns ref roles into \texttt{chapter.\allowbreak{}html\#anchor} links.
 
 
 Source:
@@ -882,18 +1035,27 @@ Rendered:
 \section{Stable labels}
 \label{markup-stable-labels}
 
-A preceding \texttt{..~\_name:} attaches to the next heading. Link with a ref role naming that label, optionally with display text in angle brackets.
+A preceding \texttt{.\allowbreak{}.\allowbreak{}~\_\allowbreak{}name:} attaches to the next heading. Link with a ref role naming that label, optionally with display text in angle brackets.
 
 
 Live refs (explicit label and display-text form):
 
 \begin{itemize}
 \item 
+
 plain: \hyperref[markup-stable-labels]{Stable labels}
+
+
 \item 
+
 with display text: \hyperref[markup-stable-labels]{Jump here}
+
+
 \item 
+
 chapter: \hyperref[install-installation]{Installation}
+
+
 \end{itemize}
 
 Title-only refs (matching a heading exactly) still work. Full chapter sources are linked from each HTML footer as \textbf{source} (and \textbf{txt} in the report index Formats column).
@@ -902,11 +1064,20 @@ Title-only refs (matching a heading exactly) still work. Full chapter sources ar
 \label{markup-inline-markup}
 \begin{itemize}
 \item 
+
 single asterisks for \emph{emphasis}
+
+
 \item 
+
 double asterisks for \textbf{strong}
+
+
 \item 
+
 backticks for \texttt{inline~literals}
+
+
 \end{itemize}
 \section{Directives}
 \label{markup-directives}
@@ -934,9 +1105,15 @@ Admonition bodies can hold nested blocks:
 
 \begin{itemize}
 \item 
+
 a bullet list
+
+
 \item 
+
 and even a nested tip
+
+
 \end{itemize}
 \begin{quote}
 \textbf{Tip.}
@@ -952,7 +1129,7 @@ Nested directives are parsed, not flattened.
 Also: \texttt{warning}, \texttt{tip}, \texttt{important}, \texttt{caution}, \texttt{attention}, \texttt{danger}, \texttt{error}, \texttt{hint}.
 
 
-Figures take a caption (numbered in HTML/LaTeX) and optional \texttt{:name:} / preceding \texttt{..~\_label:}:
+Figures take a caption. If the caption already starts with \texttt{Figure~N} or \texttt{Table~N}, HTML and LaTeX keep that label instead of adding another number. Uncaptioned \texttt{.\allowbreak{}.\allowbreak{}~image::} is not numbered.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 .. _logo-figure:
@@ -1008,7 +1185,7 @@ Paths are resolved next to the including chapter, then under the process cwd. Ne
 \texttt{literalinclude} shows a file as a listing; \texttt{include} parses it as markup. The tip below is the same fragment both ways.
 
 
-Source (\texttt{includes/shared-tip.rst}):
+Source (\texttt{includes/\allowbreak{}shared-\allowbreak{}tip.\allowbreak{}rst}):
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 .. tip::
@@ -1024,12 +1201,12 @@ Rendered:
 \textbf{Tip.}
 
 
-Snippets under \texttt{includes/} can be pulled into any chapter with \texttt{..~include::} so the same advice is not copy-pasted.
+Snippets under \texttt{includes/\allowbreak{}} can be pulled into any chapter with \texttt{.\allowbreak{}.\allowbreak{}~include::} so the same advice is not copy-pasted.
 
 \end{quote}
 
 
-Pull a real \texttt{.icn} file as a listing. Language defaults from the extension (\texttt{.icn} → \texttt{unicon}); override with \texttt{:language:}:
+Pull a real \texttt{.\allowbreak{}icn} file as a listing. Language defaults from the extension (\texttt{.\allowbreak{}icn} → \texttt{unicon}); override with \texttt{:language:}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 # Shared sample for literalinclude demos
@@ -1050,7 +1227,7 @@ The same file, only the body between markers:
 \section{Unicon listings}
 \label{markup-unicon-listings}
 
-\texttt{code-block} languages \texttt{unicon}, \texttt{icon}, and \texttt{icn} get Unicon syntax highlighting in HTML (via \texttt{highlight-unicon.js}). Other languages are emitted as plain \texttt{<pre><code~class="language-…">} without Unicon highlighting --- use \texttt{sh} for shell, \texttt{rst} or \texttt{text} for markup samples. \texttt{literalinclude} of \texttt{.icn} files uses the same highlighting.
+\texttt{code-\allowbreak{}block} languages \texttt{unicon}, \texttt{icon}, and \texttt{icn} get Unicon syntax highlighting in HTML (via \texttt{highlight-\allowbreak{}unicon.\allowbreak{}js}). \texttt{json} is highlighted the same way (strings, numbers, \texttt{true} / \texttt{false} / \texttt{null}, and \texttt{/\allowbreak{}/\allowbreak{}} comments in JSONC samples). Other languages are emitted as plain \texttt{<pre><code~class="language-\allowbreak{}…">} without extra highlighting --- use \texttt{sh} for shell, \texttt{rst} or \texttt{text} for markup samples. \texttt{literalinclude} of \texttt{.\allowbreak{}icn} files uses the same Unicon highlighting.
 
 
 Example Unicon program as it appears in the built book:
@@ -1068,7 +1245,7 @@ end
 A line ending in \texttt{::} (RST literal-block introducer) followed by an indented block is also treated as a code listing. \texttt{Unicon::} becomes the label \texttt{Unicon:} plus the indented tree; a lone \texttt{::} introduces a block with no label.
 
 
-Unknown \texttt{..~name::} directives become HTML comments so content is not silently dropped.
+Unknown \texttt{.\allowbreak{}.\allowbreak{}~name::} directives become HTML comments so content is not silently dropped.
 
 
 See also \hyperref[quickstart-quick-start]{Quick Start} and \hyperref[cli-command-line]{Command Line}.
@@ -1083,14 +1260,23 @@ HTML chrome (sidebar, search, prev/next on book chapters) is fixed in the genera
 \label{themes-built-in-themes}
 \begin{itemize}
 \item 
+
 \textbf{basic} --- light sidebar (default)
+
+
 \item 
+
 \textbf{classic} --- serif / warm-gray documentation look
+
+
 \item 
+
 \textbf{dark} --- dark background
+
+
 \end{itemize}
 
-All three are installed into \texttt{out/\_static/} as \texttt{theme-NAME.css}. Readers pick a theme from the \textbf{Theme} dropdown in the sidebar; the choice is stored in the browser (\texttt{localStorage} key \texttt{uscribe-theme}).
+All three are installed into \texttt{out/\allowbreak{}\_\allowbreak{}static/\allowbreak{}} as \texttt{theme-\allowbreak{}NAME.\allowbreak{}css}. Readers pick a theme from the \textbf{Theme} dropdown in the sidebar; the choice is stored in the browser (\texttt{localStorage} key \texttt{uscribe-\allowbreak{}theme}).
 
 \section{Build-time default}
 \label{themes-build-time-default}
@@ -1099,7 +1285,7 @@ uscribe ... --theme=classic --themePath=../themes
 \end{Verbatim}
 
 
-\texttt{theme} and \texttt{themePath} may also be set in \texttt{book.conf} (see \hyperref[config-book-configuration]{Book Configuration}).
+\texttt{theme} and \texttt{themePath} may also be set in \texttt{book.\allowbreak{}conf} (see \hyperref[config-book-configuration]{Book Configuration}).
 
 
 Or with the sample Makefiles:
@@ -1111,7 +1297,7 @@ make dark
 \end{Verbatim}
 
 
-\texttt{--theme} only sets the \emph{initial} stylesheet until the reader selects another in the UI.
+\texttt{-\allowbreak{}-\allowbreak{}theme} only sets the \emph{initial} stylesheet until the reader selects another in the UI.
 
 \section{Theme layout on disk}
 \label{themes-theme-layout-on-disk}
@@ -1127,10 +1313,10 @@ themes/
 \end{Verbatim}
 
 
-To add a custom theme, create \texttt{themes/mytheme/static/book.css} and pass \texttt{--theme=mytheme}. Keep the same HTML class names (\texttt{.sidebar}, \texttt{.main}, \texttt{.tok-keyword}, …) so shared scripts keep working.
+To add a custom theme, create \texttt{themes/\allowbreak{}mytheme/\allowbreak{}static/\allowbreak{}book.\allowbreak{}css} and pass \texttt{-\allowbreak{}-\allowbreak{}theme=mytheme}. Keep the same HTML class names (\texttt{.\allowbreak{}sidebar}, \texttt{.\allowbreak{}main}, \texttt{.\allowbreak{}tok-\allowbreak{}keyword}, …) so shared scripts keep working.
 
 
-See \texttt{themes/README.md} in the source tree for layout details.
+See \texttt{themes/\allowbreak{}README.\allowbreak{}md} in the source tree for layout details.
 
 \clearpage
 \chapter{Command Line}
@@ -1146,66 +1332,78 @@ uscribe [options]
 \begin{description}
 \item[**--manifest=FILE**]
 
-Plain-text chapter list: one source path per line. Lines starting with \texttt{\#} and blank lines are ignored. Paths are relative to the process current working directory. Default: \texttt{book.manifest} in the current directory.
+Plain-text chapter list: one source path per line. Lines starting with \texttt{\#} and blank lines are ignored. Paths are relative to the process current working directory. Default: \texttt{book.\allowbreak{}manifest} in the current directory.
 
 \item[**--config=FILE**]
 
-Book-level settings file. If omitted, uscribe loads \texttt{book.conf} next to the manifest when that file exists. See \hyperref[config-book-configuration]{Book Configuration} for the key list, path rules, and defaults. Any command-line option overrides the file.
+Book-level settings file. If omitted, uscribe loads \texttt{book.\allowbreak{}conf} next to the manifest when that file exists. See \hyperref[config-book-configuration]{Book Configuration} for the key list, path rules, and defaults. Any command-line option overrides the file.
 
 \item[**--title=TITLE**]
 
-Book title for \texttt{<title>}, the sidebar heading, the index page, and the LaTeX \texttt{\textbackslash{}\textbackslash{}title}. Default: from \texttt{book.conf}, else \texttt{Untitled~Book}.
+Book title for \texttt{<title>}, the sidebar heading, the index page, and the LaTeX \texttt{\textbackslash{}\textbackslash{}title}. Default: from \texttt{book.\allowbreak{}conf}, else \texttt{Untitled~Book}.
 
 \item[**--copyright=TEXT**]
 
-Optional footer copyright (text after ©), e.g. \texttt{2026,~Jafar~Al-Gharaibeh}. HTML only. Every HTML page always ends with \texttt{Powered~by~uscribe}; chapter pages also link \textbf{pdf} (the book PDF from \texttt{--name}, or a sibling PDF for reports) and \textbf{source} (\texttt{\_sources/name.rst.txt}, viewable as plain text in the browser).
+Optional footer copyright (text after ©), e.g. \texttt{2026,\allowbreak{}~Jafar~Al-\allowbreak{}Gharaibeh}. HTML only. Every HTML page always ends with \texttt{Powered~by~uscribe}; chapter pages also link \textbf{pdf} (the book PDF from \texttt{-\allowbreak{}-\allowbreak{}name}, or a sibling PDF for reports) and \textbf{source} (\texttt{\_\allowbreak{}sources/\allowbreak{}name.\allowbreak{}rst.\allowbreak{}txt}, viewable as plain text in the browser).
 
 \item[**--name=STEM**]
 
-Basename for the book \texttt{.tex} / \texttt{.pdf} (default: \texttt{book}). HTML footers and the index link to \texttt{STEM.pdf}. A trailing \texttt{.pdf} or \texttt{.tex} is stripped. Letters, digits, \texttt{\_}, and \texttt{-} only. Ignored for report collections (one file per report, named like the HTML stem).
+Basename for the book \texttt{.\allowbreak{}tex} / \texttt{.\allowbreak{}pdf} (default: \texttt{book}). HTML footers and the index link to \texttt{STEM.\allowbreak{}pdf}. A trailing \texttt{.\allowbreak{}pdf} or \texttt{.\allowbreak{}tex} is stripped. Letters, digits, \texttt{\_\allowbreak{}}, and \texttt{-\allowbreak{}} only. Ignored for report collections (one file per report, named like the HTML stem).
 
 \item[**--logo=FILE**]
 
-Optional logo. HTML copies it into \texttt{targetDir/\_static/} and shows it in the sidebar. LaTeX / PDF copies it into \texttt{targetDir} and places it on the title page (page 1), not as a chapter figure.
+Optional logo. HTML copies it into \texttt{targetDir/\allowbreak{}\_\allowbreak{}static/\allowbreak{}} and shows it in the sidebar. LaTeX / PDF copies it into \texttt{targetDir} and places it on the title page (page 1), not as a chapter figure.
 
 \item[**--format=FMT**]
 
 Output format: \texttt{html} (default), \texttt{latex}, or \texttt{pdf}.
 
 
-- \texttt{html} --- one page per chapter plus index/search/themes.   Report manifests get a catalog table on \texttt{index.html}. Each   report page's sidebar lists that report's sections.   See \hyperref[reports-reports]{Reports}. - \texttt{latex} --- for books, a single \texttt{STEM.tex} (default   \texttt{book.tex}); for report manifests (every chapter is a   report), one \texttt{.tex} per report - \texttt{pdf} --- like \texttt{latex}, then run \texttt{pdflatex}, \texttt{xelatex}, or   \texttt{lualatex} (whichever is first in \texttt{PATH}) twice for TOC/xrefs
+- \texttt{html} --- one page per chapter plus index/search/themes.   Report manifests get a catalog table on \texttt{index.\allowbreak{}html}. Each   report page's sidebar lists that report's sections. Book   chapter pages list every chapter and expand the current   chapter with a numbered local TOC (\texttt{1.\allowbreak{}1}, \texttt{2.\allowbreak{}3.\allowbreak{}1}, …).   Tree lines are off unless \texttt{toctree:~true} in \texttt{book.\allowbreak{}conf}.   See \hyperref[reports-reports]{Reports}. - \texttt{latex} --- for books, a single \texttt{STEM.\allowbreak{}tex} (default   \texttt{book.\allowbreak{}tex}); for report manifests (every chapter is a   report), one \texttt{.\allowbreak{}tex} per report - \texttt{pdf} --- like \texttt{latex}, then run \texttt{pdflatex}, \texttt{xelatex}, or   \texttt{lualatex} (whichever is first in \texttt{PATH}) twice for TOC/xrefs
 
 \item[**--targetDir=DIR**]
 
-Output directory. Default: \texttt{./htmlBook} for HTML, \texttt{./latexBook} for latex/pdf. Created if missing.
+Output directory. Default: \texttt{.\allowbreak{}/\allowbreak{}htmlBook} for HTML, \texttt{.\allowbreak{}/\allowbreak{}latexBook} for latex/pdf. Created if missing.
 
 \item[**--theme=NAME**]
 
-Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a custom name under \texttt{--themePath}). Default: \texttt{basic}. Ignored for latex/pdf.
+Initial HTML theme: \texttt{basic}, \texttt{classic}, or \texttt{dark} (or a custom name under \texttt{-\allowbreak{}-\allowbreak{}themePath}). Default: \texttt{basic}. Ignored for latex/pdf.
 
 \item[**--themePath=DIR**]
 
-Directory that contains theme subdirectories (\texttt{DIR/basic/static}, …). If omitted, uscribe searches \texttt{./themes}, \texttt{../themes}, and \texttt{themes}. HTML only.
+Directory that contains theme subdirectories (\texttt{DIR/\allowbreak{}basic/\allowbreak{}static}, …). If omitted, uscribe searches \texttt{.\allowbreak{}/\allowbreak{}themes}, \texttt{.\allowbreak{}.\allowbreak{}/\allowbreak{}themes}, and \texttt{themes}. HTML only.
 
 \end{description}
 
 \section{Outputs}
 \label{cli-outputs}
 
-\textbf{HTML} (\texttt{--format=html}): for each chapter \texttt{path/name.rst}, writes \texttt{targetDir/name.html}, plus:
+\textbf{HTML} (\texttt{-\allowbreak{}-\allowbreak{}format=html}): for each chapter \texttt{path/\allowbreak{}name.\allowbreak{}rst}, writes \texttt{targetDir/\allowbreak{}name.\allowbreak{}html}, plus:
 
 \begin{itemize}
 \item 
-\texttt{index.html} --- contents landing page (chapter list, or a catalog table of reports with a \textbf{Formats} column of \texttt{pdf} / \texttt{txt})
+
+\texttt{index.\allowbreak{}html} --- contents landing page (chapter list, or a catalog table of reports with a \textbf{Formats} column of \texttt{pdf} / \texttt{txt})
+
+
 \item 
-\texttt{search.html} + \texttt{searchindex.js} --- full-text search
+
+\texttt{search.\allowbreak{}html} + \texttt{searchindex.\allowbreak{}js} --- full-text search
+
+
 \item 
-\texttt{\_static/} --- theme CSS, search JS, highlighter, theme switcher
+
+\texttt{\_\allowbreak{}static/\allowbreak{}} --- theme CSS, search JS, highlighter, theme switcher
+
+
 \item 
-\texttt{\_sources/} --- chapter sources as \texttt{name.rst.txt} (browser-viewable text; linked as \textbf{txt} / \textbf{source})
+
+\texttt{\_\allowbreak{}sources/\allowbreak{}} --- chapter sources as \texttt{name.\allowbreak{}rst.\allowbreak{}txt} (browser-viewable text; linked as \textbf{txt} / \textbf{source})
+
+
 \end{itemize}
 
-\textbf{LaTeX / PDF}: book manifests write \texttt{targetDir/STEM.tex} (and \texttt{STEM.pdf} with \texttt{--format=pdf}; default stem \texttt{book}). Report manifests write one \texttt{.tex} / \texttt{.pdf} per report, named like the HTML stem (\texttt{ex-report.tex} beside \texttt{ex-report.html}). Local \texttt{..~image::} files are copied into \texttt{targetDir} automatically (relative paths preserved). SVG is not embedded in LaTeX (a boxed placeholder is emitted instead --- convert to PDF/PNG for TeX).
+\textbf{LaTeX / PDF}: book manifests write \texttt{targetDir/\allowbreak{}STEM.\allowbreak{}tex} (and \texttt{STEM.\allowbreak{}pdf} with \texttt{-\allowbreak{}-\allowbreak{}format=pdf}; default stem \texttt{book}). Report manifests write one \texttt{.\allowbreak{}tex} / \texttt{.\allowbreak{}pdf} per report, named like the HTML stem (\texttt{ex-\allowbreak{}report.\allowbreak{}tex} beside \texttt{ex-\allowbreak{}report.\allowbreak{}html}). Local \texttt{.\allowbreak{}.\allowbreak{}~image::} files are copied into \texttt{targetDir} automatically (relative paths preserved). SVG is not embedded in LaTeX (a boxed placeholder is emitted instead --- convert to PDF/PNG for TeX).
 
 \section{Exit status}
 \label{cli-exit-status}

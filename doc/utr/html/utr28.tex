@@ -6,9 +6,20 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{fancyvrb}
+\IfFileExists{fvextra.sty}{%
+  \usepackage{fvextra}%
+  \fvset{breaklines=true,breakanywhere=true}%
+}{}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{array}
 \IfFileExists{multirow.sty}{\usepackage{multirow}}{}
+\IfFileExists{caption.sty}{%
+  \usepackage{caption}%
+  \newcommand{\uscribecaptionstar}[1]{\caption*{##1}}%
+}{%
+  \newcommand{\uscribecaptionstar}[1]{{\centering\small ##1\par}}%
+}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 \begin{document}
 \begin{titlepage}
@@ -45,23 +56,17 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr28-sec-intro}
 
-This report describes IP multicast [7] and the socket-attribute facility it sits on. Trailing arguments to \texttt{open()} on network modes are \texttt{name=value} strings applied with \texttt{setsockopt(2)}. After \texttt{open()}, \texttt{Attrib()} uses the same names. The language-facing reference lives in \emph{Programming with Unicon} [8] (Chapter 5, "Multicast and Socket Attributes") and the language reference (\texttt{open} trailing attributes, \texttt{Attrib}, subscript peek, \texttt{key()}). Automated tests live in \texttt{tests/posix/mcast.icn} and \texttt{tests/posix/sockpeek.icn}.
-
-
-The work is part of POSIX networking, not an optional library. A later report covers raw sockets [9], which reuse these attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}) on mode \texttt{nr}.
+This report describes IP multicast [6] and the socket-attribute facility it sits on. Trailing arguments to \texttt{open()} on network modes are \texttt{name=value} strings applied with \texttt{setsockopt(2)}. After \texttt{open()}, \texttt{Attrib()} uses the same names. The language-facing reference lives in \emph{Programming with Unicon} [7] (Chapter 5, "Multicast and Socket Attributes") and the language reference (\texttt{open} trailing attributes, \texttt{Attrib}, subscript peek, \texttt{key()}). Automated tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}mcast.\allowbreak{}icn} and \texttt{tests/\allowbreak{}posix/\allowbreak{}sockpeek.\allowbreak{}icn}.
 
 \section{2. Motivation}
 \label{utr28-sec-motivation}
 
-Unicon's \texttt{open()} already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) [10] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join \texttt{239.1.1.1}, restrict a join to one NIC, or send with a limited TTL. Those operations were not supported.
-
-
-The rest of the I/O API already has the pattern: \texttt{open()} constructs, trailing strings configure (SSL \texttt{key=}, window \texttt{WAttrib}), \texttt{Attrib()} mutates later, and \texttt{f["name"]} peeks status. Socket options follow that pattern instead of adding \texttt{setsockopt()} as a new global.
+Unicon's \texttt{open()} already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) [8] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join a multicast group like \texttt{239.\allowbreak{}1.\allowbreak{}1.\allowbreak{}1}, restrict a join to one NIC, or send with a limited TTL like \texttt{ttl=3}. These options were not supported.
 
 \section{3. Design principles}
 \label{utr28-sec-principles}
 
-\textbf{Attributes are \texttt{name=value}, like SSL.} Unknown names fail \texttt{open()} with error 1310 (\texttt{bad~socket~attribute}). Booleans are exactly \texttt{yes} or \texttt{no}, matching \texttt{verifyPeer}.
+\textbf{Attributes are \texttt{name=value}, like graphics windows.} Unknown names fail \texttt{open()} with error 1310 (\texttt{bad~socket~attribute}). Booleans are exactly \texttt{yes} or \texttt{no}, matching \texttt{verifyPeer}.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 procedure main()
@@ -69,7 +74,7 @@ procedure main()
       write("oops")
    else
       write("bogus: ", &errortext)
-   if open(":5110", "nua4", "reuseaddr=1") then
+   if open(":5110", "nua4", "reuseaddr=yes") then
       write("oops")
    else
       write("numeric boolean: ", &errortext)
@@ -85,13 +90,13 @@ numeric boolean: bad socket attribute
 \end{Verbatim}
 
 
-\textbf{DWIM for the common cases.} Binding a UDP socket to a multicast group joins that group. Listeners default to \texttt{reuseaddr=yes}. No \texttt{iface=} means join every UP IPv4 interface and send out the first non-loopback IPv4 address (else loopback). Sending to \texttt{255.255.255.255} enables \texttt{SO\_BROADCAST}. Explicit attributes always override.
+\textbf{DWIM for the common cases.} Binding a UDP socket to a multicast group joins that group. Listeners default to \texttt{reuseaddr=yes}. No \texttt{iface=} means join every UP IPv4 interface and send out the first non-loopback IPv4 address (else loopback). Sending to \texttt{255.\allowbreak{}255.\allowbreak{}255.\allowbreak{}255} enables \texttt{SO\_\allowbreak{}BROADCAST}. Explicit attributes always override.
 
 
-\textbf{\texttt{source@group}, not \texttt{group@source}.} The address form matches VLC, ffmpeg, and RFC 4607 \texttt{(S,G)} order. Empty either side is invalid.
+\textbf{\texttt{source@\allowbreak{}group}.} The address form matches VLC, ffmpeg, and RFC 4607 \texttt{(S,\allowbreak{}G)} order. Empty either side is invalid.
 
 
-\textbf{\texttt{ttl} and \texttt{iface}, not multicast-only names.} Hop limit and interface are used by unicast, multicast, and later raw sockets [9]. \texttt{ttl=} sets both \texttt{IP\_TTL} and \texttt{IP\_MULTICAST\_TTL} (or the IPv6 hop options). \texttt{iface=} accepts an IPv4 address, a numeric index, or a name (\texttt{en0}, \texttt{lo0}; Windows also maps \texttt{lo} / \texttt{lo0} to \texttt{loopback\_0}).
+\textbf{\texttt{ttl} and \texttt{iface}, not multicast-only names.} Hop limit and interface are used by unicast, multicast, and raw sockets [9]. \texttt{ttl=} sets both \texttt{IP\_\allowbreak{}TTL} and \texttt{IP\_\allowbreak{}MULTICAST\_\allowbreak{}TTL} (or the IPv6 hop options). \texttt{iface=} accepts an IPv4 address, a numeric index, or a name (\texttt{en0}, \texttt{lo0}; Windows also maps \texttt{lo} / \texttt{lo0} to \texttt{loopback\_\allowbreak{}0}).
 
 
 \textbf{Order matters.} \texttt{iface=} before \texttt{join=} selects the interface used by that join. \texttt{Attrib()} applies a batch of assignments together for the same reason.
@@ -126,7 +131,7 @@ end
 The receiver binds the group address, so the runtime joins that group (ASM) and enables port reuse. The sender's destination is the group; without \texttt{iface=}, outbound multicast uses the first non-loopback IPv4 address. Kernel multicast loopback stays on, so a local receiver still sees the packets.
 
 
-The same exchange in one process over loopback (this is the shape of \texttt{tests/posix/mcast.icn}). \texttt{iface=127.0.0.1} keeps the datagram on loopback even when the host has no multicast route:
+The same exchange in one process over loopback (this is the shape of \texttt{tests/\allowbreak{}posix/\allowbreak{}mcast.\allowbreak{}icn}). \texttt{iface=127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1} keeps the datagram on loopback even when the host has no multicast route:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 procedure main()
@@ -155,7 +160,7 @@ hello-multicast
 \end{Verbatim}
 
 
-\texttt{r.addr} is the sender (host plus an ephemeral port). Alpine often does not deliver loopback multicast even when the join succeeds; the test suite treats a missing datagram as success there so CI stays portable.
+\texttt{r.\allowbreak{}addr} is the sender (host plus an ephemeral port).
 
 
 A wildcard bind plus explicit joins is the other shape:
@@ -168,7 +173,7 @@ f := open(":5000", "nua",
 \end{Verbatim}
 
 
-\texttt{join=group} is ASM; \texttt{join=group,source} is SSM. Attributes may be repeated. Mixing ASM and SSM in one call is allowed. If \texttt{open()} has no \texttt{4} / \texttt{6} flag, a \texttt{join=} group address picks the family so an IPv4 join is not attempted on an IPv6 wildcard socket.
+\texttt{join=group} is ASM; \texttt{join=group,\allowbreak{}source} is SSM. Attributes may be repeated. Mixing ASM and SSM in one call is allowed. If \texttt{open()} has no \texttt{4} / \texttt{6} flag, a \texttt{join=} group address picks the family so an IPv4 join is not attempted on an IPv6 wildcard socket.
 
 \section{5. Source-specific multicast}
 \label{utr28-sec-ssm}
@@ -183,14 +188,14 @@ f := open("ff3e::1:5000", "nua6", "iface=lo0", "source=::1")
 \end{Verbatim}
 
 
-On send or connect, \texttt{source@group:port} keeps only the group so the destination is the group address. The source is a receive-side filter, not a send address.
+On send or connect, \texttt{source@\allowbreak{}group:port} keeps only the group so the destination is the group address. The source is a receive-side filter, not a send address.
 
 
-IPv6 SSM is a single \texttt{MCAST\_JOIN\_SOURCE\_GROUP} / \texttt{MCAST\_LEAVE\_SOURCE\_GROUP} with no multi-interface walk. Those walks have triggered macOS kernel panics in IPv6 source filter teardown. Already-a-member and already-gone are treated as success.
+IPv6 SSM is a single \texttt{MCAST\_\allowbreak{}JOIN\_\allowbreak{}SOURCE\_\allowbreak{}GROUP} / \texttt{MCAST\_\allowbreak{}LEAVE\_\allowbreak{}SOURCE\_\allowbreak{}GROUP} with no multi-interface walk. Those walks have triggered macOS kernel panics in IPv6 source filter teardown. Already-a-member and already-gone are treated as success.
 
 \section{6. Attributes}
 \label{utr28-sec-attrs}
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Attribute & Role \\
 \hline
@@ -203,19 +208,16 @@ Attribute & Role \\
 \endfoot
 \hline
 \endlastfoot
-\texttt{join=} & Add membership: \texttt{group} (ASM) or \texttt{group,source} \\
+\texttt{join=} & Add membership: \texttt{group} (ASM) or \texttt{group,\allowbreak{}source} \\
 \texttt{leave=} & Drop membership; same forms as \texttt{join}. Pass \\
 \texttt{source=} & SSM source for a group bind (repeatable). Set-only. \\
 \texttt{iface=} & IPv4 address, index, or name. Restricts join and \\
 \texttt{ttl=} & Unicast and multicast hop limits. \texttt{f["ttl"]} peeks \\
 \texttt{mcastloop=yes|no} & Whether the host receives its own multicasts. Kernel \\
 \texttt{reuseaddr=} / \texttt{reuseport=} & Bind reuse. Listeners default to \texttt{reuseaddr=yes} \\
-\texttt{broadcast=} & \texttt{SO\_BROADCAST}. Opening \texttt{255.255.255.255} sets it. \\
+\texttt{broadcast=} & \texttt{SO\_\allowbreak{}BROADCAST}. Opening \texttt{255.\allowbreak{}255.\allowbreak{}255.\allowbreak{}255} sets it. \\
 \texttt{rcvbuf=} / \texttt{sndbuf=} & Buffer sizes in bytes. \\
 \end{longtable}
-
-
-\texttt{proto} and \texttt{hdrincl} are listed in the same table in the runtime; they belong to raw sockets [9].
 
 \section{7. \texttt{Attrib()} and status peek}
 \label{utr28-sec-attrib}
@@ -244,19 +246,22 @@ groups: unpopulated
 \end{Verbatim}
 
 
-Assignments in one call are applied together, preserving \texttt{iface} then \texttt{join} order. Status is peeked with \texttt{f["name"]}; \texttt{Attrib()} only assigns. Unknown names raise
+Assignments in one call are applied together, preserving \texttt{iface} then \texttt{join} order. Status is peeked with \texttt{f["name"]}. Unknown names raise
 
 \begin{enumerate}
 \item 
+
 An unpopulated field fails. Boolean fields that answered
+
+
 \end{enumerate}
 
-succeed with \texttt{"yes"} or \texttt{\&null} (never \texttt{"no"}). \texttt{key(f)} generates every answerable field. \texttt{f["*"]} snapshots those fields under one lock. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed. After the first suspend, \texttt{close()} makes the generator fail instead of raising, so a walk does not turn a mid-generation close into an error.
+succeed with \texttt{"yes"} or \texttt{\&null}. \texttt{key(f)} generates every answerable field. \texttt{f["*"]} snapshots those fields under one lock. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed.
 
 
-TCP, UDP, multicast, and raw sockets share one peek table (\texttt{sock\_peek}). \texttt{join}, \texttt{leave}, and \texttt{source} are verbs, not peek fields. \texttt{proto} is stored at \texttt{socket()} time on raw sockets [9]. \texttt{f["groups"]} is a list of joined groups (SSM as \texttt{source@group}); a single group is still a list of length 1.
+TCP, UDP, multicast, and raw sockets share one peek table (\texttt{sock\_\allowbreak{}peek}). \texttt{join}, \texttt{leave}, and \texttt{source} are verbs, not peek fields. \texttt{proto} is stored at \texttt{socket()} time on raw sockets [9]. \texttt{f["groups"]} is a list of joined groups (SSM as \texttt{source@\allowbreak{}group}); a single group is still a list of length 1.
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Name & Value \\
 \hline
@@ -270,8 +275,8 @@ Name & Value \\
 \hline
 \endlastfoot
 \texttt{ttl} & Hop limit (integer), typically \texttt{1} .. \texttt{255} \\
-\texttt{iface} & Dotted IPv4 address (\texttt{127.0.0.1}) or IPv6 ifindex (\texttt{1}) \\
-\texttt{groups} & List of joined groups, e.g. \texttt{239.1.1.1}; SSM as \\
+\texttt{iface} & Dotted IPv4 address (\texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}) or IPv6 ifindex (\texttt{1}) \\
+\texttt{groups} & List of joined groups, e.g. \texttt{239.\allowbreak{}1.\allowbreak{}1.\allowbreak{}1}; SSM as \\
 \texttt{mcastloop} & \texttt{"yes"} or \texttt{\&null} \\
 \texttt{reuseaddr} / \texttt{reuseport} & \texttt{"yes"} or \texttt{\&null} (\texttt{reuseport} may be unpopulated) \\
 \texttt{broadcast} & \texttt{"yes"} or \texttt{\&null} \\
@@ -302,23 +307,32 @@ Attrib(f, "iface=127.0.0.1", "leave=239.1.1.1")
 \end{Verbatim}
 
 
-On some Linux/musl builds \texttt{getsockopt(IP\_MULTICAST\_IF)} does not recover the interface used at join time. Pass \texttt{iface=} on \texttt{leave=} so \texttt{IP\_DROP\_MEMBERSHIP} matches the join. Already-not-a-member is success; the runtime also retries \texttt{INADDR\_ANY} and each local IPv4 address when a single DROP fails.
+On some Linux/musl builds \texttt{getsockopt(IP\_\allowbreak{}MULTICAST\_\allowbreak{}IF)} does not recover the interface used at join time. Pass \texttt{iface=} on \texttt{leave=} so \texttt{IP\_\allowbreak{}DROP\_\allowbreak{}MEMBERSHIP} matches the join. Already-not-a-member is success; the runtime also retries \texttt{INADDR\_\allowbreak{}ANY} and each local IPv4 address when a single DROP fails.
 
 \section{8. Listener cache}
 \label{utr28-sec-cache}
 
-\texttt{sock\_listen} still caches the first bind of an address so repeated \texttt{open()} of the same listener is cheap. That cache is a problem if a later \texttt{open(...,~"join=...")} reused the fd and changed memberships for every live alias.
+\texttt{sock\_\allowbreak{}listen} still caches the first bind of an address so repeated \texttt{open()} of the same listener is cheap. That cache is a problem if a later \texttt{open(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{}~"join=.\allowbreak{}.\allowbreak{}.\allowbreak{}")} reused the fd and changed memberships for every live alias.
 
 
 Rules:
 
 \begin{itemize}
 \item 
+
 Cache hit, no socket attributes: another \texttt{File} for the same fd (owner refcount). Closing one alias leaves the others until the last handle is closed.
+
+
 \item 
+
 Cache hit with attributes: release the pin and create an independent socket (\texttt{reuseaddr} makes the second bind succeed). \texttt{leave=} on that socket does not drop the cached alias's membership.
+
+
 \item 
+
 Changing options on a shared handle: \texttt{Attrib()} on one of the aliases.
+
+
 \end{itemize}
 
 A cache-hit open that is not a pure alias only allows additive \texttt{join=} / \texttt{source=}; \texttt{leave=} and option changes on that path would retune every live \texttt{File}.
@@ -326,19 +340,19 @@ A cache-hit open that is not a pure alias only allows additive \texttt{join=} / 
 \section{9. Runtime implementation}
 \label{utr28-sec-impl}
 
-All of this lives in \texttt{src/runtime/rposix.r}, applied from \texttt{open()} in \texttt{fsys.r} and from \texttt{Attrib()} in \texttt{fmisc.r}.
+All of this lives in \texttt{src/\allowbreak{}runtime/\allowbreak{}rposix.\allowbreak{}r}, applied from \texttt{open()} in \texttt{fsys.\allowbreak{}r} and from \texttt{Attrib()} in \texttt{fmisc.\allowbreak{}r}.
 
 
-\textbf{Two passes.} \texttt{reuseaddr} / \texttt{reuseport} must be set between \texttt{socket()} and \texttt{bind()}. Everything else runs after the socket is bound. \texttt{apply\_sock\_attrs()} takes a \texttt{prebind} flag.
+\textbf{Two passes.} \texttt{reuseaddr} / \texttt{reuseport} must be set between \texttt{socket()} and \texttt{bind()}. Everything else runs after the socket is bound. \texttt{apply\_\allowbreak{}sock\_\allowbreak{}attrs()} takes a \texttt{prebind} flag.
 
 
-\textbf{Auto-join.} After the post-bind pass, a UDP socket bound to a multicast group is joined unless an explicit \texttt{join=} took over. \texttt{source@group} or \texttt{source=} makes that join SSM.
+\textbf{Auto-join.} After the post-bind pass, a UDP socket bound to a multicast group is joined unless an explicit \texttt{join=} took over. \texttt{source@\allowbreak{}group} or \texttt{source=} makes that join SSM.
 
 
-\textbf{IPv4 join without \texttt{iface=}.} Walk \texttt{getifaddrs()} and \texttt{IP\_ADD\_MEMBERSHIP} on every UP IPv4 address so same-host and multi-homed receives work without naming a NIC. An explicit \texttt{iface=} joins only that one. Outbound multicast without \texttt{iface=} picks the first non-loopback IPv4 address via \texttt{IP\_MULTICAST\_IF}.
+\textbf{IPv4 join without \texttt{iface=}.} Walk \texttt{getifaddrs()} and \texttt{IP\_\allowbreak{}ADD\_\allowbreak{}MEMBERSHIP} on every UP IPv4 address so same-host and multi-homed receives work without naming a NIC. An explicit \texttt{iface=} joins only that one. Outbound multicast without \texttt{iface=} picks the first non-loopback IPv4 address via \texttt{IP\_\allowbreak{}MULTICAST\_\allowbreak{}IF}.
 
 
-\textbf{IPv6 ASM} uses \texttt{IPV6\_JOIN\_GROUP} / \texttt{IPV6\_LEAVE\_GROUP} with an ifindex (zero means default). There is no all-iface walk like IPv4.
+\textbf{IPv6 ASM} uses \texttt{IPV6\_\allowbreak{}JOIN\_\allowbreak{}GROUP} / \texttt{IPV6\_\allowbreak{}LEAVE\_\allowbreak{}GROUP} with an ifindex (zero means default). There is no all-iface walk like IPv4.
 
 
 \textbf{Errors.} Unknown attributes and bad booleans are 1310. \texttt{setsockopt} failures fail \texttt{open()} / \texttt{Attrib()} with the system \texttt{\&errortext}, except idempotent membership errors (already a member / already gone).
@@ -361,42 +375,66 @@ The language surface described here is implemented: trailing attributes, implici
 \textbf{IPv6 SSM without \texttt{iface=}.} Not recommended. The implementation refuses to walk interfaces for IPv6 source filters.
 
 
-\textbf{Loopback delivery.} Alpine (especially under QEMU) often does not deliver loopback multicast even when the join succeeds. \texttt{tests/posix/mcast.icn} still checks membership and treats a missing datagram as success on Alpine so CI stays portable.
+\textbf{Loopback delivery.} Alpine (especially under QEMU) often does not deliver loopback multicast even when the join succeeds. \texttt{tests/\allowbreak{}posix/\allowbreak{}mcast.\allowbreak{}icn} still checks membership and treats a missing datagram as success on Alpine so CI stays portable.
 
 
-\textbf{Windows IPv6 SSM.} Membership calls are attempted; \texttt{loopback\_0} and UNIX \texttt{lo} / \texttt{lo0} names are mapped. Delivery and option support vary by stack; the test skips cleanly on \texttt{ENOPROTOOPT}.
+\textbf{Windows IPv6 SSM.} Membership calls are attempted; \texttt{loopback\_\allowbreak{}0} and UNIX \texttt{lo} / \texttt{lo0} names are mapped. Delivery and option support vary by stack; the test skips cleanly on \texttt{ENOPROTOOPT}.
 
 
-\textbf{Raw sockets} [9] reuse \texttt{ttl} / \texttt{iface} / \texttt{join} on \texttt{SOCK\_RAW}. That is a separate report.
+\textbf{Raw sockets} [9] reuse \texttt{ttl} / \texttt{iface} / \texttt{join} on \texttt{SOCK\_\allowbreak{}RAW}. That is a separate report.
 
 \section{Appendix: test coverage}
 \label{utr28-sec-coverage}
 
-\texttt{tests/posix/mcast.icn} runs in one process over loopback, one UDP port per case so a late datagram cannot land on the next receiver. It checks:
+\texttt{tests/\allowbreak{}posix/\allowbreak{}mcast.\allowbreak{}icn} runs in one process over loopback, one UDP port per case so a late datagram cannot land on the next receiver. It checks:
 
 \begin{itemize}
 \item 
+
 unknown attributes and numeric booleans fail with 1310
+
+
 \item 
-explicit \texttt{join=} plus \texttt{iface=127.0.0.1}
+
+explicit \texttt{join=} plus \texttt{iface=127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}
+
+
 \item 
+
 implicit join by binding the group address
+
+
 \item 
-SSM via \texttt{source@group} and via \texttt{source=}
+
+SSM via \texttt{source@\allowbreak{}group} and via \texttt{source=}
+
+
 \item 
-broadcast open of \texttt{255.255.255.255} (never \texttt{EACCES})
+
+broadcast open of \texttt{255.\allowbreak{}255.\allowbreak{}255.\allowbreak{}255} (never \texttt{EACCES})
+
+
 \item 
+
 \texttt{Attrib()} \texttt{ttl=}, \texttt{join=}, \texttt{leave=}
+
+
 \item 
-IPv6 SSM membership via \texttt{@}, \texttt{source=}, and \texttt{join=group,source} (delivery not required)
+
+IPv6 SSM membership via \texttt{@\allowbreak{}}, \texttt{source=}, and \texttt{join=group,\allowbreak{}source} (delivery not required)
+
+
 \item 
+
 cache-hit alias vs independent attr open
+
+
 \end{itemize}
 
-\texttt{tests/posix/sockpeek.icn} checks \texttt{f["ttl"]}, \texttt{f["groups"]} as a list after two joins, and \texttt{key(f)}.
+\texttt{tests/\allowbreak{}posix/\allowbreak{}sockpeek.\allowbreak{}icn} checks \texttt{f["ttl"]}, \texttt{f["groups"]} as a list after two joins, and \texttt{key(f)}.
 
 
-Expected output is \texttt{tests/posix/stand/mcast.std}:
+Expected output is \texttt{tests/\allowbreak{}posix/\allowbreak{}stand/\allowbreak{}mcast.\allowbreak{}std}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 bogus attribute: bad socket attribute
@@ -431,37 +469,34 @@ Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 \bibitem[4]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[5]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[6]{cite-rfc2104}
+\bibitem[5]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[7]{cite-rfc1112}
+\bibitem[6]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[8]{cite-jeffery-pwu}
+\bibitem[7]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
+
+\bibitem[8]{cite-rfc4607}
+H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
 \bibitem[9]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[10]{cite-rfc4607}
-H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
-
-\bibitem[11]{cite-algharaibeh-utr28}
+\bibitem[10]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[12]{cite-rfc792}
+\bibitem[11]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[13]{cite-rfc2236}
+\bibitem[12]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[14]{cite-rfc3376}
+\bibitem[13]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[15]{cite-rfc1071}
+\bibitem[14]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}

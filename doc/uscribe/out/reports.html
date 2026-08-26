@@ -27,18 +27,34 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li><a href="install.html">Installation</a></li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li class="current">Reports</li>
-<li><a href="config.html">Book Configuration</a></li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li><a href="themes.html">Themes</a></li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="current toc-l1"><a href="reports.html">Reports
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#mark-a-file-as-a-report"><span class="toc-num">4.1</span>Mark a file as a report
+</a>
+</li>
+<li class="toc-sec"><a href="#one-report"><span class="toc-num">4.2</span>One report
+</a>
+</li>
+<li class="toc-sec"><a href="#several-reports-and-an-index"><span class="toc-num">4.3</span>Several reports and an index
+</a>
+</li>
+<li class="toc-sec"><a href="#book-vs-report-summary"><span class="toc-num">4.4</span>Book vs report (summary)
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>

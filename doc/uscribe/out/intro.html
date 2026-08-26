@@ -27,18 +27,34 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li class="current">Introduction</li>
-<li><a href="install.html">Installation</a></li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="config.html">Book Configuration</a></li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li><a href="themes.html">Themes</a></li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="current toc-l1"><a href="intro.html">Introduction
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#what-uscribe-is-for"><span class="toc-num">1.1</span>What uscribe is for
+</a>
+</li>
+<li class="toc-sec"><a href="#a-taste-of-unicon-highlighting"><span class="toc-num">1.2</span>A taste of Unicon highlighting
+</a>
+</li>
+<li class="toc-sec"><a href="#relation-to-unidoc"><span class="toc-num">1.3</span>Relation to unidoc
+</a>
+</li>
+<li class="toc-sec"><a href="#how-to-read-this-guide"><span class="toc-num">1.4</span>How to read this guide
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -70,21 +86,31 @@ What uscribe is for
 </h3>
 <ul>
 <li>
+<p>
 Multi-chapter books and manuals (ordered by a manifest file)
+</p>
 </li>
 <li>
+<p>
 Standalone reports (UTR-style): one HTML page per report, section navigation in the sidebar, and a catalog 
 <code>index.html</code>
  of links
+</p>
 </li>
 <li>
-HTML output with sidebar navigation, search, and selectable themes
+<p>
+HTML output with sidebar navigation (chapters, plus the current chapter's sections), search, and selectable themes
+</p>
 </li>
 <li>
+<p>
 Unicon code samples with syntax highlighting
+</p>
 </li>
 <li>
+<p>
 Images and simple admonitions
+</p>
 </li>
 </ul>
 <p>
@@ -142,36 +168,50 @@ How to read this guide
 </h3>
 <ul>
 <li>
+<p>
 <a href="install.html#installation">Installation</a>
  — build and install the 
 <code>uscribe</code>
  binary
+</p>
 </li>
 <li>
+<p>
 <a href="quickstart.html#quick-start">Quick Start</a>
  — generate HTML from a tiny book
+</p>
 </li>
 <li>
+<p>
 <a href="reports.html#reports">Reports</a>
  — one paper, or several papers plus a catalog index
+</p>
 </li>
 <li>
+<p>
 <a href="config.html#book-configuration">Book Configuration</a>
  — 
 <code>book.conf</code>
  keys, defaults, and CLI overrides
+</p>
 </li>
 <li>
+<p>
 <a href="markup.html#markup-reference">Markup Reference</a>
  — headings, lists, inline markup, directives
+</p>
 </li>
 <li>
+<p>
 <a href="themes.html#themes">Themes</a>
  — basic, classic, dark, and the in-page switcher
+</p>
 </li>
 <li>
+<p>
 <a href="cli.html#command-line">Command Line</a>
  — CLI options
+</p>
 </li>
 </ul>
 <div class="prevnext">

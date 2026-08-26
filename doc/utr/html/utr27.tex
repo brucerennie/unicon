@@ -6,9 +6,20 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{fancyvrb}
+\IfFileExists{fvextra.sty}{%
+  \usepackage{fvextra}%
+  \fvset{breaklines=true,breakanywhere=true}%
+}{}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{array}
 \IfFileExists{multirow.sty}{\usepackage{multirow}}{}
+\IfFileExists{caption.sty}{%
+  \usepackage{caption}%
+  \newcommand{\uscribecaptionstar}[1]{\caption*{##1}}%
+}{%
+  \newcommand{\uscribecaptionstar}[1]{{\centering\small ##1\par}}%
+}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 \begin{document}
 \begin{titlepage}
@@ -24,7 +35,7 @@
 \vskip 5.5em
 {\bfseries Abstract}\par
 \begin{quote}
-Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), and close() interface already used for files and sockets, with ``[ ]`` for status and Attrib() for idle-window mutation. Mode letter e is reused as a modifier; op= selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS.
+Unicon has long used OpenSSL for encrypted network sockets, but hashing, HMAC, signing, and symmetric encryption were not available as language primitives. This report describes the facilities that close that gap: cryptographic operations reached through the same open(), read(), write(), and close() interface already used for files and sockets, with ``[ ]`` for status and Attrib() for idle-window mutation. Mode letter ``e`` is reused as a modifier; ``op=`` selects the operation; keys and certificates are loaded as file-typed handles and passed as attributes. Encrypted TCP is unchanged; encrypted UDP uses DTLS. The implementation is the OpenSSL EVP interface already linked for TLS.
 \end{quote}
 \begin{quote}
 {\bfseries Keywords:} Unicon, cryptography, OpenSSL, TLS, DTLS, hash, HMAC, sign, encrypt, runtime, technical report.
@@ -45,15 +56,15 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr27-sec-intro}
 
-This report describes the cryptographic facilities in the Unicon runtime: how a handle is opened, how payload flows through \texttt{write()} / \texttt{read()}, how key and certificate material is loaded and reused, and how the same letters and attributes compose with encrypted sockets. It is formatted as a Unicon Technical Report [1]. The language-facing reference lives in \emph{Programming with Unicon} (Chapter 6) and the language reference (\texttt{open} modes \texttt{e} / \texttt{er} / \texttt{eh} / \texttt{re} / \texttt{we}, and \texttt{ne} / \texttt{nue}, subscript peek, \texttt{key()}). Automated tests live under \texttt{tests/crypto/}.
+This report describes the cryptographic facilities in the Unicon runtime: how a handle is opened, how payload flows through \texttt{write()} / \texttt{read()}, how key and certificate material is loaded and reused, and how the same letters and attributes compose with encrypted sockets. It is formatted as a Unicon Technical Report [1]. The language-facing reference lives in \emph{Programming with Unicon} (Chapter 6) and the language reference (\texttt{open} modes \texttt{e} / \texttt{er} / \texttt{eh} / \texttt{re} / \texttt{we}, and \texttt{ne} / \texttt{nue}, subscript peek, \texttt{key()}). Automated tests live under \texttt{tests/\allowbreak{}crypto/\allowbreak{}}.
 
 
-The feature is optional in the same sense as TLS. A build with OpenSSL reports \texttt{secure~sockets~layer~encryption} in \texttt{\&features} (the \texttt{\_SSL} flag). Without the library, the crypto paths are compiled out. There is no separate \texttt{--disable-crypto} switch; \texttt{--disable-ssl} turns off both encrypted sockets and these facilities.
+The feature is optional in the same sense as TLS. A build with OpenSSL reports \texttt{secure~sockets~layer~encryption} in \texttt{\&features} (the \texttt{\_\allowbreak{}SSL} flag). Without the library, the crypto paths are compiled out.
 
 \section{2. Motivation}
 \label{utr27-sec-motivation}
 
-Unicon already links OpenSSL [4] for mode \texttt{n} with \texttt{e} -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to leave the language. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through; loading a key once and signing many messages is the same pattern as opening an SSH session once and deriving channels [5].
+Unicon already links OpenSSL [4] for mode \texttt{n} with \texttt{e} -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to use external tools. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through.
 
 
 No new external dependency is introduced. The implementation uses OpenSSL's EVP interface, which the encrypted-socket support already requires.
@@ -61,7 +72,7 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 \section{3. Design principles}
 \label{utr27-sec-principles}
 
-\textbf{\texttt{e} is the crypto letter, reused not invented.} Unicon already uses \texttt{e} for encryption (\texttt{Fs\_Encrypt}). New modes carry that letter rather than adding one letter per operation. \texttt{op=} selects what the handle does.
+\textbf{\texttt{e} is the crypto letter, reused not invented.} Unicon already uses \texttt{e} for encryption (\texttt{Fs\_\allowbreak{}Encrypt}). New modes carry that letter rather than adding one letter per operation. \texttt{op=} selects what the handle does.
 
 
 \textbf{\texttt{e} composes as a modifier.} Mode letters already stack, and several already branch on bits accumulated so far: \texttt{n} + \texttt{e} is an encrypted socket; \texttt{r} + \texttt{e} / \texttt{w} + \texttt{e} is a file transform; \texttt{e} + \texttt{h} is an in-memory hash; \texttt{e} + \texttt{r} is raw key material rather than a path.
@@ -70,7 +81,7 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 \textbf{The open target configures the operation; payload is I/O.} Target is never the message being hashed or encrypted. What target means depends on the mode (algorithm name, key path, data file, host:port). Payload always flows through \texttt{write()} / \texttt{read()} / \texttt{reads()}.
 
 
-\textbf{Attributes are \texttt{name=value} strings, or handles.} A string element is parsed as always. A \textbf{handle} -- the return value of a prior \texttt{open(...,~"e")} -- is a typed attribute that could not survive being flattened into a string. Handles are interpreted by \textbf{role} from their own content (private key, public key, cert, symmetric key), not by position or by an attribute name.
+\textbf{Attributes are \texttt{name=value} strings, or handles.} A string element is parsed as always. A \textbf{handle} -- the return value of a prior \texttt{open(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{}~"e")} -- is a typed attribute that could not survive being flattened into a string. Handles are interpreted by \textbf{role} from their own content (private key, public key, cert, symmetric key), not by position or by an attribute name.
 
 
 \textbf{Material comes from a file, raw bytes, or a handle.} A file path is the target under mode \texttt{e}, or \texttt{key=} when the target is already spoken for (\texttt{re} / \texttt{we}, \texttt{n} + \texttt{e}). Raw bytes use mode \texttt{er}. A handle avoids re-parsing.
@@ -79,14 +90,14 @@ No new external dependency is introduced. The implementation uses OpenSSL's EVP 
 \textbf{Initialization is lazy.} \texttt{open()} does not create the underlying EVP context until the first \texttt{write()} (or the first transforming \texttt{read()} on a file). A handle that is never used costs nothing. \texttt{read()} finalizes and resets, so the next \texttt{write()} initializes again.
 
 
-\textbf{\texttt{Attrib()} reconfigures only in the idle window} -- before the first \texttt{write()}, or after a \texttt{read()} and before the next \texttt{write()}. Changing \texttt{op=}, \texttt{alg=}, \texttt{cipher=}, or \texttt{iv=} mid-operation fails. Handles are accepted by \texttt{open()} only, not by \texttt{Attrib()}: \texttt{Attrib()} already treats a file argument as a retarget.
+\textbf{\texttt{Attrib()} reconfigures only in the idle window} -- before the first \texttt{write()}, or after a \texttt{read()} and before the next \texttt{write()}. Changing \texttt{op=}, \texttt{alg=}, \texttt{cipher=}, or \texttt{iv=} mid-operation fails. Handles are accepted by \texttt{open()}.
 
 \section{4. Modes}
 \label{utr27-sec-modes}
 
-\texttt{open()}'s mode string is scanned character by character in \texttt{src/runtime/fsys.r}. Letters are not independent: \texttt{u} after \texttt{n} is UDP, \texttt{r} after \texttt{n} is raw, \texttt{h} after \texttt{e} is hash. Order matters. \texttt{e} already set \texttt{Fs\_Encrypt}; this design adds \texttt{Fs\_Crypto} for hash / HMAC / sign / verify / encrypt-decrypt handles so they are distinct from TLS sockets that also carry \texttt{Fs\_Encrypt}.
+\texttt{open()}'s mode string is scanned character by character in \texttt{src/\allowbreak{}runtime/\allowbreak{}fsys.\allowbreak{}r}. Letters are not independent: \texttt{u} after \texttt{n} is UDP, \texttt{r} after \texttt{n} is raw, \texttt{h} after \texttt{e} is hash. Order matters. \texttt{e} already set \texttt{Fs\_\allowbreak{}Encrypt}; this design adds \texttt{Fs\_\allowbreak{}Crypto} for hash / HMAC / sign / verify / encrypt-decrypt handles so they are distinct from TLS sockets that also carry \texttt{Fs\_\allowbreak{}Encrypt}.
 
-\begin{longtable}{lll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}}
 \hline
 Mode & Meaning & Target \\
 \hline
@@ -109,20 +120,20 @@ Mode & Meaning & Target \\
 \end{longtable}
 
 
-\texttt{e} / \texttt{er} are the \textbf{data-pipe} shape: write payload in, read the result out. \texttt{eh} is separate because its target is an algorithm name, never material. \texttt{re} / \texttt{we} are the \textbf{file-transform} shape: the target is the data file, so key material arrives via \texttt{key=} or a handle attribute.
+\texttt{e} / \texttt{er} are the \textbf{data-pipe} shape: write payload in, read the result out. \texttt{eh} is separate because its target is an algorithm name, not material. \texttt{re} / \texttt{we} are the \textbf{file-transform} shape: the target is the data file, so key material arrives via \texttt{key=} or a handle attribute.
 
 
 \texttt{h} alone remains SSH. \texttt{r} alone remains read. The new meanings apply only when \texttt{e} was seen first.
 
 
-Mode \texttt{-} skips peer verification on TLS (\texttt{ne-}) and SSH (\texttt{h-}), the same as \texttt{verifyPeer=no}. An explicit \texttt{verifyPeer=} overrides the mode flag.
+Mode \texttt{-\allowbreak{}} skips peer verification on TLS (\texttt{ne-\allowbreak{}}) and SSH (\texttt{h-\allowbreak{}}), the same as \texttt{verifyPeer=no}. An explicit \texttt{verifyPeer=} overrides the mode flag.
 
 \section{5. Operations}
 \label{utr27-sec-ops}
 
 \texttt{op=} names the operation when the mode does not already imply one. Loading material (\texttt{e} / \texttt{er} with a file or raw target and no \texttt{op=}), hashing in memory (\texttt{eh}), and TLS / DTLS sockets take no \texttt{op=}.
 
-\begin{longtable}{llll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*4)*1/4+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*4)*1/4+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*4)*1/4+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*4)*1/4+2\tabcolsep*(1-1)\relax}}
 \hline
 \texttt{op=} & What it does & Typical mode & Other attributes \\
 \hline
@@ -144,10 +155,10 @@ Mode \texttt{-} skips peer verification on TLS (\texttt{ne-}) and SSH (\texttt{h
 \end{longtable}
 
 
-HMAC is the construction of RFC 2104 [6] over the digest named by \texttt{alg=}. Algorithm and cipher names are OpenSSL's own (\texttt{sha256}, \texttt{aes-256-gcm}) and are passed through rather than mapped to a Unicon-defined set.
+HMAC is the construction of RFC 2104 [5] over the digest named by \texttt{alg=}. Algorithm and cipher names are OpenSSL's own (\texttt{sha256}, \texttt{aes-\allowbreak{}256-\allowbreak{}gcm}) and are passed through rather than mapped to a Unicon-defined set.
 
 
-Defaults are \texttt{alg=sha256} and \texttt{cipher=aes-256-gcm}.
+Defaults are \texttt{alg=sha256} and \texttt{cipher=aes-\allowbreak{}256-\allowbreak{}gcm}.
 
 \section{6. Attributes}
 \label{utr27-sec-attrs}
@@ -157,9 +168,9 @@ Trailing \texttt{open()} arguments are \texttt{name=value} strings or crypto han
 \subsection{6.1 TLS / DTLS attributes}
 \label{utr27-sec-attrs-tls}
 
-These are the names \texttt{create\_ssl\_context()} accepts. They apply to \texttt{ne} / \texttt{nue} and are unchanged except for the two alignments in \hyperref[utr27-sec-attrs-shared]{section 6.3}.
+These are the names \texttt{create\_\allowbreak{}ssl\_\allowbreak{}context()} accepts. They apply to \texttt{ne} / \texttt{nue} and are unchanged except for the two alignments in \hyperref[utr27-sec-attrs-shared]{section 6.3}.
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Attribute & Meaning \\
 \hline
@@ -176,9 +187,9 @@ Attribute & Meaning \\
 \texttt{key=} & Private key file path \\
 \texttt{keypass=} & Passphrase for an encrypted private key \\
 \texttt{ca=} / \texttt{caDir=} / \texttt{caStore=} & Trust store \\
-\texttt{ciphers=} / \texttt{ciphers1.3=} & TLS 1.2 list (e.g. \texttt{HIGH}, \texttt{ECDHE-RSA-AES256-GCM-SHA384}) \\
-\texttt{minProto=} / \texttt{maxProto=} & Protocol version bounds, e.g. \texttt{TLS1.2}, \texttt{TLS1.3} \\
-\texttt{verifyPeer=} & \texttt{yes} / \texttt{no}; \texttt{no} is the same as mode \texttt{-} \\
+\texttt{ciphers=} / \texttt{ciphers1.\allowbreak{}3=} & TLS 1.2 list (e.g. \texttt{HIGH}, \texttt{ECDHE-\allowbreak{}RSA-\allowbreak{}AES256-\allowbreak{}GCM-\allowbreak{}SHA384}) \\
+\texttt{minProto=} / \texttt{maxProto=} & Protocol version bounds, e.g. \texttt{TLS1.\allowbreak{}2}, \texttt{TLS1.\allowbreak{}3} \\
+\texttt{verifyPeer=} & \texttt{yes} / \texttt{no}; \texttt{no} is the same as mode \texttt{-\allowbreak{}} \\
 \end{longtable}
 
 
@@ -186,7 +197,7 @@ Socket attributes (\texttt{reuseaddr}, \texttt{ttl}, \texttt{iface}, \texttt{joi
 
 \subsection{6.2 Crypto attributes}
 \label{utr27-sec-attrs-crypto}
-\begin{longtable}{lll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}}
 \hline
 Attribute & Meaning & Used with \\
 \hline
@@ -201,7 +212,7 @@ Attribute & Meaning & Used with \\
 \endlastfoot
 \texttt{op=} & Operation: \texttt{hash}, \texttt{hmac}, \texttt{sign}, \texttt{verify}, & All data-pipe and file-transform ops \\
 \texttt{alg=} & Digest name passed to OpenSSL (default \texttt{sha256}; & \texttt{hash}, \texttt{hmac}, \texttt{sign}, \texttt{verify} \\
-\texttt{cipher=} & Symmetric cipher (default \texttt{aes-256-gcm}; also & \texttt{encrypt}, \texttt{decrypt} \\
+\texttt{cipher=} & Symmetric cipher (default \texttt{aes-\allowbreak{}256-\allowbreak{}gcm}; also & \texttt{encrypt}, \texttt{decrypt} \\
 \texttt{iv=} & Explicit IV; omit for automatic IV & \texttt{encrypt}, \texttt{decrypt} \\
 \texttt{sig=} & Signature being checked & \texttt{verify} \\
 \texttt{key=} & Key path when the target is already a data file or host & \texttt{re} / \texttt{we}, and TLS \\
@@ -210,7 +221,7 @@ Attribute & Meaning & Used with \\
 \end{longtable}
 
 
-\texttt{key=} on a crypto handle is typed by content and by the operation: PEM / DER private keys for \texttt{sign} and TLS; raw bytes for \texttt{encrypt}, \texttt{decrypt}, and \texttt{hmac}. A role mismatch fails rather than guessing.
+\texttt{key=} on a crypto handle is typed by content and by the operation: PEM / DER private keys for \texttt{sign} and TLS; raw bytes for \texttt{encrypt}, \texttt{decrypt}, and \texttt{hmac}. A role mismatch fails.
 
 
 Without \texttt{iv=}, \texttt{encrypt} generates a fresh random IV per operation and prepends it to the ciphertext; \texttt{decrypt} reads that prefix. Supplying \texttt{iv=} opts out -- useful for a wire format that does not prepend an IV, or for test vectors -- and hands uniqueness back to the caller. The default cipher is AEAD; the runtime appends the authentication tag after the ciphertext. Status peeks are \hyperref[utr27-sec-peek]{section 6.4}.
@@ -218,26 +229,26 @@ Without \texttt{iv=}, \texttt{encrypt} generates a fresh random IV per operation
 \subsection{6.3 Shared names with SSH}
 \label{utr27-sec-attrs-shared}
 
-\texttt{key=} is a private-key path on TLS, crypto, and SSH. \texttt{keypass=} is the shared name for a key-file passphrase. SSH \texttt{password=} is the remote login password and is not accepted on TLS. Crypto still accepts \texttt{password=} as an alias for \texttt{keypass=}.
+\texttt{key=} is a private-key path on TLS, crypto, and SSH. \texttt{keypass=} is the shared name for a key-file passphrase. SSH
 
 
-\texttt{verifyPeer=yes|no} and mode \texttt{-} mean the same thing on TLS and SSH. An explicit \texttt{verifyPeer=} overrides the mode flag. Trust stores stay distinct: TLS uses \texttt{ca=} (X.509); SSH uses \texttt{hostkeyfile=} (OpenSSH \texttt{known\_hosts}).
+\texttt{verifyPeer=yes|no} and mode \texttt{-\allowbreak{}} mean the same thing on TLS and SSH. An explicit \texttt{verifyPeer=} overrides the mode flag. Trust stores stay distinct: TLS uses \texttt{ca=} (X.509); SSH uses \texttt{hostkeyfile=} (OpenSSH \texttt{known\_\allowbreak{}hosts}).
 
 \subsection{6.4 Status peek (\texttt{[~]} and \texttt{key()})}
 \label{utr27-sec-peek}
 
-\texttt{h["name"]} / \texttt{conn["name"]} is a non-destructive get. \texttt{Attrib()} only assigns in the idle window (\texttt{op=}, \texttt{alg=}, \texttt{sig=}, ...); a bare name is not a query. Unknown names raise 1302 on a crypto handle and 1326 on a TLS socket. An unpopulated field fails. A boolean field that \emph{did} answer succeeds: \texttt{"yes"} for true, \texttt{\&null} for false -- never \texttt{"no"}, which would make \texttt{if~h["expired"]} succeed on a valid certificate. \texttt{key(h)} generates every \emph{answerable} field, including false booleans, so any \texttt{k} from \texttt{key(h)} makes \texttt{h[k]} succeed. Dump with \texttt{image(h[k])} so \texttt{\&null} is visible.
+\texttt{h["name"]} / \texttt{conn["name"]} is a non-destructive get. \texttt{Attrib()} only assigns in the idle window (\texttt{op=}, \texttt{alg=}, \texttt{sig=}, ...). Unknown names raise 1302 on a crypto handle and 1326 on a TLS socket. An unpopulated field fails. A boolean field that \emph{did} answer succeeds: \texttt{"yes"} for true, \texttt{\&null} for false , which would make things like \texttt{if~\textbackslash{}h["expired"]} succeed on a valid certificate. \texttt{key(h)} generates every \emph{answerable} field, including false booleans, so any \texttt{k} from \texttt{key(h)} makes \texttt{h[k]} succeed. Dump with \texttt{image(h[k])} so \texttt{\&null} is visible.
 
 
 \texttt{h["*"]} returns a table of those same fields captured under one lock. No status field is named \texttt{*}. Peeking a closed handle is error 174. \texttt{key(h)} that has not yet produced a name also raises 174 if the handle is already closed. After the first suspend, \texttt{close()} makes the generator fail instead of raising, so a walk does not turn a mid-generation close into an error.
 
 
-\texttt{h["type"]} is a role label (\texttt{key}, \texttt{cert}, \texttt{key,cert}), not a list. \texttt{h["san"]} and \texttt{conn["san"]} are lists of SAN strings (\texttt{DNS:host}, \texttt{IP:1.2.3.4}). \texttt{conn["certchain"]} is a list of PEM strings. A single item is still a list of length 1. \texttt{h["op"]} is always populated on an operation handle.
+\texttt{h["type"]} is a role label (\texttt{key}, \texttt{cert}, \texttt{key,\allowbreak{}cert}), not a list. \texttt{h["san"]} and \texttt{conn["san"]} are lists of SAN strings (\texttt{DNS:host}, \texttt{IP:1.\allowbreak{}2.\allowbreak{}3.\allowbreak{}4}). \texttt{conn["certchain"]} is a list of PEM strings. A single item is still a list of length 1. \texttt{h["op"]} is always populated on an operation handle.
 
 
 \textbf{Material} (mode \texttt{e} / \texttt{er}, no \texttt{op=}).
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Name & Value \\
 \hline
@@ -255,7 +266,7 @@ Name & Value \\
 \texttt{keysize} & Size in bits (integer), e.g. \texttt{2048}, \texttt{256} \\
 \texttt{subject} / \texttt{issuer} & Certificate DN, OpenSSL oneline \\
 \texttt{san} & List of Subject Alternative Names (\texttt{DNS:localhost}, \\
-\texttt{notbefore} / \texttt{notafter} & Validity timestamps (\texttt{2024-01-01T00:00:00Z}) \\
+\texttt{notbefore} / \texttt{notafter} & Validity timestamps (\texttt{2024-\allowbreak{}01-\allowbreak{}01T00:00:00Z}) \\
 \texttt{expired} & \texttt{"yes"} or \texttt{\&null} \\
 \texttt{fingerprint} & SHA-256 of the cert or public key (hex) \\
 \end{longtable}
@@ -266,7 +277,7 @@ Certificate names fail on a key-only handle.
 
 \textbf{Hash} (\texttt{eh}, or \texttt{op=hash}).
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Name & Value \\
 \hline
@@ -289,7 +300,7 @@ Name & Value \\
 
 \textbf{HMAC, sign, verify.}
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Name & Value \\
 \hline
@@ -312,7 +323,7 @@ Name & Value \\
 
 \textbf{Encrypt / decrypt.}
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Name & Value \\
 \hline
@@ -326,7 +337,7 @@ Name & Value \\
 \hline
 \endlastfoot
 \texttt{op} & \texttt{encrypt} or \texttt{decrypt} \\
-\texttt{cipher} & Symmetric cipher: \texttt{AES-256-GCM} (default), \\
+\texttt{cipher} & Symmetric cipher: \texttt{AES-\allowbreak{}256-\allowbreak{}GCM} (default), \\
 \texttt{iv} & IV that was set or generated (bytes) \\
 \texttt{bytecount} & Bytes processed (integer) \\
 \end{longtable}
@@ -334,7 +345,7 @@ Name & Value \\
 
 \textbf{TLS socket} (after handshake). These are not \texttt{open()} attributes.
 
-\begin{longtable}{ll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
 Name & Value \\
 \hline
@@ -347,21 +358,21 @@ Name & Value \\
 \endfoot
 \hline
 \endlastfoot
-\texttt{cipher} & Negotiated suite: \texttt{TLS\_AES\_256\_GCM\_SHA384}, \\
-\texttt{version} & \texttt{TLSv1.3}, \texttt{TLSv1.2} \\
-\texttt{alpn} & Selected protocol: \texttt{h2}, \texttt{http/1.1}; unpopulated if none \\
+\texttt{cipher} & Negotiated suite: \texttt{TLS\_\allowbreak{}AES\_\allowbreak{}256\_\allowbreak{}GCM\_\allowbreak{}SHA384}, \\
+\texttt{version} & \texttt{TLSv1.\allowbreak{}3}, \texttt{TLSv1.\allowbreak{}2} \\
+\texttt{alpn} & Selected protocol: \texttt{h2}, \texttt{http/\allowbreak{}1.\allowbreak{}1}; unpopulated if none \\
 \texttt{peercert} & Peer certificate as PEM \\
 \texttt{certchain} & List of PEMs \\
-\texttt{subject} / \texttt{issuer} & Peer DN, e.g. \texttt{/CN=host.example} \\
-\texttt{san} & Peer SANs as a list (\texttt{DNS:host.example}) \\
+\texttt{subject} / \texttt{issuer} & Peer DN, e.g. \texttt{/\allowbreak{}CN=host.\allowbreak{}example} \\
+\texttt{san} & Peer SANs as a list (\texttt{DNS:host.\allowbreak{}example}) \\
 \texttt{notbefore} / \texttt{notafter} / \texttt{expired} & Peer validity; \texttt{expired} is \texttt{"yes"} or \texttt{\&null} \\
 \texttt{certverified} & \texttt{"yes"} or \texttt{\&null}. Always populated: with \\
-\texttt{verifyresult} & \texttt{ok}, \texttt{expired}, \texttt{self-signed}, \texttt{untrusted-CA}, \\
+\texttt{verifyresult} & \texttt{ok}, \texttt{expired}, \texttt{self-\allowbreak{}signed}, \texttt{untrusted-\allowbreak{}CA}, \\
 \texttt{hostnamematch} & \texttt{"yes"} or \texttt{\&null}: did CN/SAN match the requested \\
 \end{longtable}
 
 
-Handshake failure means \texttt{open()} failed; there is no handle to subscript. Distinguish expired / untrusted CA / hostname mismatch / no shared cipher / protocol version via \texttt{\&errornumber} 1320--1325. \texttt{alert} and \texttt{handshakestate} are not peek fields.
+Handshake failure means \texttt{open()} failed; there is no handle to subscript. Distinguish expired / untrusted CA / hostname mismatch / no shared cipher / protocol version via \texttt{\&errornumber} 1320--1325.
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 cert := open("client.crt", "e") | stop(&errortext)
@@ -428,21 +439,15 @@ Attrib(idh, "key=client.key")
 \end{Verbatim}
 
 
-A handle is a file value (\texttt{type(h)} is \texttt{"file"}) carrying \texttt{Fs\_Crypto}, the same way a window or socket is a file that does not support every file operation. The underlying \texttt{CryptoFile} is malloc'd, like \texttt{SSHfile}, so pointers stay stable across garbage collection and are freed by \texttt{close()}.
+A handle is a file value (\texttt{type(h)} is \texttt{"file"}) carrying \texttt{Fs\_\allowbreak{}Crypto}, the same way a window or socket is a file that does not support every file operation. The underlying \texttt{CryptoFile} is malloc'd so pointers stay stable across garbage collection and are freed by \texttt{close()}.
 
 
-Consumers ask a handle for the roles they need. An encrypted socket wants a cert and a private key: one merged handle satisfies both, or two handles each contribute what they have. \texttt{op=sign} wants a private key; \texttt{op=hmac} wants symmetric bytes. A missing role, or two handles supplying the same role, fails at \texttt{open()} rather than later at \texttt{write()}.
-
-
-Handles appear only among \texttt{open()} attributes, not \texttt{Attrib()}. Binding material is an open-time concern; \texttt{Attrib()} already uses a file argument to retarget which socket the following names apply to.
-
-
-\texttt{open(k,~"e",~"op=sign")} derives an operation from a material handle. A graphics-style \texttt{clone()} would give that verb a single meaning, but would be a second mechanism next to the handle attributes that TLS and \texttt{re} / \texttt{we} need anyway.
+Consumers ask a handle for the roles they need. An encrypted socket wants a cert and a private key: one merged handle satisfies both, or two handles each contribute what they have. \texttt{op=sign} wants a private key; \texttt{op=hmac} wants symmetric bytes. A missing role, or two handles supplying the same role, fails at \texttt{open()}.
 
 \section{8. Examples}
 \label{utr27-sec-examples}
 
-These assume a build with \texttt{secure~sockets~layer~encryption}. Failures set \texttt{\&errortext}; the usual form is \texttt{h~:=~open(...)~|~stop(\&errortext)}. Package \texttt{crypto} (\texttt{uni/lib/crypto.icn}) supplies \texttt{hexencode} / \texttt{hexbytes} and base64 helpers for dumping binary digests and keys. The programs under \texttt{tests/crypto/} are the executable form of this section.
+These assume a build with \texttt{secure~sockets~layer~encryption}. Failures set \texttt{\&errortext}; the usual form is \texttt{h~:=~open(.\allowbreak{}.\allowbreak{}.\allowbreak{})~|~stop(\&errortext)}. Package \texttt{crypto} (\texttt{uni/\allowbreak{}lib/\allowbreak{}crypto.\allowbreak{}icn}) supplies \texttt{hexencode} / \texttt{hexbytes} and base64 helpers for dumping binary digests and keys. The programs under \texttt{tests/\allowbreak{}crypto/\allowbreak{}} are the executable form of this section.
 
 \subsection{8.1 Hash}
 \label{utr27-sec-ex-hash}
@@ -565,7 +570,7 @@ hm := open(k, "e", "op=hmac", "alg=sha256")
 \subsection{8.3 Sign and verify}
 \label{utr27-sec-ex-sign}
 
-A private key signs; a certificate or public key verifies. \texttt{read()} on the signer returns the signature bytes. The listing assumes \texttt{signing.pem} and \texttt{verify.pem} in the current directory:
+A private key signs; a certificate or public key verifies. \texttt{read()} on the signer returns the signature bytes. The listing assumes \texttt{signing.\allowbreak{}pem} and \texttt{verify.\allowbreak{}pem} in the current directory:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 procedure main()
@@ -628,7 +633,7 @@ two:ok
 \subsection{8.4 Symmetric encrypt and decrypt}
 \label{utr27-sec-ex-enc}
 
-The idle-window \texttt{Attrib(...,~"op=decrypt")} reuses the bound key. Ciphertext is binary; the recovered plaintext is what matters:
+The idle-window \texttt{Attrib(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{}~"op=decrypt")} reuses the bound key. Ciphertext is binary; the recovered plaintext is what matters:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 procedure main()
@@ -759,7 +764,7 @@ conn  := open("host:443", "ne", certh, keyh)
 \end{Verbatim}
 
 
-After a handshake, \texttt{conn["cipher"]} peeks the negotiated suite and \texttt{conn["certchain"]} is a list of peer certificates as PEM strings; see \hyperref[utr27-sec-peek]{section 6.4} (\texttt{tests/crypto/tlspeek.icn}). \texttt{certh["type"]} / \texttt{keyh["type"]} are material-handle peeks, not session fields.
+After a handshake, \texttt{conn["cipher"]} peeks the negotiated suite and \texttt{conn["certchain"]} is a list of peer certificates as PEM strings; see \hyperref[utr27-sec-peek]{section 6.4} (\texttt{tests/\allowbreak{}crypto/\allowbreak{}tlspeek.\allowbreak{}icn}). \texttt{certh["type"]} / \texttt{keyh["type"]} are material-handle peeks, not session fields.
 
 
 Encrypted UDP (DTLS) uses \texttt{"nue"} / \texttt{"naue"}. The runtime selects a DTLS context when the socket is datagram.
@@ -767,7 +772,7 @@ Encrypted UDP (DTLS) uses \texttt{"nue"} / \texttt{"naue"}. The runtime selects 
 \section{9. I/O and \texttt{Attrib()}}
 \label{utr27-sec-io}
 
-On a data-pipe handle, \texttt{write()} accumulates and \texttt{read()} finalizes. \texttt{read()} is always terminal -- one read consumes the whole result and resets the handle -- for two reasons that are easy to forget later. First, the default cipher is AEAD (\texttt{aes-256-gcm}): nothing authenticated can be released until the tag is checked at the end, so a mid-stream plaintext read would be a lie. Second, \texttt{read()} already means "finalize and reset" for hash / HMAC / sign; a partial encrypt read would look identical to a final one, and the handle would reset under the caller. Block ciphers such as CBC or CTR \emph{could} emit ciphertext at a block boundary, but that would be a second meaning of \texttt{read()} next to the AEAD and digest rules, so it is not offered. A second \texttt{read()} with nothing written since the last one fails, as when reading a socket with no data. \texttt{close()} is idempotent: a second \texttt{close()}, or \texttt{close()} on a never-written handle, releases the handle and drops its reference to any bound key.
+On a data-pipe handle, \texttt{write()} accumulates and \texttt{read()} finalizes. \texttt{read()} is always terminal -- one read consumes the whole result and resets the handle -- for two reasons that are easy to forget later. First, the default cipher is AEAD (\texttt{aes-\allowbreak{}256-\allowbreak{}gcm}): nothing authenticated can be released until the tag is checked at the end, so a mid-stream plaintext read would be a lie. Second, \texttt{read()} already means "finalize and reset" for hash / HMAC / sign; a partial encrypt read would look identical to a final one, and the handle would reset under the caller. Block ciphers such as CBC or CTR \emph{could} emit ciphertext at a block boundary, but that would be a second meaning of \texttt{read()} next to the AEAD and digest rules, so it is not offered. A second \texttt{read()} with nothing written since the last one fails, as when reading a socket with no data. \texttt{close()} is idempotent: a second \texttt{close()}, or \texttt{close()} on a never-written handle, releases the handle and drops its reference to any bound key.
 
 
 On \texttt{we}, writes encrypt to the file and \texttt{close()} flushes the AEAD tag. On \texttt{re} with \texttt{op=decrypt}, \texttt{reads()} yields plaintext chunks. On \texttt{re} with \texttt{op=hash}, the first \texttt{read()} returns the digest.
@@ -781,12 +786,12 @@ Framing is owned by the runtime: IV prepended, tag appended, both fixed-length p
 \section{10. Error handling}
 \label{utr27-sec-errors}
 
-Crypto and TLS connect failures \textbf{fail}, they do not \texttt{runerr}. This matches the SSL connect path: set \texttt{\&errortext}, tear down what was allocated, and fail, so callers write \texttt{if~h~:=~open(...)~then~...~else~...}. Runtime errors are reserved for type mistakes (a bad mode letter, a non-file where a handle is required).
+Crypto and TLS connect failures \textbf{fail}, they do not \texttt{runerr}. This matches the SSL connect path: set \texttt{\&errortext}, tear down what was allocated, and fail, so callers write \texttt{if~h~:=~open(.\allowbreak{}.\allowbreak{}.\allowbreak{})~then~.\allowbreak{}.\allowbreak{}.\allowbreak{}~else~.\allowbreak{}.\allowbreak{}.\allowbreak{}}. Runtime errors are reserved for type mistakes (a bad mode letter, a non-file where a handle is required).
 
 
-Error numbers, defined in \texttt{src/runtime/data.r}:
+Error numbers, defined in \texttt{src/\allowbreak{}runtime/\allowbreak{}data.\allowbreak{}r}:
 
-\begin{longtable}{lll}
+\begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*3)*1/3+2\tabcolsep*(1-1)\relax}}
 \hline
 Number & Text & Typical cause \\
 \hline
@@ -812,13 +817,13 @@ Number & Text & Typical cause \\
 \section{11. Build integration}
 \label{utr27-sec-build}
 
-Crypto compiles under \texttt{HAVE\_LIBSSL}, the same guard as TLS. \texttt{configure~--disable-ssl} turns both off. \texttt{--enable-thin} disables SSL as part of a minimal build. Otherwise \texttt{CHECK\_OPENSSL} probes for the library and headers.
+Crypto compiles under \texttt{HAVE\_\allowbreak{}LIBSSL}, the same guard as TLS. \texttt{configure~-\allowbreak{}-\allowbreak{}disable-\allowbreak{}ssl} turns both off. \texttt{-\allowbreak{}-\allowbreak{}enable-\allowbreak{}thin} disables SSL as part of a minimal build. Otherwise \texttt{CHECK\_\allowbreak{}OPENSSL} probes for the library and headers.
 
 
-\texttt{\&features} reports \texttt{secure~sockets~layer~encryption}. \texttt{tests/crypto/Makefile} skips the suite when that string is absent. TLS echo tests also require \texttt{concurrent~threads}.
+\texttt{\&features} reports \texttt{secure~sockets~layer~encryption}. \texttt{tests/\allowbreak{}crypto/\allowbreak{}Makefile} skips the suite when that string is absent. TLS echo tests also require \texttt{concurrent~threads}.
 
 
-Guards are \texttt{\#if~HAVE\_LIBSSL} in \texttt{rstructs.h}, \texttt{rmacros.h}, \texttt{feature.h}, \texttt{fsys.r}, \texttt{fmisc.r}, \texttt{rposix.r}, and \texttt{rcrypto.ri}. TLS helpers (\texttt{create\_ssl\_context}, \texttt{is\_ssl\_attr}) and the \texttt{CryptoFile} implementation share \texttt{src/runtime/rcrypto.ri}.
+Guards are \texttt{\#if~HAVE\_\allowbreak{}LIBSSL} in \texttt{rstructs.\allowbreak{}h}, \texttt{rmacros.\allowbreak{}h}, \texttt{feature.\allowbreak{}h}, \texttt{fsys.\allowbreak{}r}, \texttt{fmisc.\allowbreak{}r}, \texttt{rposix.\allowbreak{}r}, and \texttt{rcrypto.\allowbreak{}ri}. TLS helpers (\texttt{create\_\allowbreak{}ssl\_\allowbreak{}context}, \texttt{is\_\allowbreak{}ssl\_\allowbreak{}attr}) and the \texttt{CryptoFile} implementation share \texttt{src/\allowbreak{}runtime/\allowbreak{}rcrypto.\allowbreak{}ri}.
 
 \section{12. Status and remaining work}
 \label{utr27-sec-status}
@@ -826,10 +831,10 @@ Guards are \texttt{\#if~HAVE\_LIBSSL} in \texttt{rstructs.h}, \texttt{rmacros.h}
 The language surface described here is implemented: modes \texttt{e} / \texttt{er} / \texttt{eh} / \texttt{re} / \texttt{we}, TLS handle reuse, DTLS context selection and handshake, \texttt{keypass=} / \texttt{verifyPeer=} alignment with SSH, and the error numbers in \hyperref[utr27-sec-errors]{section 10}.
 
 
-\textbf{Separate configure switch.} Crypto cannot be compiled out while leaving TLS sockets on. A \texttt{Unicon\_Crypto} / \texttt{NoCrypto} guard driven by \texttt{--disable-crypto} is the obvious next step if a distribution wants encrypted sockets without the new \texttt{open()} modes.
+\textbf{Separate configure switch.} Crypto cannot be compiled out while leaving TLS sockets on. A \texttt{Unicon\_\allowbreak{}Crypto} / \texttt{NoCrypto} guard driven by \texttt{-\allowbreak{}-\allowbreak{}disable-\allowbreak{}crypto} is the obvious next step if a distribution wants encrypted sockets without the new \texttt{open()} modes.
 
 
-\textbf{\texttt{\textasciitilde{}} in \texttt{key=}.} Not expanded, matching SSH. Callers must expand a leading \texttt{\textasciitilde{}/} themselves.
+\textbf{\texttt{\textasciitilde{}} in \texttt{key=}.} Not expanded, matching SSH. Callers must expand a leading \texttt{\textasciitilde{}/\allowbreak{}} themselves.
 
 
 \textbf{Asymmetric encrypt / decrypt.} The \texttt{op=} set is hash, HMAC, sign, verify, and symmetric encrypt/decrypt. Public-key encryption is not exposed.
@@ -840,7 +845,7 @@ The language surface described here is implemented: modes \texttt{e} / \texttt{e
 \section{Appendix: test coverage}
 \label{utr27-sec-coverage}
 
-Automated tests live under \texttt{tests/crypto/}, one program per concern: \texttt{hash}, \texttt{hmac}, \texttt{sha512}, \texttt{sign}, \texttt{encrypt}, \texttt{iv}, \texttt{freshiv}, \texttt{tamper}, \texttt{filehash}, \texttt{filecrypt}, \texttt{filekey}, \texttt{filekeyattr}, \texttt{filetamper}, \texttt{opswitch}, \texttt{midattrib}, \texttt{badalg}, \texttt{badkey}, \texttt{badrole}, \texttt{badverify}, plus TLS / DTLS (\texttt{tlsplain}, \texttt{tlsverify}, \texttt{tlsauth}, \texttt{tlsproto}, \texttt{tlscipher}, \texttt{tlshandle}, \texttt{tlspeek}, \texttt{dtls}, \texttt{dtlsecho}). \texttt{tests/crypto/Makefile} skips the suite when OpenSSL is absent, and skips the threaded TLS echo tests when concurrency is absent. Expected output is \texttt{tests/crypto/stand/*.std}.
+Automated tests live under \texttt{tests/\allowbreak{}crypto/\allowbreak{}}, one program per concern: \texttt{hash}, \texttt{hmac}, \texttt{sha512}, \texttt{sign}, \texttt{encrypt}, \texttt{iv}, \texttt{freshiv}, \texttt{tamper}, \texttt{filehash}, \texttt{filecrypt}, \texttt{filekey}, \texttt{filekeyattr}, \texttt{filetamper}, \texttt{opswitch}, \texttt{midattrib}, \texttt{badalg}, \texttt{badkey}, \texttt{badrole}, \texttt{badverify}, plus TLS / DTLS (\texttt{tlsplain}, \texttt{tlsverify}, \texttt{tlsauth}, \texttt{tlsproto}, \texttt{tlscipher}, \texttt{tlshandle}, \texttt{tlspeek}, \texttt{dtls}, \texttt{dtlsecho}). \texttt{tests/\allowbreak{}crypto/\allowbreak{}Makefile} skips the suite when OpenSSL is absent, and skips the threaded TLS echo tests when concurrency is absent. Expected output is \texttt{tests/\allowbreak{}crypto/\allowbreak{}stand/\allowbreak{}*.\allowbreak{}std}.
 
 \section{References}
 \label{utr27-references}
@@ -857,37 +862,34 @@ Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 \bibitem[4]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[5]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[6]{cite-rfc2104}
+\bibitem[5]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[7]{cite-rfc1112}
+\bibitem[6]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[8]{cite-jeffery-pwu}
+\bibitem[7]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
+
+\bibitem[8]{cite-rfc4607}
+H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
 \bibitem[9]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[10]{cite-rfc4607}
-H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
-
-\bibitem[11]{cite-algharaibeh-utr28}
+\bibitem[10]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[12]{cite-rfc792}
+\bibitem[11]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[13]{cite-rfc2236}
+\bibitem[12]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[14]{cite-rfc3376}
+\bibitem[13]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[15]{cite-rfc1071}
+\bibitem[14]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}

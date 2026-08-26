@@ -27,18 +27,31 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li><a href="install.html">Installation</a></li>
-<li><a href="quickstart.html">Quick Start</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="config.html">Book Configuration</a></li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li class="current">Themes</li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="toc-l1"><a href="quickstart.html">Quick Start</a></li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="current toc-l1"><a href="themes.html">Themes
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#built-in-themes"><span class="toc-num">7.1</span>Built-in themes
+</a>
+</li>
+<li class="toc-sec"><a href="#build-time-default"><span class="toc-num">7.2</span>Build-time default
+</a>
+</li>
+<li class="toc-sec"><a href="#theme-layout-on-disk"><span class="toc-num">7.3</span>Theme layout on disk
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -62,22 +75,28 @@ Built-in themes
 </h3>
 <ul>
 <li>
+<p>
 <strong>
 basic
 </strong>
  — light sidebar (default)
+</p>
 </li>
 <li>
+<p>
 <strong>
 classic
 </strong>
  — serif / warm-gray documentation look
+</p>
 </li>
 <li>
+<p>
 <strong>
 dark
 </strong>
  — dark background
+</p>
 </li>
 </ul>
 <p>

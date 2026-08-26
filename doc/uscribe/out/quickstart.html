@@ -27,18 +27,40 @@ document.write('<link id="theme-css" rel="stylesheet" href="_static/theme-'+t+'.
 <option value="classic">classic</option>
 <option value="dark">dark</option>
 </select>
-<p class="search-hint">Filter chapters; Enter for full search</p>
+<p class="search-hint">Filter chapters and sections; Enter for full search</p>
 <input class="search-box" id="nav-search" type="search" 
-placeholder="Search..." aria-label="Filter chapter list">
+placeholder="Search..." aria-label="Filter chapter and section list">
 <ol id="nav-toc">
-<li><a href="intro.html">Introduction</a></li>
-<li><a href="install.html">Installation</a></li>
-<li class="current">Quick Start</li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="config.html">Book Configuration</a></li>
-<li><a href="markup.html">Markup Reference</a></li>
-<li><a href="themes.html">Themes</a></li>
-<li><a href="cli.html">Command Line</a></li>
+<li class="toc-l1"><a href="intro.html">Introduction</a></li>
+<li class="toc-l1"><a href="install.html">Installation</a></li>
+<li class="current toc-l1"><a href="quickstart.html">Quick Start
+</a>
+<ol class="toc-local">
+<li class="toc-sec"><a href="#1-create-a-manifest"><span class="toc-num">3.1</span>1. Create a manifest
+</a>
+</li>
+<li class="toc-sec"><a href="#2-write-chapters"><span class="toc-num">3.2</span>2. Write chapters
+</a>
+</li>
+<li class="toc-sec"><a href="#3-book-settings"><span class="toc-num">3.3</span>3. Book settings
+</a>
+</li>
+<li class="toc-sec"><a href="#4-build-html"><span class="toc-num">3.4</span>4. Build HTML
+</a>
+</li>
+<li class="toc-sec"><a href="#5-build-pdf-optional"><span class="toc-num">3.5</span>5. Build PDF (optional)
+</a>
+</li>
+<li class="toc-sec"><a href="#where-files-go"><span class="toc-num">3.6</span>Where files go
+</a>
+</li>
+</ol>
+</li>
+<li class="toc-l1"><a href="reports.html">Reports</a></li>
+<li class="toc-l1"><a href="config.html">Book Configuration</a></li>
+<li class="toc-l1"><a href="markup.html">Markup Reference</a></li>
+<li class="toc-l1"><a href="themes.html">Themes</a></li>
+<li class="toc-l1"><a href="cli.html">Command Line</a></li>
 </ol>
 <p class="search-hint"><a href="search.html">Search page</a></p>
 </nav>
@@ -142,7 +164,7 @@ Or from a project
 <p>
 Open 
 <code>out/index.html</code>
-. Use the sidebar for chapters, search, and theme switching.
+. Use the sidebar for chapters (and the current chapter's sections), search, and theme switching.
 </p>
 <h3 id="5-build-pdf-optional">
 5. Build PDF (optional)
@@ -176,33 +198,45 @@ Where files go
 </h3>
 <ul>
 <li>
+<p>
 <code>*.rst</code>
  — chapter sources
+</p>
 </li>
 <li>
+<p>
 <code>*.manifest</code>
  — chapter order
+</p>
 </li>
 <li>
+<p>
 <code>book.conf</code>
  — book title, logo, copyright, PDF name, theme
+</p>
 </li>
 <li>
+<p>
 <code>images/</code>
  — figures (copied into 
 <code>out/images/</code>
 )
+</p>
 </li>
 <li>
+<p>
 <code>out/</code>
  — generated HTML and/or 
 <code>STEM.tex</code>
  / 
 <code>STEM.pdf</code>
+</p>
 </li>
 <li>
+<p>
 <code>themes/</code>
  — built-in skins shared across projects (HTML)
+</p>
 </li>
 </ul>
 <p>
