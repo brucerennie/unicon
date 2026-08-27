@@ -260,12 +260,34 @@ Defined in
 <pre><code class="language-c">StrLen(q)         /* byte length, masked to exclude tag/count bits */
 SetStrLen(q,n)    /* sets byte length; see section 2.3 for why this clears
                      rather than preserves the other fields */
+MakeStr(s,n,dp)   /* StrLoc(*dp) = s; SetStrLen(*dp, n) -- preferred
+                     constructor for a fresh string descriptor */
 IsUniQual(d)      /* tests the UTF-8 tag */
 SetUniQual(d)     /* sets the UTF-8 tag */
 CpCount(q)        /* reads the cached codepoint count, or the sentinel
                      value 0 if none is cached */
 SetCpCount(q,n)   /* sets the cached codepoint count */
 </code></pre>
+<p>
+<code>MakeStr</code>
+ is the preferred way to fill a new string descriptor: it sets the pointer and then the length in one step, so call sites share one order. 
+<code>StrLoc</code>
+ and 
+<code>SetStrLen</code>
+ update different words of the descriptor, so swapping those two alone does not affect the tag; the ordering that matters for Unicode is still 
+<code>SetStrLen</code>
+ / 
+<code>MakeStr</code>
+, then 
+<code>SetUniQual</code>
+, then 
+<code>SetCpCount</code>
+ (
+<a href="utr25.html#sec-strlen">section 2.3</a>
+). 
+<code>AsgnCStr</code>
+ is the C-string specialization of the same pattern.
+</p>
 <p>
 Three shared helpers implement UTF-8 decoding logic used throughout the runtime:
 </p>
@@ -310,7 +332,11 @@ All three treat a malformed lead byte as a one-byte unit and continue, rather th
 <p>
 The consequence is that any code that needs to both set a length and retain or apply tagging must do so explicitly, in order: 
 <code>SetStrLen</code>
-, then 
+ (or 
+<code>MakeStr</code>
+, which ends in 
+<code>SetStrLen</code>
+), then 
 <code>SetUniQual</code>
 , then 
 <code>SetCpCount</code>
@@ -416,6 +442,7 @@ Two new functions provide Unicode-aware equivalents:
 </p>
 <ul>
 <li>
+<p>
 <code>uchar(i)</code>
  accepts any Unicode scalar value (
 <code>0 &lt;= i &lt;= 0x10FFFF</code>
@@ -424,8 +451,10 @@ Two new functions provide Unicode-aware equivalents:
 -
 <code>0xDFFF</code>
 , which are not valid standalone Unicode scalar values) and returns its UTF-8 encoding as a string, tagged when the encoding is genuinely multi-byte.
+</p>
 </li>
 <li>
+<p>
 <code>uord(s)</code>
  accepts a string and returns its codepoint value, requiring that 
 <code>s</code>
@@ -436,6 +465,7 @@ Two new functions provide Unicode-aware equivalents:
  is strict: malformed or wrong-length input raises a runtime error rather than failing silently, matching the convention already used by 
 <code>ord()</code>
  for its own precondition violations.
+</p>
 </li>
 </ul>
 <p>
@@ -490,6 +520,7 @@ Three mechanisms give a program control over tagging where it is needed, rather 
 </p>
 <ul>
 <li>
+<p>
 <strong>
 <code>unicode(s)</code>
 </strong>
@@ -508,8 +539,10 @@ Three mechanisms give a program control over tagging where it is needed, rather 
  is not the inverse; see 
 <a href="utr25.html#sec-api">section 7</a>
 .
+</p>
 </li>
 <li>
+<p>
 <strong>
 The 
 <code>i</code>
@@ -540,14 +573,17 @@ reads
  onto a pty handle (
 <a href="utr29.html#sec-status">section 9</a>
 ). SFTP open rewrites the status word and likewise drops the bit.
+</p>
 </li>
 <li>
+<p>
 <strong>
 A global default
 </strong>
 , changing what 
 <code>open()</code>
  assumes when a caller does not specify a mode explicitly, has been designed but not implemented.
+</p>
 </li>
 </ul>
 <p>
@@ -576,6 +612,7 @@ assign
 </h2>
 <ul>
 <li>
+<p>
 <code>type()</code>
  is 
 <code>&quot;string&quot;</code>
@@ -588,8 +625,10 @@ assign
  / 
 <code>string()</code>
  treat tagged values as strings.
+</p>
 </li>
 <li>
+<p>
 ASCII is never tagged. 
 <code>unicode(&quot;hello&quot;)</code>
  is a no-op. On ASCII, 
@@ -597,16 +636,20 @@ ASCII is never tagged.
  / 
 <code>s[i]</code>
  / scanning already match the text view.
+</p>
 </li>
 <li>
+<p>
 <code>unicode(s)</code>
 : text view (
 <code>*</code>
  / 
 <code>[]</code>
  are codepoints).
+</p>
 </li>
 <li>
+<p>
 Inverse of 
 <code>unicode(s)</code>
 : same UTF-8 bytes, untagged descriptor (
@@ -616,8 +659,10 @@ Inverse of
  are bytes). Not implemented. Name open. Implementation is a descriptor copy plus 
 <code>SetStrLen</code>
 .
+</p>
 </li>
 <li>
+<p>
 Current untag path: 
 <code>writes</code>
  to a file, 
@@ -625,6 +670,7 @@ Current untag path:
  without 
 <code>i</code>
 . Not an API.
+</p>
 </li>
 </ul>
 <h3 id="sec-string">
@@ -634,14 +680,17 @@ Current untag path:
 </h3>
 <ul>
 <li>
+<p>
 <code>string(x)</code>
 : convert to string or fail. Identity on strings, including the tag. 
 <code>string(a, b, ...)</code>
  concatenates and keeps the tag (
 <code>||</code>
  does the same).
+</p>
 </li>
 <li>
+<p>
 Must stay identity: 
 <code>s := string(x) | fail</code>
  is the usual coerce. Used in 
@@ -655,14 +704,18 @@ Must stay identity:
  byte-oriented on 
 <code>&quot;café&quot;</code>
 .
+</p>
 </li>
 <li>
+<p>
 <code>if string(x) then</code>
  still succeeds as a type test if the tag is dropped; 
 <code>if s := string(x) then</code>
  would bind the byte view.
+</p>
 </li>
 <li>
+<p>
 Rejected inverse names: 
 <code>bytes(s)</code>
  (storage size), 
@@ -672,13 +725,16 @@ Rejected inverse names:
 ), 
 <code>plain(s)</code>
 .
+</p>
 </li>
 <li>
+<p>
 No builtin 
 <code>isunicode(s)</code>
  if the inverse exists; see 
 <a href="utr25.html#sec-tests">section 7.2</a>
 .
+</p>
 </li>
 </ul>
 <h3 id="sec-tests">
@@ -1441,11 +1497,11 @@ S. Deering. &quot;Host Extensions for IP Multicasting&quot;. RFC 1112. 1989.
 <li id="cite-jeffery-pwu" value="10">
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. &quot;Programming with Unicon&quot;. doc/book/. 2026.
 </li>
-<li id="cite-algharaibeh-utr29" value="11">
-Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
-</li>
-<li id="cite-rfc4607" value="12">
+<li id="cite-rfc4607" value="11">
 H. Holbrook and B. Cain. &quot;Source-Specific Multicast for IP&quot;. RFC 4607. 2006.
+</li>
+<li id="cite-algharaibeh-utr29" value="12">
+Jafar Al-Gharaibeh. &quot;Raw Sockets and Packet Layouts in Unicon&quot;. doc/utr/utr29.rst. 2026.
 </li>
 <li id="cite-algharaibeh-utr28" value="13">
 Jafar Al-Gharaibeh. &quot;Multicast and Socket Attributes in Unicon&quot;. doc/utr/utr28.rst. 2026.

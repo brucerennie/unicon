@@ -56,7 +56,7 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr29-sec-intro}
 
-This report describes raw IP sockets in Unicon: how a handle is opened, how datagrams are sent and received, how protocol bytes are built and decoded, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. Socket attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}, and the rest) are the multicast facility [10]; this report adds mode \texttt{nr} and the packet library on top of that. The language-facing reference lives in \emph{Programming with Unicon} [7] (Chapter 5, "Raw Sockets" and "PacketSpec and package net"; Chapter 14, \texttt{uping} and \texttt{uigmp}) and the language reference (\texttt{open} mode \texttt{nr}, attributes \texttt{proto} and \texttt{hdrincl}, subscript peek). Automated plumbing and peek tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}raw\_\allowbreak{}sock.\allowbreak{}icn}.
+This report describes raw IP sockets in Unicon: how a handle is opened, how datagrams are sent and received, how protocol bytes are built and decoded, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. Socket attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}, and the rest) are the multicast facility [13]; this report adds mode \texttt{nr} and the packet library on top of that. The language-facing reference lives in \emph{Programming with Unicon} [10] (Chapter 5, "Raw Sockets" and "PacketSpec and package net"; Chapter 14, \texttt{uping} and \texttt{uigmp}) and the language reference (\texttt{open} mode \texttt{nr}, attributes \texttt{proto} and \texttt{hdrincl}, subscript peek). Automated plumbing and peek tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}raw\_\allowbreak{}sock.\allowbreak{}icn}.
 
 
 Raw sockets are part of the POSIX network facility. A build without POSIX networking has no \texttt{n} modes at all. Opening \texttt{SOCK\_\allowbreak{}RAW} usually needs elevated privileges (root or administrator); that is an operating-system restriction, not a Unicon one.
@@ -64,7 +64,7 @@ Raw sockets are part of the POSIX network facility. A build without POSIX networ
 \section{2. Motivation}
 \label{utr29-sec-motivation}
 
-TCP and UDP cover most application protocols. Diagnostic and control traffic sits one layer down: ICMP echo [11], IGMP membership [12] [13], OSPF, GRE, PIM. Those messages are IP protocol payloads, not port-addressed transport streams. ICMP, IGMP, and other raw IP protocols were not supported.
+TCP and UDP cover most application protocols. Diagnostic and control traffic sits one layer down: ICMP echo [14], IGMP membership [15] [16], OSPF, GRE, PIM. Those messages are IP protocol payloads, not port-addressed transport streams. ICMP, IGMP, and other raw IP protocols were not supported.
 
 
 The rest of Unicon networking already treats \texttt{open()} as the constructor and \texttt{Attrib()} as the option verb. Raw sockets follow that pattern instead of adding \texttt{rawsocket()} or a parallel packet API. Payload construction is a library problem: the runtime delivers bytes, and \texttt{PacketSpec} names the fields.
@@ -162,7 +162,7 @@ The last line is the unprivileged case. With privileges it prints \texttt{raw-\a
 \section{5. Attributes and status peek}
 \label{utr29-sec-attrs}
 
-Trailing \texttt{open()} arguments are the same \texttt{name=value} socket attributes used for TCP and UDP [10]. Booleans are exactly \texttt{yes} or \texttt{no}. \texttt{ttl} and \texttt{iface} were named for this sharing: hop limit and interface are not multicast-only knobs.
+Trailing \texttt{open()} arguments are the same \texttt{name=value} socket attributes used for TCP and UDP [13]. Booleans are exactly \texttt{yes} or \texttt{no}. \texttt{ttl} and \texttt{iface} were named for this sharing: hop limit and interface are not multicast-only knobs.
 
 \begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
@@ -186,7 +186,7 @@ Attribute & Role on a raw socket \\
 \end{longtable}
 
 
-\texttt{Attrib(f,\allowbreak{}~"ttl=4")} sets hop limits after \texttt{open()}. Status uses the same \texttt{[~]} / \texttt{key()} get as UDP [10]: unknown names raise 1310, unpopulated fields fail. Boolean peek fields that answered succeed with \texttt{"yes"} or \texttt{\&null} (never \texttt{"no"}); that is output only -- \texttt{open()} and \texttt{Attrib()} still take \texttt{yes} or \texttt{no}. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed; after the first suspend, \texttt{close()} makes the generator fail instead of raising. Raw sockets add \texttt{proto} (fixed at \texttt{socket()}) and \texttt{hdrincl}.
+\texttt{Attrib(f,\allowbreak{}~"ttl=4")} sets hop limits after \texttt{open()}. Status uses the same \texttt{[~]} / \texttt{key()} get as UDP [13]: unknown names raise 1310, unpopulated fields fail. Boolean peek fields that answered succeed with \texttt{"yes"} or \texttt{\&null} (never \texttt{"no"}); that is output only -- \texttt{open()} and \texttt{Attrib()} still take \texttt{yes} or \texttt{no}. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed; after the first suspend, \texttt{close()} makes the generator fail instead of raising. Raw sockets add \texttt{proto} (fixed at \texttt{socket()}) and \texttt{hdrincl}.
 
 \begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
@@ -248,7 +248,7 @@ As with UDP, \texttt{read()} / \texttt{reads()} are the wrong verbs for datagram
 Module \texttt{packetspec} (package \texttt{net}, \texttt{uni/\allowbreak{}lib/\allowbreak{}packetspec.\allowbreak{}icn}) is a small declarative engine for fixed binary layouts. Protocol classes inherit \texttt{PacketSpec} and override \texttt{define()}.
 
 
-Layer-1 helpers pack and unpack network-order integers (\texttt{u8} / \texttt{u16} / \texttt{u32} / \texttt{u64} and the matching \texttt{get\_\allowbreak{}u*} readers) and IPv4 addresses (\texttt{ipv4} / \texttt{to\_\allowbreak{}ipv4} / \texttt{get\_\allowbreak{}ipv4}). \texttt{inet\_\allowbreak{}cksum()} is RFC 1071 [14].
+Layer-1 helpers pack and unpack network-order integers (\texttt{u8} / \texttt{u16} / \texttt{u32} / \texttt{u64} and the matching \texttt{get\_\allowbreak{}u*} readers) and IPv4 addresses (\texttt{ipv4} / \texttt{to\_\allowbreak{}ipv4} / \texttt{get\_\allowbreak{}ipv4}). \texttt{inet\_\allowbreak{}cksum()} is RFC 1071 [17].
 
 \subsection{7.1 Declaring a layout}
 \label{utr29-sec-ps-fields}
@@ -310,7 +310,7 @@ type=8 id=1 seq=2
 \section{8. ICMP echo}
 \label{utr29-sec-icmp}
 
-\texttt{uni/\allowbreak{}lib/\allowbreak{}icmp.\allowbreak{}icn} adds echo request (type 8) and echo reply (type 0) [11] on top of \texttt{PacketSpec}:
+\texttt{uni/\allowbreak{}lib/\allowbreak{}icmp.\allowbreak{}icn} adds echo request (type 8) and echo reply (type 0) [14] on top of \texttt{PacketSpec}:
 
 \begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
 PacketSpec
@@ -596,43 +596,52 @@ On an unprivileged account the \texttt{raw-\allowbreak{}*} lines still print \te
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-libssh}
+\bibitem[2]{cite-algharaibeh-utr26}
+Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
+
+\bibitem[3]{cite-unicode-standard}
+Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
+
+\bibitem[4]{cite-unicon-utf8lib}
+Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
+
+\bibitem[5]{cite-libssh}
 The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
 
-\bibitem[3]{cite-jeffery-utr13}
+\bibitem[6]{cite-jeffery-utr13}
 Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 
-\bibitem[4]{cite-openssl}
+\bibitem[7]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[5]{cite-rfc2104}
+\bibitem[8]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[6]{cite-rfc1112}
+\bibitem[9]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[7]{cite-jeffery-pwu}
+\bibitem[10]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
 
-\bibitem[8]{cite-rfc4607}
+\bibitem[11]{cite-rfc4607}
 H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
-\bibitem[9]{cite-algharaibeh-utr29}
+\bibitem[12]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[10]{cite-algharaibeh-utr28}
+\bibitem[13]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[11]{cite-rfc792}
+\bibitem[14]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[12]{cite-rfc2236}
+\bibitem[15]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[13]{cite-rfc3376}
+\bibitem[16]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[14]{cite-rfc1071}
+\bibitem[17]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}

@@ -160,11 +160,22 @@ Defined in ``src/h/rmacros.h``:
    StrLen(q)         /* byte length, masked to exclude tag/count bits */
    SetStrLen(q,n)    /* sets byte length; see section 2.3 for why this clears
                         rather than preserves the other fields */
+   MakeStr(s,n,dp)   /* StrLoc(*dp) = s; SetStrLen(*dp, n) -- preferred
+                        constructor for a fresh string descriptor */
    IsUniQual(d)      /* tests the UTF-8 tag */
    SetUniQual(d)     /* sets the UTF-8 tag */
    CpCount(q)        /* reads the cached codepoint count, or the sentinel
                         value 0 if none is cached */
    SetCpCount(q,n)   /* sets the cached codepoint count */
+
+``MakeStr`` is the preferred way to fill a new string descriptor: it
+sets the pointer and then the length in one step, so call sites share
+one order. ``StrLoc`` and ``SetStrLen`` update different words of the
+descriptor, so swapping those two alone does not affect the tag; the
+ordering that matters for Unicode is still
+``SetStrLen`` / ``MakeStr``, then ``SetUniQual``, then ``SetCpCount``
+(:ref:`section 2.3 <sec-strlen>`). ``AsgnCStr`` is the C-string
+specialization of the same pattern.
 
 Three shared helpers implement UTF-8 decoding logic used throughout
 the runtime:
@@ -215,7 +226,8 @@ which is what nearly every call site actually requires.
 
 The consequence is that any code that needs to both set a length and
 retain or apply tagging must do so explicitly, in order:
-``SetStrLen``, then ``SetUniQual``, then ``SetCpCount`` if applicable.
+``SetStrLen`` (or ``MakeStr``, which ends in ``SetStrLen``), then
+``SetUniQual``, then ``SetCpCount`` if applicable.
 Reversing this order silently loses the tag, since ``SetStrLen``
 clears it. This ordering requirement is not enforced by the type
 system and must be checked by hand at any call site that does both.

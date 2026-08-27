@@ -69,7 +69,7 @@ Unicon programs that needed SSH previously relied on \texttt{popen()} or pipes t
 \subsection{2.1 Library choice}
 \label{utr26-sec-prior}
 
-Two C libraries were considered. \textbf{libssh} (LGPL) supports both client and server, modern key exchange and host keys, and true non-blocking I/O via \texttt{poll(2)}. \textbf{libssh2} (BSD) is client-only and cannot be used fully non-blocking. The implementation binds \textbf{libssh} [2], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (\hyperref[utr26-sec-receive]{section 8.3}).
+Two C libraries were considered. \textbf{libssh} (LGPL) supports both client and server, modern key exchange and host keys, and true non-blocking I/O via \texttt{poll(2)}. \textbf{libssh2} (BSD) is client-only and cannot be used fully non-blocking. The implementation binds \textbf{libssh} [5], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (\hyperref[utr26-sec-receive]{section 8.3}).
 
 
 A full protocol reimplementation (Paramiko, Go's \texttt{x/\allowbreak{}crypto/\allowbreak{}ssh}) would mean owning crypto primitives and protocol-drift / CVE tracking indefinitely. Binding to libssh via the existing C runtime avoids that.
@@ -82,7 +82,7 @@ Python (Paramiko) and Go (\texttt{x/\allowbreak{}crypto/\allowbreak{}ssh}) both 
 \subsection{2.3 Why not Messaging}
 \label{utr26-sec-messaging}
 
-The Messaging facility (HTTP/POP/SMTP, \texttt{rmsg.\allowbreak{}r}, libtp) [3] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (\texttt{exec} / \texttt{shell} / \texttt{sftp} as concurrent channels) also does not map onto Messaging's request/response verb model (\texttt{GET} / \texttt{POST} / \texttt{RETR}). Instead, SSH uses the \texttt{h} mode character and plain \texttt{user@\allowbreak{}host} string form, independent of the Messaging/URI subsystem.
+The Messaging facility (HTTP/POP/SMTP, \texttt{rmsg.\allowbreak{}r}, libtp) [6] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (\texttt{exec} / \texttt{shell} / \texttt{sftp} as concurrent channels) also does not map onto Messaging's request/response verb model (\texttt{GET} / \texttt{POST} / \texttt{RETR}). Instead, SSH uses the \texttt{h} mode character and plain \texttt{user@\allowbreak{}host} string form, independent of the Messaging/URI subsystem.
 
 \section{3. Architectural grounding}
 \label{utr26-sec-arch}
@@ -704,43 +704,52 @@ Guards are \texttt{\#if~HAVE\_\allowbreak{}LIBSSH} throughout \texttt{rstructs.\
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-libssh}
+\bibitem[2]{cite-algharaibeh-utr26}
+Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
+
+\bibitem[3]{cite-unicode-standard}
+Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
+
+\bibitem[4]{cite-unicon-utf8lib}
+Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
+
+\bibitem[5]{cite-libssh}
 The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
 
-\bibitem[3]{cite-jeffery-utr13}
+\bibitem[6]{cite-jeffery-utr13}
 Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 
-\bibitem[4]{cite-openssl}
+\bibitem[7]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[5]{cite-rfc2104}
+\bibitem[8]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[6]{cite-rfc1112}
+\bibitem[9]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[7]{cite-jeffery-pwu}
+\bibitem[10]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
 
-\bibitem[8]{cite-rfc4607}
+\bibitem[11]{cite-rfc4607}
 H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
-\bibitem[9]{cite-algharaibeh-utr29}
+\bibitem[12]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[10]{cite-algharaibeh-utr28}
+\bibitem[13]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[11]{cite-rfc792}
+\bibitem[14]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[12]{cite-rfc2236}
+\bibitem[15]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[13]{cite-rfc3376}
+\bibitem[16]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[14]{cite-rfc1071}
+\bibitem[17]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}

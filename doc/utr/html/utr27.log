@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.26)  26 AUG 2026 21:58
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.27)  27 AUG 2026 13:36
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -501,12 +501,17 @@ Underfull \hbox (badness 4779) in paragraph at lines 854--855
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 857--858
+Underfull \hbox (badness 10000) in paragraph at lines 860--861
+[]\T1/cmr/m/n/12 Unicode Con-sor-tium. "The Uni-code Stan-dard".
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 866--867
 []\T1/cmr/m/n/12 The lib-ssh Project. "lib-ssh -- The SSH Li-brary".
  []
 
 
-Underfull \hbox (badness 1072) in paragraph at lines 863--864
+Underfull \hbox (badness 1072) in paragraph at lines 872--873
 []\T1/cmr/m/n/12 The OpenSSL Project. "OpenSSL -- Cryp-tog-ra-phy and SSL/TLS
  []
 
@@ -519,10 +524,10 @@ Package rerunfilecheck Info: File `utr27.out' has not changed.
 (rerunfilecheck)             Checksum: EF7CFE255922ED09517620DE98A78C56;3686.
  ) 
 Here is how much of TeX's memory you used:
- 12286 strings out of 476182
- 198814 string characters out of 5795595
+ 12292 strings out of 476182
+ 198959 string characters out of 5795595
  1939975 words of memory out of 5000000
- 34079 multiletter control sequences out of 15000+600000
+ 34082 multiletter control sequences out of 15000+600000
  571230 words of font info for 61 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,8n,79p,1134b,699s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -539,10 +544,10 @@ n/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecbx2074.600pk></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
 s/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cm
 sy6.pfb>
-Output written on utr27.pdf (23 pages, 188029 bytes).
+Output written on utr27.pdf (23 pages, 188326 bytes).
 PDF statistics:
- 709 PDF objects out of 1000 (max. 8388607)
- 266 compressed objects within 3 object streams
- 71 named destinations out of 1000 (max. 500000)
+ 714 PDF objects out of 1000 (max. 8388607)
+ 271 compressed objects within 3 object streams
+ 74 named destinations out of 1000 (max. 500000)
  193 words of extra memory for PDF output out of 10000 (max. 10000000)
 

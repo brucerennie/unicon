@@ -56,12 +56,12 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr28-sec-intro}
 
-This report describes IP multicast [6] and the socket-attribute facility it sits on. Trailing arguments to \texttt{open()} on network modes are \texttt{name=value} strings applied with \texttt{setsockopt(2)}. After \texttt{open()}, \texttt{Attrib()} uses the same names. The language-facing reference lives in \emph{Programming with Unicon} [7] (Chapter 5, "Multicast and Socket Attributes") and the language reference (\texttt{open} trailing attributes, \texttt{Attrib}, subscript peek, \texttt{key()}). Automated tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}mcast.\allowbreak{}icn} and \texttt{tests/\allowbreak{}posix/\allowbreak{}sockpeek.\allowbreak{}icn}.
+This report describes IP multicast [9] and the socket-attribute facility it sits on. Trailing arguments to \texttt{open()} on network modes are \texttt{name=value} strings applied with \texttt{setsockopt(2)}. After \texttt{open()}, \texttt{Attrib()} uses the same names. The language-facing reference lives in \emph{Programming with Unicon} [10] (Chapter 5, "Multicast and Socket Attributes") and the language reference (\texttt{open} trailing attributes, \texttt{Attrib}, subscript peek, \texttt{key()}). Automated tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}mcast.\allowbreak{}icn} and \texttt{tests/\allowbreak{}posix/\allowbreak{}sockpeek.\allowbreak{}icn}.
 
 \section{2. Motivation}
 \label{utr28-sec-motivation}
 
-Unicon's \texttt{open()} already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) [8] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join a multicast group like \texttt{239.\allowbreak{}1.\allowbreak{}1.\allowbreak{}1}, restrict a join to one NIC, or send with a limited TTL like \texttt{ttl=3}. These options were not supported.
+Unicon's \texttt{open()} already constructed TCP and UDP handles. Multicast -- any-source (ASM) and source-specific (SSM) [11] -- is ordinary UDP plus membership and hop-limit options. Without those options, a Unicon program could not join a multicast group like \texttt{239.\allowbreak{}1.\allowbreak{}1.\allowbreak{}1}, restrict a join to one NIC, or send with a limited TTL like \texttt{ttl=3}. These options were not supported.
 
 \section{3. Design principles}
 \label{utr28-sec-principles}
@@ -96,7 +96,7 @@ numeric boolean: bad socket attribute
 \textbf{\texttt{source@\allowbreak{}group}.} The address form matches VLC, ffmpeg, and RFC 4607 \texttt{(S,\allowbreak{}G)} order. Empty either side is invalid.
 
 
-\textbf{\texttt{ttl} and \texttt{iface}, not multicast-only names.} Hop limit and interface are used by unicast, multicast, and raw sockets [9]. \texttt{ttl=} sets both \texttt{IP\_\allowbreak{}TTL} and \texttt{IP\_\allowbreak{}MULTICAST\_\allowbreak{}TTL} (or the IPv6 hop options). \texttt{iface=} accepts an IPv4 address, a numeric index, or a name (\texttt{en0}, \texttt{lo0}; Windows also maps \texttt{lo} / \texttt{lo0} to \texttt{loopback\_\allowbreak{}0}).
+\textbf{\texttt{ttl} and \texttt{iface}, not multicast-only names.} Hop limit and interface are used by unicast, multicast, and raw sockets [12]. \texttt{ttl=} sets both \texttt{IP\_\allowbreak{}TTL} and \texttt{IP\_\allowbreak{}MULTICAST\_\allowbreak{}TTL} (or the IPv6 hop options). \texttt{iface=} accepts an IPv4 address, a numeric index, or a name (\texttt{en0}, \texttt{lo0}; Windows also maps \texttt{lo} / \texttt{lo0} to \texttt{loopback\_\allowbreak{}0}).
 
 
 \textbf{Order matters.} \texttt{iface=} before \texttt{join=} selects the interface used by that join. \texttt{Attrib()} applies a batch of assignments together for the same reason.
@@ -259,7 +259,7 @@ An unpopulated field fails. Boolean fields that answered
 succeed with \texttt{"yes"} or \texttt{\&null}. \texttt{key(f)} generates every answerable field. \texttt{f["*"]} snapshots those fields under one lock. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed.
 
 
-TCP, UDP, multicast, and raw sockets share one peek table (\texttt{sock\_\allowbreak{}peek}). \texttt{join}, \texttt{leave}, and \texttt{source} are verbs, not peek fields. \texttt{proto} is stored at \texttt{socket()} time on raw sockets [9]. \texttt{f["groups"]} is a list of joined groups (SSM as \texttt{source@\allowbreak{}group}); a single group is still a list of length 1.
+TCP, UDP, multicast, and raw sockets share one peek table (\texttt{sock\_\allowbreak{}peek}). \texttt{join}, \texttt{leave}, and \texttt{source} are verbs, not peek fields. \texttt{proto} is stored at \texttt{socket()} time on raw sockets [12]. \texttt{f["groups"]} is a list of joined groups (SSM as \texttt{source@\allowbreak{}group}); a single group is still a list of length 1.
 
 \begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
@@ -381,7 +381,7 @@ The language surface described here is implemented: trailing attributes, implici
 \textbf{Windows IPv6 SSM.} Membership calls are attempted; \texttt{loopback\_\allowbreak{}0} and UNIX \texttt{lo} / \texttt{lo0} names are mapped. Delivery and option support vary by stack; the test skips cleanly on \texttt{ENOPROTOOPT}.
 
 
-\textbf{Raw sockets} [9] reuse \texttt{ttl} / \texttt{iface} / \texttt{join} on \texttt{SOCK\_\allowbreak{}RAW}. That is a separate report.
+\textbf{Raw sockets} [12] reuse \texttt{ttl} / \texttt{iface} / \texttt{join} on \texttt{SOCK\_\allowbreak{}RAW}. That is a separate report.
 
 \section{Appendix: test coverage}
 \label{utr28-sec-coverage}
@@ -460,43 +460,52 @@ Received hello-alias
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-libssh}
+\bibitem[2]{cite-algharaibeh-utr26}
+Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
+
+\bibitem[3]{cite-unicode-standard}
+Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
+
+\bibitem[4]{cite-unicon-utf8lib}
+Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
+
+\bibitem[5]{cite-libssh}
 The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
 
-\bibitem[3]{cite-jeffery-utr13}
+\bibitem[6]{cite-jeffery-utr13}
 Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
 
-\bibitem[4]{cite-openssl}
+\bibitem[7]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[5]{cite-rfc2104}
+\bibitem[8]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
 
-\bibitem[6]{cite-rfc1112}
+\bibitem[9]{cite-rfc1112}
 S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
 
-\bibitem[7]{cite-jeffery-pwu}
+\bibitem[10]{cite-jeffery-pwu}
 Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
 
-\bibitem[8]{cite-rfc4607}
+\bibitem[11]{cite-rfc4607}
 H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
 
-\bibitem[9]{cite-algharaibeh-utr29}
+\bibitem[12]{cite-algharaibeh-utr29}
 Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
 
-\bibitem[10]{cite-algharaibeh-utr28}
+\bibitem[13]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[11]{cite-rfc792}
+\bibitem[14]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[12]{cite-rfc2236}
+\bibitem[15]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[13]{cite-rfc3376}
+\bibitem[16]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[14]{cite-rfc1071}
+\bibitem[17]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
