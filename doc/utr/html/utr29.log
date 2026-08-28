@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.27)  27 AUG 2026 13:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.28)  28 AUG 2026 14:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -279,34 +279,42 @@ LaTeX Info: Redefining \\ on input line 3180.
 \c@FV@BreakBufferDepth=\count299
 \FV@LineWidth=\dimen157
 )
+(/usr/share/texlive/texmf-dist/tex/latex/framed/framed.sty
+Package: framed 2011/10/22 v 0.96: framed or shaded text with page breaks
+\OuterFrameSep=\skip52
+\fb@frw=\dimen158
+\fb@frh=\dimen159
+\FrameRule=\dimen160
+\FrameSep=\dimen161
+)
 (/usr/share/texlive/texmf-dist/tex/latex/booktabs/booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
-\heavyrulewidth=\dimen158
-\lightrulewidth=\dimen159
-\cmidrulewidth=\dimen160
-\belowrulesep=\dimen161
-\belowbottomsep=\dimen162
-\aboverulesep=\dimen163
-\abovetopsep=\dimen164
-\cmidrulesep=\dimen165
-\cmidrulekern=\dimen166
-\defaultaddspace=\dimen167
+\heavyrulewidth=\dimen162
+\lightrulewidth=\dimen163
+\cmidrulewidth=\dimen164
+\belowrulesep=\dimen165
+\belowbottomsep=\dimen166
+\aboverulesep=\dimen167
+\abovetopsep=\dimen168
+\cmidrulesep=\dimen169
+\cmidrulekern=\dimen170
+\defaultaddspace=\dimen171
 \@cmidla=\count300
 \@cmidlb=\count301
-\@aboverulesep=\dimen168
-\@belowrulesep=\dimen169
+\@aboverulesep=\dimen172
+\@belowrulesep=\dimen173
 \@thisruleclass=\count302
 \@lastruleclass=\count303
-\@thisrulewidth=\dimen170
+\@thisrulewidth=\dimen174
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/longtable.sty
 Package: longtable 2023-11-01 v4.19 Multi-page Table package (DPC)
-\LTleft=\skip52
-\LTright=\skip53
-\LTpre=\skip54
-\LTpost=\skip55
+\LTleft=\skip53
+\LTright=\skip54
+\LTpre=\skip55
+\LTpost=\skip56
 \LTchunksize=\count304
-\LTcapwidth=\dimen171
+\LTcapwidth=\dimen175
 \LT@head=\box57
 \LT@firsthead=\box58
 \LT@foot=\box59
@@ -320,34 +328,34 @@ Package: longtable 2023-11-01 v4.19 Multi-page Table package (DPC)
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/array.sty
 Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
-\col@sep=\dimen172
+\col@sep=\dimen176
 \ar@mcellbox=\box62
-\extrarowheight=\dimen173
+\extrarowheight=\dimen177
 \NC@list=\toks22
-\extratabsurround=\skip56
-\backup@length=\skip57
+\extratabsurround=\skip57
+\backup@length=\skip58
 \ar@cellbox=\box63
 )
 (/usr/share/texlive/texmf-dist/tex/latex/multirow/multirow.sty
 Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
-\multirow@colwidth=\skip58
+\multirow@colwidth=\skip59
 \multirow@cntb=\count309
-\multirow@dima=\skip59
-\bigstrutjot=\dimen174
+\multirow@dima=\skip60
+\bigstrutjot=\dimen178
 )
 (/usr/share/texlive/texmf-dist/tex/latex/caption/caption.sty
 Package: caption 2023/08/05 v3.6o Customizing captions (AR)
 
 (/usr/share/texlive/texmf-dist/tex/latex/caption/caption3.sty
 Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
-\caption@tempdima=\dimen175
-\captionmargin=\dimen176
-\caption@leftmargin=\dimen177
-\caption@rightmargin=\dimen178
-\caption@width=\dimen179
-\caption@indent=\dimen180
-\caption@parindent=\dimen181
-\caption@hangindent=\dimen182
+\caption@tempdima=\dimen179
+\captionmargin=\dimen180
+\caption@leftmargin=\dimen181
+\caption@rightmargin=\dimen182
+\caption@width=\dimen183
+\caption@indent=\dimen184
+\caption@parindent=\dimen185
+\caption@hangindent=\dimen186
 Package caption Info: Standard document class detected.
 )
 \c@caption@flags=\count310
@@ -358,7 +366,7 @@ Package caption Info: longtable package is loaded.
 (/usr/share/texlive/texmf-dist/tex/latex/caption/ltcaption.sty
 Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
 ))
-Package hyperref Info: Option `colorlinks' set `true' on input line 23.
+Package hyperref Info: Option `colorlinks' set `true' on input line 30.
 
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
@@ -368,35 +376,35 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 (./utr29.aux)
 \openout1 = `utr29.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 31.
+LaTeX Font Info:    ... okay on input line 31.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count313
-\scratchdimen=\dimen183
+\scratchdimen=\dimen187
 \scratchbox=\box65
 \nofMPsegments=\count314
 \nofMParguments=\count315
 \everyMPshowfont=\toks23
 \MPscratchCnt=\count316
-\MPscratchDim=\dimen184
+\MPscratchDim=\dimen188
 \MPnumerator=\count317
 \makeMPintoPDFobject=\count318
 \everyMPtoPDFconversion=\toks24
@@ -409,7 +417,7 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring ON on input line 24.
+Package hyperref Info: Link coloring ON on input line 31.
 
 (./utr29.out) (./utr29.out)
 \@outlinefile=\write4
@@ -418,35 +426,35 @@ Package hyperref Info: Link coloring ON on input line 24.
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
 
-Overfull \hbox (54.22887pt too wide) in paragraph at lines 38--39
+Overfull \hbox (54.22887pt too wide) in paragraph at lines 45--46
 \T1/cmr/m/n/12 SOCK_RAW, proto= se-lects the IP pro-to-col num-ber, and writes(
 )/receive()
  []
 
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 4
-6.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 5
+3.
 (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 46.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 53.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 46.
+(Font)              <14.4> on input line 53.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 46.
+(Font)              <7> on input line 53.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 75.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 82.
 
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.79 
+l.86 
       [1]
-Overfull \hbox (10.26404pt too wide) in paragraph at lines 84--85
+Overfull \hbox (10.26404pt too wide) in paragraph at lines 91--92
 []\T1/cmr/bx/n/12 Datagram I/O matches UDP. \T1/cmr/m/n/12 Raw sock-ets are not
  con-nected. \T1/cmtt/m/n/12 writes()
  []
@@ -456,78 +464,63 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.124 \end{longtable}
+l.133 \end{longtable}
                       [2] [3] [4]
-Overfull \hbox (6.93239pt too wide) in paragraph at lines 231--232
+Overfull \hbox (6.93239pt too wide) in paragraph at lines 248--249
 []\T1/cmtt/m/n/12 writes() \T1/cmr/m/n/12 calls \T1/cmtt/m/n/12 sock_write()\T1
 /cmr/m/n/12 , which for \T1/cmtt/m/n/12 SOCK_RAW \T1/cmr/m/n/12 (and UDP) does 
 \T1/cmtt/m/n/12 sendto
  []
 
-
-Overfull \hbox (7.49402pt too wide) in paragraph at lines 248--249
+[5]
+Overfull \hbox (7.49402pt too wide) in paragraph at lines 265--266
 \T1/cmr/m/n/12 declar-a-tive en-gine for fixed bi-nary lay-outs. Pro-to-col cla
 sses in-herit \T1/cmtt/m/n/12 PacketSpec
  []
 
-[5] [6]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 285.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 285.
-
-Overfull \hbox (0.30559pt too wide) in paragraph at lines 303--304
+[6] [7]
+Overfull \hbox (0.30559pt too wide) in paragraph at lines 326--327
 []\T1/cmtt/m/n/12 set() \T1/cmr/m/n/12 and \T1/cmtt/m/n/12 set_payload() \T1/cm
 r/m/n/12 are chain-able. \T1/cmtt/m/n/12 build(extra, payload, lax)
  []
 
-[7] [8] [9]
-Overfull \hbox (26.43155pt too wide) in paragraph at lines 443--444
+[8] [9] [10]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 443.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 443.
+ [11]
+Overfull \hbox (26.43155pt too wide) in paragraph at lines 482--483
 []\T1/cmr/m/n/12 Exported con-stants (\T1/cmtt/m/n/12 IGMP_MEMBERSHIP_QUERY\T1/
 cmr/m/n/12 , \T1/cmtt/m/n/12 IGMP_V3_MEMBERSHIP_REPORT\T1/cmr/m/n/12 ,
  []
 
 
-Overfull \hbox (19.9777pt too wide) in paragraph at lines 443--444
+Overfull \hbox (19.9777pt too wide) in paragraph at lines 482--483
 \T1/cmtt/m/n/12 IGMP_CHANGE_TO_EXCLUDE_MODE\T1/cmr/m/n/12 , and the rest) are i
 ni-tial-ized on first \T1/cmtt/m/n/12 IgmpPacket
  []
 
-[10] [11]
-Overfull \hbox (6.84897pt too wide) in paragraph at lines 518--519
+[12] [13]
+Overfull \hbox (6.84897pt too wide) in paragraph at lines 567--568
 \T1/cmtt/m/n/12 hdrincl=\T1/cmr/m/n/12 , data-gram \T1/cmtt/m/n/12 writes \T1/c
 mr/m/n/12 / \T1/cmtt/m/n/12 receive\T1/cmr/m/n/12 , Pack-et-Spec, ICMP echo, IG
 MPv2/v3,
  []
 
-[12]
-Overfull \hbox (4.97978pt too wide) in paragraph at lines 569--570
+[14]
+Overfull \hbox (4.97978pt too wide) in paragraph at lines 618--619
 \T1/cmtt/m/n/12 key(f) \T1/cmr/m/n/12 yields pop-u-lated names (priv-i-lege de-
 nial still prints \T1/cmtt/m/n/12 raw-peek:ok
  []
 
-[13]
-Underfull \hbox (badness 4779) in paragraph at lines 597--598
+
+Underfull \hbox (badness 4779) in paragraph at lines 648--649
 []\T1/cmr/m/n/12 Clinton Jef-fery. "How to Write a Uni-con Tech-ni-cal Re-port"
 .
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 603--604
-[]\T1/cmr/m/n/12 Unicode Con-sor-tium. "The Uni-code Stan-dard".
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 609--610
-[]\T1/cmr/m/n/12 The lib-ssh Project. "lib-ssh -- The SSH Li-brary".
- []
-
-
-Underfull \hbox (badness 1072) in paragraph at lines 615--616
-[]\T1/cmr/m/n/12 The OpenSSL Project. "OpenSSL -- Cryp-tog-ra-phy and SSL/TLS
- []
-
-[14] [15] (./utr29.aux)
+[15] [16] (./utr29.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -536,13 +529,13 @@ Package rerunfilecheck Info: File `utr29.out' has not changed.
 (rerunfilecheck)             Checksum: 0D6B070CC34CAE1098921B700123C951;2555.
  ) 
 Here is how much of TeX's memory you used:
- 12253 strings out of 476182
- 198529 string characters out of 5795595
- 1945975 words of memory out of 5000000
- 34063 multiletter control sequences out of 15000+600000
+ 12303 strings out of 476182
+ 199272 string characters out of 5795595
+ 1942975 words of memory out of 5000000
+ 34118 multiletter control sequences out of 15000+600000
  571254 words of font info for 61 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,9n,79p,892b,703s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,890b,593s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.60
 0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1095.
 600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti120
@@ -556,10 +549,10 @@ n/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknap
 pen/ec/ecbx2074.600pk></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
 s/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cm
 sy6.pfb>
-Output written on utr29.pdf (17 pages, 178502 bytes).
+Output written on utr29.pdf (18 pages, 175225 bytes).
 PDF statistics:
- 642 PDF objects out of 1000 (max. 8388607)
- 207 compressed objects within 3 object streams
- 54 named destinations out of 1000 (max. 500000)
+ 635 PDF objects out of 1000 (max. 8388607)
+ 199 compressed objects within 2 object streams
+ 45 named destinations out of 1000 (max. 500000)
  137 words of extra memory for PDF output out of 10000 (max. 10000000)
 

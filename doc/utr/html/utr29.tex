@@ -10,6 +10,13 @@
   \usepackage{fvextra}%
   \fvset{breaklines=true,breakanywhere=true}%
 }{}
+\IfFileExists{framed.sty}{%
+  \usepackage{framed}%
+  \definecolor{shadecolor}{RGB}{240,243,246}%
+  \newenvironment{uscribeshaded}{\shaded}{\endshaded}%
+}{%
+  \newenvironment{uscribeshaded}{}{}%
+}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -56,7 +63,7 @@ Moscow, ID, 83844, USA
 \section{1. Introduction}
 \label{utr29-sec-intro}
 
-This report describes raw IP sockets in Unicon: how a handle is opened, how datagrams are sent and received, how protocol bytes are built and decoded, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. Socket attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}, and the rest) are the multicast facility [13]; this report adds mode \texttt{nr} and the packet library on top of that. The language-facing reference lives in \emph{Programming with Unicon} [10] (Chapter 5, "Raw Sockets" and "PacketSpec and package net"; Chapter 14, \texttt{uping} and \texttt{uigmp}) and the language reference (\texttt{open} mode \texttt{nr}, attributes \texttt{proto} and \texttt{hdrincl}, subscript peek). Automated plumbing and peek tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}raw\_\allowbreak{}sock.\allowbreak{}icn}.
+This report describes raw IP sockets in Unicon: how a handle is opened, how datagrams are sent and received, how protocol bytes are built and decoded, and what remains out of scope. It is formatted as a Unicon Technical Report [1]. Socket attributes (\texttt{ttl}, \texttt{iface}, \texttt{join}, and the rest) are the multicast facility [2]; this report adds mode \texttt{nr} and the packet library on top of that. The language-facing reference lives in \emph{Programming with Unicon} [3] (Chapter 5, "Raw Sockets" and "PacketSpec and package net"; Chapter 14, \texttt{uping} and \texttt{uigmp}) and the language reference (\texttt{open} mode \texttt{nr}, attributes \texttt{proto} and \texttt{hdrincl}, subscript peek). Automated plumbing and peek tests live in \texttt{tests/\allowbreak{}posix/\allowbreak{}raw\_\allowbreak{}sock.\allowbreak{}icn}.
 
 
 Raw sockets are part of the POSIX network facility. A build without POSIX networking has no \texttt{n} modes at all. Opening \texttt{SOCK\_\allowbreak{}RAW} usually needs elevated privileges (root or administrator); that is an operating-system restriction, not a Unicon one.
@@ -64,7 +71,7 @@ Raw sockets are part of the POSIX network facility. A build without POSIX networ
 \section{2. Motivation}
 \label{utr29-sec-motivation}
 
-TCP and UDP cover most application protocols. Diagnostic and control traffic sits one layer down: ICMP echo [14], IGMP membership [15] [16], OSPF, GRE, PIM. Those messages are IP protocol payloads, not port-addressed transport streams. ICMP, IGMP, and other raw IP protocols were not supported.
+TCP and UDP cover most application protocols. Diagnostic and control traffic sits one layer down: ICMP echo [4], IGMP membership [5] [6], OSPF, GRE, PIM. Those messages are IP protocol payloads, not port-addressed transport streams. ICMP, IGMP, and other raw IP protocols were not supported.
 
 
 The rest of Unicon networking already treats \texttt{open()} as the constructor and \texttt{Attrib()} as the option verb. Raw sockets follow that pattern instead of adding \texttt{rawsocket()} or a parallel packet API. Payload construction is a library problem: the runtime delivers bytes, and \texttt{PacketSpec} names the fields.
@@ -88,10 +95,12 @@ The rest of Unicon networking already treats \texttt{open()} as the constructor 
 
 \section{4. Opening a raw socket}
 \label{utr29-sec-open}
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 f := open("8.8.8.8", "nr", "proto=icmp", "ttl=64") |
      stop(&errortext)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 The first argument is a bare host or address, not \texttt{host:port}. Raw destinations are hosts. A single \texttt{host:port} form is accepted when there is exactly one colon and a non-empty port, but ICMP and IGMP do not use ports. IPv6 literals contain colons; they are treated as hosts and are not split as \texttt{host:port}.
@@ -129,7 +138,8 @@ Names are case-insensitive. Unknown names and numbers outside 0--255 fail at \te
 
 If the kernel refuses \texttt{SOCK\_\allowbreak{}RAW}, \texttt{open()} fails and \texttt{\&errortext} is the system message (typically "Operation not permitted" or "Permission denied"). That is success of the Unicon plumbing and a privilege problem on the host.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local f
    if f := open("8.8.8.8", "nr") then
@@ -146,15 +156,18 @@ procedure main()
       write("raw-icmp: ", &errortext)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 missing-proto: bad socket attribute
 bad-proto: bad socket attribute
 raw-icmp: Operation not permitted
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 The last line is the unprivileged case. With privileges it prints \texttt{raw-\allowbreak{}icmp:~ok} (or the test suite's \texttt{plumbing-\allowbreak{}ok}).
@@ -162,7 +175,7 @@ The last line is the unprivileged case. With privileges it prints \texttt{raw-\a
 \section{5. Attributes and status peek}
 \label{utr29-sec-attrs}
 
-Trailing \texttt{open()} arguments are the same \texttt{name=value} socket attributes used for TCP and UDP [13]. Booleans are exactly \texttt{yes} or \texttt{no}. \texttt{ttl} and \texttt{iface} were named for this sharing: hop limit and interface are not multicast-only knobs.
+Trailing \texttt{open()} arguments are the same \texttt{name=value} socket attributes used for TCP and UDP [2]. Booleans are exactly \texttt{yes} or \texttt{no}. \texttt{ttl} and \texttt{iface} were named for this sharing: hop limit and interface are not multicast-only knobs.
 
 \begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
@@ -186,7 +199,7 @@ Attribute & Role on a raw socket \\
 \end{longtable}
 
 
-\texttt{Attrib(f,\allowbreak{}~"ttl=4")} sets hop limits after \texttt{open()}. Status uses the same \texttt{[~]} / \texttt{key()} get as UDP [13]: unknown names raise 1310, unpopulated fields fail. Boolean peek fields that answered succeed with \texttt{"yes"} or \texttt{\&null} (never \texttt{"no"}); that is output only -- \texttt{open()} and \texttt{Attrib()} still take \texttt{yes} or \texttt{no}. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed; after the first suspend, \texttt{close()} makes the generator fail instead of raising. Raw sockets add \texttt{proto} (fixed at \texttt{socket()}) and \texttt{hdrincl}.
+\texttt{Attrib(f,\allowbreak{}~"ttl=4")} sets hop limits after \texttt{open()}. Status uses the same \texttt{[~]} / \texttt{key()} get as UDP [2]: unknown names raise 1310, unpopulated fields fail. Boolean peek fields that answered succeed with \texttt{"yes"} or \texttt{\&null} (never \texttt{"no"}); that is output only -- \texttt{open()} and \texttt{Attrib()} still take \texttt{yes} or \texttt{no}. Peeking a closed handle is error 174. \texttt{key(f)} that has not yet produced a name also raises 174 if the handle is already closed; after the first suspend, \texttt{close()} makes the generator fail instead of raising. Raw sockets add \texttt{proto} (fixed at \texttt{socket()}) and \texttt{hdrincl}.
 
 \begin{longtable}{>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}>{\raggedright\sloppy\arraybackslash}p{\dimexpr(\textwidth-2\tabcolsep*2)*1/2+2\tabcolsep*(1-1)\relax}}
 \hline
@@ -210,7 +223,8 @@ Name & Peek value \\
 \texttt{rcvbuf} / \texttt{sndbuf} & Buffer sizes in bytes (integers) \\
 \end{longtable}
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 f := open("127.0.0.1", "nr", "proto=icmp") | stop(&errortext)
 write("proto=", f["proto"])
 write("ttl=", f["ttl"] | "unpopulated")
@@ -218,14 +232,17 @@ every k := key(f) do
    write("field ", k)
 close(f)
 \end{Verbatim}
+\end{uscribeshaded}
 
 \section{6. Send and receive}
 \label{utr29-sec-io}
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 writes(f, icmp_bytes)
 r := receive(f)
 write(r.addr, "  ", *r.msg, " bytes")
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{writes()} calls \texttt{sock\_\allowbreak{}write()}, which for \texttt{SOCK\_\allowbreak{}RAW} (and UDP) does \texttt{sendto} to the \texttt{addrinfo} saved at \texttt{open()}. There is no \texttt{connect(2)}. Changing the destination means opening another handle (or, with \texttt{hdrincl=yes}, putting the destination in a supplied IP header).
@@ -248,11 +265,12 @@ As with UDP, \texttt{read()} / \texttt{reads()} are the wrong verbs for datagram
 Module \texttt{packetspec} (package \texttt{net}, \texttt{uni/\allowbreak{}lib/\allowbreak{}packetspec.\allowbreak{}icn}) is a small declarative engine for fixed binary layouts. Protocol classes inherit \texttt{PacketSpec} and override \texttt{define()}.
 
 
-Layer-1 helpers pack and unpack network-order integers (\texttt{u8} / \texttt{u16} / \texttt{u32} / \texttt{u64} and the matching \texttt{get\_\allowbreak{}u*} readers) and IPv4 addresses (\texttt{ipv4} / \texttt{to\_\allowbreak{}ipv4} / \texttt{get\_\allowbreak{}ipv4}). \texttt{inet\_\allowbreak{}cksum()} is RFC 1071 [17].
+Layer-1 helpers pack and unpack network-order integers (\texttt{u8} / \texttt{u16} / \texttt{u32} / \texttt{u64} and the matching \texttt{get\_\allowbreak{}u*} readers) and IPv4 addresses (\texttt{ipv4} / \texttt{to\_\allowbreak{}ipv4} / \texttt{get\_\allowbreak{}ipv4}). \texttt{inet\_\allowbreak{}cksum()} is RFC 1071 [7].
 
 \subsection{7.1 Declaring a layout}
 \label{utr29-sec-ps-fields}
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 class IcmpEchoRequest : IcmpPacket()
    method define()
       field("type", 1, 8)
@@ -263,6 +281,7 @@ class IcmpEchoRequest : IcmpPacket()
    end
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{field(name,\allowbreak{}~size,\allowbreak{}~defval)} is a network-order integer. \texttt{bytes\_\allowbreak{}field} is opaque fixed-width bytes. \texttt{ipv4\_\allowbreak{}field} accepts a dotted-quad, integer, or four raw bytes on build and returns a dotted-quad on decode. \texttt{checksum\_\allowbreak{}field} is a 16-bit placeholder filled at \texttt{build()} time over the header plus payload. Pass \texttt{exclude\_\allowbreak{}off} / \texttt{exclude\_\allowbreak{}len} (1-based) to omit a range from the sum --- OSPF Authentication and PIM Register are the documented cases; those layouts are not in the library yet.
@@ -275,7 +294,8 @@ end
 
 Preferred call shape (no string-keyed tables required). This needs no raw socket:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import net
 
 procedure main()
@@ -288,16 +308,19 @@ procedure main()
    write("type=", v["type"], " id=", v["id"], " seq=", v["seq"])
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 type:int=8  code:int=0  checksum:checksum(auto)  id:int=0  seq:int=0
 type:int=8  code:int=0  checksum:checksum(auto)  id:int=1  seq:int=2
 len=10
 type=8 id=1 seq=2
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{set()} and \texttt{set\_\allowbreak{}payload()} are chainable. \texttt{build(extra,\allowbreak{}~payload,\allowbreak{}~lax)} overlays an optional table, appends payload, and returns the complete byte string with checksum filled. \texttt{decode(s)} returns a table of field names to values. \texttt{describe()} is a one-line summary for the REPL: names, kinds, defaults, required markers, and current \texttt{set()} values.
@@ -310,20 +333,23 @@ type=8 id=1 seq=2
 \section{8. ICMP echo}
 \label{utr29-sec-icmp}
 
-\texttt{uni/\allowbreak{}lib/\allowbreak{}icmp.\allowbreak{}icn} adds echo request (type 8) and echo reply (type 0) [14] on top of \texttt{PacketSpec}:
+\texttt{uni/\allowbreak{}lib/\allowbreak{}icmp.\allowbreak{}icn} adds echo request (type 8) and echo reply (type 0) [4] on top of \texttt{PacketSpec}:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 PacketSpec
   IcmpPacket          strip_ip / match
     IcmpEchoRequest   type 8; echo(id, seq, payload)
     IcmpEchoReply     type 0; match_echo(pkt, id, seq)
 Ping                  session wrapper
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{Ping(host)} opens \texttt{proto=icmp} with TTL 64 and a 2000 ms default wait. \texttt{echo()} sends a request (56 zero bytes unless a payload is given), waits with \texttt{select()}, and succeeds with a decode table plus \texttt{rtt} (milliseconds, real), \texttt{rtt\_\allowbreak{}us}, \texttt{ttl} (from the IPv4 header), and \texttt{addr}. Round-trip time uses \texttt{gettimeofday()}.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import net
 
 procedure main()
@@ -335,6 +361,7 @@ procedure main()
    p.close()
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{set\_\allowbreak{}timeout(ms)} changes the default wait. An explicit sequence number and payload can be passed to \texttt{echo()}; otherwise the session increments \texttt{seq}.
@@ -342,7 +369,8 @@ end
 
 The same exchange with an explicit socket:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import net
 
 procedure main()
@@ -360,6 +388,7 @@ procedure main()
    close(f)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Other ICMP types (destination unreachable, time exceeded, and so on) are not in the library. \texttt{proto=icmpv6} opens an ICMPv6 socket, but there are no Neighbor Discovery or echo layouts yet.
@@ -369,13 +398,15 @@ Other ICMP types (destination unreachable, time exceeded, and so on) are not in 
 
 \texttt{uni/\allowbreak{}lib/\allowbreak{}igmp.\allowbreak{}icn} covers IGMPv2 (RFC 2236) and IGMPv3 (RFC 3376):
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 PacketSpec
   IgmpPacket
     Igmpv2Query / Igmpv2Report / Igmpv2Leave
     Igmpv3Query / Igmpv3Report
 Igmp                     session wrapper
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 IGMPv2 messages are an eight-octet header. Report and leave \texttt{require()} a group. IGMPv3 queries add flags, QQIC, and a source list. IGMPv3 reports carry group records: ASM join/leave and SSM source filters (\texttt{join\_\allowbreak{}sources}, \texttt{allow}, \texttt{block}).
@@ -386,7 +417,8 @@ IGMPv2 messages are an eight-octet header. Report and leave \texttt{require()} a
 
 PacketSpec classes work without a raw socket:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import net
 
 procedure main()
@@ -401,22 +433,26 @@ procedure main()
    write("v3 join len=", *pkt)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 type:int=22  max_resp_time:int=0  checksum:checksum(auto)  group:ipv4(required)
 type:int=34  reserved1:int=0  checksum:checksum(auto)  reserved2:int=0  nrecords:int=0
 v2 report len=8
 type=22 group=239.1.1.1
 v3 join len=16
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Opening a live IGMP socket needs the same privileges as ICMP:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import net
 
 procedure main()
@@ -430,14 +466,17 @@ procedure main()
    g.close()
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Session send helpers: \texttt{report} / \texttt{leave} / \texttt{query} (v2), \texttt{join} / \texttt{leave3} (v3 ASM), and \texttt{send(bytes)} for a hand-built packet. SSM source-filter joins use the PacketSpec class, not the session wrapper:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 pkt := Igmpv3Report().join_sources("239.1.1.1", ["192.0.2.1"])
 g.send(pkt)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Exported constants (\texttt{IGMP\_\allowbreak{}MEMBERSHIP\_\allowbreak{}QUERY}, \texttt{IGMP\_\allowbreak{}V3\_\allowbreak{}MEMBERSHIP\_\allowbreak{}REPORT}, \texttt{IGMP\_\allowbreak{}CHANGE\_\allowbreak{}TO\_\allowbreak{}EXCLUDE\_\allowbreak{}MODE}, and the rest) are initialized on first \texttt{IgmpPacket} construction.
@@ -447,7 +486,8 @@ Exported constants (\texttt{IGMP\_\allowbreak{}MEMBERSHIP\_\allowbreak{}QUERY}, 
 
 \texttt{uni/\allowbreak{}progs/\allowbreak{}uping} and \texttt{uni/\allowbreak{}progs/\allowbreak{}uigmp} are teaching clients, not replacements for \texttt{ping(8)} or \texttt{tcpdump(1)}. They need \texttt{SOCK\_\allowbreak{}RAW} privileges:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 unicon uping
 unicon uigmp
 sudo ./uping host [count]
@@ -455,18 +495,22 @@ sudo ./uigmp [seconds]
 sudo ./uping -v host    # also show open()/Ping API demos
 sudo ./uigmp -v         # also show open()/Igmp API demos
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Default mode uses the session wrappers. \texttt{-\allowbreak{}v} / \texttt{-\allowbreak{}d} also runs the lower-level \texttt{open(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{}~"nr",\allowbreak{}~.\allowbreak{}.\allowbreak{}.\allowbreak{})} plus PacketSpec path and prints \texttt{describe()} output.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 sudo ./uping 192.0.2.1
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 PING 192.0.2.1 (192.0.2.1): 56 data bytes
 64 bytes from 192.0.2.1: icmp_seq=0 ttl=118 time=18.390 ms
 64 bytes from 192.0.2.1: icmp_seq=1 ttl=118 time=16.245 ms
@@ -476,21 +520,26 @@ PING 192.0.2.1 (192.0.2.1): 56 data bytes
 4 packets transmitted, 4 packets received, 0.0% packet loss
 round-trip min/avg/max = 15.533/16.869/18.390 ms
 \end{Verbatim}
+\end{uscribeshaded}
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 sudo ./uigmp
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 listening on IGMP
 
 36 bytes from 192.0.2.10: IGMPv3 query group=0.0.0.0 max_resp=100 qrv=2
 36 bytes from 192.0.2.10: IGMPv3 query group=239.1.1.1 max_resp=100 qrv=2
 36 bytes from 192.0.2.20: IGMPv3 report \{239.1.1.1 CHANGE_TO_EXCLUDE\}
 \end{Verbatim}
+\end{uscribeshaded}
 
 \section{11. Runtime implementation}
 \label{utr29-sec-impl}
@@ -573,7 +622,8 @@ when \texttt{SOCK\_\allowbreak{}RAW} is allowed, \texttt{f["proto"]} is 1 after 
 
 Expected output is \texttt{tests/\allowbreak{}posix/\allowbreak{}stand/\allowbreak{}raw\_\allowbreak{}sock.\allowbreak{}std}:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 missing-proto: bad socket attribute
 bad-proto: bad socket attribute
 empty-proto: bad socket attribute
@@ -586,6 +636,7 @@ read-mode-r: ok
 raw-peek:ok
 raw-key:ok
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 On an unprivileged account the \texttt{raw-\allowbreak{}*} lines still print \texttt{plumbing-\allowbreak{}ok}: the test treats both a successful \texttt{socket()} and a privilege denial as passing plumbing. The posix suite picks up every \texttt{*.\allowbreak{}icn} in that directory.
@@ -596,52 +647,22 @@ On an unprivileged account the \texttt{raw-\allowbreak{}*} lines still print \te
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[3]{cite-unicode-standard}
-Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
-
-\bibitem[4]{cite-unicon-utf8lib}
-Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
-
-\bibitem[5]{cite-libssh}
-The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
-
-\bibitem[6]{cite-jeffery-utr13}
-Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
-
-\bibitem[7]{cite-openssl}
-The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
-
-\bibitem[8]{cite-rfc2104}
-H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
-
-\bibitem[9]{cite-rfc1112}
-S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
-
-\bibitem[10]{cite-jeffery-pwu}
-Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
-
-\bibitem[11]{cite-rfc4607}
-H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
-
-\bibitem[12]{cite-algharaibeh-utr29}
-Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
-
-\bibitem[13]{cite-algharaibeh-utr28}
+\bibitem[2]{cite-algharaibeh-utr28}
 Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
 
-\bibitem[14]{cite-rfc792}
+\bibitem[3]{cite-jeffery-pwu}
+Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
+
+\bibitem[4]{cite-rfc792}
 J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
 
-\bibitem[15]{cite-rfc2236}
+\bibitem[5]{cite-rfc2236}
 W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
 
-\bibitem[16]{cite-rfc3376}
+\bibitem[6]{cite-rfc3376}
 B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
 
-\bibitem[17]{cite-rfc1071}
+\bibitem[7]{cite-rfc1071}
 R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}

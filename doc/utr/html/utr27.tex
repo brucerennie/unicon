@@ -10,6 +10,13 @@
   \usepackage{fvextra}%
   \fvset{breaklines=true,breakanywhere=true}%
 }{}
+\IfFileExists{framed.sty}{%
+  \usepackage{framed}%
+  \definecolor{shadecolor}{RGB}{240,243,246}%
+  \newenvironment{uscribeshaded}{\shaded}{\endshaded}%
+}{%
+  \newenvironment{uscribeshaded}{}{}%
+}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -64,7 +71,7 @@ The feature is optional in the same sense as TLS. A build with OpenSSL reports \
 \section{2. Motivation}
 \label{utr27-sec-motivation}
 
-Unicon already links OpenSSL [7] for mode \texttt{n} with \texttt{e} -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to use external tools. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through.
+Unicon already links OpenSSL [2] for mode \texttt{n} with \texttt{e} -- encrypted TCP. Programs that needed a SHA-256 digest, an HMAC, a signature, or a file encrypted at rest had to use external tools. The facilities here expose those primitives without a second API: hashing a stream is opening a handle and writing to it; reading an encrypted file is opening the file with a transform on the way through.
 
 
 No new external dependency is introduced. The implementation uses OpenSSL's EVP interface, which the encrypted-socket support already requires.
@@ -155,7 +162,7 @@ Mode \texttt{-\allowbreak{}} skips peer verification on TLS (\texttt{ne-\allowbr
 \end{longtable}
 
 
-HMAC is the construction of RFC 2104 [8] over the digest named by \texttt{alg=}. Algorithm and cipher names are OpenSSL's own (\texttt{sha256}, \texttt{aes-\allowbreak{}256-\allowbreak{}gcm}) and are passed through rather than mapped to a Unicon-defined set.
+HMAC is the construction of RFC 2104 [3] over the digest named by \texttt{alg=}. Algorithm and cipher names are OpenSSL's own (\texttt{sha256}, \texttt{aes-\allowbreak{}256-\allowbreak{}gcm}) and are passed through rather than mapped to a Unicon-defined set.
 
 
 Defaults are \texttt{alg=sha256} and \texttt{cipher=aes-\allowbreak{}256-\allowbreak{}gcm}.
@@ -374,7 +381,8 @@ Name & Value \\
 
 Handshake failure means \texttt{open()} failed; there is no handle to subscript. Distinguish expired / untrusted CA / hostname mismatch / no shared cipher / protocol version via \texttt{\&errornumber} 1320--1325.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 cert := open("client.crt", "e") | stop(&errortext)
 write("material ", cert["type"], " ", cert["subject"])
 every name := !cert["san"] do
@@ -393,13 +401,15 @@ every pem := !conn["certchain"] do
    write(*pem, " byte PEM")
 close(conn)
 \end{Verbatim}
+\end{uscribeshaded}
 
 \section{7. Material handles}
 \label{utr27-sec-handles}
 
 Mode \texttt{e} with no \texttt{op=} loads keys and certificates. Content is auto-detected (PEM by header, DER by probe-by-parse). A file that holds several items -- a combined cert+key PEM, or a cert plus chain -- loads into one handle. \texttt{type=} narrows that to a single role.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 k  := open("signing.pem", "e")
 pk := open("verify.pem", "e")
 c  := open("client.pem", "e")
@@ -407,11 +417,13 @@ kb := open(key_bytes, "er")
 ek := open("enc.key", "e", "keypass=" || pw)
 c  := open("bundle.pem", "e", "type=cert")
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 A raw key is still a file value; \texttt{h["type"]} reports the role:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local k
    k := open("sixteen-byte-key-material-here!!", "er") |
@@ -421,22 +433,27 @@ procedure main()
    close(k)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 file
 symkey
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Material split across files can be merged:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 idh := open("client.pem", "e")
 Attrib(idh, "key=client.key")
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 A handle is a file value (\texttt{type(h)} is \texttt{"file"}) carrying \texttt{Fs\_\allowbreak{}Crypto}, the same way a window or socket is a file that does not support every file operation. The underlying \texttt{CryptoFile} is malloc'd so pointers stay stable across garbage collection and are freed by \texttt{close()}.
@@ -454,7 +471,8 @@ These assume a build with \texttt{secure~sockets~layer~encryption}. Failures set
 
 SHA-256 of the known vector \texttt{abc}:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import crypto
 
 procedure main()
@@ -466,18 +484,22 @@ procedure main()
    close(h)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{write()} may be called many times; \texttt{read()} finalizes the digest \textbf{and resets} the handle, so the same handle can hash unrelated messages. Chunked \texttt{"hel"} + \texttt{"lo"} matches a single write of \texttt{"hello"}. A read with nothing pending fails:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import crypto
 
 procedure main()
@@ -494,20 +516,24 @@ procedure main()
    close(h)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
 idle:ok
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 A whole file uses the file-transform shape. The first \texttt{read()} consumes the file and returns the digest:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import crypto
 
 procedure main()
@@ -523,20 +549,24 @@ procedure main()
    remove("hash.dat")
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.2 HMAC}
 \label{utr27-sec-ex-hmac}
 
 Raw key bytes use mode \texttt{er}. \texttt{read()} returns the MAC; the same handle can MAC many messages after each finalize:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import crypto
 
 procedure main()
@@ -550,29 +580,35 @@ procedure main()
    close(hm)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 9fd1a900325bd173af31bf6467de8139d6615202654cf0fe2645cd2997eaf879
 32
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 A key loaded from a file is the same, with the material handle as the \texttt{open()} target and \texttt{op=hmac} as an attribute:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 k  := open("hmac.key", "e")
 hm := open(k, "e", "op=hmac", "alg=sha256")
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.3 Sign and verify}
 \label{utr27-sec-ex-sign}
 
 A private key signs; a certificate or public key verifies. \texttt{read()} on the signer returns the signature bytes. The listing assumes \texttt{signing.\allowbreak{}pem} and \texttt{verify.\allowbreak{}pem} in the current directory:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local k, sg, pk, vf, signature
    k := open("signing.pem", "e") | stop(&errortext)
@@ -592,18 +628,22 @@ procedure main()
    close(pk)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 ok
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 A failed verify sets \texttt{\&errornumber} 1315 so it is distinct from "nothing written." The same handle can check many messages by setting \texttt{sig=} in the idle window:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local k, sg, pk, vf, signature, msg
    k := open("signing.pem", "e") | stop(&errortext)
@@ -621,21 +661,25 @@ procedure main()
    every close(sg | vf | k | pk)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 one:ok
 two:ok
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.4 Symmetric encrypt and decrypt}
 \label{utr27-sec-ex-enc}
 
 The idle-window \texttt{Attrib(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{}~"op=decrypt")} reuses the bound key. Ciphertext is binary; the recovered plaintext is what matters:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local ky, c, ct, pt
    ky := open("sixteen-byte-key-material-here!!", "er") |
@@ -651,18 +695,22 @@ procedure main()
    close(ky)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 hello
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 With no \texttt{iv=}, each \texttt{read()} generates a fresh IV and prepends it, so one handle can encrypt many messages. Lengths below include the IV and AEAD tag:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local ky, c, msg, ct
    ky := open("sixteen-byte-key-material-here!!", "er") |
@@ -677,33 +725,39 @@ procedure main()
    close(ky)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 alpha 33 bytes
 beta 32 bytes
 gamma 33 bytes
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 For a wire format that does not prepend an IV, or for test vectors, set \texttt{iv=} in the idle window and take uniqueness yourself:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 every plaintext := !messages do \{
    Attrib(c, "iv=" || newiv())
    write(c, plaintext)
    ciphertext := read(c)
    \}
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.5 File encrypt and decrypt}
 \label{utr27-sec-ex-file}
 
 Writes encrypt and are finalized on \texttt{close()}. Reads decrypt as a stream. AEAD authentication is checked on the \textbf{final} read: earlier \texttt{reads()} chunks are provisional. Nothing decrypted should be acted on until the stream completes without error.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local ky, f, chunk, pending
    ky := open("sixteen-byte-key-material-here!!", "er") |
@@ -725,13 +779,16 @@ procedure main()
    close(ky)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 classified
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Callers who cannot defer processing should use the data-pipe shape, where a single \texttt{read()} returns plaintext only after the tag verifies.
@@ -739,7 +796,8 @@ Callers who cannot defer processing should use the data-pipe shape, where a sing
 
 The same key handle can wrap many files:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 keyh := open("aes.key", "e")
 every name := !filenames do \{
    f := open(name || ".enc", "we", "op=encrypt", keyh)
@@ -747,13 +805,15 @@ every name := !filenames do \{
    close(f)
    \}
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.6 TLS identity reuse and DTLS}
 \label{utr27-sec-ex-tls}
 
 Encrypted TCP remains \texttt{"ne"}. Material handles may be passed as attributes so certs and keys are parsed once. The socket asks by role, not by position: one combined PEM, or two handles, both work.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 id := open("client.pem", "e")
 conn := open("host:443", "ne", id, "verifyPeer=no")
 conn := open("host:443", "ne-", id)    # same as verifyPeer=no
@@ -762,6 +822,7 @@ certh := open("client.pem", "e")
 keyh  := open("client.key", "e")
 conn  := open("host:443", "ne", certh, keyh)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 After a handshake, \texttt{conn["cipher"]} peeks the negotiated suite and \texttt{conn["certchain"]} is a list of peer certificates as PEM strings; see \hyperref[utr27-sec-peek]{section 6.4} (\texttt{tests/\allowbreak{}crypto/\allowbreak{}tlspeek.\allowbreak{}icn}). \texttt{certh["type"]} / \texttt{keyh["type"]} are material-handle peeks, not session fields.
@@ -853,53 +914,11 @@ Automated tests live under \texttt{tests/\allowbreak{}crypto/\allowbreak{}}, one
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[3]{cite-unicode-standard}
-Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
-
-\bibitem[4]{cite-unicon-utf8lib}
-Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
-
-\bibitem[5]{cite-libssh}
-The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
-
-\bibitem[6]{cite-jeffery-utr13}
-Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
-
-\bibitem[7]{cite-openssl}
+\bibitem[2]{cite-openssl}
 The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
 
-\bibitem[8]{cite-rfc2104}
+\bibitem[3]{cite-rfc2104}
 H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
-
-\bibitem[9]{cite-rfc1112}
-S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
-
-\bibitem[10]{cite-jeffery-pwu}
-Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
-
-\bibitem[11]{cite-rfc4607}
-H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
-
-\bibitem[12]{cite-algharaibeh-utr29}
-Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
-
-\bibitem[13]{cite-algharaibeh-utr28}
-Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
-
-\bibitem[14]{cite-rfc792}
-J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
-
-\bibitem[15]{cite-rfc2236}
-W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
-
-\bibitem[16]{cite-rfc3376}
-B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
-
-\bibitem[17]{cite-rfc1071}
-R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
 \end{document}

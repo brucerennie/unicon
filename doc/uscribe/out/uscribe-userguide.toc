@@ -8,57 +8,58 @@
 \contentsline {section}{\numberline {2.2}TeX / PDF dependencies by platform}{3}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}macOS (Homebrew)}{3}{subsection.2.2.1}%
 \contentsline {subsection}{\numberline {2.2.2}Debian / Ubuntu}{4}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}Fedora / RHEL-family}{4}{subsection.2.2.3}%
-\contentsline {subsection}{\numberline {2.2.4}Arch Linux}{4}{subsection.2.2.4}%
-\contentsline {subsection}{\numberline {2.2.5}Windows}{4}{subsection.2.2.5}%
+\contentsline {subsection}{\numberline {2.2.3}Fedora / RHEL-family}{5}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Arch Linux}{5}{subsection.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.5}Windows}{5}{subsection.2.2.5}%
 \contentsline {subsection}{\numberline {2.2.6}What uscribe LaTeX output needs}{5}{subsection.2.2.6}%
-\contentsline {section}{\numberline {2.3}Build uscribe}{5}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Verify}{5}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Build this manual}{5}{section.2.5}%
-\contentsline {chapter}{\numberline {3}Quick Start}{7}{chapter.3}%
-\contentsline {section}{\numberline {3.1}1. Create a manifest}{7}{section.3.1}%
-\contentsline {section}{\numberline {3.2}2. Write chapters}{7}{section.3.2}%
-\contentsline {section}{\numberline {3.3}3. Book settings}{8}{section.3.3}%
-\contentsline {section}{\numberline {3.4}4. Build HTML}{8}{section.3.4}%
-\contentsline {section}{\numberline {3.5}5. Build PDF (optional)}{9}{section.3.5}%
-\contentsline {section}{\numberline {3.6}Where files go}{9}{section.3.6}%
-\contentsline {chapter}{\numberline {4}Reports}{10}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Mark a file as a report}{10}{section.4.1}%
-\contentsline {section}{\numberline {4.2}One report}{11}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Several reports and an index}{12}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Book vs report (summary)}{12}{section.4.4}%
-\contentsline {chapter}{\numberline {5}Book Configuration}{14}{chapter.5}%
-\contentsline {section}{\numberline {5.1}How the file is found}{14}{section.5.1}%
-\contentsline {section}{\numberline {5.2}File format}{14}{section.5.2}%
-\contentsline {section}{\numberline {5.3}title}{15}{section.5.3}%
-\contentsline {section}{\numberline {5.4}copyright}{15}{section.5.4}%
-\contentsline {section}{\numberline {5.5}logo}{15}{section.5.5}%
-\contentsline {section}{\numberline {5.6}name}{15}{section.5.6}%
-\contentsline {section}{\numberline {5.7}theme}{15}{section.5.7}%
-\contentsline {section}{\numberline {5.8}themePath}{16}{section.5.8}%
-\contentsline {section}{\numberline {5.9}docclass}{16}{section.5.9}%
-\contentsline {section}{\numberline {5.10}frontmatter}{16}{section.5.10}%
-\contentsline {section}{\numberline {5.11}toctree}{16}{section.5.11}%
-\contentsline {section}{\numberline {5.12}Not in book.conf}{16}{section.5.12}%
-\contentsline {section}{\numberline {5.13}This guide}{17}{section.5.13}%
-\contentsline {chapter}{\numberline {6}Markup Reference}{18}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Headings}{18}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Document fields}{18}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Paragraphs and lists}{19}{section.6.3}%
-\contentsline {section}{\numberline {6.4}Definition lists}{20}{section.6.4}%
-\contentsline {section}{\numberline {6.5}Tables}{20}{section.6.5}%
-\contentsline {section}{\numberline {6.6}Labels and cross-references}{22}{section.6.6}%
-\contentsline {section}{\numberline {6.7}Stable labels}{23}{section.6.7}%
-\contentsline {section}{\numberline {6.8}Inline markup}{23}{section.6.8}%
-\contentsline {section}{\numberline {6.9}Directives}{23}{section.6.9}%
-\contentsline {section}{\numberline {6.10}Include / literalinclude}{26}{section.6.10}%
-\contentsline {section}{\numberline {6.11}Unicon listings}{26}{section.6.11}%
-\contentsline {chapter}{\numberline {7}Themes}{28}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Built-in themes}{28}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Build-time default}{28}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Theme layout on disk}{29}{section.7.3}%
-\contentsline {chapter}{\numberline {8}Command Line}{30}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Synopsis}{30}{section.8.1}%
-\contentsline {section}{\numberline {8.2}Options}{30}{section.8.2}%
-\contentsline {section}{\numberline {8.3}Outputs}{31}{section.8.3}%
-\contentsline {section}{\numberline {8.4}Exit status}{32}{section.8.4}%
+\contentsline {section}{\numberline {2.3}Build uscribe}{6}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Verify}{6}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Build this manual}{6}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Quick Start}{8}{chapter.3}%
+\contentsline {section}{\numberline {3.1}1. Create a manifest}{8}{section.3.1}%
+\contentsline {section}{\numberline {3.2}2. Write chapters}{8}{section.3.2}%
+\contentsline {section}{\numberline {3.3}3. Book settings}{9}{section.3.3}%
+\contentsline {section}{\numberline {3.4}4. Build HTML}{10}{section.3.4}%
+\contentsline {section}{\numberline {3.5}5. Build PDF (optional)}{10}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Where files go}{10}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Reports}{12}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Mark a file as a report}{12}{section.4.1}%
+\contentsline {section}{\numberline {4.2}One report}{13}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Several reports and an index}{14}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Book vs report (summary)}{15}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Book Configuration}{16}{chapter.5}%
+\contentsline {section}{\numberline {5.1}How the file is found}{16}{section.5.1}%
+\contentsline {section}{\numberline {5.2}File format}{16}{section.5.2}%
+\contentsline {section}{\numberline {5.3}title}{17}{section.5.3}%
+\contentsline {section}{\numberline {5.4}copyright}{17}{section.5.4}%
+\contentsline {section}{\numberline {5.5}logo}{17}{section.5.5}%
+\contentsline {section}{\numberline {5.6}name}{17}{section.5.6}%
+\contentsline {section}{\numberline {5.7}theme}{17}{section.5.7}%
+\contentsline {section}{\numberline {5.8}themePath}{18}{section.5.8}%
+\contentsline {section}{\numberline {5.9}docclass}{18}{section.5.9}%
+\contentsline {section}{\numberline {5.10}frontmatter}{18}{section.5.10}%
+\contentsline {section}{\numberline {5.11}toctree}{18}{section.5.11}%
+\contentsline {section}{\numberline {5.12}sources}{18}{section.5.12}%
+\contentsline {section}{\numberline {5.13}Not in book.conf}{19}{section.5.13}%
+\contentsline {section}{\numberline {5.14}This guide}{19}{section.5.14}%
+\contentsline {chapter}{\numberline {6}Markup Reference}{20}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Headings}{20}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Document fields}{20}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Paragraphs and lists}{21}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Definition lists}{22}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Tables}{23}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Labels and cross-references}{25}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Stable labels}{26}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Inline markup}{26}{section.6.8}%
+\contentsline {section}{\numberline {6.9}Directives}{26}{section.6.9}%
+\contentsline {section}{\numberline {6.10}Include / literalinclude}{29}{section.6.10}%
+\contentsline {section}{\numberline {6.11}Unicon listings}{30}{section.6.11}%
+\contentsline {chapter}{\numberline {7}Themes}{32}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Built-in themes}{32}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Build-time default}{32}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Theme layout on disk}{33}{section.7.3}%
+\contentsline {chapter}{\numberline {8}Command Line}{34}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Synopsis}{34}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Options}{34}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Outputs}{35}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Exit status}{36}{section.8.4}%

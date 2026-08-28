@@ -235,7 +235,11 @@ Generated
 <code>Table N</code>
  captions can use 
 <code>\\caption*</code>
-; without it uscribe falls back to a centered paragraph. A latex recommended install is usually enough; GitHub Pages installs 
+; without it uscribe falls back to a centered paragraph. 
+<code>framed</code>
+ is loaded when present so code samples get a shaded box; without it the listing is still full-width 
+<code>Verbatim</code>
+. A latex recommended install is usually enough; GitHub Pages installs 
 <code>texlive-latex-extra</code>
  so the user-guide PDF build has the full set. If 
 <code>pdflatex</code>
@@ -264,7 +268,9 @@ That compiles the
 <code>./uscribe</code>
 , and installs a copy to 
 <code>../../bin/uscribe</code>
-. A top-level 
+. 
+<code>make install</code>
+ in this directory does the same. A top-level 
 <code>make install</code>
  also installs 
 <code>uscribe</code>
@@ -274,7 +280,9 @@ That compiles the
 <code>unicon</code>
 , 
 <code>udb</code>
-, and the other addon tools.
+, and the other addon tools, and copies themes to 
+<code>$(libdir)/unicon/uni/uscribe/themes</code>
+.
 </p>
 <p>
 Regenerate Make dependencies after adding 

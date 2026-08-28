@@ -671,6 +671,15 @@ Also:
 .
 </p>
 <p>
+CLI command signatures use 
+<code>.. clicmd::</code>
+, like FRR’s command reference: the argument is the syntax line; an indented body hangs under the command as its description.
+</p>
+<pre><code class="language-rst">.. clicmd:: pki gen &lt;key-name&gt; &lt;key-type&gt; &lt;key-length&gt;
+
+   Generate a private key.
+</code></pre>
+<p>
 Figures take a caption. If the caption already starts with 
 <code>Figure N</code>
  or 

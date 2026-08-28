@@ -18,7 +18,6 @@
 TOPDIR=../..
 USCRIBE_DIR = $(TOPDIR)/uni/uscribe
 USCRIBE ?= $(USCRIBE_DIR)/uscribe
-THEMES = $(USCRIBE_DIR)/themes
 HTMLDIR = html
 TEXDIR = latex
 MANIFEST = utr.manifest
@@ -30,12 +29,12 @@ FILES=utr3.pdf utr15.pdf utr16.pdf utr18.pdf utr19.pdf utr22.pdf utr20.pdf utr23
 
 all: $(FILES)
 
-# RST reports listed in utr.manifest (currently UTR #25–#29).
+# RST reports listed in utr.manifest (currently UTR #26–#29).
 html: $(USCRIBE)
 	mkdir -p $(HTMLDIR)
 	-cp -f *.pdf $(HTMLDIR)/ 2>/dev/null || true
 	$(USCRIBE) --manifest=$(MANIFEST) --title="$(TITLE)" \
-		--themePath=$(THEMES) --targetDir=$(HTMLDIR) --format=html
+		--targetDir=$(HTMLDIR) --format=html
 
 latex: $(USCRIBE)
 	mkdir -p $(TEXDIR)
@@ -50,6 +49,7 @@ pdf-rst: $(USCRIBE)
 
 $(USCRIBE):
 	$(MAKE) -C $(USCRIBE_DIR)
+
 
 htmlean: htmlean.icn
 	unicon htmlean.icn
@@ -69,3 +69,4 @@ utr9c.pdf: utr9.tex
 Clean clean:
 	rm -f  utr*.png utr*.jpg *.log *.out htmlean $(FILES)
 	rm -rf $(HTMLDIR) $(TEXDIR)
+

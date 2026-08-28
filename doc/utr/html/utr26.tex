@@ -10,6 +10,13 @@
   \usepackage{fvextra}%
   \fvset{breaklines=true,breakanywhere=true}%
 }{}
+\IfFileExists{framed.sty}{%
+  \usepackage{framed}%
+  \definecolor{shadecolor}{RGB}{240,243,246}%
+  \newenvironment{uscribeshaded}{\shaded}{\endshaded}%
+}{%
+  \newenvironment{uscribeshaded}{}{}%
+}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -69,7 +76,7 @@ Unicon programs that needed SSH previously relied on \texttt{popen()} or pipes t
 \subsection{2.1 Library choice}
 \label{utr26-sec-prior}
 
-Two C libraries were considered. \textbf{libssh} (LGPL) supports both client and server, modern key exchange and host keys, and true non-blocking I/O via \texttt{poll(2)}. \textbf{libssh2} (BSD) is client-only and cannot be used fully non-blocking. The implementation binds \textbf{libssh} [5], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (\hyperref[utr26-sec-receive]{section 8.3}).
+Two C libraries were considered. \textbf{libssh} (LGPL) supports both client and server, modern key exchange and host keys, and true non-blocking I/O via \texttt{poll(2)}. \textbf{libssh2} (BSD) is client-only and cannot be used fully non-blocking. The implementation binds \textbf{libssh} [2], for server-side optionality later and for the callback API that preserves stdout/stderr arrival order (\hyperref[utr26-sec-receive]{section 8.3}).
 
 
 A full protocol reimplementation (Paramiko, Go's \texttt{x/\allowbreak{}crypto/\allowbreak{}ssh}) would mean owning crypto primitives and protocol-drift / CVE tracking indefinitely. Binding to libssh via the existing C runtime avoids that.
@@ -82,7 +89,7 @@ Python (Paramiko) and Go (\texttt{x/\allowbreak{}crypto/\allowbreak{}ssh}) both 
 \subsection{2.3 Why not Messaging}
 \label{utr26-sec-messaging}
 
-The Messaging facility (HTTP/POP/SMTP, \texttt{rmsg.\allowbreak{}r}, libtp) [6] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (\texttt{exec} / \texttt{shell} / \texttt{sftp} as concurrent channels) also does not map onto Messaging's request/response verb model (\texttt{GET} / \texttt{POST} / \texttt{RETR}). Instead, SSH uses the \texttt{h} mode character and plain \texttt{user@\allowbreak{}host} string form, independent of the Messaging/URI subsystem.
+The Messaging facility (HTTP/POP/SMTP, \texttt{rmsg.\allowbreak{}r}, libtp) [3] is not a fit. Messaging's transport-discipline abstraction has the same 1:1 single-stream limitation as SSL -- no channel-multiplexing concept -- so moving into that world would not solve the multiplexed-channel requirement, only relocate it. SSH's request/channel model (\texttt{exec} / \texttt{shell} / \texttt{sftp} as concurrent channels) also does not map onto Messaging's request/response verb model (\texttt{GET} / \texttt{POST} / \texttt{RETR}). Instead, SSH uses the \texttt{h} mode character and plain \texttt{user@\allowbreak{}host} string form, independent of the Messaging/URI subsystem.
 
 \section{3. Architectural grounding}
 \label{utr26-sec-arch}
@@ -132,7 +139,8 @@ Two shapes, both using the existing \texttt{open()}. The second argument is the 
 
 A session opened with \texttt{channel=no} has no channel of its own (\texttt{Fs\_\allowbreak{}SSH} alone, no \texttt{Fs\_\allowbreak{}Socket}). It exists so later \texttt{open(s,\allowbreak{}~"hc")} / \texttt{open(s,\allowbreak{}~"hs")} calls have an authenticated transport. \texttt{channel=yes} is the default. Combining \texttt{channel=no} with mode \texttt{hc} or \texttt{cmd=} is contradictory and fails with a bad-attribute error.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("jafar@" || host, "h", "key=" || keypath)
 write(s, "ls -l\\n")
 while line := reads(s) do write(line)
@@ -142,6 +150,7 @@ s := open("user@host", "h", "key=id_ed25519", "channel=no")
 c1 := open(s, "hc", "cmd=uname -a")
 c2 := open(s, "hc", "cmd=uptime")
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{4.2 Host string}
 \label{utr26-sec-host}
@@ -159,9 +168,11 @@ The first argument is \texttt{host}, \texttt{user@\allowbreak{}host}, or either 
 
 A shell channel has no clean command boundaries: prompt text, echoed input, and output all interleave. For scripted use, prefer mode \texttt{hc} with \texttt{cmd=}, which has clean stdout and a real exit status:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 c := open(s, "hc", "cmd=ls -l")
 \end{Verbatim}
+\end{uscribeshaded}
 
 \section{5. Attributes and authentication}
 \label{utr26-sec-attrs}
@@ -255,7 +266,8 @@ leading integer & attribute (timeout) & Connect timeout in milliseconds \\
 
 With no \texttt{cmd=}, \texttt{open(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{}~"h")} requests a remote PTY and shell. \texttt{net::ssh\_\allowbreak{}interactive(s)} attaches the local tty (raw mode, \texttt{select()} with \texttt{\&input}, CRLF for display):
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 import net
 
 procedure main()
@@ -265,6 +277,7 @@ procedure main()
    close(s)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{term=}, \texttt{cols=}, and \texttt{rows=} override the PTY. Mode \texttt{"h-\allowbreak{}"} skips \texttt{known\_\allowbreak{}hosts} (useful on a first connect before the key is installed). Password auth uses \texttt{password=} instead of, or in addition to, \texttt{key=}.
@@ -274,7 +287,8 @@ end
 
 Mode \texttt{"hc"} with \texttt{cmd=} runs one command and returns its stdout through ordinary \texttt{read()} / \texttt{reads()}. \texttt{c["exitstatus"]} is the remote exit code once it has arrived:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    s := open("user@host", "hc", "key=/home/user/.ssh/id_ed25519",
              "cmd=uname -a") | stop(&errortext)
@@ -283,20 +297,24 @@ procedure main()
    close(s)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 The host string may include a port (\texttt{user@\allowbreak{}host:2222}) or an IPv6 address (\texttt{user@\allowbreak{}[2001:db8::1]:22}). A leading integer is a connect timeout in milliseconds:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("user@host", "hc", 5000, "cmd=true") | stop(&errortext)
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{6.4 Ordered stdout and stderr}
 \label{utr26-sec-ex-receive}
 
 Stream \texttt{reads()} see stdout only. When stdout and stderr must stay in arrival order, or when stderr should go to \texttt{\&errout}, use \texttt{receive()}:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("user@host", "hc", "key=/home/user/.ssh/id_ed25519",
           "cmd=echo out; echo err 1>&2; exit 3") | stop(&errortext)
 while m := receive(s) do
@@ -307,6 +325,7 @@ while m := receive(s) do
       \}
 close(s)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{c["stderr"]} is the other stderr path: it peeks the current accumulated buffer, without preserving order against stdout. See \hyperref[utr29-sec-io]{section 8}.
@@ -316,7 +335,8 @@ close(s)
 
 \texttt{channel=no} opens an authenticated transport. Later \texttt{open(s,\allowbreak{}~"hc")} / \texttt{open(s,\allowbreak{}~"hs")} calls add exec, shell, or SFTP handles on that session. Closing \texttt{s} invalidates every derived handle:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("user@host", "h", "key=/home/user/.ssh/id_ed25519",
           "channel=no") | stop(&errortext)
 c1 := open(s, "hc", "cmd=uname -a") | stop(&errortext)
@@ -327,6 +347,7 @@ close(c1)
 close(c2)
 close(s)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Opening on an existing channel opens a sibling on the session owner, not a child of that channel.
@@ -336,7 +357,8 @@ Opening on an existing channel opens a sibling on the session owner, not a child
 
 The same session carries SFTP. Mode \texttt{"hs"} plus \texttt{path=} opens a remote file or, if the path is a directory, lists it. \texttt{stat}, \texttt{remove}, and \texttt{rename} take the session as a leading argument:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("user@host", "h", "key=/home/user/.ssh/id_ed25519",
           "channel=no") | stop(&errortext)
 
@@ -355,13 +377,15 @@ rename(s, "/tmp/out.bin", "/tmp/out.bin.bak")
 remove(s, "/tmp/out.bin.bak")
 close(s)
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{6.7 Concurrent hosts}
 \label{utr26-sec-ex-threads}
 
 Each connection is blocking. Concurrent hosts use Unicon \texttt{thread}, one thread per in-flight session:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure run_cmd(host, key)
    local s, line
    s := open(host, "hc", "key=" || key, "cmd=uname -a") | \{
@@ -379,6 +403,7 @@ procedure main()
       thread run_cmd(host, key)
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Channels that share a session serialize on the session mutex (\hyperref[utr26-sec-mutex]{section 10.1}). Separate sessions do not.
@@ -492,7 +517,8 @@ Name & Value \\
 \texttt{connected} & \texttt{"yes"} or \texttt{\&null} \\
 \end{longtable}
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("user@host", "h", "key=id_rsa", "channel=no") |
    stop(&errortext)
 write("type=", s["type"], " kex=", s["kex"])
@@ -513,6 +539,7 @@ every k := key(c) do
 close(c)
 close(s)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Preferring callback state over libssh's blocking \texttt{get\_\allowbreak{}exit\_\allowbreak{}*} helpers avoids version-sensitive fallbacks once callbacks are registered. Failing until the status is ready reuses the ordinary Unicon "fail = not ready" idiom, the same as \texttt{read()} failing at EOF.
@@ -525,7 +552,8 @@ A command can produce interleaved stdout and stderr where the caller needs to kn
 
 \texttt{receive(c)} on an SSH channel yields the next queued event as a \texttt{posix\_\allowbreak{}message} whose \texttt{addr} is \texttt{"stdout"}, \texttt{"stderr"}, or \texttt{"exit"} and whose \texttt{msg} is the payload. The exit status is kept as a \textbf{string} so \texttt{receive()}'s return type stays uniform across every kind of file it can be called on; Unicon's \texttt{=} already coerces numeric strings.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 c := open(s, "hc", "cmd=process_records")
 while m := receive(c) do
    case m.addr of \{
@@ -534,6 +562,7 @@ while m := receive(c) do
       "exit"   : write("done, status " || m.msg)
       \}
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{receive()} fails once the channel is exhausted.
@@ -571,11 +600,13 @@ On Windows, \texttt{select(\&input)} and \texttt{Attrib(f,\allowbreak{}~"tty=raw
 
 \texttt{uni/\allowbreak{}lib/\allowbreak{}ssh.\allowbreak{}icn} provides \texttt{ssh\_\allowbreak{}interactive(s)}: put the local tty in raw mode, mux \texttt{\&input} with the remote channel via \texttt{select()}, map lone LF to CRLF when copying remote output to a raw local terminal (needed because raw mode disables \texttt{ONLCR}), and restore the tty before returning. It does not close \texttt{s}. The \texttt{ussh} demo (\texttt{uni/\allowbreak{}progs/\allowbreak{}ussh.\allowbreak{}icn}) is a small OpenSSH-like client built with the other \texttt{uni/\allowbreak{}progs} demos: interactive shell, or a one-shot remote command via \texttt{receive()}.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 s := open("user@host", "h", "key=...") | stop(&errortext)
 ssh_interactive(s)
 close(s)
 \end{Verbatim}
+\end{uscribeshaded}
 
 \section{10. Concurrency and channel lifecycle}
 \label{utr26-sec-conc}
@@ -607,11 +638,13 @@ Three shapes, each mapped onto an existing Unicon pattern.
 
 \subsection{11.1 File transfer -- \texttt{read()} / \texttt{write()}}
 \label{utr26-sec-sftp-xfer}
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 c := open(s, "hs", "path=/tmp/firmware.bin", "w")
 while writes(c, ReadBytes(local_fw))
 close(c)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Mode \texttt{"hs"} is SFTP; read/write/append intent comes from the usual mode characters (\texttt{r} / \texttt{w} / \texttt{a} / \texttt{b}), either in the same string (\texttt{"hsw"}) or as a trailing mode-only token. \texttt{path=} is required. Backed by \texttt{sftp\_\allowbreak{}open()} / \texttt{sftp\_\allowbreak{}read()} / \texttt{sftp\_\allowbreak{}write()} / \texttt{sftp\_\allowbreak{}close()}. Structurally a plain file -- another variant feeding the existing dispatch. SFTP regular files are \textbf{not} marked \texttt{Fs\_\allowbreak{}Socket}: they are byte streams, not select-able channels.
@@ -648,10 +681,12 @@ These extend existing builtins via the leading-optional-file argument idiom, rat
 
 
 \end{itemize}
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 if info := stat(s, "/tmp/firmware.bin") then
    if info.size = expected_size then pull_it()
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{sftp2rec()} populates the same \texttt{posix\_\allowbreak{}stat} record as \texttt{stat2rec()}. SFTP's attribute set is protocol-version dependent; fields the server did not send are left \textbf{null} rather than reported as zero, so callers can tell "absent" from "genuinely zero." SFTP carries atime/mtime, not ctime. Size, uid/gid (name or numeric), permissions-as-mode-string, and file type (\texttt{d} / \texttt{l} / \texttt{c}) are filled when the corresponding flags are present.
@@ -704,53 +739,11 @@ Guards are \texttt{\#if~HAVE\_\allowbreak{}LIBSSH} throughout \texttt{rstructs.\
 \bibitem[1]{cite-jeffery-utr15}
 Clinton Jeffery. "How to Write a Unicon Technical Report". doc/utr/utr15.tex. 2013.
 
-\bibitem[2]{cite-algharaibeh-utr26}
-Jafar Al-Gharaibeh. "Native SSH and SFTP Support in Unicon". doc/utr/utr26.rst. 2026.
-
-\bibitem[3]{cite-unicode-standard}
-Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/latest/. 2026.
-
-\bibitem[4]{cite-unicon-utf8lib}
-Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
-
-\bibitem[5]{cite-libssh}
+\bibitem[2]{cite-libssh}
 The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
 
-\bibitem[6]{cite-jeffery-utr13}
+\bibitem[3]{cite-jeffery-utr13}
 Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
-
-\bibitem[7]{cite-openssl}
-The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
-
-\bibitem[8]{cite-rfc2104}
-H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
-
-\bibitem[9]{cite-rfc1112}
-S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
-
-\bibitem[10]{cite-jeffery-pwu}
-Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
-
-\bibitem[11]{cite-rfc4607}
-H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
-
-\bibitem[12]{cite-algharaibeh-utr29}
-Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
-
-\bibitem[13]{cite-algharaibeh-utr28}
-Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
-
-\bibitem[14]{cite-rfc792}
-J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
-
-\bibitem[15]{cite-rfc2236}
-W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
-
-\bibitem[16]{cite-rfc3376}
-B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
-
-\bibitem[17]{cite-rfc1071}
-R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
 \end{document}
