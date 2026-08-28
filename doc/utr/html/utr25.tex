@@ -10,6 +10,13 @@
   \usepackage{fvextra}%
   \fvset{breaklines=true,breakanywhere=true}%
 }{}
+\IfFileExists{framed.sty}{%
+  \usepackage{framed}%
+  \definecolor{shadecolor}{RGB}{240,243,246}%
+  \newenvironment{uscribeshaded}{\shaded}{\endshaded}%
+}{%
+  \newenvironment{uscribeshaded}{}{}%
+}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -88,12 +95,14 @@ The approach taken is to reuse bits already present in the descriptor's length w
 
 Available on 64-bit builds (\texttt{WordBits~==~64}) when compiled with \texttt{UniconUnicode} defined (\texttt{src/\allowbreak{}h/\allowbreak{}config.\allowbreak{}h}). With the feature disabled, every macro described below reduces to today's unmodified behavior, so no call site needs its own conditional compilation.
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 bit 63       F_Nqual        (existing -- qualifier vs. typed value)
 bit 62       F_UniQual      (this string is UTF-8-tagged)
 bits 32-61   cp_count       (30 bits, cached codepoint count)
 bits 0-31    byte length    (32 bits, ~4.3 GB maximum)
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \textbf{Byte length retains a full 32 bits rather than being reduced further.} Unlike the codepoint count, byte length has no fallback: if a string's true length does not fit in its field, there is no secondary source of truth to recover it from, since Unicon strings are not null-terminated. The codepoint count, by contrast, can always be recomputed by walking the string when it is not cached, so it can safely be given whatever bits remain. In practice this is generous rather than tight -- the sentinel value (see below) is reached only by a string close to the full 4.3 GB byte-length limit that is almost entirely single-byte content, which would not be UTF-8-tagged in the first place under normal conditions.
@@ -109,7 +118,8 @@ A cached-position representation matching the same bit budget was designed and b
 
 Defined in \texttt{src/\allowbreak{}h/\allowbreak{}rmacros.\allowbreak{}h}:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 StrLen(q)         /* byte length, masked to exclude tag/count bits */
 SetStrLen(q,n)    /* sets byte length; see section 2.3 for why this clears
                      rather than preserves the other fields */
@@ -121,6 +131,7 @@ CpCount(q)        /* reads the cached codepoint count, or the sentinel
                      value 0 if none is cached */
 SetCpCount(q,n)   /* sets the cached codepoint count */
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{MakeStr} is the preferred way to fill a new string descriptor: it sets the pointer and then the length in one step, so call sites share one order. \texttt{StrLoc} and \texttt{SetStrLen} update different words of the descriptor, so swapping those two alone does not affect the tag; the ordering that matters for Unicode is still \texttt{SetStrLen} / \texttt{MakeStr}, then \texttt{SetUniQual}, then \texttt{SetCpCount} (\hyperref[utr25-sec-strlen]{section 2.3}). \texttt{AsgnCStr} is the C-string specialization of the same pattern.
@@ -128,7 +139,8 @@ SetCpCount(q,n)   /* sets the cached codepoint count */
 
 Three shared helpers implement UTF-8 decoding logic used throughout the runtime:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 uq_lead_width(b)              /* width in bytes of the UTF-8 character
                                  starting at lead byte b */
 uq_scan(bytes, len, &ncps)    /* scans a byte range once; returns
@@ -137,6 +149,7 @@ uq_scan(bytes, len, &ncps)    /* scans a byte range once; returns
 uq_seek_cp(bytes, target_cp)  /* returns the byte offset at which
                                  codepoint index target_cp begins */
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 All three treat a malformed lead byte as a one-byte unit and continue, rather than raising an error; this lenient behavior is specific to internal scanning and is distinct from the strict validation applied by \texttt{uord()} (\hyperref[utr25-sec-uchar]{section 4}). I/O uses the same scan through \texttt{UqMaybeTagRead(s,\allowbreak{}~status)}, which tags a just-read string when \texttt{Fs\_\allowbreak{}Unicode} is set on the handle (\hyperref[utr29-sec-io]{section 6}).
@@ -349,7 +362,8 @@ These examples assume a Unicon build with \texttt{Unicode} in \texttt{\&features
 
 \texttt{*s} is 4, not 5. \texttt{s[4]} is the letter é, not a continuation byte:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local s, i
    s := "café"
@@ -358,17 +372,20 @@ procedure main()
       write("s[", i, "] = ", s[i])
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 *s = 4
 s[1] = c
 s[2] = a
 s[3] = f
 s[4] = é
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{"hello"} is untagged ASCII, so \texttt{*} and \texttt{[]} still mean bytes, which for ASCII are the same as codepoints.
@@ -379,7 +396,8 @@ s[4] = é
 
 \texttt{unicode(s)} tags non-ASCII UTF-8. \texttt{uchar} / \texttt{uord} are the codepoint pair; \texttt{char} / \texttt{ord} stay byte-oriented (\hyperref[utr25-sec-uchar]{section 4}):
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    write(*unicode("hello"))
    write(*unicode("café"))
@@ -389,11 +407,13 @@ procedure main()
    write(char(65), " ", ord("A"))
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 5
 4
 é
@@ -401,6 +421,7 @@ Output:
 1
 A 65
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{uord} on more than one codepoint is error 205.
@@ -410,22 +431,26 @@ A 65
 
 \texttt{||} tags the result if either operand is tagged, and adds cached codepoint counts when both are known (\hyperref[utr25-sec-concat]{section 5}):
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    write(*("café" || "naïve"))
    write(*("café" || "hello"))
    write(*("hello" || "café"))
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 9
 9
 9
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{string(a,\allowbreak{}~b,\allowbreak{}~.\allowbreak{}.\allowbreak{}.\allowbreak{})} concatenates too and \textbf{keeps} the tag, the same as \texttt{||}. It is not a byte-view switch (\hyperref[utr25-sec-string]{section 7.1}).
@@ -435,7 +460,8 @@ Output:
 
 On a tagged subject, \texttt{move}, \texttt{tab}, and \texttt{pos} use codepoint positions:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    &subject := "café naïve"
    &pos := 1
@@ -446,22 +472,26 @@ procedure main()
    write(pos(1))
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 café
 café
 1
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.5 \texttt{open()} mode \texttt{i}}
 \label{utr25-sec-ex-io}
 
 Without \texttt{i}, \texttt{reads()} is untagged (byte \texttt{*}). With \texttt{i}, the same UTF-8 is tagged (\hyperref[utr29-sec-io]{section 6}):
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local f, s
    f := open("uio.dat", "wu") | stop("open")
@@ -481,22 +511,26 @@ procedure main()
    remove("uio.dat")
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 5
 4
 é
 \end{Verbatim}
+\end{uscribeshaded}
 
 \subsection{8.6 Content vs. tag}
 \label{utr25-sec-ex-tag}
 
 Untagged UTF-8 from a file, or built from \texttt{char()} bytes, has byte \texttt{*}. \texttt{unicode()} is the text view. The two disagree exactly when the payload is multi-byte (\hyperref[utr25-sec-tests]{section 7.2}):
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 procedure main()
    local raw
    raw := char(195) || char(169)    # UTF-8 of é, untagged
@@ -505,15 +539,18 @@ procedure main()
    write(*string(unicode(raw)))
 end
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 Output:
 
-\begin{Verbatim}[fontsize=\small,frame=single,commandchars=\\\{\}]
+\begin{uscribeshaded}
+\begin{Verbatim}[fontsize=\small,frame=none,resetmargins=true,commandchars=\\\{\}]
 2
 1
 1
 \end{Verbatim}
+\end{uscribeshaded}
 
 
 \texttt{string(s)} on \texttt{"café"} also keeps the tag: \texttt{*string(s)~=~*s}.
@@ -595,45 +632,6 @@ Unicode Consortium. "The Unicode Standard". https://www.unicode.org/versions/lat
 
 \bibitem[4]{cite-unicon-utf8lib}
 Unicon Project. "UTF-8 class library". uni/lib/utf8.icn.
-
-\bibitem[5]{cite-libssh}
-The libssh Project. "libssh -- The SSH Library". https://www.libssh.org/. 2026.
-
-\bibitem[6]{cite-jeffery-utr13}
-Clinton Jeffery. "The Unicon Messaging Facilities". doc/utr/utr13.odt.
-
-\bibitem[7]{cite-openssl}
-The OpenSSL Project. "OpenSSL -- Cryptography and SSL/TLS Toolkit". https://www.openssl.org/. 2026.
-
-\bibitem[8]{cite-rfc2104}
-H. Krawczyk and M. Bellare and R. Canetti. "HMAC: Keyed-Hashing for Message Authentication". RFC 2104. 1997.
-
-\bibitem[9]{cite-rfc1112}
-S. Deering. "Host Extensions for IP Multicasting". RFC 1112. 1989.
-
-\bibitem[10]{cite-jeffery-pwu}
-Clinton Jeffery and Shamim Mohamed and Jafar Al-Gharaibeh. "Programming with Unicon". doc/book/. 2026.
-
-\bibitem[11]{cite-rfc4607}
-H. Holbrook and B. Cain. "Source-Specific Multicast for IP". RFC 4607. 2006.
-
-\bibitem[12]{cite-algharaibeh-utr29}
-Jafar Al-Gharaibeh. "Raw Sockets and Packet Layouts in Unicon". doc/utr/utr29.rst. 2026.
-
-\bibitem[13]{cite-algharaibeh-utr28}
-Jafar Al-Gharaibeh. "Multicast and Socket Attributes in Unicon". doc/utr/utr28.rst. 2026.
-
-\bibitem[14]{cite-rfc792}
-J. Postel. "Internet Control Message Protocol". RFC 792. 1981.
-
-\bibitem[15]{cite-rfc2236}
-W. Fenner. "Internet Group Management Protocol, Version 2". RFC 2236. 1997.
-
-\bibitem[16]{cite-rfc3376}
-B. Cain and S. Deering and I. Kouvelas and B. Fenner and A. Thyagarajan. "Internet Group Management Protocol, Version 3". RFC 3376. 2002.
-
-\bibitem[17]{cite-rfc1071}
-R. Braden and D. Borman and C. Partridge. "Computing the Internet Checksum". RFC 1071. 1988.
 
 \end{thebibliography}
 \end{document}
