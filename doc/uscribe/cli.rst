@@ -54,7 +54,10 @@ Options
 
   - ``html`` — one page per chapter plus index/search/themes.
     Report manifests get a catalog table on ``index.html``. Each
-    report page's sidebar lists that report's sections.
+    report page's sidebar lists that report's sections. Book
+    chapter pages list every chapter and expand the current
+    chapter with a numbered local TOC (``1.1``, ``2.3.1``, …).
+    Tree lines are off unless ``toctree: true`` in ``book.conf``.
     See :doc:`reports`.
   - ``latex`` — for books, a single ``STEM.tex`` (default
     ``book.tex``); for report manifests (every chapter is a
@@ -73,8 +76,10 @@ Options
 
 **--themePath=DIR**
   Directory that contains theme subdirectories (``DIR/basic/static``,
-  …). If omitted, uscribe searches ``./themes``, ``../themes``, and
-  ``themes``. HTML only.
+  …). If omitted, uscribe searches ``./themes``, ``../themes``,
+  ``themes``, then Unicon's ``uni/uscribe/themes`` using the
+  ``Binaries at`` / ``Libraries at`` strings in ``&features``.
+  HTML only.
 
 Outputs
 -------
@@ -87,7 +92,8 @@ writes ``targetDir/name.html``, plus:
 - ``search.html`` + ``searchindex.js`` — full-text search
 - ``_static/`` — theme CSS, search JS, highlighter, theme switcher
 - ``_sources/`` — chapter sources as ``name.rst.txt`` (browser-viewable
-  text; linked as **txt** / **source**)
+  text; linked as **txt** / **source**). Omitted when ``sources`` is
+  off; a rebuild then deletes a leftover ``_sources/``
 
 **LaTeX / PDF**: book manifests write ``targetDir/STEM.tex`` (and
 ``STEM.pdf`` with ``--format=pdf``; default stem ``book``). Report manifests write one

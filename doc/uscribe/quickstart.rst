@@ -71,7 +71,6 @@ Full key list: :doc:`config`.
    logo: images/logo.png
    name: my-book
    theme: basic
-   themePath: /path/to/uni/uscribe/themes
 
 4. Build HTML
 -------------
@@ -82,8 +81,8 @@ Full key list: :doc:`config`.
 
 Or from a project ``Makefile`` patterned on ``doc/uscribe/Makefile``.
 
-Open ``out/index.html``. Use the sidebar for chapters, search, and
-theme switching.
+Open ``out/index.html``. Use the sidebar for chapters (and the
+current chapter's sections), search, and theme switching.
 
 5. Build PDF (optional)
 -----------------------

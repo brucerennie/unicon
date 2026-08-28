@@ -64,6 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/udb
 %{_bindir}/unidep
 %{_bindir}/uprof
+%{_bindir}/uscribe
 %{_bindir}/iyacc
 %{_bindir}/patchstr
 %{_libdir}/unicon/ipl/lib/*.u
@@ -77,6 +78,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/unicon/uni/unidep/*.*
 %{_libdir}/unicon/uni/parser/*.*
 %{_libdir}/unicon/uni/xml/*.*
+%{_libdir}/unicon/uni/uscribe/*.*
+%{_libdir}/unicon/uni/uscribe/themes/*.*
+%{_libdir}/unicon/uni/uscribe/themes/_shared/*.*
+%{_libdir}/unicon/uni/uscribe/themes/basic/*.*
+%{_libdir}/unicon/uni/uscribe/themes/basic/static/*.*
+%{_libdir}/unicon/uni/uscribe/themes/classic/*.*
+%{_libdir}/unicon/uni/uscribe/themes/classic/static/*.*
+%{_libdir}/unicon/uni/uscribe/themes/dark/*.*
+%{_libdir}/unicon/uni/uscribe/themes/dark/static/*.*
 %{_libdir}/unicon/plugins/lib/*.*
 %{_docdir}/unicon/*.*
 %{_mandir}/man1/unicon.1.gz
