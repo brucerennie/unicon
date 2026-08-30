@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.28)  28 AUG 2026 14:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.8.30)  30 AUG 2026 06:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -449,53 +449,60 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.89 
+l.92 
       [1]
-Overfull \hbox (1.0448pt too wide) in paragraph at lines 91--92
-\T1/cmr/m/n/12 length word rather than in-tro-duce a new block type for Unicode
--aware strings.
- []
-
-
 Overfull \hbox (21.47726pt too wide) in paragraph at lines 96--97
 \T1/cmr/m/n/12 Available on 64-bit builds (\T1/cmtt/m/n/12 WordBits == 64\T1/cm
 r/m/n/12 ) when com-piled with \T1/cmtt/m/n/12 UniconUnicode
  []
 
 
+LaTeX Warning: Hyper reference `utr29-sec-status' on page 2 undefined on input 
+line 114.
+
+
 pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.112 
-       [2]
-
-LaTeX Warning: Hyper reference `utr29-sec-status' on page 3 undefined on input 
-line 114.
-
+l.116 \subsection
+                 {2.2 Core macros} [2]
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 123.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 123.
-[3]
+ [3]
 
 LaTeX Warning: Hyper reference `utr29-sec-io' on page 4 undefined on input line
  155.
 
-[4] [5] [6]
+[4] [5]
 
-LaTeX Warning: Hyper reference `utr29-sec-status' on page 7 undefined on input 
+LaTeX Warning: Hyper reference `utr29-sec-status' on page 6 undefined on input 
 line 188.
 
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <17.28> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 190.
-[7] [8] [9]
+
+Overfull \hbox (71.39662pt too wide) in paragraph at lines 211--212
+\T1/cmr/m/n/12 im-ple-mented in \T1/cmtt/m/n/12 src/runtime/fmisc.r \T1/cmr/m/n
+/12 along-side \T1/cmtt/m/n/12 char() \T1/cmr/m/n/12 and \T1/cmtt/m/n/12 ord()\
+T1/cmr/m/n/12 . \T1/cmtt/m/n/12 uord(uchar(i)) = i
+ []
+
+[6]
+Overfull \hbox (6.0616pt too wide) in paragraph at lines 227--228
+\T1/cmr/m/n/12 ex-am-ines the tag treats an un-tagged string as pure ASCII, in-
+clud-ing codepoint-
+ []
+
+[7]
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 235.
 
 
-LaTeX Warning: Hyper reference `utr29-sec-status' on page 10 undefined on input
- line 240.
+LaTeX Warning: Hyper reference `utr29-sec-status' on page 8 undefined on input 
+line 240.
 
 
 Overfull \hbox (11.98192pt too wide) in paragraph at lines 240--241
@@ -505,75 +512,75 @@ TagRead
  []
 
 
-Overfull \hbox (31.73862pt too wide) in paragraph at lines 250--251
-\T1/cmr/m/n/12 al-lowlist of per-mit-ted flag com-bi-na-tions (\T1/cmtt/m/n/12 
-src/runtime/fsys.r\T1/cmr/m/n/12 , \T1/cmtt/m/n/12 if (status & ~(.
- []
-
-[10]
-Overfull \hbox (43.56023pt too wide) in paragraph at lines 257--258
-[]\T1/cmtt/m/n/12 type() \T1/cmr/m/n/12 is \T1/cmtt/m/n/12 "string" \T1/cmr/m/n
-/12 for both views. No \T1/cmtt/m/n/12 "unicode" \T1/cmr/m/n/12 type: \T1/cmtt/
-m/n/12 type(x) == "string"
+Overfull \hbox (1.96259pt too wide) in paragraph at lines 250--251
+\T1/cmr/m/n/12 flag com-bi-na-tions (\T1/cmtt/m/n/12 src/runtime/fsys.r\T1/cmr/
+m/n/12 , \T1/cmtt/m/n/12 if (status & ~(...)) runerr(.
  []
 
 
-Overfull \hbox (17.81683pt too wide) in paragraph at lines 329--329
+Overfull \hbox (58.30672pt too wide) in paragraph at lines 255--256
+\T1/cmtt/m/n/12 type() \T1/cmr/m/n/12 is \T1/cmtt/m/n/12 "string" \T1/cmr/m/n/1
+2 for both views. There is no \T1/cmtt/m/n/12 "unicode" \T1/cmr/m/n/12 type: \T
+1/cmtt/m/n/12 type(x) == "string"\T1/cmr/m/n/12 ,
+ []
+
+[8]
+Overfull \hbox (17.81683pt too wide) in paragraph at lines 287--287
 []|\T1/cmtt/m/n/12 *unicode(s) ~= *foo(s)|  
  []
 
-[11]
-Overfull \hbox (1.90842pt too wide) in paragraph at lines 336--336
+
+Overfull \hbox (1.90842pt too wide) in paragraph at lines 294--294
 []|\T1/cmtt/m/n/12 *unicode(s)|  
  []
 
 
-Overfull \hbox (1.90842pt too wide) in paragraph at lines 340--340
+Overfull \hbox (1.90842pt too wide) in paragraph at lines 298--298
 []|\T1/cmtt/m/n/12 *unicode(s)|  
  []
 
-[12] [13] [14]
+[9] [10] [11] [12]
 
-LaTeX Warning: Hyper reference `utr29-sec-io' on page 15 undefined on input lin
-e 491.
+LaTeX Warning: Hyper reference `utr29-sec-io' on page 13 undefined on input lin
+e 449.
 
-[15]
-Overfull \hbox (8.04546pt too wide) in paragraph at lines 530--531
+[13]
+Overfull \hbox (8.04546pt too wide) in paragraph at lines 488--489
 \T1/cmr/m/n/12 Untagged UTF-8 from a file, or built from \T1/cmtt/m/n/12 char()
  \T1/cmr/m/n/12 bytes, has byte \T1/cmtt/m/n/12 *\T1/cmr/m/n/12 . \T1/cmtt/m/n/
 12 unicode()
  []
 
-[16]
-Overfull \hbox (2.78831pt too wide) in paragraph at lines 561--562
-\T1/cmr/m/n/12 The fol-low-ing op-er-a-tions have been made Unicode-aware. Sub-
-script-ing (\T1/cmtt/m/n/12 s[i]\T1/cmr/m/n/12 )
+[14] [15]
+Overfull \hbox (5.4486pt too wide) in paragraph at lines 557--558
+[]\T1/cmr/m/n/12 A block-based rep-re-sen-ta-tion (ten-ta-tively \T1/cmtt/m/n/1
+2 struct b_unistr\T1/cmr/m/n/12 ) with a single-
  []
 
-[17] [18] [19] [20]
+[16]
 
-LaTeX Warning: Hyper reference `utr29-sec-status' on page 21 undefined on input
- line 619.
+LaTeX Warning: Hyper reference `utr29-sec-status' on page 17 undefined on input
+ line 580.
 
 
-Overfull \hbox (35.26306pt too wide) in paragraph at lines 619--620
+Overfull \hbox (35.26306pt too wide) in paragraph at lines 580--581
 \T1/cmtt/m/n/12 * \T1/cmr/m/n/12 and \T1/cmtt/m/n/12 languages\T1/cmr/m/n/12 ).
  \T1/cmtt/m/n/12 tests/general/Makefile \T1/cmr/m/n/12 ex-cludes the pre-existi
 ng \T1/cmtt/m/n/12 utf8\T1/cmr/m/n/12 /\T1/cmtt/m/n/12 utf8_
  []
 
-[21]
-Underfull \hbox (badness 4779) in paragraph at lines 625--626
+[17]
+Underfull \hbox (badness 4779) in paragraph at lines 586--587
 []\T1/cmr/m/n/12 Clinton Jef-fery. "How to Write a Uni-con Tech-ni-cal Re-port"
 .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 631--632
+Underfull \hbox (badness 10000) in paragraph at lines 589--590
 []\T1/cmr/m/n/12 Unicode Con-sor-tium. "The Uni-code Stan-dard".
  []
 
-[22] (./utr25.aux)
+[18] (./utr25.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -583,22 +590,22 @@ L3 programming layer <2024-01-22>
 LaTeX Warning: There were undefined references.
 
 Package rerunfilecheck Info: File `utr25.out' has not changed.
-(rerunfilecheck)             Checksum: 02147853C6C6ACF859A1A3C4EC49EBC0;4514.
+(rerunfilecheck)             Checksum: 52072CC15505E4B920DA1E893EAD4B43;4446.
  ) 
 Here is how much of TeX's memory you used:
- 12327 strings out of 476182
- 199645 string characters out of 5795595
- 1942975 words of memory out of 5000000
+ 12323 strings out of 476182
+ 199617 string characters out of 5795595
+ 1947975 words of memory out of 5000000
  34132 multiletter control sequences out of 15000+600000
  571567 words of font info for 62 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,10n,79p,3824b,600s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,10n,79p,1238b,600s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.60
 0pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1728.
-600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt109
-5.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1
-200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
-i1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/e
+600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti120
+0.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1
+095.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
+t1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/e
 cbx1728.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec
 /ectt1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/
 ec/ecrm1200.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jknappe
@@ -607,10 +614,10 @@ pen/ec/ecbx1440.600pk> </home/runner/.texlive2023/texmf-var/fonts/pk/ljfour/jkn
 appen/ec/ecbx2074.600pk></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
 nts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
 cmsy6.pfb>
-Output written on utr25.pdf (24 pages, 200407 bytes).
+Output written on utr25.pdf (20 pages, 187486 bytes).
 PDF statistics:
- 719 PDF objects out of 1000 (max. 8388607)
- 261 compressed objects within 3 object streams
- 54 named destinations out of 1000 (max. 500000)
+ 697 PDF objects out of 1000 (max. 8388607)
+ 248 compressed objects within 3 object streams
+ 50 named destinations out of 1000 (max. 500000)
  185 words of extra memory for PDF output out of 10000 (max. 10000000)
 
