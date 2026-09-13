@@ -88,7 +88,7 @@ class LSIFIndexer(
                         put(range_list, rangeID)
                         result2 := definitionHandler.getResult()
                         if \result2 & *result2 ~= 0 & result2["uri"] == uri then {
-                           if (result2["range"]["start"]["line"] <= j <= result2["range"]["end"]["line"] &&
+                           if (result2["range"]["start"]["line"] <= j <= result2["range"]["end"]["line"] &
                                result2["range"]["start"]["character"] <= k <= result2["range"]["end"]["character"]) then {
                               resultSetID := createResultSetVertex()
                               createHoverResultVertex(result["item"], resultSetID)
@@ -127,10 +127,10 @@ class LSIFIndexer(
          if \resultSet_table then {
             every resultSet := !resultSet_table do {
                every reference := !reference_table do {
-                  if (resultSet["uri"] == reference["uri"] &&
-                     resultSet["range"]["start"]["line"] == reference["range"]["start"]["line"] &&
-                     resultSet["range"]["end"]["line"] == reference["range"]["end"]["line"] &&
-                     resultSet["range"]["start"]["character"] == reference["range"]["start"]["character"] &&
+                  if (resultSet["uri"] == reference["uri"] &
+                     resultSet["range"]["start"]["line"] == reference["range"]["start"]["line"] &
+                     resultSet["range"]["end"]["line"] == reference["range"]["end"]["line"] &
+                     resultSet["range"]["start"]["character"] == reference["range"]["start"]["character"] &
                      resultSet["range"]["end"]["character"] == reference["range"]["end"]["character"]) then {
                      createHoverResultVertex(reference["result"]["item"], reference["rangeID"])
                      createItemEdge(resultSet["referenceID"], reference["rangeID"], reference["docID"], "references")

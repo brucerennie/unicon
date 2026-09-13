@@ -70,7 +70,7 @@ class FormattingHandler(filehandler, params)
             }
          }
          every position := find("{", trimmedLine) do {
-            if withinQuotes(trimmedLine, position) ~== 1 && trimmedLine[position - 1] ~== " " then
+            if withinQuotes(trimmedLine, position) ~== 1 & trimmedLine[position - 1] ~== " " then
                put(results_list, createResult(lineNum, position - 1, lineNum, position - 1, " "))
          }
 
@@ -210,7 +210,7 @@ class FormattingHandler(filehandler, params)
                            put(res, createResult(lineNum, cpos, lineNum, cpos, " "))
                            if _line[&pos] ~== " " then {
                               cpos := &pos - 1
-                              if _line[&pos - 1] == "-" && _line[&pos - 2] == "=" then
+                              if _line[&pos - 1] == "-" & _line[&pos - 2] == "=" then
                                  cpos -:= 1
                               put(res, createResult(lineNum, cpos, lineNum, cpos, " "))
                            }
@@ -220,19 +220,19 @@ class FormattingHandler(filehandler, params)
                         tab(many(charOps))
                         if _line[&pos] ~== " " then {
                            cpos := &pos - 1
-                           if _line[&pos - 1] == "-" && _line[&pos - 2] == "=" then
+                           if _line[&pos - 1] == "-" & _line[&pos - 2] == "=" then
                               cpos -:= 1
                            put(res, createResult(lineNum, cpos, lineNum, cpos, " "))
                         }
                      }
                   }
                   "@" : {
-                     if \_line[&pos + 1] && _line[&pos + 1] == ">" then {
+                     if \_line[&pos + 1] & _line[&pos + 1] == ">" then {
                         put(res, createResult(lineNum, &pos - 1, lineNum, &pos - 1, " "))
                         tab(many(charOps))
                         if _line[&pos] ~== " " then {
                            cpos := &pos - 1
-                           if _line[&pos - 1] == "-" && _line[&pos - 2] == "=" then
+                           if _line[&pos - 1] == "-" & _line[&pos - 2] == "=" then
                               cpos -:= 1
                            put(res, createResult(lineNum, cpos, lineNum, cpos, " "))
                         }
@@ -245,7 +245,7 @@ class FormattingHandler(filehandler, params)
                         tab(many(charOps))
                         if _line[&pos] ~== " " then {
                            cpos := &pos - 1
-                           if _line[&pos - 1] == "-" && _line[&pos - 2] == "=" then
+                           if _line[&pos - 1] == "-" & _line[&pos - 2] == "=" then
                               cpos -:= 1
                            put(res, createResult(lineNum, cpos, lineNum, cpos, " "))
                         }
@@ -258,7 +258,7 @@ class FormattingHandler(filehandler, params)
                         tab(many(charOps))
                         if _line[&pos] ~== " " then {
                            cpos := &pos - 1
-                           if _line[&pos - 1] == "-" && _line[&pos - 2] == "=" then
+                           if _line[&pos - 1] == "-" & _line[&pos - 2] == "=" then
                               cpos -:= 1
                            put(res, createResult(lineNum, cpos, lineNum, cpos, " "))
                         }
