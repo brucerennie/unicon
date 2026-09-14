@@ -97,7 +97,7 @@ class FoldingRangeHandler(filehandler)
                      if (ch == "\'" & (_line[&pos-2] ~== "\\")) then single_quote +:= 1
                      if (ch == "\"" & (_line[&pos-2] ~== "\\")) then double_quote +:= 1
                   }
-                  if (single_quote % 2) = 0 && (double_quote % 2) = 0 then {
+                  if (single_quote % 2) = 0 & (double_quote % 2) = 0 then {
                      startLine := pop(open_blocks)
                      put(results_list, table(
                         "startLine", startLine-1,
@@ -115,7 +115,7 @@ class FoldingRangeHandler(filehandler)
                      if (ch == "\'" & (_line[&pos-2] ~== "\\")) then single_quote +:= 1
                      if (ch == "\"" & (_line[&pos-2] ~== "\\")) then double_quote +:= 1
                   }
-                  if (single_quote % 2) = 0 && (double_quote % 2) = 0 then {
+                  if (single_quote % 2) = 0 & (double_quote % 2) = 0 then {
                      push(open_blocks, lineNum)
                   }
                }
