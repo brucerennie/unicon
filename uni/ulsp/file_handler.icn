@@ -412,7 +412,7 @@ class FileHandler(
                objectName := ::tab(::many(&digits ++ &letters ++ '-' ++ '_'))
                ::tab(::many(' \t'))
                ::move(2)
-               ::tab(::::many(' \t'))
+               ::tab(::many(' \t'))
                className := ::tab(::upto("\("))
                if ::member(linked_classes, className) | ::member(imported_classes, className) | ::member(internal_classes, className) | ::member(package_classes, className) then {
                   objects[objectName] := className
