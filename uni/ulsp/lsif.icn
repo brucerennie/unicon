@@ -296,7 +296,7 @@ class LSIFIndexer(
          "id" : hoverID;
          "type" : "vertex";
          "label" : "hoverResult";
-         "result" : ["contents", [["language" : "unicon"; 
+         "result" : ["contents" : [["language" : "unicon"; 
                                    "value" : value]]]
       ]
       write(outFile, tojson(lsif_table))
