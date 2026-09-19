@@ -292,11 +292,17 @@ procedure start_htetris()
     brick_table := init_bricks()
     next_id     := "1"
 
-    current_keys         := table()
-    current_keys[RIGHT]  := Key_Right
-    current_keys[LEFT]   := Key_Left
-    current_keys[ROTATE] := Key_Up
-    current_keys[SLAM]   := Key_Down
+    #current_keys         := table()
+    #current_keys[RIGHT]  := Key_Right
+    #current_keys[LEFT]   := Key_Left
+    #current_keys[ROTATE] := Key_Up
+    #current_keys[SLAM]   := Key_Down
+
+    current_keys := [ RIGHT   : Key_Right;
+                      LEFT    : Key_Left;
+                      ROTATE  : Key_Up;
+                      SLAM    : Key_Down]
+
     special_keys :=
 	["print screen","scroll lock","pause","insert","home","page up","end",
 	 "page down","arrow left","arrow up","arrow right","arrow down","F1",
