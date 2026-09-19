@@ -142,12 +142,18 @@ end
 procedure display_sizer_atts(object)
    local t
 
-   t := table()
-   t["a_name"]		:= object.id
-   t["b_label"]		:= object.label
-   t["c_width"]		:= object.x + object.w
-   t["d_height"]	:= object.y + object.h - CANVASY
-   t["_dialog"]		:= object.dlog
+   #t := table()
+   #t["a_name"]          := object.id
+   #t["b_label"]         := object.label
+   #t["c_width"]         := object.x + object.w
+   #t["d_height"]        := object.y + object.h - CANVASY
+   #t["_dialog"]         := object.dlog
+   
+   t := [ "a_name"    : object.id;
+          "b_label"   : object.label;
+          "c_width"   : object.x + object.w;
+          "d_height"  : object.y + object.h - CANVASY;
+          "_dialog"   : object.dlog]
 
    repeat {
       if sizer_dialog(t) == "Cancel" then
