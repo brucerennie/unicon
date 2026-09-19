@@ -79,14 +79,22 @@ end
 procedure display_rect_atts(object)
    local t
 
-   t := table()
-   t["_style"]		:= object.style
-   t["a_id"]		:= object.id
-   t["b_callback"]	:= object.proc
-   t["c_x"]		:= object.x
-   t["d_y"]		:= object.y - CANVASY
-   t["e_width"]		:= object.w
-   t["f_height"]	:= object.h
+   #t := table()
+   #t["_style"]          := object.style
+   #t["a_id"]            := object.id
+   #t["b_callback"]      := object.proc
+   #t["c_x"]             := object.x
+   #t["d_y"]             := object.y - CANVASY
+   #t["e_width"]         := object.w
+   #t["f_height"]        := object.h
+   
+   t := [ "_style"      : object.style;
+          "a_id"        : object.id;
+          "b_callback"  : object.proc;
+          "c_x"         : object.x;
+          "d_y"         : object.y - CANVASY;
+          "e_width"     : object.w;
+          "f_height"    : object.h]
 
    repeat {
       if rect_dialog(t) == "Cancel" then
