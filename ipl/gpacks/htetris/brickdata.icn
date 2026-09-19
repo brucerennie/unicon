@@ -114,13 +114,21 @@ procedure init_bricks()
 		"40,c1,~~~~~~~~~~~~~~~~~~~~bbbbbbbbbbbbbbbbbbbb~~~~~~~~~~~~~~~~~~~~bbbbbbbbbbbbbbbbbbbO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbOOOOOOOOOOOOOOOOOO~~~~~~~~~~~~~~~~~~~~bOOOOOOOOOOOOOOOOOOObbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbObbbbbbbbbbbbbbbbbbbObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbOOOOOOOOOOOOOOOOOObbOOOOOOOOOOOOOOOOOObOOOOOOOOOOOOOOOOOOObOOOOOOOOOOOOOOOOOOO~~~~~~~~~~~~~~~~~~~~bbbbbbbbbbbbbbbbbbbb~~~~~~~~~~~~~~~~~~~~bbbbbbbbbbbbbbbbbbbO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~bbOOOOOOOOOOOOOOOOOO~~~~~~~~~~~~~~~~~~~~bOOOOOOOOOOOOOOOOOOO",
 		"60,c1,bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbObbbbbbbbbbbbbbbbbbbObbbbbbbbbbbbbbbbbbbObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbBBBBBBBBBBBBBBBBOObbOOOOOOOOOOOOOOOOOObbOOOOOOOOOOOOOOOOOObbOOOOOOOOOOOOOOOOOObOOOOOOOOOOOOOOOOOOObOOOOOOOOOOOOOOOOOOObOOOOOOOOOOOOOOOOOOO~~~~~~~~~~~~~~~~~~~~bbbbbbbbbbbbbbbbbbbb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbbbbbbbbbbbbbbbbbbO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbBBBBBBBBBBBBBBBBOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bbOOOOOOOOOOOOOOOOOO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bOOOOOOOOOOOOOOOOOOO~~~~~~~~~~~~~~~~~~~~"])
 
-    standard_bricks            := table()
-    standard_bricks["brick_1"] := brick1
-    standard_bricks["brick_2"] := brick2
-    standard_bricks["brick_3"] := brick3
-    standard_bricks["brick_4"] := brick4
-    standard_bricks["brick_5"] := brick5
-    standard_bricks["brick_6"] := brick6
-    standard_bricks["brick_7"] := brick7
+    #standard_bricks            := table()
+    #standard_bricks["brick_1"] := brick1
+    #standard_bricks["brick_2"] := brick2
+    #standard_bricks["brick_3"] := brick3
+    #standard_bricks["brick_4"] := brick4
+    #standard_bricks["brick_5"] := brick5
+    #standard_bricks["brick_6"] := brick6
+    #standard_bricks["brick_7"] := brick7
+
+    standard_bricks :=  [ "brick_1" : brick1;
+                          "brick_2" : brick2;
+                          "brick_3" : brick3;
+                          "brick_4" : brick4;
+                          "brick_5" : brick5;
+                          "brick_6" : brick6;
+                          "brick_7" : brick7]
     return standard_bricks
 end
