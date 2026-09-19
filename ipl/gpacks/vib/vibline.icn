@@ -142,12 +142,18 @@ end
 procedure display_line_atts(object)
    local t, dx, dy
 
-   t := table()
-   t["a_id"]		:= object.id
-   t["c_x1"]		:= object.x1
-   t["d_y1"]		:= object.y1 - CANVASY
-   t["e_x2"]		:= object.x2
-   t["f_y2"]		:= object.y2 - CANVASY
+   #t := table()
+   #t["a_id"]            := object.id
+   #t["c_x1"]            := object.x1
+   #t["d_y1"]            := object.y1 - CANVASY
+   #t["e_x2"]            := object.x2
+   #t["f_y2"]            := object.y2 - CANVASY
+   
+   t := [ "a_id"  : object.id;
+          "c_x1"  : object.x1;
+          "d_y1"  : object.y1 - CANVASY;
+          "e_x2"  : object.x2;
+          "f_y2"  : object.y2 - CANVASY]
 
    repeat {
       if line_dialog(t) == "Cancel" then
