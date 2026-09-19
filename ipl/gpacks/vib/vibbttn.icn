@@ -136,18 +136,30 @@ procedure display_button_atts(object)
       o := &null
       }
 
-   t := table()
-   t["_style"]		:= s
-   t["_outline"]	:= o
-   t["_toggle"]		:= object.toggle
-   t["_dflt"]		:= object.dflt
-   t["a_label"]		:= object.label
-   t["b_id"]		:= object.id
-   t["c_callback"]	:= object.proc
-   t["d_x"]		:= object.x
-   t["e_y"]		:= object.y - CANVASY
-   t["f_width"]		:= object.w
-   t["g_height"]	:= object.h
+   #t := table()
+   #t["_style"]          := s
+   #t["_outline"]        := o
+   #t["_toggle"]         := object.toggle
+   #t["_dflt"]           := object.dflt
+   #t["a_label"]         := object.label
+   #t["b_id"]            := object.id
+   #t["c_callback"]      := object.proc
+   #t["d_x"]             := object.x
+   #t["e_y"]             := object.y - CANVASY
+   #t["f_width"]         := object.w
+   #t["g_height"]        := object.h
+   
+   t := [ "_style"      : s;
+          "_outline"    : o;
+          "_toggle"     : object.toggle;
+          "_dflt"       : object.dflt;
+          "a_label"     : object.label;
+          "b_id"        : object.id;
+          "c_callback"  : object.proc;
+          "d_x"         : object.x;
+          "e_y"         : object.y - CANVASY;
+          "f_width"     : object.w;
+          "g_height"    : object.h]
 
    repeat {
       if button_dialog(t) == "Cancel" then
