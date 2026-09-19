@@ -76,11 +76,16 @@ end
 procedure display_label_atts(object)
    local t
 
-   t := table()
-   t["a_label"]		:= object.label
-   t["b_id"]		:= object.id
-   t["c_x"]		:= object.x
-   t["d_y"]		:= object.y - CANVASY
+   #t := table()
+   #t["a_label"]         := object.label
+   #t["b_id"]            := object.id
+   #t["c_x"]             := object.x
+   #t["d_y"]             := object.y - CANVASY
+   
+   t := [ "a_label" : object.label;
+          "b_id"    : object.id;
+          "c_x"     : object.x;
+          "d_y"     : object.y - CANVASY]
 
    repeat {
       if label_dialog(t) == "Cancel" then
