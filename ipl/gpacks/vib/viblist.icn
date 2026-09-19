@@ -95,13 +95,20 @@ end
 procedure display_list_atts(object)
    local t
 
-   t := table()
-   t["a_id"]		:= object.id
-   t["b_callback"]	:= object.proc
-   t["c_x"]		:= object.x
-   t["d_y"]		:= object.y - CANVASY
-   t["e_width"]		:= object.w
-   t["f_height"]	:= object.h
+   #t := table()
+   #t["a_id"]            := object.id
+   #t["b_callback"]      := object.proc
+   #t["c_x"]             := object.x
+   #t["d_y"]             := object.y - CANVASY
+   #t["e_width"]         := object.w
+   #t["f_height"]        := object.h
+   
+   t := [ "a_id"        : object.id;
+          "b_callback"  : object.proc;
+          "c_x"         : object.x;
+          "d_y"         : object.y - CANVASY;
+          "e_width"     : object.w;
+          "f_height"    : object.h]
    
    t["g_style"] := case object.style of {
       "r" : "read only"
