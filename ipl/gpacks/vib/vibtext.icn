@@ -98,15 +98,22 @@ end
 procedure display_text_input_atts(object)
    local t
 
-   t := table()
-   t["a_id"]		:= object.id
-   t["b_callback"]	:= object.proc
-   t["c_x"]		:= object.x
-   t["d_y"]		:= object.y - CANVASY
-   t["e_label"]		:= object.label
-   t["f_value"]		:= object.value
-   t["g_length"]	:= object.length
-
+   #t := table()
+   #t["a_id"]            := object.id
+   #t["b_callback"]      := object.proc
+   #t["c_x"]             := object.x
+   #t["d_y"]             := object.y - CANVASY
+   #t["e_label"]         := object.label
+   #t["f_value"]         := object.value
+   #t["g_length"]        := object.length
+   
+   t := [ "a_id"        : object.id;
+          "b_callback"  : object.proc;
+          "c_x"         : object.x;
+          "d_y"         : object.y - CANVASY;
+          "e_label"     : object.label;
+          "f_value"     : object.value;
+          "g_length"    : object.length]
    repeat {
       if text_dialog(t) == "Cancel" then
          fail
