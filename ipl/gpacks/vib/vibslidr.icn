@@ -120,16 +120,24 @@ end
 procedure display_slider_atts(object)
    local t, s
 
-   t := table()
-   t["_filter"]		:= object.filter
-   t["a_id"]		:= object.id
-   t["b_callback"]	:= object.proc
-   t["c_x"]		:= object.x
-   t["d_y"]		:= object.y - CANVASY
-   t["g_lefttop"]	:= object.min
-   t["h_initial"]	:= object.value
-   t["i_rightbot"]	:= object.max
-
+   #t := table()
+   #t["_filter"]         := object.filter
+   #t["a_id"]            := object.id
+   #t["b_callback"]      := object.proc
+   #t["c_x"]             := object.x
+   #t["d_y"]             := object.y - CANVASY
+   #t["g_lefttop"]       := object.min
+   #t["h_initial"]       := object.value
+   #t["i_rightbot"]      := object.max
+   
+   t := [ "_filter"     : object.filter;
+          "a_id"        : object.id;
+          "b_callback"  : object.proc;
+          "c_x"         : object.x;
+          "d_y"         : object.y - CANVASY;
+          "g_lefttop"   : object.min;
+          "h_initial"   : object.value;
+          "i_rightbot"  : object.max]
    if object.w > object.h then {
       t["j_orientation"] := "horizontal"
       t["e_length"]	:= object.w
