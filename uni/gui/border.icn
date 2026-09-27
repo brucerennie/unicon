@@ -1,9 +1,10 @@
 #
-# $Id: border.icn,v 1.4 2006-07-09 23:43:07 rparlett Exp $
+# $Id: border.icn,v 1.5 2026-09-27 23:19 brennie Exp $
 #
 # This file is in the public domain.
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
+# Modified: bruce G.Rennie
 #
 
 package gui
@@ -69,9 +70,9 @@ class Border : Panel(
 
       if \title_obj then {
          case self.internal_alignment of {
-            "c" : EraseRectangle(W, self.x + self.w / 2 - title_obj.w / 2 - BORDER_TEXT_SPACING, y1, title_obj.w + 2 * BORDER_TEXT_SPACING, 2 * BORDER_WIDTH)
-            "l" : EraseRectangle(W, self.x + DEFAULT_TEXT_X_SURROUND, y1, title_obj.w + 2 * BORDER_TEXT_SPACING, 2 * BORDER_WIDTH)
-            "r" : EraseRectangle(W, self.x + self.w - title_obj.w - DEFAULT_TEXT_X_SURROUND - 2 * BORDER_TEXT_SPACING, y1, title_obj.w + 2 * BORDER_TEXT_SPACING, 2 * BORDER_WIDTH)
+            ALIGN_CENTER : EraseRectangle(W, self.x + self.w / 2 - title_obj.w / 2 - BORDER_TEXT_SPACING, y1, title_obj.w + 2 * BORDER_TEXT_SPACING, 2 * BORDER_WIDTH)
+            ALIGN_LEFT   : EraseRectangle(W, self.x + DEFAULT_TEXT_X_SURROUND, y1, title_obj.w + 2 * BORDER_TEXT_SPACING, 2 * BORDER_WIDTH)
+            ALIGN_RIGHT  : EraseRectangle(W, self.x + self.w - title_obj.w - DEFAULT_TEXT_X_SURROUND - 2 * BORDER_TEXT_SPACING, y1, title_obj.w + 2 * BORDER_TEXT_SPACING, 2 * BORDER_WIDTH)
          }         
       }
 
@@ -92,12 +93,12 @@ class Border : Panel(
       y1 := self.y
       h1 := self.h
       if \title_obj then {
-         title_obj.set_align(self.internal_alignment, "c")
+         title_obj.set_align(self.internal_alignment, ALIGN_CENTER)
          case self.internal_alignment of {
-            "c" : title_obj.set_pos("50%", 0)
-            "l" : title_obj.set_pos(DEFAULT_TEXT_X_SURROUND + BORDER_TEXT_SPACING, 0)
-            "r" : title_obj.set_pos("100%-" || (DEFAULT_TEXT_X_SURROUND + BORDER_TEXT_SPACING), 0)
-            default : fatal("incorrect internal_alignment specifier:" || image(self.internal_alignment))
+            ALIGN_CENTER : title_obj.set_pos("50%", 0)
+            ALIGN_LEFT   : title_obj.set_pos(DEFAULT_TEXT_X_SURROUND + BORDER_TEXT_SPACING, 0)
+            ALIGN_RIGHT  : title_obj.set_pos("100%-" || (DEFAULT_TEXT_X_SURROUND + BORDER_TEXT_SPACING), 0)
+            default      : fatal("incorrect internal_alignment specifier:" || image(self.internal_alignment))
          }
          #
          # Resize title_obj to work out y1, h1; note that title_obj will be resized again below
@@ -118,6 +119,6 @@ class Border : Panel(
 
    initially(a[])
       self.Panel.initially()
-      self.internal_alignment := "l"
+      self.internal_alignment := ALIGN_LEFT
       set_fields(a)
 end
