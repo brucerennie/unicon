@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Unicon downloads</title>
+<link rel="stylesheet" href="/unicon/assets/site.css" />
+</head><body>
+<nav class="unicon-site-nav" aria-label="Site">
+  <div class="unicon-site-nav-inner">
+    <a class="home" href="/unicon/">Unicon</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/">Documentation</a>
+    <span class="sep">·</span>
+    <a href="/unicon/doc/utr/html/">Technical Reports</a>
+    <span class="sep">·</span>
+    <a href="/unicon/downloads/">Download packages</a>
+    <span class="sep">·</span>
+    <a href="/unicon/CONTRIBUTING.html">Contributing</a>
+    <span class="sep">·</span>
+    <a href="/unicon/COPYING.html">License</a>
+    <span class="sep">·</span>
+    <a href="/unicon/config/editor/">Editor configs</a>
+    <span class="sep">·</span>
+    <a href="https://github.com/uniconproject/unicon">GitHub</a>
+  </div>
+</nav>
+<main style="max-width:60rem;margin:2rem auto;padding:0 1rem;font-family:sans-serif">
+<h1>Development package downloads</h1>
+<p>Built automatically from the latest <code>master</code> commit.
+ These are <strong>unsigned development builds</strong>, not an
+ apt or dnf repository. Signed release packages are published
+ separately per tagged release.
+ A path containing <code>nographics</code> is built with
+ <code>--disable-graphics</code> and has no GUI, IDE, or 3D library.</p>
+<p><em>No successful package build yet.</em></p>
+<h2>Debian / Ubuntu (.deb)</h2>
+<p>Download the package for your release and architecture,
+ for example Ubuntu 24.04 amd64 or Debian 13 arm64.
+ From the directory where you saved it:</p>
+<pre><code>sudo apt install "./unicon_&lt;version&gt;_&lt;arch&gt;.deb"</code></pre>
+<p>Quote the filename. It contains <code>~</code>, which the shell
+ would otherwise treat as your home directory.
+ <code>apt</code> installs the shared libraries the package needs.
+ A local file is not signed, and apt may say so; that is expected.
+ <code>dpkg -i</code> does not install those libraries. If you use it,
+ run <code>sudo apt-get -f install</code> afterward.</p>
+<ul>
+<li><em>none yet</em></li>
+</ul>
+<h2>Fedora / Rocky Linux (.rpm)</h2>
+<p>Download the Fedora 44 or Rocky Linux 9 x86_64 package that
+ matches your system. The two are not interchangeable.
+ From the directory where you saved it:</p>
+<pre><code>sudo dnf install "./unicon-&lt;version&gt;.rpm"</code></pre>
+<p>Quote the filename because it contains <code>~</code>.
+ <code>dnf</code> installs the dependencies.
+ <code>rpm -i</code> does not.</p>
+<ul>
+<li><em>none yet</em></li>
+</ul>
+<h2>Windows</h2>
+<p>Download the 64-bit <code>.exe</code> and run it. The installer
+ is unsigned, so Windows may report an unknown publisher.
+ It adds the Unicon <code>bin</code> directory to the system
+ <code>PATH</code>. Open a new terminal after installation so the
+ updated path is picked up.</p>
+<ul>
+<li><em>none yet</em></li>
+</ul>
+</main>
+<footer class="unicon-site-footer">
+  <a href="/unicon/">Home</a>
+  · <a href="/unicon/doc/">Documentation</a>
+  · Source on <a href="https://github.com/uniconproject/unicon">GitHub</a>
+</footer>
+</body></html>

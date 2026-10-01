@@ -174,6 +174,8 @@
     <span class="sep">·</span>
     <a href="/unicon/doc/utr/html/">Technical Reports</a>
     <span class="sep">·</span>
+    <a href="/unicon/downloads/">Download packages</a>
+    <span class="sep">·</span>
     <a href="/unicon/CONTRIBUTING.html">Contributing</a>
     <span class="sep">·</span>
     <a href="/unicon/COPYING.html">License</a>
@@ -225,9 +227,12 @@ Code</a></strong> has Unicon solutions for many programming tasks. More
 technical reports and resources are linked from the project site.</p>
 <p><strong>GitHub Pages:</strong> <a
 href="https://uniconproject.github.io/unicon/">uniconproject.github.io/unicon</a>
-(this README) · <strong><a href="doc/"><code>doc/</code></a></strong>
-for the documentation index · <strong><a href="doc/utr/html/">Technical
-Reports</a></strong> (RST UTRs).</p>
+(this README) · <strong><a
+href="https://uniconproject.github.io/unicon/downloads/">download
+packages</a></strong> · <strong><a
+href="doc/"><code>doc/</code></a></strong> for the documentation index ·
+<strong><a href="doc/utr/html/">Technical Reports</a></strong> (RST
+UTRs).</p>
 <h3 id="editors-and-ides">Editors and IDEs</h3>
 <p><strong>Syntax highlighting:</strong> <a
 href="/unicon/config/editor/"><code>config/editor/</code></a> ships highlighting
@@ -261,8 +266,15 @@ managers, for example on a Debian system:</p>
 <p>On macOS git is available with Xcode. On Windows you can install and
 set up git using the instructions: <a
 href="https://unicon.org/git.html">here</a></p>
-<p>For source tarballs and binary distributions, see the unicon.org <a
+<p>For source tarballs and release binaries, see the unicon.org <a
 href="https://unicon.org/downloads.html">download page</a>.</p>
+<p><strong><a
+href="https://uniconproject.github.io/unicon/downloads/">Download
+packages</a></strong> for development builds of the latest
+<code>master</code> commit: Debian/Ubuntu <code>.deb</code>,
+Fedora/Rocky <code>.rpm</code>, and a Windows installer. Packages whose
+names end in <code>nographics</code> are the same builds configured with
+<code>--disable-graphics</code>.</p>
 <h2 id="build-instructions">Build Instructions</h2>
 <p><em>Prerequisites</em> - Gnu/Unix utilities such as shell, make,
 grep, etc. - C language compiler that supports C99 such as gcc or
@@ -307,7 +319,7 @@ for common Linux distributions.</p>
 <p>Fedora/Centos (Depending on your Centos version, you may need to
 replace dnf with yum):</p>
 <pre><code>dnf install libjpeg-turbo-devel libpng-devel libX11-devel mesa-libGL-devel mesa-libGLU-devel
-            freetype-devel openal-devel freealut-devel libogg-devel libvorbis-devel
+            freetype-devel openal-soft-devel freealut-devel libogg-devel libvorbis-devel
         openssl-devel libssh-devel unixODBC-devel libXft-devel</code></pre>
 <p>Go into the Unicon directory and run:</p>
 <pre><code>./configure
