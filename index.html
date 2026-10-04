@@ -268,13 +268,21 @@ set up git using the instructions: <a
 href="https://unicon.org/git.html">here</a></p>
 <p>For source tarballs and release binaries, see the unicon.org <a
 href="https://unicon.org/downloads.html">download page</a>.</p>
-<p><strong><a
-href="https://uniconproject.github.io/unicon/downloads/">Download
-packages</a></strong> for development builds of the latest
-<code>master</code> commit: Debian/Ubuntu <code>.deb</code>,
-Fedora/Rocky <code>.rpm</code>, and a Windows installer. Packages whose
-names end in <code>nographics</code> are the same builds configured with
-<code>--disable-graphics</code>.</p>
+<p>Development builds of the latest <code>master</code> commit are on
+the <strong><a
+href="https://uniconproject.github.io/unicon/downloads/">download
+packages</a></strong> page. That page has the apt, dnf, zypper, and
+pacman repositories under <code>pkgs/</code>, and the Windows
+installers.</p>
+<p><code>unicon</code> installs the full graphics set.
+<code>unicon-nographics</code> is that set built without graphics or
+audio, and without the GUI library or ui/ivib. The two cannot be
+installed together. <code>unicon-runtime</code> and
+<code>unicon-runtime-nographics</code> are just the virtual machine, and
+they conflict as well. The other packages are the pieces on their own:
+translator, compiler, class library, program library, plugins, the GUI
+library, ui/ivib, and tools such as uscribe, udb, and iyacc. Windows
+ships two complete installers instead of these separate packages.</p>
 <h2 id="build-instructions">Build Instructions</h2>
 <p><em>Prerequisites</em> - Gnu/Unix utilities such as shell, make,
 grep, etc. - C language compiler that supports C99 such as gcc or

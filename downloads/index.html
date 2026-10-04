@@ -22,45 +22,31 @@
   </div>
 </nav>
 <main style="max-width:60rem;margin:2rem auto;padding:0 1rem;font-family:sans-serif">
-<h1>Development package downloads</h1>
+<h1>Development packages</h1>
 <p>Built automatically from the latest <code>master</code> commit.
- These are <strong>unsigned development builds</strong>, not an
- apt or dnf repository. Signed release packages are published
- separately per tagged release.
- A path containing <code>nographics</code> is built with
- <code>--disable-graphics</code> and has no GUI, IDE, or 3D library.</p>
+ These repositories are <strong>unsigned</strong> and contain only
+ the <code>dev</code> component. <code>apt install unicon</code> is the
+ graphics set. <code>apt install unicon-nographics</code> is the same
+ set around the virtual machine built with
+ <code>--disable-graphics</code> and <code>--disable-audio</code>.
+ The two metapackages conflict. Signed release repositories are
+ published separately.</p>
 <p><em>No successful package build yet.</em></p>
-<h2>Debian / Ubuntu (.deb)</h2>
-<p>Download the package for your release and architecture,
- for example Ubuntu 24.04 amd64 or Debian 13 arm64.
- From the directory where you saved it:</p>
-<pre><code>sudo apt install "./unicon_&lt;version&gt;_&lt;arch&gt;.deb"</code></pre>
-<p>Quote the filename. It contains <code>~</code>, which the shell
- would otherwise treat as your home directory.
- <code>apt</code> installs the shared libraries the package needs.
- A local file is not signed, and apt may say so; that is expected.
- <code>dpkg -i</code> does not install those libraries. If you use it,
- run <code>sudo apt-get -f install</code> afterward.</p>
-<ul>
-<li><em>none yet</em></li>
-</ul>
-<h2>Fedora / Rocky Linux (.rpm)</h2>
-<p>Download the Fedora 44 or Rocky Linux 9 x86_64 package that
- matches your system. The two are not interchangeable.
- From the directory where you saved it:</p>
-<pre><code>sudo dnf install "./unicon-&lt;version&gt;.rpm"</code></pre>
-<p>Quote the filename because it contains <code>~</code>.
- <code>dnf</code> installs the dependencies.
- <code>rpm -i</code> does not.</p>
-<ul>
-<li><em>none yet</em></li>
-</ul>
+<h2>Debian / Ubuntu</h2>
+<p><em>No apt repository in this build yet.</em></p>
+<h2>Fedora / Rocky Linux</h2>
+<p><em>No dnf repository in this build yet.</em></p>
+<h2>openSUSE</h2>
+<p><em>No zypper repository in this build yet.</em></p>
+<h2>Arch Linux / CachyOS</h2>
+<p><em>No pacman repository in this build yet.</em></p>
 <h2>Windows</h2>
 <p>Download the 64-bit <code>.exe</code> and run it. The installer
  is unsigned, so Windows may report an unknown publisher.
  It adds the Unicon <code>bin</code> directory to the system
  <code>PATH</code>. Open a new terminal after installation so the
- updated path is picked up.</p>
+ updated path is picked up. A path containing <code>nographics</code>
+ is built with <code>--disable-graphics</code> and <code>--disable-audio</code>.</p>
 <ul>
 <li><em>none yet</em></li>
 </ul>
