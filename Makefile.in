@@ -36,16 +36,24 @@ default_target: allsrc
 	@cat unicon-features.log
 	@echo "add $(shell cd $(TOPDIR) && pwd)/bin to your path or do \"make install\" to install Unicon on your system"
 
-.PHONY: plugins update_rev doc config help
+.PHONY: plugins update_rev doc config help seed-makedefs-uni
 
 # Optional $(wildcard config.status): do not require config.status before it exists
 # (e.g. debian/rules clean / dh_auto_clean runs make distclean without configuring).
+# Do not copy Makedefs.in in that case: it still contains @PACKAGE_VERSION@
+# and would make the deb/rpm version string invalid.
 Makedefs: $(srcdir)/Makedefs.in $(wildcard config.status)
 	@if test -f ./config.status; then \
 	  $(SHELL) ./config.status Makedefs; \
 	else \
 	  echo "Warning: config.status missing; Makedefs not regenerated. Run configure first." >&2; \
 	fi
+
+# Makedefs.uni is configure output. Clean targets run before it exists, and
+# an empty file turns "$(RMDIR) html" into a command named html. The template
+# already defines RMDIR, unlike Makedefs.in which still has @PACKAGE_*@.
+seed-makedefs-uni:
+	@if test ! -s Makedefs.uni; then cp $(srcdir)/Makedefs.uni.in Makedefs.uni; fi
 
 update_rev:
 	@$(TOPDIR)/config/scripts/version.sh
@@ -106,6 +114,9 @@ winbin WinInstaller:
 	@echo "#define AppRevision \""`$(TOPDIR)/config/scripts/version.sh "revision"`"\"" \
 		>> $(TOPDIR)/config/win32/gcc/unicon_version.iss
 	@echo "#define PATCHSTR \"$(PATCHSTR)\"" >> $(TOPDIR)/config/win32/gcc/unicon_version.iss
+	@if test -n "$(GRAPHICS)"; then \
+		echo "#define WithGraphics" >> $(TOPDIR)/config/win32/gcc/unicon_version.iss; \
+	fi
 	$(INNOSETUP) $(TOPDIR)/config/win32/gcc/unicon.iss
 
 
@@ -221,8 +232,9 @@ F=*.{u,icn}
 # runtime binaries, variants of iconx, icont, and iconc
 RTbins=$(UNICONX)$(EXE) $(UNICONWX)$(EXE) $(UNICONT)$(EXE) $(UNICONWT)$(EXE) $(UNICONC)$(EXE)
 ADDONbins=udb$(EXE) uprof$(EXE) unidep$(EXE) unidoc$(EXE) ui$(EXE) ivib$(EXE) ulsp$(EXE) uscribe$(EXE)
-UTILbins=patchstr$(EXE) iyacc$(EXE)
-ALLbins=$(RTbins) unicon$(EXE) $(ADDONbins) $(UTILbins) rt.a rt.h
+UTILbins=patchstr$(EXE) iyacc$(EXE) uflex$(EXE)
+# rt.a and rt.h are installed with the runtime tree under $(libdir)/unicon/rt.
+ALLbins=$(RTbins) unicon$(EXE) $(ADDONbins) $(UTILbins)
 # binaries that should be signed after install, only needed on arm macOS for now
 SIGNbins=$(RTbins) $(UTILbins)
 
@@ -288,6 +300,12 @@ install Install:
 	@$(INST) -m 644 $(TOPDIR)/ipl/gincl/*.icn $(DESTDIR)$(UIPL)/gincl
 	@$(INST) -m 644 $(TOPDIR)/ipl/mincl/*.icn $(DESTDIR)$(UIPL)/mincl
 	@$(INST) -m 644 $(TOPDIR)/ipl/procs/*.icn $(DESTDIR)$(UIPL)/procs
+#	libcfunc.so is built into bin/ for in-tree runs. Packaged iconx looks
+#	for it in the uniroot directory added to FPATH.
+	@if test -f "$(TOPDIR)/bin/libcfunc.so"; then \
+	  echo "Installing libcfunc.so to $(DESTDIR)$(ULROT)"; \
+	  $(INST) $(TOPDIR)/bin/libcfunc.so $(DESTDIR)$(ULROT)/libcfunc.so; \
+	fi
 #	install unicon/uni
 	@for d in $(Udirs); do \
 	  echo "Installing uni/$$d to $(DESTDIR)$(ULB)/$$d ..."; \
@@ -347,6 +365,13 @@ VV=$(PKG_VERSION)$(MV)
 PKG_STRNAME=$(PKG_TARNAME)_$(VV)$(VSUFFIX)
 UTAR=$(PKG_STRNAME).tar.gz
 UTARORIG=$(PKG_STRNAME).orig.tar.gz
+# CI sets UNICON_PKG_REV (run number, dot, short sha) so a development package
+# sorts newer than the previous build. Local release builds leave it unset.
+PKG_BUILDVER=$(VV)$(VSUFFIX)$(if $(UNICON_PKG_REV),+git$(UNICON_PKG_REV))
+# CI sets UNICON_DEB_REV per suite (1~deb13u1, 1~ubuntu24.04.1, ...). The
+# upstream version, and therefore the .orig.tar.gz name, stays the same so
+# reprepro can store one orig for every suite. UNICON_DEB_CODENAME replaces
+# UNRELEASED in the changelog so the .changes distribution matches the suite.
 # Tarball, unicondist/, rpmbuild/ go under here (default: parent of repo). If the clone is at
 # /unicon, .. is / (not writable): use e.g. DISTROOT=.dist or a path under your home directory.
 DISTROOT ?= ..
@@ -377,8 +402,34 @@ deb: dist
 	@echo "	 debuild -us -uc"
 
 debin: deb
-	cd $(DISTROOT)/$(udist)/$(PKG_STRNAME) && debuild -us -uc $(SIGNOPT) --lintian-opts --profile debian
-	ls -lh $(DISTROOT)/$(udist)/unicon_*.deb
+	src="$(DISTROOT)/$(udist)/$(PKG_STRNAME)"; \
+	if test -n "$(UNICON_PKG_REV)" || test -n "$$UNICON_DEB_REV" || test -n "$$UNICON_DEB_CODENAME"; then \
+	  ver="$(PKG_BUILDVER)"; \
+	  deb_rev="$${UNICON_DEB_REV:-1}"; \
+	  sed -i "1s/([^)]*)/($${ver}-$${deb_rev})/" "$$src/debian/changelog"; \
+	  if test -n "$${UNICON_DEB_CODENAME:-}"; then \
+	    sed -i "1s/) UNRELEASED;/) $${UNICON_DEB_CODENAME};/" "$$src/debian/changelog"; \
+	  fi; \
+	  echo "Debian version $${ver}-$${deb_rev} ($${UNICON_DEB_CODENAME:-UNRELEASED})"; \
+	fi; \
+	if test -n "$(UNICON_PKG_REV)"; then \
+	  ver="$(PKG_BUILDVER)"; \
+	  dest="$(DISTROOT)/$(udist)/$(PKG_TARNAME)_$$ver"; \
+	  mv "$$src" "$$dest"; \
+	  mv "$(DISTROOT)/$(udist)/$(UTARORIG)" "$(DISTROOT)/$(udist)/$(PKG_TARNAME)_$$ver.orig.tar.gz"; \
+	  src="$$dest"; \
+	fi; \
+	if test -n "$(UNICON_CONFIGURE_EXTRA)"; then \
+	  printf '%s\n' "$(UNICON_CONFIGURE_EXTRA)" > "$$src/debian/configure-extra"; \
+	fi; \
+	case " $(UNICON_CONFIGURE_EXTRA) " in \
+	  *" --disable-graphics "*) \
+	    DEB_BUILD_PROFILES="$${DEB_BUILD_PROFILES:+$$DEB_BUILD_PROFILES }pkg.unicon.nographics"; \
+	    export DEB_BUILD_PROFILES; \
+	    ;; \
+	esac; \
+	cd "$$src" && DEB_BUILD_MAINT_OPTIONS="$${DEB_BUILD_MAINT_OPTIONS:+$$DEB_BUILD_MAINT_OPTIONS }optimize=-lto" debuild -us -uc $(SIGNOPT) --lintian-opts --profile debian
+	ls -lh $(DISTROOT)/$(udist)/*.deb
 
 debsrc: deb
 	cd $(DISTROOT)/$(udist)/$(PKG_STRNAME) && debuild -S $(SIGNOPT) --lintian-opts --profile debian
@@ -393,31 +444,47 @@ launchpad:
 
 # RPM section
 rpmdir=rpmbuild
+# Absolute, so rpmbuild --define _topdir still points here after the recipe cds into SPECS.
+RPM_TOPDIR=$(abspath $(DISTROOT)/$(rpmdir))
 
 rpm: dist
-	mkdir -p $(DISTROOT)/$(rpmdir)/SOURCES
-	mkdir -p $(DISTROOT)/$(rpmdir)/SPECS
-	cp $(TOPDIR)/rpm/unicon.spec $(DISTROOT)/$(rpmdir)/SPECS
-	mv $(DISTROOT)/$(UTAR) $(DISTROOT)/$(rpmdir)/SOURCES
+	mkdir -p $(RPM_TOPDIR)/SOURCES
+	mkdir -p $(RPM_TOPDIR)/SPECS
+	cp $(TOPDIR)/rpm/unicon.spec $(RPM_TOPDIR)/SPECS
+	mv $(DISTROOT)/$(UTAR) $(RPM_TOPDIR)/SOURCES
 	@echo "To finish building the rpm package, do"
-	@echo "   cd $(DISTROOT)/$(rpmdir)/SPECS"
+	@echo "   cd $(RPM_TOPDIR)/SPECS"
 	@echo "Then run:"
-	@echo "	 rpmbuild -ba unicon.spec"
+	@echo "	 rpmbuild -ba $(RPM_DEFINES) unicon.spec"
+
+# UNICON_CONFIGURE_EXTRA is passed to ./configure (for example --disable-graphics).
+# An empty configure_extra define is an rpmbuild error, so omit it unless set.
+RPM_WITH_GRAPHICS=$(if $(findstring --disable-graphics,$(UNICON_CONFIGURE_EXTRA)),0,1)
+# autoconf accepts --disable-plugins and --enable-plugins=no. Both turn the
+# library off. Match whole words so --disable-plugins=yes is not treated as off.
+RPM_WITH_PLUGINS=$(if $(filter --disable-plugins --disable-plugins=no --enable-plugins=no,$(UNICON_CONFIGURE_EXTRA)),0,1)
+RPM_DEFINES=--define "ver $(PKG_BUILDVER)" \
+	--define "tarball $(UTAR)" \
+	--define "_topdir $(RPM_TOPDIR)" \
+	$(if $(UNICON_CONFIGURE_EXTRA),--define "configure_extra $(UNICON_CONFIGURE_EXTRA)") \
+	--define "with_graphics $(RPM_WITH_GRAPHICS)" \
+	$(if $(filter 0,$(RPM_WITH_PLUGINS)),--without plugins)
 
 rpmbin: rpm
-	cd $(DISTROOT)/$(rpmdir)/SPECS &&  rpmbuild -ba unicon.spec
-	@ls $(DISTROOT)/$(rpmdir)/RPMS/
-	ls -lh $(DISTROOT)/$(rpmdir)/RPMS/$(PKG_STRNAME)-*.*.rpm
+	cd $(RPM_TOPDIR)/SPECS && rpmbuild -ba $(RPM_DEFINES) unicon.spec
+	ls -lh $(RPM_TOPDIR)/RPMS/*/$(PKG_TARNAME)-*.rpm
 
 rpmresume: rpm
-	cd $(DISTROOT)/$(rpmdir) &&  rpmbuild -bi --short-circuit unicon.spec
-	@ls $(DISTROOT)/$(rpmdir)/RPMS/
-	ls -lh $(DISTROOT)/$(rpmdir)/RPMS/$(PKG_STRNAME)-$(VV)-*.*.rpm
+	cd $(RPM_TOPDIR)/SPECS && rpmbuild -bi --short-circuit $(RPM_DEFINES) unicon.spec
+	ls -lh $(RPM_TOPDIR)/RPMS/*/$(PKG_TARNAME)-*.rpm
 
-rpmsrc:
-	cd $(DISTROOT)/$(rpmdir) &&  rpmbuild -bs unicon.spec
-	@ls $(DISTROOT)/$(rpmdir)/SRPMS/
-	ls -lh $(DISTROOT)/$(rpmdir)/RPMS/$(PKG_STRNAME)-*.*.rpm
+rpmsrc: rpm
+	cd $(RPM_TOPDIR)/SPECS && rpmbuild -bs \
+	  --define "ver $(PKG_BUILDVER)" \
+	  --define "tarball $(UTAR)" \
+	  --define "_topdir $(RPM_TOPDIR)" \
+	  unicon.spec
+	ls -lh $(RPM_TOPDIR)/SRPMS/$(PKG_TARNAME)-*.src.rpm
 
 
 ##################################################################
@@ -457,7 +524,7 @@ Benchmark-icont:
 # "make Pure"  also removes binaries, library, and configured files.
 
 clean Clean:
-		touch Makedefs Makedefs.uni
+		$(MAKE) seed-makedefs-uni
 		rm -rf icon.*
 		cd $(TOPDIR)/src;			$(MAKE) Clean
 		cd $(TOPDIR)/tests;		$(MAKE) Clean
@@ -465,7 +532,7 @@ clean Clean:
 		cd $(TOPDIR)/doc;			$(MAKE) Clean
 
 distclean:
-		touch Makedefs Makedefs.uni
+		$(MAKE) seed-makedefs-uni
 		rm -rf icon.* $(TOPDIR)/bin/[A-Za-z]* $(TOPDIR)/lib/[a-z]*
 		cd $(TOPDIR)/uni;			$(MAKE) Pure
 		cd $(TOPDIR)/ipl;			$(MAKE) Pure
@@ -479,7 +546,7 @@ distclean:
 
 
 Pure:
-		touch Makedefs Makedefs.uni
+		$(MAKE) seed-makedefs-uni
 		rm -rf icon.* $(TOPDIR)/bin/[A-Za-z]* $(TOPDIR)/lib/[a-z]*
 		cd $(TOPDIR)/uni;			$(MAKE) Pure
 		cd $(TOPDIR)/ipl;			$(MAKE) Pure
