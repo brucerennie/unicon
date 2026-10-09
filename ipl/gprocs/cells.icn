@@ -145,7 +145,7 @@ procedure colorcells(panel, matrix)		#: color all cells in panel
          # fudge 0/1 matrix
          if matrix[i, j] === "1" then matrix[i, j] := "white"
          else if matrix[i, j] === "0" then matrix[i, j] := "black"
-         Fg(panel.window, matrix[i, j])
+         Fg(panel.window, matrix[i, j]) |
             stop("Fg() failed in colorcells() with matrix[" ||
               i || "," || j || "]=" || matrix[i, j] || ".")
          FillRectangle(panel.window, (j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
