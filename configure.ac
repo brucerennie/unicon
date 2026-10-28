@@ -396,6 +396,7 @@ if test x"$tsan" = x"yes" ; then
   AC_CFLAG([-fsanitize=thread], [AC_MSG_ERROR([ThreadSanitizer (-fsanitize=thread) is not supported by $CC])])
   AC_CXXFLAG([-fsanitize=thread], [AC_MSG_ERROR([ThreadSanitizer (-fsanitize=thread) is not supported by $CXX])])
   LDFLAGS="$LDFLAGS -fsanitize=thread"
+  AC_DEFINE([ThreadSanitizer], [1], [Define if built with ThreadSanitizer (--enable-tsan).])
 fi
 
 if test x"$msan" = x"yes" ; then
@@ -607,6 +608,23 @@ int main(void) {
   if test "x$ac_cv_c11_atomics" = "xyes"; then
     AC_DEFINE([HAVE_C11_ATOMICS], [1],
       [Define if the compiler provides C11 <stdatomic.h> atomics])
+  fi
+  dnl Atomic operations on plain (non-_Atomic) words, for counters kept in
+  dnl fields shared with other data, such as a record's serial number.
+  AC_CACHE_CHECK([for atomic builtins on plain words],
+    [ac_cv_atomic_builtins],
+    [AC_LINK_IFELSE(
+      [AC_LANG_SOURCE([[
+static long ub_w;
+int main(void) {
+   return (int)__atomic_fetch_add(&ub_w, 1, __ATOMIC_RELAXED);
+}
+]])],
+      [ac_cv_atomic_builtins=yes],
+      [ac_cv_atomic_builtins=no])])
+  if test "x$ac_cv_atomic_builtins" = "xyes"; then
+    AC_DEFINE([HAVE_ATOMIC_BUILTINS], [1],
+      [Define if the compiler provides __atomic builtins on plain words])
   fi
 fi
 
@@ -840,8 +858,8 @@ if ! test "x$graphics" = "xno"; then
     GRAPHICS=graphics
 
     if test "ms$unicon_os" != "mswindows" ; then
-       XL="-lXpm \$(XLIBS)"
-       XPM=xpm
+       CHECK_XPM()
+       XL="\$(XLIBS)"
     fi
 
     if test "$cv_libftgl" = "yes"; then
@@ -854,14 +872,14 @@ if ! test "x$graphics" = "xno"; then
      *linux*)
         ;;
      *solaris*)
-        XLIBS="-L/usr/X11R6/lib/64 -R/usr/X11R6/lib/64 -lXpm -lX11"
+        XLIBS="-L/usr/X11R6/lib/64 -R/usr/X11R6/lib/64 -lX11"
         ;;
      *aix*)
         ;;
      *bsd*)
         ;;
      *macos*)
-        XLIBS="-L/opt/X11/lib -L/usr/X11R6/lib -L/usr/local/lib -lXpm -lX11"
+        XLIBS="-L/opt/X11/lib -L/usr/X11R6/lib -L/usr/local/lib -lX11"
 	;;
      *windows*)
         ;;
@@ -881,7 +899,6 @@ fi
   AC_SUBST(XLIBS)
   AC_SUBST(GRAPHICS)
   AC_SUBST(XL)
-  AC_SUBST(XPM)
   AC_SUBST(DRAWSTRING)
   AC_SUBST(COMMONDRAWSTRING)
   AC_SUBST(CMNT)
@@ -1069,6 +1086,9 @@ if test "x$graphics" = "xyes" || test "x$graphics" = "xon" ; then
   if test "x$cv_libpng"  = "xyes" ; then gtmp="$gtmp +PNG " ; else gtmp="$gtmp -PNG " ; fi
 
   if test "x$cv_libXft"   = "xyes" ; then gtmp="$gtmp +XFT " ; else gtmp="$gtmp -XFT " ; fi
+  if test "ms$unicon_os" != "mswindows" ; then
+    if test "x$cv_libXpm" = "xyes" ; then gtmp="$gtmp +XPM " ; else gtmp="$gtmp -XPM " ; fi
+  fi
   if test "x$cv_libfreetype"   = "xyes" ; then
     gtmp="$gtmp+Freetype " ; else gtmp="$gtmp-FreeType " ; fi
 else
