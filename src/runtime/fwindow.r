@@ -1659,7 +1659,7 @@ function{0,1} Fg(argv[argc])
 
 #ifdef Graphics3D
       if (w->context->is_3D)
-         getmaterials(sbuf1);
+         getmaterials(w, sbuf1);
 #endif
       len = strlen(sbuf1);
       Protect(tmp = alcstr(sbuf1, len), runerr(0));
@@ -2481,16 +2481,16 @@ function{0,1} ReadImage(argv[argc])
       if (is_texture){
          warg=1;
          imd.format = UCOLOR_RGB;
-         imd.is_bottom_up = 1;
+         imd.is_bottom_up = 0;
          }
       else
 #endif                                  /* Graphics3D */
       {
-#if NT
+#ifdef MSWindows
          imd.format = UCOLOR_BGR;
-#else
+#else                                   /* MSWindows */
          imd.format = UCOLOR_RGB;
-#endif
+#endif                                  /* MSWindows */
          imd.is_bottom_up = 0;
       }
 
@@ -2534,19 +2534,50 @@ function{0,1} ReadImage(argv[argc])
        * First try to read as one of the supported image file formats.
        * If that doesn't work, try platform-dependent image reading code.
        */
-      r = readImage(filename, p, &imd);
+      r = readImage(filename, 0, &imd);
+      if (r == Succeeded && p && coerceimg(w, &imd, p) != Succeeded) {
+         free((pointer)imd.paltbl);
+         free((pointer)imd.data);
+         runerr(305);
+         }
       if (r == Succeeded) {
 
 #ifdef Graphics3D
          if (is_texture) {
-            if (texhandle > w->context->display->ntextures)
+            if (p)                      /* palette colors are linear */
+               gldisplaypal(w, imd.paltbl);
+            if (texhandle >= w->context->display->ntextures)
+               r = RunError;
+            else
+               r = TexReadImage(w, texhandle, x, y, &imd);
+            free((pointer)imd.paltbl);
+            free((pointer)imd.data);
+            if (r == RunError)
                runerr(102, argv[warg]);
-            return C_integer (word) TexReadImage(w, texhandle, x, y, &imd);
+            if (r != Succeeded)
+               fail;
+            return nulldesc;
             }
 #endif                                  /* Graphics3D */
 
-         status = strimage(w, x, y, imd.width, imd.height, imd.paltbl,
+         /*
+          * Show a color table from the file as given.  An image coerced
+          * to palette p has the palette's (linear) colors instead.
+          */
+         if (imd.paltbl && p == 0) {
+            int ix = x, iy = y;
+            if (imgtorgb(w, &ix, &iy, &imd) == Succeeded) {
+               x = ix;
+               y = iy;
+               }
+            else
+               linearpal(w, imd.paltbl);
+            }
+         if (imd.width > 0)
+            status = strimage(w, x, y, imd.width, imd.height, imd.paltbl,
                            imd.data, (word)imd.width * (word)imd.height, 0);
+         else
+            status = 0;
          if (status < 0)
             r = RunError;
          free((pointer)imd.paltbl);
