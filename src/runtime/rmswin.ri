@@ -2604,7 +2604,21 @@ int on_icon;
       free(buf2);
          }
       else {
-         buf2 = s;
+         /*
+          * Each row of a DIB starts on a four-byte boundary; copy the
+          * rows apart if three bytes per pixel do not get there.
+          */
+         long rowlen = (long)width * 3, stride = (rowlen + 3) / 4 * 4;
+         buf2 = (char *)s;
+         if (stride != rowlen) {
+            if ((buf2 = malloc(stride * height)) == NULL) {
+               free(bmi);
+               FREE_STDLOCALS(w);
+               return -1;
+               }
+            for (iy = 0; iy < height; iy++)
+               memcpy(buf2 + iy * stride, s + iy * rowlen, rowlen);
+            }
          bmih->biClrUsed = 0;
          bmih->biHeight = -height;
          bmih->biBitCount = 24;
@@ -2635,6 +2649,8 @@ int on_icon;
          bmi->bmiColors[2].rgbReserved = 0x00;
 #endif
          temppix=CreateDIBitmap(pixdc, bmih, CBM_INIT, buf2, bmi, DIB_RGB_COLORS);
+         if (buf2 != (char *)s)
+            free(buf2);
         }
 
       tempdc = CreateCompatibleDC(stddc);

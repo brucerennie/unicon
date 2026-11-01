@@ -52,7 +52,8 @@ void cylinder(double radius1, double radius2, double height,
  * traverse the given list and set material properties.
  * RGBA are given in X11-style 0-65535 range
  */
-int determinematerial(temp, r, g, b, a)
+int determinematerial(w, temp, r, g, b, a)
+wbp w;
 char *temp;
 C_integer r, g, b, a;
 {
@@ -74,14 +75,14 @@ void disk(double radius1, double radius2, double angle1, double angle2,
 /*
  * returns the current value of the specified light # in the result buf
  */
-int getlight(int light, char* buf)
+int getlight(wbp w, int light, char* buf)
 {
 }
 
 /*
  * returns the current material properties
  */
-int getmaterials(char* buf)
+int getmaterials(wbp w, char* buf)
 {
    return Failed;
 }

@@ -4,13 +4,63 @@
  */
 int alcinstalltex(int k, wdp wd, GLubyte *tex, int width, int height);
 int bltex(wbp w, int width, int height, int ch, char *s, word len);
-int determinematerial(char *, C_integer, C_integer, C_integer, C_integer);
+int determinematerial(wbp, char *, C_integer, C_integer, C_integer, C_integer);
 int lookup_texture_byname(wbp w, char *name, int len, int type, int curtex);
 int texture(int width, int height, GLubyte *tex, int texmode);
 int texture_24img(wbp w, struct imgdata im);
 int textureimg(wbp w, int width, int height,
                 struct palentry *e, unsigned char *s, word len);
 int init_3dcontext(wcp wc);
+
+/*
+ * Colors in Unicon are linear; 2D windows gamma correct them for the
+ * screen.  These helpers do the same for OpenGL, using the window's gamma,
+ * so that a color looks the same in a 3D window as in a 2D one.  (The
+ * window's own fg and bg, as RED() and friends give them, are already
+ * the colors shown.)
+ */
+
+/*
+ * glcolor(w, r, g, b, a, color) - a linear color (0 - 65535) as an
+ * OpenGL color.  Alpha is not a color and stays as it is.
+ */
+#define GLGAMMA(c, inv) \
+   (((long)(65535 * pow((c) / 65535.0, inv)) >> 8) / (GLfloat)255)
+static void glcolor(wbp w, long r, long g, long b, long a, GLfloat color[4])
+{
+   double inv = 1.0 / w->context->gamma;
+   color[0] = GLGAMMA(r, inv);          /* the same 8-bit value as in 2D */
+   color[1] = GLGAMMA(g, inv);
+   color[2] = GLGAMMA(b, inv);
+   color[3] = a / (GLfloat)65535;
+}
+
+/*
+ * linearcolor(w, color) - the reverse of glcolor(), for reporting colors.
+ */
+static void linearcolor(wbp w, GLfloat color[4])
+{
+   double gamma = w->context->gamma;
+   int i;
+   for (i = 0; i < 3; i++)
+      color[i] = pow(color[i] > 0 ? color[i] : 0.0, gamma);
+}
+
+/*
+ * gldisplaypal(w, e) - gamma correct the linear colors of a palette
+ * (DrawImage() palettes, or an image coerced to one) for a texture.
+ */
+void gldisplaypal(wbp w, struct palentry *e)
+{
+   double inv = 1.0 / w->context->gamma;
+   int i;
+   for (i = 0; i < 256; i++)
+      if (e[i].valid) {
+         e[i].clr.red   = 65535 * pow(e[i].clr.red   / 65535.0, inv);
+         e[i].clr.green = 65535 * pow(e[i].clr.green / 65535.0, inv);
+         e[i].clr.blue  = 65535 * pow(e[i].clr.blue  / 65535.0, inv);
+         }
+}
 
 FILE *wopengl(char *name, struct b_list *lp, dptr attr, int n, int *err_index)
 {
@@ -1395,7 +1445,7 @@ int traversefunctionlist(wbp w)
             if (!cnv:C_integer(d, a))
                return Failed;
 
-            if(!determinematerial(temp, r, g, b, a)) {
+            if(!determinematerial(w, temp, r, g, b, a)) {
                 /*
                         if(!determinematerial(funclist)) {
                 */
@@ -1782,7 +1832,7 @@ int traversefunctionlist(wbp w)
 /*
  * traverse the given list and set material properties
  */
-int determinematerial(char *temp, C_integer r, C_integer g, C_integer b, C_integer a)
+int determinematerial(wbp w, char *temp, C_integer r, C_integer g, C_integer b, C_integer a)
 {
    GLfloat color[4];
 
@@ -1790,10 +1840,7 @@ int determinematerial(char *temp, C_integer r, C_integer g, C_integer b, C_integ
     * must convert from an integer between 0 and 65535
     * to a float between 0.0 and 0.0
     */
-   color[0] = r/(GLfloat)65535;
-   color[1] = g/(GLfloat)65535;
-   color[2] = b/(GLfloat)65535;
-   color[3] = a/(GLfloat)65535;  /* alpha value */
+   glcolor(w, r, g, b, a, color);
 
   /* set the material property */
    if (!strcmp(temp, "ambient"))
@@ -1821,7 +1868,7 @@ int determinematerial(char *temp, C_integer r, C_integer g, C_integer b, C_integ
 /* routines to return an attribute vale */
 
 /* returns the current value of the specified light */
-int getlight(int light, char* buf)
+int getlight(wbp w, int light, char* buf)
 {
    GLfloat pos[4];
    GLfloat amb[4];
@@ -1832,13 +1879,16 @@ int getlight(int light, char* buf)
    glGetLightfv(GL_LIGHT0 + light, GL_AMBIENT, amb);
    glGetLightfv(GL_LIGHT0 + light, GL_DIFFUSE, diff);
    glGetLightfv(GL_LIGHT0 + light, GL_SPECULAR, spec);
+   linearcolor(w, amb);
+   linearcolor(w, diff);
+   linearcolor(w, spec);
 
    sprintf(buf, "position %.2f,%.2f,%.2f; ambient %.2f,%.2f,%.2f; diffuse %.2f,%.2f,%.2f; specular %.2f,%.2f,%.2f",  pos[0], pos[1], pos[2], amb[0], amb[1], amb[2],  diff[0], diff[1], diff[2], spec[0], spec[1], spec[2]);
    return Succeeded;
 }
 
 /* returns the current material properties */
-int getmaterials(char* buf)
+int getmaterials(wbp w, char* buf)
 {
    GLfloat amb[4];
    GLfloat diff[4];
@@ -1852,6 +1902,10 @@ int getmaterials(char* buf)
    glGetMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
    glGetMaterialfv(GL_FRONT, GL_SPECULAR, spec);
    glGetMaterialfv(GL_FRONT, GL_SHININESS, &shine);
+   linearcolor(w, emis);
+   linearcolor(w, amb);
+   linearcolor(w, diff);
+   linearcolor(w, spec);
 
    sprintf(buf, "ambient %.2f,%.2f,%.2f; diffuse %.2f,%.2f,%.2f; specular %.2f,%.2f,%.2f; emission %.2f,%.2f,%.2f; shininess %.2f", amb[0], amb[1], amb[2],  diff[0], diff[1], diff[2], spec[0], spec[1], spec[2], emis[0], emis[1], emis[2], shine);
    return Succeeded;
@@ -1928,10 +1982,7 @@ int setmaterials(wbp w, char* s)
          /* determine the icon color */
          if(parsecolor(w,sbuf2, &rd, &gr, &bl, &al)== Failed)
             return Failed;
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535; /* alpha value */
+         glcolor(w, rd, gr, bl, al, color);
 
          /* set the property */
          glMaterialfv(GL_FRONT, GL_AMBIENT, color);
@@ -1954,10 +2005,7 @@ int setmaterials(wbp w, char* s)
             return Failed;
 
          /* convert values to floats between 0.0 and 1.0 */
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
 
          /* set the property */
          glMaterialfv(GL_FRONT, GL_DIFFUSE, color);
@@ -1980,10 +2028,7 @@ int setmaterials(wbp w, char* s)
           */
          if(parsecolor(w, sbuf2, &rd, &gr,&bl,&al)==Failed)
             return Failed;
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
 
          /* set the property */
          glMaterialfv(GL_FRONT, GL_SPECULAR, color);
@@ -2025,10 +2070,7 @@ int setmaterials(wbp w, char* s)
           */
          if(parsecolor(w, sbuf2, &rd, &gr,&bl,&al)==Failed)
             return Failed;
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
 
          /* set the emission color */
          glMaterialfv(GL_FRONT, GL_EMISSION, color);
@@ -2042,10 +2084,7 @@ int setmaterials(wbp w, char* s)
          if(parsecolor(w, s, &rd, &gr, &bl, &al)==Failed)
             return Failed;
          i = strlen(s);
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
          glColor4f(color[0], color[1], color[2], color[3]);
          glMaterialfv(GL_FRONT, GL_DIFFUSE, color);
          MakeStr("diffuse", 7, &material);
@@ -2129,10 +2168,7 @@ int setlight(wbp w, char* s, int light)
          if(parsecolor(w, s3, &rd, &gr, &bl, &al) ==Failed)
               return Failed;
 
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
 
          /* set the ambient light value */
          glLightfv(light, GL_AMBIENT, color);
@@ -2155,10 +2191,7 @@ int setlight(wbp w, char* s, int light)
             between 0.0 and 1.0 */
          if(parsecolor(w, s3, &rd, &gr, &bl,&al) == Failed)
               return Failed;
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
 
          /* set the diffuse value of the light */
          glLightfv(light, GL_DIFFUSE, color);
@@ -2179,10 +2212,7 @@ int setlight(wbp w, char* s, int light)
          /* convert to appropriate values */
          if (parsecolor(w, s3, &rd, &gr, &bl, &al) == Failed)
             return Failed;
-         color[0] = rd/(GLfloat)65535;
-         color[1] = gr/(GLfloat)65535;
-         color[2] = bl/(GLfloat)65535;
-         color[3] = al/(GLfloat)65535;
+         glcolor(w, rd, gr, bl, al, color);
          glLightfv(light, GL_SPECULAR, color);
          s2 = s2 + i;
          if (*s2 != ';' && *s2 != '\0') return Failed;
@@ -2378,6 +2408,7 @@ int settexcoords(wbp w, char* s)
 int imagestr(wbp w, char* str)
 {
    struct palentry *e;
+   struct palentry pal[256];
    int c, i, width, height, row, p;
    word nchars;
    unsigned char *t, *z, *s;
@@ -2463,7 +2494,10 @@ int imagestr(wbp w, char* str)
 
    height = nchars/width;
 
-   i = textureimg(w, width, height, e, s, (word)(z-s));
+   /* the palette's colors are linear: gamma correct a copy */
+   memcpy(pal, e, sizeof(pal));
+   gldisplaypal(w, pal);
+   i = textureimg(w, width, height, pal, s, (word)(z-s));
    if (i == Succeeded)
       return Succeeded;
    else
@@ -2473,52 +2507,28 @@ int imagestr(wbp w, char* str)
 /* convert a file into a opengl texture */
 int fileimage(wbp w, char* filename)
 {
-   int r, i;
-   int status;
+   int i;
    struct imgdata im;
 
+   /*
+    * Read the image top row first, as for a 2D window; textureimg() and
+    * texture_24img() store it bottom row first, the way OpenGL wants it.
+    * Images with a color table (GIF, BMP with 8 or fewer bits per pixel)
+    * have one byte per pixel; all others have three.
+    */
    im.format = UCOLOR_RGB;
-   im.is_bottom_up = 1;
+   im.is_bottom_up = 0;
+   if (readImage(filename, 0, &im) != Succeeded)
+      return Failed;
 
-   /* a gif file */
-   if ((r = readGIF(filename, 0, &im)) == Succeeded){
+   if (im.paltbl)
       i = textureimg(w, im.width, im.height, im.paltbl, im.data,
                      (word)im.width*(word)im.height);
-      free(im.data);
-      free(im.paltbl);
-
-      }
-   else {
-      /*
-       * Not a gif file. We need to handle other cases beside gif...
-       * what are those cases ? ... look at ReadImage
-       */
-     i = SCREENDEPTH(w);
-     i = i / 8;
-
-     if ((r = readImage(filename, i, &im)) == Succeeded) {
-        switch (i) {
-        case 1: i = textureimg(w, im.width, im.height, im.paltbl, im.data,
-                        (word)im.width*(word)im.height);
-                if (im.data){ free(im.data); im.data = NULL;}
-                if (im.paltbl){ free(im.paltbl); im.paltbl = NULL;}
-                break;
-        case 2: /* 16-bit display, but opengl does the right thing for us */
-        case 3:
-        case 4: i = texture_24img(w, im);
-                if (im.data){ free(im.data); im.data = NULL;}
-                if (im.paltbl){ free(im.paltbl); im.paltbl = NULL;}
-                break;
-        }
-      }
-     else
-        r = readimage(w, filename, 0, 0, &status);
-   }
-
-   if (i == Succeeded)
-         return Succeeded;
    else
-      return Failed;
+      i = texture_24img(w, im);
+   free(im.data);
+   free(im.paltbl);
+   return i;
 }
 
 
@@ -2945,7 +2955,7 @@ int texture_24img(wbp w, struct imgdata im)
 {
    wcp wc = w->context;
    int width=im.width, height=im.height;
-   word l, wd3x2=width*3*2;
+   word l;
    int i, j;
    unsigned char *t;
    GLubyte *tex = (GLubyte *)malloc(height * width * 3);
@@ -2954,29 +2964,14 @@ int texture_24img(wbp w, struct imgdata im)
    makecurrent(w);
 
    /*
-    * convert string s into an array that can be used by opengl as a texture.
-    * we must start at height=height-1 and width=0 to make this look right
+    * The image data is top row first; OpenGL wants the bottom row first.
     */
-
    t = im.data;
-
-#ifdef XWindows
-   l =  (height-1) * width * 3;
-   for(j=0; j < height; j++){
-        for(i=0; i < width; i++) {
-           tex[l] = t[0]; tex[l+1] = t[1]; tex[l+2] = t[2];
-           l = l + 3; t += 3;
-           }
-        l -= wd3x2;
-        }
-#else                                   /* XWindows */
-   {
-   word l, wd3x2=width*3*2, wh3=width*height*3;
-   for(l=0; l < wh3; l+=3, t+=3) {
-      tex[l] = t[0]; tex[l+1] = t[1]; tex[l+2] = t[2];
+   l = (word)width * 3;
+   for (j = height - 1; j >= 0; j--) {
+      memcpy(tex + j * l, t, l);
+      t += l;
       }
-   }
-#endif                                  /* XWindows */
 
    /* set the texture */
    i = texture(width, height, (GLubyte *)tex, w->context->texmode);
@@ -3555,35 +3550,71 @@ int TexDrawPoint(wbp w, int texhandle, int x, int y)
 int TexReadImage(wbp w, int texhandle, int x, int y, struct imgdata *imd)
 {
    wcp wc=w->context;
-   int wd, ht, l, nextLineOffset, i, j;
+   int wd, ht, i, j, c;
+   word l;
    GLubyte *tex;
    unsigned char *s;
+   struct palentry *e = imd->paltbl;
 
    tex = wc->display->stex[texhandle].tex;
    wd  = wc->display->stex[texhandle].width;
    ht  = wc->display->stex[texhandle].height;
 
-   /*  check for width and height.  the old texture with the new image  */
-   if (wd<x+imd->width || ht<y+imd->height)
+   /*  the image must fit inside the texture  */
+   if (x < 0 || y < 0 || wd<x+imd->width || ht<y+imd->height)
       return Failed;
 
-   s = imd->data ;  /* point to the image data*/
-
-   l = (ht-y-imd->height)*wd*3 + ( x)*3; /* first byte in texture data to be updated */
-   nextLineOffset = (wd-imd->width)*3;
-
+   /*
+    * The image data is top row first, with three bytes (RGB) per pixel,
+    * or one byte per pixel indexing the color table e.  Texture rows go
+    * bottom up.  Transparent pixels leave the texture as it was.
+    */
+   s = imd->data;
    for (i=0; i<imd->height; i++) {
-      for (j=0; j<imd->width; j++) {
-         tex[l] = (GLubyte) *s++;
-         tex[l+1] = (GLubyte) *s++;
-         tex[l+2] = (GLubyte) *s++;
-         l+=3;
+      l = ((word)(ht-1-y-i)*wd + x)*3;
+      for (j=0; j<imd->width; j++, l+=3) {
+         if (e) {
+            c = *s++;
+            if (!e[c].valid)
+               continue;
+            tex[l]   = e[c].clr.red >> 8;
+            tex[l+1] = e[c].clr.green >> 8;
+            tex[l+2] = e[c].clr.blue >> 8;
+            }
+         else {
+            tex[l]   = s[0];
+            tex[l+1] = s[1];
+            tex[l+2] = s[2];
+            s += 3;
+            }
          }
-      l += nextLineOffset;
       }
 
    TEXUPDATE(w, wc, texhandle, tex, wd, ht);
    return Succeeded;
+}
+
+/*
+ * clipcopy() - clip a copy of a width x height area at (x,y), in a
+ * source of size sw x sh, to (xt,yt) in a destination of size dw x dh.
+ * A negative width or height extends the area to the left or up.
+ * Parts outside either side are dropped, moving the other side along.
+ * Returns zero if nothing is left to copy.
+ */
+static int clipcopy(int *x, int *y, int *width, int *height, int *xt, int *yt,
+                    int sw, int sh, int dw, int dh)
+{
+   if (*width < 0)  { *x += *width;  *xt += *width;  *width = -*width; }
+   if (*height < 0) { *y += *height; *yt += *height; *height = -*height; }
+   if (*x < 0)  { *xt -= *x;  *width += *x;   *x = 0; }
+   if (*y < 0)  { *yt -= *y;  *height += *y;  *y = 0; }
+   if (*xt < 0) { *x -= *xt;  *width += *xt;  *xt = 0; }
+   if (*yt < 0) { *y -= *yt;  *height += *yt; *yt = 0; }
+   if (*x + *width > sw)   *width = sw - *x;
+   if (*y + *height > sh)  *height = sh - *y;
+   if (*xt + *width > dw)  *width = dw - *xt;
+   if (*yt + *height > dh) *height = dh - *yt;
+   return (*width > 0 && *height > 0);
 }
 
 int copyareaTexToTex(wbp w, int texhandle, int dest_texhandle,
@@ -3603,6 +3634,9 @@ int copyareaTexToTex(wbp w, int texhandle, int dest_texhandle,
    int tws3 = srcwd * 3;
    int twd3 = txw * 3;
    GLubyte b;
+
+   if (!clipcopy(&x, &y, &width, &height, &xt, &yt, srcwd, srcht, txw, txh))
+      return Failed;
 
    for(j=0; j < height; j++){
       srcl = (srcht-y-j-1)*tws3 + x * 3;
@@ -3634,14 +3668,12 @@ int copyareaToTex2D(wbp w2d, GLubyte *tex, int x, int y,
 {
    struct imgmem imem;
    int i, j, l, twd3;
-   LinearColor clr;
    unsigned long c;
 #ifdef XWindows
    wdp wd = w2d->window->display;
    Display *stddpy = wd->display;
    Visual *vis = w2d->window->vis;
    XColor clrcell;
-/*   wclrp cp, lastcp = wd->colors; */
    TRUECOLOR_DECLARE_AND_INIT_RGB_VARS(vis->red_mask, vis->green_mask,vis->blue_mask);
 #endif                                  /* XWindows */
 
@@ -3668,66 +3700,48 @@ int copyareaToTex2D(wbp w2d, GLubyte *tex, int x, int y,
            l = l + 3;
            }
         }
+      getpixel_term(w2d, &imem);
       return Succeeded;
       }
 #endif
 
+   /*
+    * Other displays: ask for each pixel's color as shown.  Texture rows
+    * go bottom up.
+    */
    for(j=0; j < height; j++){
-        l = (yt+j)*twd3 + xt * 3;
-        for(i=0; i < width; i++) {
+      l = (txh-1-yt-j)*twd3 + xt * 3;
+      for(i=0; i < width; i++) {
 #ifdef XWindows
-           clrcell.pixel = XGetPixel(imem.im, i, j);
-/*         rv = 0xff000000;
-           if  (lastcp->c == c){
-              tex[l] = lastcp ->r>>8;
-              tex[l+1] = lastcp->g>>8;
-              tex[l+2] = lastcp->b>>8;
-              l = l + 3;
-              continue;
-              }
-           else
-              for (cp = wd->colors ; cp < wd->colors + wd->numColors; cp++) {
-                 if (cp->c == c) {
-                    lastcp = cp;
-                    tex[l] = cp->r>>8;
-                    tex[l+1] = cp->g>>8;
-                    tex[l+2] = cp->b>>8;
-                    l = l + 3;
-                    continue;
-                    }
-                 }
-           if (rv == 0xff000000) {
-*/
-              XQueryColor(stddpy, wd->cmap, &clrcell);
-              clr = lcolor(w2d, clrcell);
-              tex[l] = clr.red>>8;
-              tex[l+1] = clr.green>>8;
-              tex[l+2] = clr.blue>>8;
-              l = l + 3;
-/*            } */
-#else
-           {
-           char *s2, strout[50];
-           long rv;
+         clrcell.pixel = XGetPixel(imem.im, i, j);
+         XQueryColor(stddpy, wd->cmap, &clrcell);
+         tex[l] = clrcell.red >> 8;
+         tex[l+1] = clrcell.green >> 8;
+         tex[l+2] = clrcell.blue >> 8;
+#else                                   /* XWindows */
+         char *s2, strout[50];
+         long rv;
 
-           if (getpixel(w2d, i, height-j-1, &rv, strout, &imem) == Failed)
-               return Failed;
+         if (getpixel(w2d, x + i, y + j, &rv, strout, &imem) == Failed) {
+            getpixel_term(w2d, &imem);
+            return Failed;
+            }
 
-           s2 = strout;
-           /* parse string to get pixel values */
-           while(isspace(*s2)) s2++;
-           tex[l] = atoi(s2)/256;
-           while(isdigit(*s2)) s2++;
-           s2++;
-           tex[l+1] = atoi(s2)/256;
-           while (isdigit(*s2)) s2++;
-           s2++;
-           tex[l+2] = atoi(s2)/256;
-           l = l + 3;
-           }
-#endif
-        }
+         /* parse string to get pixel values */
+         s2 = strout;
+         while(isspace(*s2)) s2++;
+         tex[l] = atoi(s2)/256;
+         while(isdigit(*s2)) s2++;
+         s2++;
+         tex[l+1] = atoi(s2)/256;
+         while (isdigit(*s2)) s2++;
+         s2++;
+         tex[l+2] = atoi(s2)/256;
+#endif                                  /* XWindows */
+         l = l + 3;
+         }
       }
+   getpixel_term(w2d, &imem);
    return Succeeded;
 }
 
@@ -3879,26 +3893,8 @@ int TexCopyArea(wbp w, wbp w2, int texhandle, int x, int y, int width,
    wd  = wc->display->stex[texhandle].width;
    ht  = wc->display->stex[texhandle].height;
 
-   /* if width/height is negative, flip it and readjust x and y accroridngly */
-   if (width < 0){  x+= width;  xt+=width;  width=-width;   }
-   if (height < 0){ y+= height; yt+=height; height=-height; }
-
-
-   if (x+width<0 || x>wwd || y+height<0 || y>wht) return Failed;
-   if (xt+width<0 || xt>=wd || yt+height<0 || yt>=ht) return Failed;
-
-   if (x<0){ width+=x; x=0;}
-   if (xt<0){width+=xt; xt=0;}
-   if (y<0){ height+=y; y=0;}
-   if (yt<0){ height+=yt; yt=0;}
-
-   if (x+width > wwd ) width=wwd-x;
-   if (xt+width > wd ) width=wd-xt;
-
-   if (y+height > wht ) height=wht-y;
-   if (yt+height >= ht ) height=ht-y-1;
-
-   if (width<=0 || height<=0) return Failed;
+   if (!clipcopy(&x, &y, &width, &height, &xt, &yt, wwd, wht, wd, ht))
+      return Failed;
 
    if (w->context->is_3D){
       y = wht-y - height;

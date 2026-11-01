@@ -1231,110 +1231,341 @@ struct palentry *bmp_paltbl(int n, int *colortable)
 }
 
 /*
- * Construct Icon-style imgdata from BMP-style rasterdata.
- * Only trick we know about so far is to reverse rows so first row is bottom
- * But apparently this is wrong (for some bmp's?) if there's no color table.
+ * Little-endian fields of a BMP header.
  */
-unsigned char * bmp_data(int width, int height, int bpp, char * rasterdata, int bottom_up)
+static long bmp_le32(unsigned char *b)
 {
-   int i;
-   int rowbytes = width * bpp;
-   char *tmp;
-
-   if (bottom_up) return (unsigned char *)rasterdata;
-
-   if ((tmp = malloc(rowbytes))==NULL) return NULL;
-   for(i=0;i<height/2;i++) {
-      memmove(tmp, rasterdata + (i * rowbytes), rowbytes);
-      memmove(rasterdata + (i * rowbytes),
-           rasterdata + (height-i-1) * rowbytes, rowbytes);
-      memmove(rasterdata + (height-i-1) * rowbytes, tmp, rowbytes);
-      }
-  free(tmp);
-  return (unsigned char *)rasterdata;
+   return (long)((unsigned long)b[0] | ((unsigned long)b[1] << 8) |
+                 ((unsigned long)b[2] << 16) | ((unsigned long)b[3] << 24));
 }
 
+static int bmp_le16(unsigned char *b)
+{
+   return b[0] | (b[1] << 8);
+}
+
+/*
+ * bmp_mask() - find where a bit-field color mask sits: its shift and width.
+ */
+static void bmp_mask(unsigned long m, int *shift, int *bits)
+{
+   *shift = *bits = 0;
+   if (m == 0) return;
+   while (!(m & 1)) { m >>= 1; (*shift)++; }
+   while (m & 1) { m >>= 1; (*bits)++; }
+}
+
+/*
+ * bmp_chan() - scale the bits of a color channel to the range 0 - 255.
+ */
+static int bmp_chan(unsigned long px, int shift, int bits)
+{
+   unsigned long v, max;
+   if (bits == 0) return 0;
+   v = (px >> shift) & ((1UL << bits) - 1);
+   if (bits >= 8) return (int)(v >> (bits - 8));
+   max = (1UL << bits) - 1;
+   return (int)((v * 255 + max / 2) / max);
+}
 
 /*
  * readBMP() - BMP file reader, patterned after readGIF().
+ *
+ * Reads BMP files with 1, 4 or 8 bits per pixel and a color table,
+ * uncompressed or (4 and 8 bits) run-length encoded, and files with 16,
+ * 24 or 32 bits per pixel, uncompressed or (16 and 32 bits) with color
+ * bit fields.  Both the Windows header and the older OS/2 one are read.
+ * The file stores pixels as blue, green, red; imd->format says which
+ * order the caller wants.  Rows are padded to a multiple of four bytes,
+ * and are stored bottom up unless the height is negative.
  */
 int readBMP(char *filename, int p, struct imgdata *imd)
 {
   FILE *f;
-  int c;
-  char headerstuff[52]; /* 54 - 2 byte magic number = 52 */
-  int filesize, width, height, compression, imagesize, numcolors;
-  short bitcount;
+  unsigned char hdr[70], *row = NULL, *data = NULL, *rle = NULL;
   int *colortable = NULL;
-  char *rasterdata;
+  long offbits, hdrsize, stride, i, rlelen = 0;
+  int width, height, topdown = 0, bitcount, compression, numcolors, entsize;
+  int x, y, outbpp, shift[3], bits[3];
+  unsigned long mask[3];
+
   if ((f = fopen(filename, "rb")) == NULL) return Failed;
-  if (((c = getc(f)) != 'B') || ((c = getc(f)) != 'M')) {
+  if (fread(hdr, 1, 26, f) < 26 || hdr[0] != 'B' || hdr[1] != 'M') {
      fclose(f);
      return Failed;
      }
-  if (fread(headerstuff, 1, 52, f) < 52) {
+  offbits = bmp_le32(hdr+10);
+  hdrsize = bmp_le32(hdr+14);
+  if (hdrsize == 12) {                          /* OS/2 BITMAPCOREHEADER */
+     width = bmp_le16(hdr+18);
+     height = (short)bmp_le16(hdr+20);
+     bitcount = bmp_le16(hdr+24);
+     compression = 0;
+     numcolors = 0;
+     entsize = 3;
+     }
+  else {
+     if (hdrsize < 40 || fread(hdr+26, 1, 28, f) < 28) {
+        fclose(f);
+        return Failed;
+        }
+     width = (int)bmp_le32(hdr+18);
+     height = (int)bmp_le32(hdr+22);
+     bitcount = bmp_le16(hdr+28);
+     compression = (int)bmp_le32(hdr+30);
+     numcolors = (int)bmp_le32(hdr+46);
+     entsize = 4;
+     }
+
+  /*
+   * Compression 0 is none, 1 and 2 are run-length encoding of 8 and 4-bit
+   * pixels, and 3 and 6 give the color bit fields (masks) of 16 and 32-bit
+   * pixels, which follow the 40-byte header or are part of a longer one.
+   */
+  if (!((compression == 0) ||
+        (compression == 1 && bitcount == 8) ||
+        (compression == 2 && bitcount == 4) ||
+        ((compression == 3 || compression == 6) &&
+         (bitcount == 16 || bitcount == 32)))) {
+     fprintf(stderr, "warning, can't read this kind of bmp file\n");
      fclose(f);
      return Failed;
      }
-  filesize = *(int *)(headerstuff);
-  width = *(int *)(headerstuff+16);
-  height = *(int *)(headerstuff+20);
-  bitcount = *(short *)(headerstuff+26);
-  switch(bitcount) {
-     case 1: numcolors = 1; break;
-     case 4: numcolors = 16; break;
-     case 8: numcolors = 256; break;
-     case 16: numcolors = 65536; break;
-     case 24: numcolors = 65536 * 256;
-     default:
-        /* teart as 8-bit ?*/
-        numcolors = 256; break;
+  if (height < 0) {
+     /*
+      * RLE rows are stored bottom up.  Negating INT_MIN does not fit
+      * in an int, so that height is refused rather than wrapped.
+      */
+     if (compression == 1 || compression == 2 || height == INT_MIN) {
+        fclose(f);
+        return Failed;
+        }
+     height = -height;
+     topdown = 1;
      }
-  compression = *(int *)(headerstuff+28);
-  if (compression != 0) {
-     fprintf(stderr, "warning, can't read compressed bmp's yet\n");
+  if (width <= 0 || height <= 0 ||
+      (bitcount != 1 && bitcount != 4 && bitcount != 8 &&
+       bitcount != 16 && bitcount != 24 && bitcount != 32)) {
      fclose(f);
      return Failed;
      }
 
-  imagesize = *(int *)(headerstuff+32);
-  if (compression == 0 && (imagesize==0)) {
-     imagesize = filesize - 54;
-     if (bitcount <= 8) imagesize -= 4 * numcolors;
+  if (compression == 3 || compression == 6) {
+     if (fread(hdr+54, 1, 12, f) < 12) {
+        fclose(f);
+        return Failed;
+        }
+     for (i = 0; i < 3; i++)
+        mask[i] = (unsigned long)bmp_le32(hdr + 54 + 4 * i);
      }
+  else if (bitcount == 16) {                    /* 5 bits each: x1r5g5b5 */
+     mask[0] = 0x7C00; mask[1] = 0x03E0; mask[2] = 0x001F;
+     }
+  else {
+     mask[0] = 0xFF0000; mask[1] = 0xFF00; mask[2] = 0xFF;
+     }
+  for (i = 0; i < 3; i++)                       /* red, green, blue */
+     bmp_mask(mask[i], &shift[i], &bits[i]);
 
+  /*
+   * The color table follows the header; it has 2^bitcount entries
+   * unless the header says how many are used.  OS/2 entries have three
+   * bytes, Windows ones four.
+   */
   if (bitcount <= 8) {
-     if ((colortable = (int *)malloc(4 * numcolors)) == NULL) {
-        fclose(f); return Failed;
-        }
-     if (fread(colortable, 4, numcolors, f) < numcolors) {
-        fclose(f); return Failed;
-        }
+     if (numcolors <= 0 || numcolors > (1 << bitcount))
+        numcolors = 1 << bitcount;
+     if ((colortable = (int *)calloc(numcolors, 4)) == NULL ||
+         hdrsize > LONG_MAX - 14 ||
+         fseek(f, 14 + hdrsize, SEEK_SET) != 0)
+        goto bmperr;
+     for (i = 0; i < numcolors; i++)
+        if (fread(colortable + i, 1, entsize, f) < entsize)
+           goto bmperr;
      }
-  if ((rasterdata = (char *)malloc(imagesize))) {
-     if (fread(rasterdata, 1, imagesize, f) < imagesize) {
-        fclose(f); return Failed;
+
+  outbpp = (bitcount <= 8) ? 1 : 3;
+
+  /*
+   * Refuse sizes whose pixels cannot fit in memory, and uncompressed
+   * pixels the file is too short to hold: a damaged header should not
+   * make us allocate gigabytes.  On Windows a long is 32 bits, so
+   * width * bitcount is computed in 64 bits.  Otherwise the stride
+   * wraps (an 8-bit row can come out a few bytes long) while the copy
+   * below still uses width.
+   */
+  {
+     long long rowbytes, pixbytes, off, need;
+     long flen;
+
+     rowbytes = ((long long)width * bitcount + 31) / 32 * 4;
+     pixbytes = (long long)width * height * outbpp;
+     /* bmp_le32 sign-extends a 32-bit offset when long is 32 bits */
+     off = (long long)(unsigned long)offbits;
+     if (rowbytes < 4 || rowbytes > LONG_MAX ||
+         pixbytes <= 0 || pixbytes > LONG_MAX / 2 ||
+         off > LONG_MAX ||
+         (bitcount == 8 && rowbytes < width))
+        goto bmperr;
+     stride = (long)rowbytes;
+     offbits = (long)off;
+
+     if (compression != 1 && compression != 2) {
+        if (fseek(f, 0, SEEK_END) != 0 || (flen = ftell(f)) < 0 ||
+            rowbytes > (LLONG_MAX - off) / height)
+           goto bmperr;
+        need = off + rowbytes * (long long)height;
+        if (need > flen)
+           goto bmperr;
         }
-     /* OK, read the whole thing, now what to do with it ? */
-     imd->width = width;
-     imd->height = height;
-     if (colortable) {
-        imd->paltbl = bmp_paltbl(numcolors, colortable);
-        imd->data = bmp_data(width, height, 1, rasterdata, imd->is_bottom_up);
-        }
-     else {
-        imd->paltbl = NULL;
-        imd->data = bmp_data(width, height, 3, rasterdata, imd->is_bottom_up);
-#if NT
-        if (imd->format == UCOLOR_RGB &&  bitcount == 24 ){
-           unsigned char *byte, t;
-           for (byte=imd->data; byte<imd->data+width*height*3; byte+=3)
-             {t = byte[0]; byte[0] = byte[2]; byte[2] = t;}
+     if ((row = malloc((size_t)stride)) == NULL ||
+         (data = calloc((size_t)pixbytes, 1)) == NULL ||
+         fseek(f, offbits, SEEK_SET) != 0)
+        goto bmperr;
+     }
+
+  if (compression == 1 || compression == 2) {
+     /*
+      * Run-length encoded pixels: read them all, then expand them.
+      * A count with a pixel value is a run; a zero count is followed by
+      * 0 (end of row), 1 (end of image), 2 (move right dx and up dy), or
+      * the number of pixels given as they are, padded to two bytes.
+      * Pixels the encoding skips stay 0.
+      */
+     long pos = 0, n;
+     int c, d, k;
+     if (fseek(f, 0, SEEK_END) != 0 || (rlelen = ftell(f) - offbits) <= 0 ||
+         (rle = malloc(rlelen)) == NULL || fseek(f, offbits, SEEK_SET) != 0 ||
+         fread(rle, 1, rlelen, f) < rlelen)
+        goto bmperr;
+     x = y = 0;                                 /* y counts from the bottom */
+     while (pos + 1 < rlelen && y < height) {
+        c = rle[pos++];
+        d = rle[pos++];
+        if (c > 0) {
+           for (k = 0; k < c; k++) {
+              if (x >= 0 && x < width && y >= 0 && y < height)
+                 data[(long)(height - 1 - y) * width + x] =
+                    (compression == 1) ? d : ((k & 1) ? (d & 15) : (d >> 4));
+              if (x < INT_MAX) x++;
+              else x = width;                    /* do not wrap the column */
+              }
            }
-#endif
+        else if (d == 0) {                      /* end of row */
+           x = 0;
+           y++;
+           }
+        else if (d == 1)                        /* end of image */
+           break;
+        else if (d == 2) {                      /* move */
+           int dx, dy;
+           if (pos + 1 >= rlelen) break;
+           dx = rle[pos++];
+           dy = rle[pos++];
+           if (x > INT_MAX - dx) x = INT_MAX; else x += dx;
+           if (y > INT_MAX - dy) y = INT_MAX; else y += dy;
+           }
+        else {                                  /* d pixels as they are */
+           n = (compression == 1) ? d : (d + 1) / 2;
+           if (pos + n > rlelen) break;
+           for (k = 0; k < d; k++) {
+              if (x >= 0 && x < width && y >= 0 && y < height)
+                 data[(long)(height - 1 - y) * width + x] =
+                    (compression == 1) ? rle[pos + k] :
+                    ((k & 1) ? (rle[pos + k / 2] & 15) : (rle[pos + k / 2] >> 4));
+              if (x < INT_MAX) x++;
+              else x = width;                    /* do not wrap the column */
+              }
+           pos += n + (n & 1);
+           }
         }
-     return Succeeded;
+     if (imd->is_bottom_up)                     /* turn the rows over */
+        for (y = 0; y < height / 2; y++) {
+           unsigned char *r1 = data + (long)y * width;
+           unsigned char *r2 = data + (long)(height - 1 - y) * width;
+           for (x = 0; x < width; x++) {
+              unsigned char t = r1[x]; r1[x] = r2[x]; r2[x] = t;
+              }
+           }
      }
+  else
+  for (i = 0; i < height; i++) {
+     unsigned char *out;
+     if (fread(row, 1, stride, f) < stride)
+        goto bmperr;
+     y = topdown ? i : height - 1 - i;          /* row from the top */
+     if (imd->is_bottom_up)
+        y = height - 1 - y;
+     out = data + (long)y * width * outbpp;
+     switch (bitcount) {
+        case 1:
+           for (x = 0; x < width; x++)
+              out[x] = (row[x >> 3] >> (7 - (x & 7))) & 1;
+           break;
+        case 4:
+           for (x = 0; x < width; x++)
+              out[x] = (x & 1) ? (row[x >> 1] & 15) : (row[x >> 1] >> 4);
+           break;
+        case 8:
+           memcpy(out, row, width);
+           break;
+        case 24:
+           for (x = 0; x < width; x++, out += 3) {
+              unsigned char *px = row + (long)x * 3; /* blue, green, red */
+              if (imd->format == UCOLOR_BGR) {
+                 out[0] = px[0]; out[1] = px[1]; out[2] = px[2];
+                 }
+              else {
+                 out[0] = px[2]; out[1] = px[1]; out[2] = px[0];
+                 }
+              }
+           break;
+        default: {                              /* 16 or 32 bits */
+           unsigned long px;
+           int r, g, b;
+           for (x = 0; x < width; x++, out += 3) {
+              if (bitcount == 16)
+                 px = (unsigned long)bmp_le16(row + (long)x * 2);
+              else
+                 px = (unsigned long)bmp_le32(row + (long)x * 4);
+              r = bmp_chan(px, shift[0], bits[0]);
+              g = bmp_chan(px, shift[1], bits[1]);
+              b = bmp_chan(px, shift[2], bits[2]);
+              if (imd->format == UCOLOR_BGR) {
+                 out[0] = b; out[1] = g; out[2] = r;
+                 }
+              else {
+                 out[0] = r; out[1] = g; out[2] = b;
+                 }
+              }
+           }
+        }
+     }
+
+  if (bitcount <= 8)                            /* stay inside the table */
+     for (i = (long)width * height - 1; i >= 0; i--)
+        if (data[i] >= numcolors) data[i] = 0;
+
+  imd->width = width;
+  imd->height = height;
+  if (colortable) {
+     if ((imd->paltbl = bmp_paltbl(numcolors, colortable)) == NULL)
+        goto bmperr;
+     }
+  else
+     imd->paltbl = NULL;
+  imd->data = data;
+  free(colortable);
+  free(row);
+  free(rle);
+  fclose(f);
+  return Succeeded;
+
+bmperr:
+  free(colortable);
+  free(row);
+  free(rle);
+  free(data);
   fclose(f);
   return Failed;
 }
@@ -1757,6 +1988,92 @@ void my_error_exit (j_common_ptr cinfo)
 /*
  * jpegread(filename, p, image) - read jpeg file
  */
+/*
+ * Exif data (in a JPEG APP1 marker) is a TIFF file, in either byte order.
+ */
+static unsigned long exif_get(unsigned char *b, int n, int bigendian)
+{
+   unsigned long v = 0;
+   int i;
+   for (i = 0; i < n; i++)
+      v |= (unsigned long)b[bigendian ? i : n - 1 - i] << (8 * (n - 1 - i));
+   return v;
+}
+
+/*
+ * jpeg_orientation(cinfo) - return the Exif orientation (1 to 8) of a JPEG
+ * file whose APP1 markers were saved, or 1 (shown as stored) if it has
+ * none.  Cameras store pictures as the sensor read them and record how
+ * to turn them upright in this tag of the first image directory.
+ */
+static int jpeg_orientation(struct jpeg_decompress_struct *cinfo)
+{
+   struct jpeg_marker_struct *m;
+   unsigned char *d;
+   unsigned long len, ifd, n, i, v;
+   int be;
+
+   for (m = cinfo->marker_list; m != NULL; m = m->next) {
+      if (m->marker != JPEG_APP0 + 1 || m->data_length < 6 + 8 ||
+          memcmp(m->data, "Exif\0\0", 6))
+         continue;
+      d = m->data + 6;
+      len = m->data_length - 6;
+      if (d[0] == 'M' && d[1] == 'M') be = 1;
+      else if (d[0] == 'I' && d[1] == 'I') be = 0;
+      else continue;
+      ifd = exif_get(d + 4, 4, be);
+      if (ifd > len || len - ifd < 2)
+         continue;
+      n = exif_get(d + ifd, 2, be);
+      for (i = 0; i < n && (len - ifd - 2) / 12 > i; i++) {
+         unsigned char *e = d + ifd + 2 + 12 * i;
+         if (exif_get(e, 2, be) == 0x0112) {      /* Orientation */
+            v = exif_get(e + 8, 2, be);
+            return (v >= 1 && v <= 8) ? (int)v : 1;
+            }
+         }
+      }
+   return 1;
+}
+
+/*
+ * jpeg_turn(imd, bpp, orient) - turn an image read top row first upright
+ * according to its Exif orientation, giving rows in the order imd asks.
+ * Orientations 5 to 8 swap the width and the height.
+ */
+static int jpeg_turn(struct imgdata *imd, int bpp, int orient)
+{
+   int w = imd->width, h = imd->height, dw, dh, dx, dy, sx, sy;
+   unsigned char *out, *o;
+
+   if ((out = malloc((size_t)w * h * bpp)) == NULL)
+      return Failed;
+   dw = (orient >= 5) ? h : w;
+   dh = (orient >= 5) ? w : h;
+   for (dy = 0; dy < dh; dy++) {
+      o = out + (size_t)(imd->is_bottom_up ? dh - 1 - dy : dy) * dw * bpp;
+      for (dx = 0; dx < dw; dx++, o += bpp) {
+         switch (orient) {
+            case 2:  sx = w - 1 - dx; sy = dy;         break; /* mirrored */
+            case 3:  sx = w - 1 - dx; sy = h - 1 - dy; break; /* turned 180 */
+            case 4:  sx = dx;         sy = h - 1 - dy; break; /* flipped */
+            case 5:  sx = dy;         sy = dx;         break; /* transposed */
+            case 6:  sx = dy;         sy = h - 1 - dx; break; /* turn 90 cw */
+            case 7:  sx = w - 1 - dy; sy = h - 1 - dx; break; /* transverse */
+            case 8:  sx = w - 1 - dy; sy = dx;         break; /* turn 90 ccw */
+            default: sx = dx;         sy = dy;         break;
+            }
+         memcpy(o, imd->data + ((size_t)sy * w + sx) * bpp, bpp);
+         }
+      }
+   free(imd->data);
+   imd->data = out;
+   imd->width = dw;
+   imd->height = dh;
+   return Succeeded;
+}
+
 static int jpegread(char *filename, int p, struct imgdata *imd)
 {
    struct jpeg_decompress_struct cinfo; /* libjpeg struct */
@@ -1764,7 +2081,7 @@ static int jpegread(char *filename, int p, struct imgdata *imd)
    JSAMPARRAY buffer;
    unsigned char *row_ptr;
    int row_stride, row_stride_shift;
-   int i;
+   int i, orient;
    static FILE *jpg_f = NULL;                   /* input file */
 
 #ifdef MSWindows
@@ -1786,7 +2103,9 @@ static int jpegread(char *filename, int p, struct imgdata *imd)
 
    jpeg_create_decompress(&cinfo);
    jpeg_stdio_src(&cinfo, jpg_f);
+   jpeg_save_markers(&cinfo, JPEG_APP0 + 1, 0xFFFF);    /* for Exif */
    jpeg_read_header(&cinfo, TRUE);
+   orient = jpeg_orientation(&cinfo);
 
    /*
     * set parameters for decompression
@@ -1844,7 +2163,10 @@ static int jpegread(char *filename, int p, struct imgdata *imd)
    buffer = (*cinfo.mem->alloc_sarray)
       ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
 
-   if (imd->is_bottom_up){
+   /*
+    * A picture to be turned upright is read top row first, then turned.
+    */
+   if (imd->is_bottom_up && orient == 1){
       row_stride_shift = -row_stride;
       row_ptr = imd->data + (cinfo.output_height-1) * row_stride;
       }
@@ -1881,6 +2203,9 @@ static int jpegread(char *filename, int p, struct imgdata *imd)
 
    fclose(jpg_f);
    jpg_f = NULL;
+
+   if (orient != 1)
+      return jpeg_turn(imd, row_stride / imd->width, orient);
    return Succeeded;
 }
 
@@ -2040,12 +2365,12 @@ static int pngread(char *filename, int p, struct imgdata *imd)
     */
 
    /*
-    * do file gamma for gamma correction, or use a default gamma
+    * Like the pixels of other image files, PNG samples are shown as they
+    * are, unless a gAMA (or sRGB) chunk says how they were encoded; then
+    * convert them for a standard (sRGB, gamma 2.2) display.
     */
    if (png_get_gAMA(png_ptr, info_ptr, &gamma))
-      png_set_gamma(png_ptr, GammaCorrection, gamma);
-   else
-      png_set_gamma(png_ptr, GammaCorrection, 1.0/2.2);
+      png_set_gamma(png_ptr, 2.2, gamma);
 
    /*
     * All transformations have been registered; now update info_ptr data,
@@ -2246,54 +2571,136 @@ int writeBMP(wbp w, char *filename, int x, int y, int width, int height)
 
 static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
    {
-   int i, a[6];
+   int i, j, a[6];
    short sh[2];
-   long len;
-   struct palentry paltbl[DMAXCOLORS];
+   long stride;
+   unsigned char *row, *s, *o;
 
-   len = (long)width * (long)height;    /* total length of data */
+   stride = ((long)width * 3 + 3) / 4 * 4;      /* bytes per row in the file */
 
    if (!(gf_f = fopen(filename, "wb")))
       return Failed;
-   if (!(gf_string = (unsigned char*)malloc((msize)len)))
+   if (!(gf_string = (unsigned char*)malloc((msize)stride * (height + 1))))
       return RunError;
-
-   for (i = 0; i < DMAXCOLORS; i++)
-      paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-   if (!getimstr(w, x, y, width, height, paltbl, gf_string))
+   if (!getimstr24(w, x, y, width, height, gf_string + stride))
       return RunError;
 
    fprintf(gf_f, "BM");
-   a[0] = 54 + 4 * 256 + len;
+   a[0] = 54 + stride * height;                 /* file size */
    a[1] = 0;
-   a[2] = 54 + 4 * 256;
-   a[3] = 40;
+   a[2] = 54;                                   /* offset of the pixels */
+   a[3] = 40;                                   /* size of the info header */
    a[4] = width;
    a[5] = height;
    if (fwrite(a, 4, 6, gf_f) < 6) return Failed;
-   sh[0] = 1;
-   sh[1] = 8;
+   sh[0] = 1;                                   /* planes */
+   sh[1] = 24;                                  /* bits per pixel */
    if (fwrite(sh, 2, 2, gf_f) < 2) return Failed;
-   a[0] = 0;
-   a[1] = len;
+   a[0] = 0;                                    /* no compression */
+   a[1] = stride * height;
    a[2] = a[3] = 3938; /* presumably, hardwire to assume 100dpi */
-   a[4] = 256; /* colors used */
+   a[4] = 0; /* colors used */
    a[5] = 0; /* colors important */
    if (fwrite(a, 4, 6, gf_f) < 6) return Failed;
 
-   for (i=0; i<256; i++) {
-      unsigned char c[4];
-      c[0] = paltbl[i].clr.red >> 8;
-      c[1] = paltbl[i].clr.green >> 8;
-      c[2] = paltbl[i].clr.blue >> 8;
-      c[3] = 0;
-      if (fwrite(c, 4, 1, gf_f) < 1) return Failed;
+   /*
+    * getimstr24() gives RGB rows top down, after the first stride bytes
+    * of the buffer, which holds each row as it is written: blue, green,
+    * red, padded to a multiple of four bytes, bottom row first.
+    */
+   row = gf_string;
+   memset(row, 0, stride);
+   for (i = height - 1; i >= 0; i--) {
+      s = gf_string + stride + (long)i * width * 3;
+      for (j = 0, o = row; j < width; j++, s += 3, o += 3) {
+         o[0] = s[2];
+         o[1] = s[1];
+         o[2] = s[0];
+         }
+      if (fwrite(row, 1, stride, gf_f) < stride)
+         return Failed;
       }
-   if (bmp_data(width, height, 1, (char *)gf_string, 0) == NULL) return RunError;
-   if (fwrite(gf_string, width, height, gf_f) < height) return Failed;
    return Succeeded;
 }
 
+
+/*
+ * getimpal(w, x, y, width, height, paltbl, data) - get an image as a
+ * string of color indices, one per pixel, and a table of the colors as
+ * they are shown.  More than 256 colors are mapped onto a 6x7x6 color
+ * cube.  Returns 0 if the image cannot be read.
+ */
+static int getimpal(wbp w, int x, int y, int width, int height,
+                    struct palentry paltbl[DMAXCOLORS], unsigned char *data)
+   {
+   unsigned char *rgb, *s;
+   unsigned long clist[DMAXCOLORS], px, lastpx = 0;
+   long i, len = (long)width * height;
+   int n = 0, k = 0, lo, hi, cube = 0;
+
+   if (!(rgb = (unsigned char *)malloc((msize)len * 3 + 1)))
+      return 0;
+   if (!getimstr24(w, x, y, width, height, rgb)) {
+      free(rgb);
+      return 0;
+      }
+
+   /*
+    * Make a sorted list of the colors, as long as there are no more than
+    * DMAXCOLORS of them.
+    */
+   for (i = 0, s = rgb; i < len; i++, s += 3) {
+      px = ((unsigned long)s[0] << 16) | ((unsigned long)s[1] << 8) | s[2];
+      for (lo = 0, hi = n; lo < hi; ) {
+         k = (lo + hi) / 2;
+         if (clist[k] < px) lo = k + 1;
+         else hi = k;
+         }
+      if (lo < n && clist[lo] == px)
+         continue;
+      if (n == DMAXCOLORS) {
+         cube = 1;
+         break;
+         }
+      memmove(clist + lo + 1, clist + lo, (n - lo) * sizeof(clist[0]));
+      clist[lo] = px;
+      n++;
+      }
+
+   for (i = 0, s = rgb; i < len; i++, s += 3) {
+      if (cube)
+         k = ((s[0] * 5 + 127) / 255 * 7 + (s[1] * 6 + 127) / 255) * 6 +
+             (s[2] * 5 + 127) / 255;
+      else {
+         px = ((unsigned long)s[0] << 16) | ((unsigned long)s[1] << 8) | s[2];
+         if (i == 0 || px != lastpx) {
+            for (lo = 0, hi = n - 1; lo < hi; ) {
+               k = (lo + hi) / 2;
+               if (clist[k] < px) lo = k + 1;
+               else hi = k;
+               }
+            k = lo;
+            lastpx = px;
+            }
+         }
+      data[i] = k;
+      if (!paltbl[k].used) {
+         paltbl[k].used = paltbl[k].valid = 1;
+         if (cube) {
+            paltbl[k].clr.red = k / 42 * 51 * 257;
+            paltbl[k].clr.green = k / 6 % 7 * 255 / 6 * 257;
+            paltbl[k].clr.blue = k % 6 * 51 * 257;
+            }
+         else {
+            paltbl[k].clr.red = (px >> 16) * 257;
+            paltbl[k].clr.green = ((px >> 8) & 0xFF) * 257;
+            paltbl[k].clr.blue = (px & 0xFF) * 257;
+            }
+         }
+      }
+   free(rgb);
+   return 1;
+   }
 
 /*
  * writeGIF(w, filename, x, y, width, height) - write GIF image
@@ -2342,7 +2749,7 @@ static int gfwrite(wbp w, char *filename, int x, int y, int width, int height)
 
    for (i = 0; i < DMAXCOLORS; i++)
       paltbl[i].used = paltbl[i].valid = paltbl[i].transpt = 0;
-   if (!getimstr(w, x, y, width, height, paltbl, gf_string))
+   if (!getimpal(w, x, y, width, height, paltbl, gf_string))
       return RunError;
 
    gfpack(gf_string, len, paltbl);      /* pack color table, set color params */
@@ -2710,6 +3117,183 @@ int readImage(char *filename, int p, struct imgdata *imd){
 
    return Failed;
 }
+
+/*
+ * linearpal(w, e) - make a color table read from an image file linear.
+ *
+ * Image files give the colors to be shown, but strimage() gamma corrects
+ * the colors of a palette, which are linear like those of DrawImage()
+ * palettes and Fg().  Converting them first makes strimage() show the
+ * file's own colors.  Each component gets the linear value whose gamma
+ * corrected 8-bit value, computed as strimage() does, comes closest;
+ * with a gamma up to about 2.3, that is the file's value exactly.
+ */
+static long linear1(long c, double gamma)
+   {
+   long v = c >> 8, l = (long)ceil(65535 * pow(c / 65535.0, gamma));
+   long hi = ((long)(65535 * pow(l / 65535.0, 1.0 / gamma)) >> 8) - v;
+   long lo = l > 0 ?
+      v - ((long)(65535 * pow((l - 1) / 65535.0, 1.0 / gamma)) >> 8) : hi + 1;
+   return (lo < hi) ? l - 1 : l;
+   }
+
+void linearpal(wbp w, struct palentry *e)
+   {
+   int i;
+   double gamma = w->context->gamma;
+
+   for (i = 0; i < DMAXCOLORS; i++)
+      if (e[i].valid) {
+         e[i].clr.red   = linear1(e[i].clr.red, gamma);
+         e[i].clr.green = linear1(e[i].clr.green, gamma);
+         e[i].clr.blue  = linear1(e[i].clr.blue, gamma);
+         }
+   }
+
+/*
+ * imgtorgb(w, &x, &y, imd) - turn an image read from a file with a color
+ * table into one with three bytes per pixel, in imd->format order.
+ *
+ * strimage() draws such pixels exactly as given, at any gamma, while the
+ * linear colors of a palette cannot give every dark shade when the gamma
+ * is high.  Transparent pixels take the colors of the window's pixels
+ * under the image placed at (x,y); the part of the image outside the
+ * window is cut off, and x, y, and the size change to match (to a size
+ * of 0 if nothing is left).  With w NULL, an image with transparent
+ * pixels is left alone.  Returns Succeeded or Failed.
+ */
+int imgtorgb(wbp w, int *x, int *y, struct imgdata *imd)
+   {
+   struct palentry *e = imd->paltbl;
+   unsigned char *under = NULL, *out, *o, *s;
+   int i, j, c, trans = 0, cx = 0, cy = 0, cw = imd->width, ch = imd->height;
+   int r = 0, g = 1, b = 2;
+
+   if (e == NULL)
+      return Succeeded;
+   for (i = 0; i < DMAXCOLORS; i++)
+      if (e[i].used && !e[i].valid)
+         trans = 1;
+   if (trans) {
+      wsp ws;
+      if (w == NULL)
+         return Failed;
+      ws = w->window;
+      cx = (*x < 0) ? -*x : 0;                  /* cut to the window */
+      cy = (*y < 0) ? -*y : 0;
+      if (*x + cw > ws->width)  cw = ws->width - *x;
+      if (*y + ch > ws->height) ch = ws->height - *y;
+      cw -= cx;
+      ch -= cy;
+      if (cw <= 0 || ch <= 0) {
+         free(imd->data);
+         free(e);
+         imd->data = NULL;
+         imd->paltbl = NULL;
+         imd->width = imd->height = 0;
+         return Succeeded;
+         }
+      if ((under = malloc((size_t)cw * ch * 3)) == NULL)
+         return Failed;
+      if (!getimstr24(w, *x + cx, *y + cy, cw, ch, under)) {
+         free(under);
+         return Failed;
+         }
+      }
+   if ((out = malloc((size_t)cw * ch * 3)) == NULL) {
+      free(under);
+      return Failed;
+      }
+   if (imd->format == UCOLOR_BGR) {
+      r = 2; b = 0;
+      }
+   o = out;
+   for (j = 0; j < ch; j++) {
+      s = imd->data + (size_t)(j + cy) * imd->width + cx;
+      for (i = 0; i < cw; i++, o += 3) {
+         c = *s++;
+         if (e[c].valid) {
+            o[r] = e[c].clr.red >> 8;
+            o[g] = e[c].clr.green >> 8;
+            o[b] = e[c].clr.blue >> 8;
+            }
+         else {                                 /* RGB from getimstr24() */
+            unsigned char *u = under + ((size_t)j * cw + i) * 3;
+            o[r] = u[0];
+            o[g] = u[1];
+            o[b] = u[2];
+            }
+         }
+      }
+   free(under);
+   free(imd->data);
+   free(e);
+   imd->data = out;
+   imd->paltbl = NULL;
+   imd->width = cw;
+   imd->height = ch;
+   *x += cx;
+   *y += cy;
+   return Succeeded;
+   }
+
+/*
+ * coerceimg(w, imd, p) - map the colors of an image read from a file to
+ * palette p, choosing for each color the key PaletteKey() would.  The
+ * image comes out with one byte per pixel and a color table of the
+ * palette's (linear) colors; transparent pixels stay transparent.
+ * Returns Succeeded, or Failed if memory runs out.
+ */
+int coerceimg(wbp w, struct imgdata *imd, int p)
+   {
+   struct palentry *pal, *e;
+   unsigned char *data, *s;
+   double lin[256], gamma = w->context->gamma;
+   long i, n = (long)imd->width * imd->height;
+   int c = 0, r = 0, b = 2;
+   unsigned long px, lastpx = 0;
+
+   if ((pal = palsetup(p)) == NULL)
+      return Failed;
+   for (i = 0; i < 256; i++)                    /* file colors are shown */
+      lin[i] = pow(i / 255.0, gamma);           /* as given: make linear */
+
+   if ((e = imd->paltbl) != NULL) {
+      for (i = 0; i < DMAXCOLORS; i++)
+         if (e[i].valid) {
+            c = *(unsigned char *)rgbkey(p, lin[e[i].clr.red >> 8],
+               lin[e[i].clr.green >> 8], lin[e[i].clr.blue >> 8]);
+            e[i].clr = pal[c].clr;
+            }
+      return Succeeded;
+      }
+
+   if ((data = malloc(n + 1)) == NULL)
+      return Failed;
+   if ((e = calloc(DMAXCOLORS, sizeof(struct palentry))) == NULL) {
+      free(data);
+      return Failed;
+      }
+   if (imd->format == UCOLOR_BGR) {
+      r = 2; b = 0;
+      }
+   for (i = 0, s = imd->data; i < n; i++, s += 3) {
+      px = ((unsigned long)s[r] << 16) | ((unsigned long)s[1] << 8) | s[b];
+      if (i == 0 || px != lastpx) {
+         c = *(unsigned char *)rgbkey(p, lin[s[r]], lin[s[1]], lin[s[b]]);
+         lastpx = px;
+         }
+      data[i] = c;
+      if (!e[c].used) {
+         e[c].clr = pal[c].clr;
+         e[c].used = e[c].valid = 1;
+         }
+      }
+   free(imd->data);
+   imd->data = data;
+   imd->paltbl = e;
+   return Succeeded;
+   }
 
 int  writeImage (wbp w, char *filename, int x, int y, int width, int height){
    int itype;
@@ -3737,16 +4321,23 @@ int wattrib(wbp w, char *s, long len, dptr answer, char * abuf)
          break;
          }
       case A_IMAGE: {
-#if NT
+#ifdef MSWindows
          ws->initimage.format = UCOLOR_BGR;
-#else
+#else                                   /* MSWindows */
          ws->initimage.format = UCOLOR_RGB;
-#endif
+#endif                                  /* MSWindows */
          ws->initimage.is_bottom_up = 0;
 
          /* first try supported image file formats; then try platform-dependent format */
          r = readImage(val, 0, &ws->initimage);
          if (r == Succeeded) {
+            /*
+             * Show a color table as given; a transparent image keeps
+             * its palette so that the background shows through.
+             */
+            int ix = 0, iy = 0;
+            if (imgtorgb(NULL, &ix, &iy, &ws->initimage) != Succeeded)
+               linearpal(w, ws->initimage.paltbl);
             setwidth(w, ws->initimage.width);
             setheight(w, ws->initimage.height);
             }
@@ -3888,35 +4479,35 @@ int wattrib(wbp w, char *s, long len, dptr answer, char * abuf)
         break;
       case A_LIGHT:
       case A_LIGHT0:
-         getlight(0, abuf);
+         getlight(w, 0, abuf);
          MakeStr(abuf, strlen(abuf), answer);
          break;
       case A_LIGHT1:
-        getlight(1, abuf);
+        getlight(w, 1, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_LIGHT2:
-        getlight(2, abuf);
+        getlight(w, 2, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_LIGHT3:
-        getlight(3, abuf);
+        getlight(w, 3, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_LIGHT4:
-        getlight(4, abuf);
+        getlight(w, 4, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_LIGHT5:
-        getlight(5, abuf);
+        getlight(w, 5, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_LIGHT6:
-        getlight(6, abuf);
+        getlight(w, 6, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_LIGHT7:
-        getlight(7, abuf);
+        getlight(w, 7, abuf);
         MakeStr(abuf, strlen(abuf), answer);
         break;
       case A_MESHMODE:
@@ -4087,7 +4678,7 @@ int wattrib(wbp w, char *s, long len, dptr answer, char * abuf)
       case A_FG:
 #ifdef Graphics3D
           if (w->context->is_3D)
-            getmaterials(abuf);
+            getmaterials(w, abuf);
          else
 #endif
          getfg(w, abuf);
