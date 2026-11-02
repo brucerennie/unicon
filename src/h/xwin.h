@@ -173,10 +173,11 @@
 #define EVQUEEMPTY(w) (BlkD((w)->window->listp,List)->size == 0)
 
 /*
- * Colors.  These are allocated within displays; they are currently
- * statically bounded to DMAXCOLORS colors per display.  Pointers
- * into the display's color table are also kept on a per-window
- * basis so that they may be (de)allocated when a window is cleared.
+ * Colors.  These are allocated within displays. The table starts at
+ * DMAXCOLORS entries and grows. Indices into the display's color
+ * table are kept per window so colors can be freed when a window
+ * is cleared. Slot 2 is scratch for TrueColor pixels and is not a
+ * color in the hash.
  * Colors are aliased by r,g,b value.  Allocations by name and r,g,b
  * share when appropriate.
  *

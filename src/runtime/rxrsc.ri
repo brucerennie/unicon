@@ -42,12 +42,13 @@ int bucklookup(wdp wd, int r, int g, int b)
 int buckdelete(wdp wd, wclrp wc)
 {
    int i = colorhash(wc->r, wc->g, wc->b);
-   if (wd->colors[wd->buckets[i]].prev != -1)
-       wd->colors[wd->colors[wd->buckets[i]].prev].next = wc->next;
-   if (wd->colors[wd->buckets[i]].next != -1)
-       wd->colors[wd->colors[wd->buckets[i]].next].prev = wc->prev;
+   if (wc->prev != -1)
+       wd->colors[wc->prev].next = wc->next;
+   if (wc->next != -1)
+       wd->colors[wc->next].prev = wc->prev;
 
    if (wd->buckets[i] == wc-wd->colors) wd->buckets[i] = wc->next;
+   wc->prev = wc->next = -1;
    return 0;
 }
 
@@ -63,6 +64,29 @@ int buckinsert(wdp wd, wclrp wc)
 
 
 /*
+ * Make room for one more index in a window color table.
+ * Returns 1 when theColors[*numColors] may be written.
+ * limit is how many indices the display can name.
+ */
+int ensure_wcolor(int *numColors, int *sizColors, int **theColors, int limit)
+   {
+   int nsz;
+   int *p;
+
+   if (*numColors < *sizColors)
+      return 1;
+   if (*sizColors <= 0 || *numColors >= limit)
+      return 0;
+   nsz = *sizColors * 2;
+   p = realloc(*theColors, (size_t)nsz * sizeof(int));
+   if (p == NULL)
+      return 0;
+   *theColors = p;
+   *sizColors = nsz;
+   return 1;
+   }
+
+/*
  * Allocate a color given linear r, g, b. Colors are shared on a
  * per-display basis, but they are often freed on a per-window basis,
  * so they are remembered in two structures.
@@ -74,7 +98,7 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b, in
    int i;
    int *numColors;
    int *sizColors;
-   short **theColors;
+   int **theColors;
    wsp ws = w->window;
    wdp wd = ws->display;
    Display *stddpy = wd->display;
@@ -89,7 +113,7 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b, in
 
    if (is_iconcolor) {
       if (ws->iconColors == NULL) {
-         ws->iconColors = (short *)calloc(WMAXCOLORS, sizeof(short));
+         ws->iconColors = (int *)calloc(WMAXCOLORS, sizeof(int));
          if (ws->iconColors == NULL) return NULL;
          ws->siziColors = WMAXCOLORS;
          }
@@ -99,7 +123,7 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b, in
       }
    else {
       if (ws->theColors == NULL) {
-         ws->theColors = (short *)calloc(WMAXCOLORS*2, sizeof(short));
+         ws->theColors = (int *)calloc(WMAXCOLORS*2, sizeof(int));
          if (ws->theColors == NULL) return NULL;
          ws->sizColors = WMAXCOLORS*2;
          }
@@ -128,15 +152,9 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b, in
        * color not found, must allocate
        * first verify there is room in window color table.
        */
-      if (*numColors >= *sizColors-1) {
-         if (*numColors >= 2 << DefaultDepth(stddpy, wd->screen))
-            return NULL;
-         (*theColors) = realloc(*theColors, *sizColors * 2 * sizeof(short));
-         *sizColors *= 2;
-         /*
-          * reallocated color table to *sizColors
-          */
-         }
+      if (!ensure_wcolor(numColors, sizColors, theColors,
+                         2 << DefaultDepth(stddpy, wd->screen)))
+         return NULL;
 
       if (!XAllocColor(stddpy, wd->cmap, &color)) {
          /* try again with a virtual colormap (but not for an icon) */
@@ -166,8 +184,11 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b, in
       static int lastlastfound; /* exploit locality to speedup someday */
       int k;
 
-      if (lastfound && (*theColors)[lastfound] == i) return &(wd->colors[i]);
-      if (lastlastfound && (*theColors)[lastlastfound] == i)
+      if (lastfound > 0 && lastfound < *numColors &&
+          (*theColors)[lastfound] == i)
+         return &(wd->colors[i]);
+      if (lastlastfound > 0 && lastlastfound < *numColors &&
+          (*theColors)[lastlastfound] == i)
          return &(wd->colors[i]);
 
       for(k=*numColors-1; k >= 0; k--){
@@ -178,6 +199,13 @@ wclrp alc_rgb(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b, in
             return &(wd->colors[i]);
             }
          }
+      /*
+       * A color owned by another window still has to be recorded here.
+       * Writing without growing walks off the end of theColors.
+       */
+      if (!ensure_wcolor(numColors, sizColors, theColors,
+                         2 << DefaultDepth(stddpy, wd->screen)))
+         return NULL;
       wd->colors[i].refcount++;
       (*theColors)[(*numColors)++] = i;
       lastlastfound = lastfound;
@@ -245,6 +273,7 @@ wclrp alc_rgbTrueColor(wbp w, unsigned long r, unsigned long g, unsigned long b)
    g = g & gmask;
    b = b & bmask;
 
+   /* slot 2 is reserved scratch; it is not in the color hash */
    wd->colors[2].c = r | g | b;    /*  pixel value */
 
    /* put 'exact' colors into red,green,blue fields */
@@ -273,7 +302,7 @@ wclrp alc_rgb2(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b)
    int i;
    int *numColors;
    int *sizColors;
-   short **theColors;
+   int **theColors;
    wsp ws = w->window;
    wdp wd = ws->display;
    Display *stddpy = wd->display;
@@ -287,7 +316,7 @@ wclrp alc_rgb2(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b)
       return &(wd->colors[1]);
 
       if (ws->theColors == NULL) {
-         ws->theColors = (short *)calloc(WMAXCOLORS*2, sizeof(short));
+         ws->theColors = (int *)calloc(WMAXCOLORS*2, sizeof(int));
          if (ws->theColors == NULL) return NULL;
          ws->sizColors = WMAXCOLORS*2;
          }
@@ -316,15 +345,9 @@ wclrp alc_rgb2(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b)
        * color not found, must allocate
        * first verify there is room in window color table.
        */
-      if (*numColors >= *sizColors-1) {
-         if (*numColors >= 2 << DefaultDepth(wd->display, wd->screen))
-            return NULL;
-         (*theColors) = realloc(*theColors, *sizColors * 2 * sizeof(short));
-         *sizColors *= 2;
-         /*
-          * reallocated color table to *sizColors
-          */
-         }
+      if (!ensure_wcolor(numColors, sizColors, theColors,
+                         2 << DefaultDepth(wd->display, wd->screen)))
+         return NULL;
 
       if (!XAllocColor(stddpy, wd->cmap, &color)) {
          /* try again with a virtual colormap (but not for an icon) */
@@ -350,7 +373,21 @@ wclrp alc_rgb2(wbp w, char *s, unsigned int r, unsigned int g, unsigned int b)
       return &(wd->colors[j]);
       }
    else {
-      /* color is found, alias it and put it in the window color table */
+      /*
+       * Already allocated, possibly by another window. Record it here
+       * so this window keeps a reference until it is cleared.
+       */
+      int k;
+
+      for (k = *numColors - 1; k >= 0; k--) {
+         if ((*theColors)[k] == i)
+            return &(wd->colors[i]);
+         }
+      if (!ensure_wcolor(numColors, sizColors, theColors,
+                         2 << DefaultDepth(wd->display, wd->screen)))
+         return NULL;
+      wd->colors[i].refcount++;
+      (*theColors)[(*numColors)++] = i;
       return &(wd->colors[i]);
       }
    }
@@ -363,7 +400,8 @@ int alc_centry(wdp wd)
 {
    int j;
 
-   for (j = 2; j < wd->sizColors; j++)
+   /* slot 2 is alc_rgbTrueColor()'s scratch entry */
+   for (j = 3; j < wd->sizColors; j++)
       if (wd->colors[j].refcount == 0)
          break;
    return alc_centry2(wd, j);
@@ -438,16 +476,18 @@ void copy_colors(wbp w1, wbp w2)
             }
          if (i2 >= ws2->numColors) {
             /* need to add this color */
-            wd->colors[j].refcount++;
-            if (ws2->numColors < WMAXCOLORS) {
-               if (ws2->theColors == NULL)
-                  ws2->theColors = (short *)calloc(WMAXCOLORS, sizeof(short));
+            if (ws2->theColors == NULL) {
+               ws2->theColors = (int *)calloc(WMAXCOLORS, sizeof(int));
                if (ws2->theColors == NULL)
                   break; /* unlikely bug; should fail or something */
                ws2->sizColors = WMAXCOLORS;
+               }
+            if (ensure_wcolor(&ws2->numColors, &ws2->sizColors,
+                              &ws2->theColors,
+                              2 << DefaultDepth(wd->display, wd->screen))) {
+               wd->colors[j].refcount++;
                ws2->theColors[ws2->numColors++] = j;
                }
-            /* else cannot record it -- table full */
             }
          }
       }
@@ -492,7 +532,7 @@ void free_xcolors(wbp w, int extent)
    int freed = 0;
    int *numColors;
    int numSaved;
-   short *theColors;
+   int *theColors;
    wsp ws = w->window;
    wdp wd = ws->display;
 
@@ -505,7 +545,11 @@ void free_xcolors(wbp w, int extent)
       int j = theColors[i];
 
 
-      if (j < 2)                /* black & white are permanent residents */
+      /*
+       * 0 and 1 are black and white. 2 is TrueColor scratch and is
+       * not in the color hash.
+       */
+      if (j < 3)
          continue;
       /*
        * don't free fg, bg, or mutable color
@@ -622,7 +666,9 @@ wdp alc_display(char *s)
    /*
     * Color slots 0 and 1 are permanently reserved for black and white
     * respectively.  Allocate them explicitly so that they're preserved
-    * if we later switch to a virtual colormap.
+    * if we later switch to a virtual colormap.  Slot 2 is scratch for
+    * alc_rgbTrueColor(), which overwrites its r, g, b, and pixel and
+    * does not put it in the color hash, so no real color may live there.
     */
    wd->sizColors = DMAXCOLORS;
    wd->colors = calloc(DMAXCOLORS, sizeof (struct wcolor));
@@ -645,7 +691,9 @@ wdp alc_display(char *s)
       wd->colors[1].c = color.pixel;
    else
       wd->colors[1].c = WhitePixel(wd->display,wd->screen);
-   wd->numColors = 2;
+   wd->colors[2].refcount = 1;
+   wd->colors[2].prev = wd->colors[2].next = -1;
+   wd->numColors = 3;
 
    {int i; for(i=0; i<16384; i++)
     wd->buckets[i] = -1; }

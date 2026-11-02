@@ -1,0 +1,79 @@
+#
+# TLS behavior that depends on rcrypto.ri's OpenSSL version tests seeing
+# the real OPENSSL_VERSION_NUMBER (they used to see 0 and always took the
+# pre-1.1 branch): TLS 1.3 as a minimum, TLS 1.3 ciphersuite selection,
+# certificate host-name checks, and ISO 8601 certificate times.
+#
+# Requires OpenSSL 1.1.1 or later. Older libraries reject minProto=TLS1.3,
+# and certificate times are not ISO 8601 until ASN1_TIME_to_tm.
+#
+
+link tlsutil
+
+procedure main()
+   local port, host, skey, scert, ca, sock, t
+
+   if not (&features == "secure sockets layer encryption") then
+      stop("needs SSL")
+   if not (&features == "concurrent threads") then
+      stop("needs concurrent threads")
+
+   skey := "key=./data/unicon-server.key"
+   scert := "cert=./data/unicon-server.crt"
+   ca := "ca=./data/unicon-ca.crt"
+
+   port := tls_port()
+   # Pin the TLS 1.3 suite on the server too. A client-only list of
+   # TLS_AES_128_GCM_SHA256 fails the handshake where the system default
+   # no longer offers that suite, and the peer reset used to kill the
+   # process (SIGPIPE) before open() could report it.
+   # Four accepts: the non-overlapping suite fails one of them.
+   tls_start([port, "nae", skey, scert, ca,
+              "ciphers1.3=TLS_AES_256_GCM_SHA384"], 4)
+   # The test certificate names localhost as a DNS SAN.  The server listens
+   # on 127.0.0.1, so connect over IPv4 ("4") in case localhost is ::1 first.
+   host := "localhost:" || port[find(":", port) + 1:0]
+
+   if sock := open(host, "ne4", 5000, ca, "minProto=TLS1.3") then {
+      write("minProto TLS1.3: ", sock["version"])
+      close(sock)
+      }
+   else {
+      write("minProto TLS1.3: fail ", &errortext)
+      # 1308 is "unknown protocol". OpenSSL 1.1.0 accepts the name and
+      # then rejects the version, and that text also mentions protocol.
+      if &errornumber = 1308 | (&errortext ? find("protocol")) then
+         stop("This Program Requires TLS 1.3")
+      }
+
+   if sock := open(host, "ne4", 5000, ca, "minProto=TLS1.3",
+                   "ciphers1.3=TLS_AES_256_GCM_SHA384") then {
+      write("ciphers1.3: ", sock["cipher"] | "missing")
+      close(sock)
+      }
+   else
+      write("ciphers1.3: fail ", &errortext)
+
+   # The server offers only AES-256. A client that honors ciphers1.3 and
+   # asks for only AES-128 cannot connect. A client that ignores the
+   # attribute would still connect, because its default list includes
+   # the server's suite.
+   if sock := open(host, "ne4", 5000, ca, "minProto=TLS1.3",
+                   "ciphers1.3=TLS_AES_128_GCM_SHA256") then {
+      write("mismatch: connected ", sock["cipher"] | "missing")
+      close(sock)
+      }
+   else
+      write("mismatch: fail")
+
+   if sock := open(host, "ne4", 5000, ca) then {
+      write("hostnamematch: ", image(sock["hostnamematch"]))
+      t := sock["notafter"]
+      write("notafter: ",
+            if t ? (tab(many(&digits)) & ="-" & move(2) & ="-" & move(2) &
+                    ="T" & move(8) & ="Z" & pos(0)) then "iso" else image(t))
+      close(sock)
+      }
+   else
+      write("connect: fail ", &errortext)
+end
