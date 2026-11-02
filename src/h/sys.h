@@ -106,6 +106,22 @@
       #endif                                    /* PosixFns */
       #endif                                    /* NT */
    #endif                               /* MSWindows */
+
+#if NT && defined(PosixFns)
+   /*
+    * GetTickCount64 is in kernel32. Current MinGW winsock2.h includes
+    * windows.h, which declares it (_WIN32_WINNT is at least 0x0601).
+    * Older winsock2.h, and MSVC's, do not. A repeated prototype loses
+    * the dllimport attribute and -Werror rejects it, so declare it
+    * only when those headers have not been seen. The declaration
+    * cannot live in an .r file: rtt rejects the calling convention.
+    */
+#if !defined(_INC_WINDOWS) && !defined(_WINDOWS_) && \
+    !defined(_SYSINFOAPI_H_) && !defined(_APISETSYSINFOAPI_)
+   extern unsigned long long WINAPI GetTickCount64(void);
+#endif
+#endif                                  /* NT && PosixFns */
+
    #include <setjmp.h>
    #define Type(d) (int)((d).dword & TypeMask)
    #undef lst1

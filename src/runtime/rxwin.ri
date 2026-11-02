@@ -2345,10 +2345,10 @@ int isetfg(wbp w, int fg)
       r = fg & 255;
       return setfgrgb(w, r * 257, g * 257, b * 257);
       }
-   for (i = 2; i < DMAXCOLORS; i++)
+   for (i = 3; i < wd->numColors; i++)
       if (wd->colors[i].type == CLR_MUTABLE && wd->colors[i].c == -fg - 1)
          break;
-   if (i == DMAXCOLORS) return Failed;
+   if (i >= wd->numColors) return Failed;
    w->context->fg = i;
    return resetfg(w);
    }
@@ -2394,10 +2394,10 @@ int isetbg(wbp w, int bg)
       r = bg & 255;
       return setbgrgb(w, r * 257, g * 257, b * 257);
       }
-   for (i = 2; i < DMAXCOLORS; i++)
+   for (i = 3; i < wd->numColors; i++)
       if (wd->colors[i].type == CLR_MUTABLE && wd->colors[i].c == -bg - 1)
          break;
-   if (i == DMAXCOLORS) return Failed;
+   if (i >= wd->numColors) return Failed;
    wc->bg = i;
    if (wc->gc != NULL)
       XSetBackground(wd->display, wc->gc, wd->colors[wc->bg].c);
@@ -3211,14 +3211,15 @@ int mutable_color(wbp w, dptr argv, int ac, int *retval)
    colorname = colorname + strlen(colorname) + 1;
    *colorname = '\0';                           /* value unknown */
 
-   if (ws->numColors < WMAXCOLORS) {
-      if (ws->theColors == NULL) {
-         ws->theColors = (short *)calloc(WMAXCOLORS, sizeof(short));
-         if (ws->theColors == NULL)
-            return RunError;
-         }
-      ws->theColors[ws->numColors++] = i;
+   if (ws->theColors == NULL) {
+      ws->theColors = (int *)calloc(WMAXCOLORS, sizeof(int));
+      if (ws->theColors == NULL)
+         return RunError;
+      ws->sizColors = WMAXCOLORS;
       }
+   if (ensure_wcolor(&ws->numColors, &ws->sizColors, &ws->theColors,
+                     2 << DefaultDepth(stddpy, wd->screen)))
+      ws->theColors[ws->numColors++] = i;
 
    if (ac > 0) {                     /* set the color */
       if (ac != 1) return RunError;
@@ -3261,10 +3262,10 @@ char *get_mutable_name(wbp w, int mute_index)
 
    dp = w->window->display;
 
-   for (i = 2; i < DMAXCOLORS; i++)
+   for (i = 3; i < dp->numColors; i++)
       if (dp->colors[i].type == CLR_MUTABLE && dp->colors[i].c == -mute_index-1)
             break;
-   if (i == DMAXCOLORS)
+   if (i >= dp->numColors)
       return NULL;
    colorname = dp->colors[i].name;                      /* color name field */
    colorname = colorname + strlen(colorname) + 1;       /* set value follows */
@@ -3293,10 +3294,10 @@ void free_mutable(wbp w, int mute_index)
 
    dp = w->window->display;
 
-   for (i = 2; i < DMAXCOLORS; i++)
+   for (i = 3; i < dp->numColors; i++)
       if (dp->colors[i].type == CLR_MUTABLE && dp->colors[i].c == -mute_index-1)
             break;
-   if (i != DMAXCOLORS)
+   if (i < dp->numColors)
       free_xcolor(w, dp->colors[i].c);
    }
 
@@ -3313,11 +3314,11 @@ void freecolor(wbp w, char *s)
    dp = w->window->display;
    color = xcolor(w, clr);
 
-   for (i = 2; i < DMAXCOLORS; i++)
+   for (i = 3; i < dp->numColors; i++)
       if (dp->colors[i].r == color.red && dp->colors[i].g == color.green
       && dp->colors[i].b == color.blue && dp->colors[i].type != CLR_MUTABLE)
          break;
-   if (i != DMAXCOLORS)
+   if (i < dp->numColors)
       free_xcolor(w, dp->colors[i].c);
    }
 
@@ -3584,14 +3585,21 @@ int getimstr(wbp w,
    else {
 
       /*
-       * Make a sorted list of the pixel values of the colors that are in
-       * use.  Search this list for every pixel and store the resulting
-       * list index as the color index.
+       * Sorted pixel values of the colors in use. The image string holds
+       * at most DMAXCOLORS of them; the display table can be larger, and
+       * writing past clist or paltbl overflows. Slot 2 is TrueColor
+       * scratch, not a color of this window. A pixel that does not fit
+       * is stored as index 0.
        */
-      lp = clist;
-      for (cp = wd->colors; cp < wd->colors + wd->numColors; cp++)
-         *lp++ = cp->c;
-      ncolors = lp - clist;
+      ncolors = 0;
+      for (cp = wd->colors; cp < wd->colors + wd->numColors &&
+           ncolors < DMAXCOLORS; cp++) {
+         if (cp == wd->colors + 2 || cp->refcount <= 0)
+            continue;
+         clist[ncolors++] = cp->c;
+         }
+      if (ncolors == 0)
+         clist[ncolors++] = wd->colors[0].c;
       qsort((char *)clist, ncolors, sizeof(*clist), (int (*)())ulcmp);
 
       for (y = 0; y < height; y++)
@@ -4351,16 +4359,8 @@ Pixmap loadimage(wbp w, char *filename,
        * and window in which we are residing.
        */
       for (i = 0; i < a.npixels; i++) {
-         for (j = 2; j < DMAXCOLORS; j++)
-            if (wd->colors[j].refcount == 0) break;
-         if (j == DMAXCOLORS) {
+         if ((j = alc_centry(wd)) == 0)
             return (Pixmap) NULL;
-            }
-         if (j == wd->numColors) wd->numColors++;
-         else if (j > wd->numColors) {
-            wd->numColors = j+1;
-            }
-         wd->colors[j].refcount = 1;
          /*
           * Store their allocated pixel (r,g,b) values.
           */
@@ -4371,16 +4371,29 @@ Pixmap loadimage(wbp w, char *filename,
          wd->colors[j].b = color.blue;
          clr = lcolor(w, color);
          sprintf(wd->colors[j].name,"%ld,%ld,%ld",clr.red,clr.green,clr.blue);
-         if (ws->numColors == WMAXCOLORS)
-            ;
-         else {
+         wd->colors[j].type = CLR_SHARED;
+         buckinsert(wd, &(wd->colors[j]));
+         if (ws->theColors == NULL) {
+            ws->theColors = (int *)calloc(WMAXCOLORS, sizeof(int));
             if (ws->theColors == NULL) {
-               ws->theColors = (short *)calloc(WMAXCOLORS, sizeof(short));
-               if (ws->theColors == NULL)
-                  return (Pixmap) NULL;
+               buckdelete(wd, &(wd->colors[j]));
+               wd->colors[j].refcount = 0;
+               return (Pixmap) NULL;
                }
-            ws->theColors[ws->numColors++] = j;
+            ws->sizColors = WMAXCOLORS;
             }
+         /*
+          * free_xcolors() only visits colors recorded here. Grow the
+          * window table instead of leaving a display entry that nothing
+          * will release.
+          */
+         if (!ensure_wcolor(&ws->numColors, &ws->sizColors, &ws->theColors,
+                            2 << DefaultDepth(stddpy, wd->screen))) {
+            buckdelete(wd, &(wd->colors[j]));
+            wd->colors[j].refcount = 0;
+            continue;
+            }
+         ws->theColors[ws->numColors++] = j;
          }
 #else                                   /* HAVE_LIBXPM */
       return (Pixmap) NULL;

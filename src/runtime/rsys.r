@@ -67,7 +67,7 @@ int sock_getstrg(register char *buf, int maxi, dptr file)
 
 #if HAVE_LIBSSL
    if (BlkD(*file, File)->status & Fs_Encrypt) {
-     r = SSL_read(BlkD(*file,File)->fd.ssl, buf, i);
+     r = ossl_read(BlkD(*file,File)->fd.ssl, buf, i);
      if (r <= 0) {
        if (set_ssl_connection_errortext(BlkD(*file,File)->fd.ssl, r) == SSL_ERROR_ZERO_RETURN)
          return -1;
