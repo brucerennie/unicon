@@ -97,7 +97,7 @@ jobs:
       run: make Test
 
     - name: TestReport
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ !cancelled() && steps.build.outcome == 'success' }}
       run: |
         make -C tests Report 2>&1 | tee tests/test-report.txt
         sh "$GITHUB_WORKSPACE/config/scripts/ci-check-test-report.sh" tests/test-report.txt
@@ -160,7 +160,7 @@ jobs:
       run: make Test
 
     - name: TestReport
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ !cancelled() && steps.build.outcome == 'success' }}
       run: |
         make -C tests Report 2>&1 | tee tests/test-report.txt
         sh "$GITHUB_WORKSPACE/config/scripts/ci-check-test-report.sh" tests/test-report.txt
@@ -284,7 +284,7 @@ jobs:
     # In container jobs, ${{ github.workspace }} is expanded to the runner host path; the shell runs
     # inside the container where the repo lives under $GITHUB_WORKSPACE instead.
     - name: TestReport
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ !cancelled() && steps.build.outcome == 'success' }}
       run: |
         make -C tests Report 2>&1 | tee tests/test-report.txt
         sh "$GITHUB_WORKSPACE/config/scripts/ci-check-test-report.sh" tests/test-report.txt
@@ -355,7 +355,7 @@ jobs:
       shell: alpine.sh {0}
 
     - name: TestReport
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ !cancelled() && steps.build.outcome == 'success' }}
       run: |
         make -C tests Report 2>&1 | tee tests/test-report.txt
         sh "$GITHUB_WORKSPACE/config/scripts/ci-check-test-report.sh" tests/test-report.txt
@@ -461,7 +461,7 @@ jobs:
         VRFY: -2
 
     - name: TestReport
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ !cancelled() && steps.build.outcome == 'success' }}
       run: |
         make -C tests Report 2>&1 | tee tests/test-report.txt
         sh "$GITHUB_WORKSPACE/config/scripts/ci-check-test-report.sh" tests/test-report.txt
@@ -618,7 +618,7 @@ jobs:
 
    # Tee to repo root so the file is on the runner workspace (vmactions sometimes omits subpaths under tests/).
    - name: TestReport
-     if: ${{ steps.build.outcome == 'success' }}
+     if: ${{ !cancelled() && steps.build.outcome == 'success' }}
      shell: freebsd {0}
      run: |
        cd $GITHUB_WORKSPACE
@@ -736,7 +736,7 @@ jobs:
 
     # Same as Test: installed package provides `unicon` / `udb` on PATH, not ../bin/...
     - name: TestReport
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ !cancelled() && steps.build.outcome == 'success' }}
       run: |
         set -euo pipefail
         debdir=$(ls -d "$DISTROOT"/unicondist/unicon_* 2>/dev/null | head -1 || true)

@@ -702,6 +702,10 @@ int checkOpenConsole( FILE *w, char *s );
       wclrp     alc_rgbTrueColor        (wbp w,unsigned long r,
                                            unsigned long g, unsigned long b);
       int       alc_centry              (wdp wd);
+      int       buckinsert              (wdp wd, wclrp wc);
+      int       buckdelete              (wdp wd, wclrp wc);
+      int       ensure_wcolor           (int *numColors, int *sizColors,
+                                           int **theColors, int limit);
       wclrp     alc_color               (wbp w, char *s);
       void      copy_colors             (wbp w1, wbp w2);
       void      free_xcolor             (wbp w, unsigned long c);
@@ -1220,6 +1224,15 @@ void set_ssl_context_errortext(int err, char* errtext);
 int ssl_dtls_accept(SSL *ssl, int fd);
 int ssl_dtls_connect(SSL *ssl, int fd);
 int sock_udp_connect_saved(int fd);
+/*
+ * SSL_* wrappers that stop a peer reset from raising SIGPIPE and killing
+ * the process before the call can return an error.
+ */
+int ossl_connect(SSL *ssl);
+int ossl_accept(SSL *ssl);
+int ossl_shutdown(SSL *ssl);
+int ossl_read(SSL *ssl, void *buf, int num);
+int ossl_write(SSL *ssl, const void *buf, int num);
 
 struct CryptoFile *crypto_open_material(dptr target, int israw, dptr attr,
                                         int nattr, int *rc);

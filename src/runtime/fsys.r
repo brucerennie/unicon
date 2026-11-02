@@ -111,7 +111,7 @@ function{0,1} close(f)
 #if HAVE_LIBSSL
         if (BlkD(f,File)->status & Fs_Encrypt) {
            s = SSL_get_fd(BlkD(f,File)->fd.ssl);
-           SSL_shutdown(BlkLoc(f)->File.fd.ssl);
+           ossl_shutdown(BlkLoc(f)->File.fd.ssl);
            SSL_CTX_free(SSL_get_SSL_CTX(BlkLoc(f)->File.fd.ssl));
            SSL_free(BlkLoc(f)->File.fd.ssl);
            BlkLoc(f)->File.fd.ssl = NULL;
@@ -1688,7 +1688,7 @@ Deliberate Syntax Error
                   else {
                   SSL_set_fd(ssl, fd);
                   DEC_NARTHREADS;
-                  err = SSL_accept(ssl);
+                  err = ossl_accept(ssl);
                   INC_NARTHREADS_CONTROLLED;
 
                   /*Check for error in accept.*/
@@ -1758,7 +1758,7 @@ Deliberate Syntax Error
                      }
                   else {
                   SSL_set_fd(ssl, fd);
-                  err = SSL_connect(ssl);
+                  err = ossl_connect(ssl);
 
                   /*Check for error in connect.*/
                   if (err<1) {
@@ -4156,7 +4156,7 @@ function {1} name(x[nargs])
                      if (status & Fs_Socket) {
 #if HAVE_LIBSSL
                         if(status & Fs_Encrypt) {
-                          SSL_write(f.ssl, StrLoc(t), StrLen(t));
+                          ossl_write(f.ssl, StrLoc(t), StrLen(t));
                         }
                         else{
 #endif                                  /* HAVE_LIBSSL */
