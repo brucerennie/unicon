@@ -501,7 +501,7 @@ typedef struct childcontrol {
  * "Window state" includes the actual X window and references to a large
  * number of resources allocated on a per-window basis.  Windows are
  * allocated out of a global array in rwinrsrc.c.  Windows remember the
- * first WMAXCOLORS colors they allocate, and deallocate them on clearscreen.
+ * colors they allocate, and deallocate them on clearscreen.
  */
 typedef struct _wstate {
   int           refcount;               /* reference count */
@@ -553,10 +553,10 @@ typedef struct _wstate {
   int           normalw, normalh;       /* size to remember when maximized */
   int           numColors;              /* allocated (used) color info */
   int           sizColors;              /* malloced size of theColors */
-  short         *theColors;             /* indices into display color table */
+  int           *theColors;             /* indices into display color table */
   int           numiColors;             /* allocated color info for the icon */
   int           siziColors;             /* malloced size of iconColors */
-  short         *iconColors;            /* indices into display color table */
+  int           *iconColors;            /* indices into display color table */
   char *selectiondata;
   int           iconic;                 /* window state; icon, window or root*/
   int           iconx, icony;           /* location of icon */

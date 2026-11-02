@@ -1,0 +1,5 @@
+minProto TLS1.3: TLSv1.3
+ciphers1.3: TLS_AES_256_GCM_SHA384
+mismatch: fail
+hostnamematch: "yes"
+notafter: iso

@@ -1,6 +1,12 @@
 /*
- * ssl_dtls.c - DTLS handshake helpers for encrypted UDP (nue/naue).
+ * ssl_dtls.c - DTLS handshake helpers for encrypted UDP (nue/naue),
+ * and SSL I/O wrappers that keep SIGPIPE from killing the process.
  */
+
+#if !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200809L
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
 
 #include "../h/gsupport.h"
 
@@ -17,6 +23,168 @@
 #endif                                  /* HAVE_LIBSSL */
 
 #if HAVE_LIBSSL
+
+/*
+ * A write on a socket whose peer has already closed raises SIGPIPE. The
+ * default disposition kills the process, so the SSL call never gets to
+ * return the error. Block SIGPIPE in this thread for the call, drop a
+ * signal the call itself raised, and put the previous mask back
+ * unchanged. errno from the SSL call is kept: the cleanup calls would
+ * otherwise replace it (sigtimedwait sets EAGAIN when nothing is left).
+ *
+ * A standard signal is one bit. One that was already pending is left
+ * alone. A new one is taken without waiting. sigwait would block the
+ * thread that loses a race for a process-directed SIGPIPE.
+ */
+#if UNIX
+#if defined(__APPLE__) && defined(Concurrent)
+static pthread_mutex_t ossl_sigpipe_mu = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+/* macOS and BSD: this socket then fails with EPIPE and raises nothing. */
+static void ossl_nosigpipe(SSL *ssl)
+{
+#ifdef SO_NOSIGPIPE
+   int fd, on = 1;
+
+   if (ssl == NULL)
+      return;
+   fd = SSL_get_fd(ssl);
+   if (fd >= 0)
+      (void)setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof on);
+#else                                   /* SO_NOSIGPIPE */
+   (void)ssl;
+#endif                                  /* SO_NOSIGPIPE */
+}
+
+static int ossl_sigpipe_block(sigset_t *save, int *was_pending)
+{
+   sigset_t block, pend;
+   int rc;
+
+   *was_pending = 0;
+   if (sigpending(&pend) == 0 && sigismember(&pend, SIGPIPE))
+      *was_pending = 1;
+
+   sigemptyset(&block);
+   sigaddset(&block, SIGPIPE);
+#ifdef Concurrent
+   rc = pthread_sigmask(SIG_BLOCK, &block, save);
+#else                                   /* Concurrent */
+   rc = sigprocmask(SIG_BLOCK, &block, save);
+#endif                                  /* Concurrent */
+   return rc == 0;
+}
+
+/* Drop a SIGPIPE this call raised. The caller's mask is not modified. */
+static void ossl_sigpipe_discard(int was_pending)
+{
+   sigset_t pend;
+
+   if (was_pending)
+      return;
+   if (sigpending(&pend) < 0 || !sigismember(&pend, SIGPIPE))
+      return;
+
+#if !defined(__APPLE__)
+   {
+   sigset_t one;
+   struct timespec zero;
+
+   sigemptyset(&one);
+   sigaddset(&one, SIGPIPE);
+   memset(&zero, 0, sizeof zero);
+   while (sigtimedwait(&one, NULL, &zero) > 0)
+      ;
+   }
+#else                                   /* __APPLE__ */
+   {
+   struct sigaction ign, old;
+
+   /*
+    * No sigtimedwait here. Setting SIG_IGN discards a pending SIGPIPE
+    * even while it is blocked. The previous action is restored before
+    * the caller's mask is.
+    */
+#if defined(Concurrent)
+   pthread_mutex_lock(&ossl_sigpipe_mu);
+#endif                                  /* Concurrent */
+   memset(&ign, 0, sizeof ign);
+   ign.sa_handler = SIG_IGN;
+   sigemptyset(&ign.sa_mask);
+   if (sigaction(SIGPIPE, &ign, &old) == 0)
+      sigaction(SIGPIPE, &old, NULL);
+#if defined(Concurrent)
+   pthread_mutex_unlock(&ossl_sigpipe_mu);
+#endif                                  /* Concurrent */
+   }
+#endif                                  /* __APPLE__ */
+}
+
+static void ossl_sigpipe_unblock(int blocked, const sigset_t *save,
+                                 int was_pending)
+{
+   int saved = errno;
+
+   if (blocked) {
+      ossl_sigpipe_discard(was_pending);
+#ifdef Concurrent
+      pthread_sigmask(SIG_SETMASK, save, NULL);
+#else                                   /* Concurrent */
+      sigprocmask(SIG_SETMASK, save, NULL);
+#endif                                  /* Concurrent */
+      }
+   errno = saved;
+}
+
+#define OSSL_CALL(ssl, call) \
+   do { \
+      sigset_t ossl_save; \
+      int ossl_was = 0; \
+      int ossl_blocked; \
+      ossl_nosigpipe(ssl); \
+      ossl_blocked = ossl_sigpipe_block(&ossl_save, &ossl_was); \
+      call; \
+      ossl_sigpipe_unblock(ossl_blocked, &ossl_save, ossl_was); \
+   } while (0)
+#else                                   /* UNIX */
+#define OSSL_CALL(ssl, call) do { (void)(ssl); call; } while (0)
+#endif                                  /* UNIX */
+
+int ossl_connect(SSL *ssl)
+{
+   int rc;
+   OSSL_CALL(ssl, rc = SSL_connect(ssl));
+   return rc;
+}
+
+int ossl_accept(SSL *ssl)
+{
+   int rc;
+   OSSL_CALL(ssl, rc = SSL_accept(ssl));
+   return rc;
+}
+
+int ossl_shutdown(SSL *ssl)
+{
+   int rc;
+   OSSL_CALL(ssl, rc = SSL_shutdown(ssl));
+   return rc;
+}
+
+int ossl_read(SSL *ssl, void *buf, int num)
+{
+   int rc;
+   OSSL_CALL(ssl, rc = SSL_read(ssl, buf, num));
+   return rc;
+}
+
+int ossl_write(SSL *ssl, const void *buf, int num)
+{
+   int rc;
+   OSSL_CALL(ssl, rc = SSL_write(ssl, buf, num));
+   return rc;
+}
 
 #ifndef OPENSSL_NO_DTLS
 
@@ -134,9 +302,9 @@ int ssl_dtls_accept(SSL *ssl, int fd)
       }
    BIO_ADDR_free(client);
    BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &peer_sa);
-   rv = SSL_accept(ssl);
+   rv = ossl_accept(ssl);
    while (rv <= 0 && dtls_want_retry(ssl, rv))
-      rv = SSL_accept(ssl);
+      rv = ossl_accept(ssl);
    return rv == 1;
 }
 
@@ -162,9 +330,9 @@ int ssl_dtls_connect(SSL *ssl, int fd)
    BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &tv);
    BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &peer);
    SSL_set_bio(ssl, bio, bio);
-   rv = SSL_connect(ssl);
+   rv = ossl_connect(ssl);
    while (rv <= 0 && dtls_want_retry(ssl, rv))
-      rv = SSL_connect(ssl);
+      rv = ossl_connect(ssl);
    return rv == 1;
 }
 
