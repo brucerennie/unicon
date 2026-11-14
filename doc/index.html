@@ -60,6 +60,10 @@
     img {
       max-width: 100%;
     }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -103,8 +107,8 @@
      overflow: visible;
     }
     hr {
-      background-color: #1a1a1a;
       border: none;
+      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -163,8 +167,9 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -402,33 +407,33 @@ examples).</p>
 <col style="width: 73%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>File</th>
 <th>Title / purpose</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><a href="unicon/faq.html">faq.html</a></td>
 <td><em>Unicon: Frequently Asked Questions</em></td>
 </tr>
-<tr class="even">
+<tr>
 <td><a href="unicon/posix.html">posix.html</a></td>
 <td><em>Unicon: A Posix Interface for the Icon Programming
 Language</em></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><a href="unicon/reports.html">reports.html</a></td>
 <td><em>Technical Reports</em> — in-tree index; see also the project
 site <a href="https://unicon.sourceforge.io/reports.html">Technical
 Reports</a></td>
 </tr>
-<tr class="even">
+<tr>
 <td><a href="unicon/svn.html">svn.html</a></td>
 <td><em>Unicon Source Code SVN Repository</em> — <strong>legacy</strong>
 (SVN; development uses Git today)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><a href="unicon/simple.html">simple.html</a>, <a
 href="unicon/simp.html">simp.html</a></td>
 <td><em>A Simple Example — Using the CGI Icon Library</em></td>
@@ -468,28 +473,28 @@ chapters</li>
 <col style="width: 57%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>File</th>
 <th>Title</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><a href="icon/faq.htm">faq.htm</a></td>
 <td><em>Frequently Asked Questions about the Icon programming
 language</em></td>
 </tr>
-<tr class="even">
+<tr>
 <td><a href="icon/ipd266.htm">ipd266.htm</a></td>
 <td><em>An Overview of the Icon Programming Language; Version
 9</em></td>
 </tr>
-<tr class="odd">
+<tr>
 <td><a href="icon/ipd281.htm">ipd281.htm</a></td>
 <td><em>Graphics Facilities for the Icon Programming Language; Version
 9.3</em></td>
 </tr>
-<tr class="even">
+<tr>
 <td><a href="icon/ipd283.htm">ipd283.htm</a></td>
 <td><em>The Icon Program Library; Version 9.3.3</em></td>
 </tr>

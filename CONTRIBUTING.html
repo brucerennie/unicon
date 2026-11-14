@@ -60,6 +60,10 @@
     img {
       max-width: 100%;
     }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -103,8 +107,8 @@
      overflow: visible;
     }
     hr {
-      background-color: #1a1a1a;
       border: none;
+      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -163,8 +167,9 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -415,13 +420,13 @@ warnings, and debug symbols</h3>
 <col style="width: 52%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Option</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong><code>--enable-debug</code></strong></td>
 <td>Add <strong>debug symbols</strong> (<code>-g</code>) and, when no
 custom <code>CFLAGS</code> are set, a suitable <strong>optimization
@@ -430,7 +435,7 @@ build; sanitizer builds may use <code>-O1</code>). Use this whenever you
 need <strong>GDB</strong>, <strong>lldb</strong>, or readable
 <strong>stack traces</strong>.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong><code>--enable-devmode</code></strong></td>
 <td><strong>Developer mode:</strong> enables
 <strong><code>--enable-debug</code></strong> and <strong>compiler
@@ -440,19 +445,19 @@ warnings</strong> (<code>--enable-warnings</code>), and defines
 <code>DEVELOPMODE</code> in sources) are available for deeper
 inspection.</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong><code>--enable-devmode=all</code></strong></td>
 <td>Same as <strong><code>yes</code></strong>, and also enables
 <strong>heap debugging</strong> and <strong>heap verification</strong>
 (<a href="#heap-debugging-and-verification">Heap debugging</a>)—heavier,
 use when tracking <strong>memory / GC / pointer</strong> bugs.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong><code>--enable-warnings</code></strong></td>
 <td>Turn on <strong>most</strong> compiler warnings (off by default in
 many configurations).</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><strong><code>--enable-werror</code></strong></td>
 <td>Treat <strong>warnings as errors</strong>—use in CI or when cleaning
 up warning debt; can be noisy on new toolchains.</td>
@@ -476,13 +481,13 @@ debugging</strong>, not production installs.</p>
 <col style="width: 66%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Option</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><strong><code>--enable-debugheap</code></strong></td>
 <td>Defines <strong><code>DebugHeap</code></strong>. Block access macros
 (e.g. <code>Blk</code>) gain <strong>runtime type and pointer
@@ -492,7 +497,7 @@ checks</strong> so invalid block references are caught closer to the bug
 enough and you suspect <strong>corrupted pointers</strong> or
 <strong>wrong block kinds</strong>.</td>
 </tr>
-<tr class="even">
+<tr>
 <td><strong><code>--enable-verifyheap</code></strong></td>
 <td>Defines <strong><code>VerifyHeap</code></strong>. Enables
 <strong>structured heap/GC verification</strong> and logging controlled
@@ -558,29 +563,29 @@ shared libraries):</p>
 <col style="width: 50%" />
 </colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Option</th>
 <th>Effect</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td><code>--enable-asan</code></td>
 <td>AddressSanitizer (<code>-fsanitize=address</code>)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>--enable-tsan</code></td>
 <td>ThreadSanitizer (<code>-fsanitize=thread</code>)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><code>--enable-ubsan</code></td>
 <td>UndefinedBehaviorSanitizer (<code>-fsanitize=undefined</code>)</td>
 </tr>
-<tr class="even">
+<tr>
 <td><code>--enable-msan</code></td>
 <td>MemorySanitizer (<code>-fsanitize=memory</code>)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td><code>--enable-hwasan</code></td>
 <td>HardwareAssisted AddressSanitizer
 (<code>-fsanitize=hwaddress</code>; common on AArch64)</td>
