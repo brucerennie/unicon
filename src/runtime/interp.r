@@ -442,6 +442,18 @@ deliberate syntax error
 #define ExInterp_sp     sp = rsp; IPC_MEM = ripc;
 #define EntInterp_sp    rsp = sp; ripc = IPC_MEM;
 
+/*
+ * Suspension copies the stack region [first,last] to the top of the stack,
+ * followed by at most a descriptor.  Deep chains of suspended generators
+ * grow the stack this way without any procedure being invoked.
+ */
+#define SuspStackCheck(first, last) \
+   if (EvalStackOverflow(rsp, ((char *)(last) - (char *)(first)) + \
+                         WordSize + sizeof(struct descrip))) { \
+      ExInterp_sp; \
+      fatalerr(301, NULL); \
+      }
+
 /*#define ExInterp_ipc  ipc = ripc;
 #define EntInterp_ipc   ripc = ripc;
 
@@ -517,6 +529,7 @@ int interp_x(int fsig,dptr cargp)
 #ifdef TallyOpt
    extern word tallybin[];
 #endif                                  /* TallyOpt */
+   char cstack_mark;                    /* locates this C stack frame */
 
 #ifdef Concurrent
 /*
@@ -528,6 +541,40 @@ int interp_x(int fsig,dptr cargp)
 #endif                                  /* Concurrent */
    inst ripc = IPC_MEM;                 /* PROTO: ipc kept in a register */
 
+   /*
+    * Suspension re-enters interp() on the C stack.  A native
+    * co-expression's C stack grows down toward its evaluation stack in
+    * the same block, with no guard page between them, so stop before
+    * they meet, leaving room for the error traceback.  Only the
+    * process &main uses the system stack.  A program started by load()
+    * has its own &main in a co-expression block, so it is checked too.
+    */
+#ifdef MultiProgram
+   if ((struct b_coexpr *)BlkLoc(k_current) != rootpstate.Mainhead) {
+#else                                   /* MultiProgram */
+   if (BlkLoc(k_current) != BlkLoc(k_main)) {
+#endif                                  /* MultiProgram */
+      struct b_coexpr *cecs = BlkD(k_current,Coexpr);
+      char *lo = (char *)cecs->es_stack, *hi = (char *)cecs->es_stackend;
+      if (lo < hi && &cstack_mark > lo &&
+          &cstack_mark < hi + Min(CStackPeril, (hi - lo) / 4))
+         fatalerr(308, NULL);
+      }
+
+#if UNIX
+   /*
+    * &main and threads run on a system stack that has a guard page.
+    * Stop while fatalerr() still has room; segvtrap() is the backstop
+    * when this check does not see the stack.
+    */
+   {
+   int cerr;
+
+   if ((cerr = cstack_peril(&cstack_mark)) != 0)
+      fatalerr(cerr, NULL);
+   }
+#endif                                  /* UNIX */
+
 #if e_intcall
    EVVal(fsig, e_intcall);
 #endif                                  /* e_intcall */
@@ -538,26 +585,6 @@ int interp_x(int fsig,dptr cargp)
    EVVal(DiffPtrs(sp, stack), e_cstack);
 #endif                                  /* StackCheck */
 #endif                                  /* e_cstack */
-
-#ifdef StackCheck
-   /*
-    * Make a stab at catching interpreter stack overflow.  This does
-    * not detect C stack overflow.
-    */
-   if (((char *)sp + PerilDelta) > (char *)(BlkD(k_current,Coexpr)->es_stackend)){
-         fatalerr(301, NULL);
-         }
-#else                                   /* StackCheck */
-#ifndef MultiProgram
-   /*
-    * Make a stab at catching interpreter stack overflow.  This does
-    * nothing for invocation in a co-expression other than &main.
-    */
-   if (BlkLoc(k_current) == BlkLoc(k_main) &&
-      ((char *)sp + PerilDelta) > (char *)stackend)
-         fatalerr(301, NULL);
-#endif                                  /* MultiProgram */
-#endif                                  /* StackCheck */
 
 #ifdef Polling
    if (!pollctr--) {
@@ -624,6 +651,7 @@ int interp_x(int fsig,dptr cargp)
        * Copy the portion of the stack with endpoints firstwd and lastwd
        *  (inclusive) to the top of the stack.
        */
+      SuspStackCheck(firstwd, lastwd);
       for (wd = firstwd; wd <= lastwd; wd++)
          *++rsp = *wd;
       gfp = newgfp;
@@ -1359,31 +1387,14 @@ L_astatic:
                   bp = BlkLoc(value_tmp);
                   args = (int)Blk(bp,List)->size;
 
-#ifdef StackCheck
                   /*
                    * Make a stab at catching interpreter stack overflow.
                    * This does not detect C stack overflow.
                    */
-                  if ((char *)sp + args * sizeof(struct descrip) + PerilDelta >
-                       (char *)(BlkD(k_current,Coexpr)->es_stackend)) {
+                  if (EvalStackOverflow(rsp, args * sizeof(struct descrip))) {
                      ExInterp_sp;
                      fatalerr(301, NULL);
                      }
-#else                                   /* StackCheck */
-#ifndef MultiProgram
-                  /*
-                   * Make a stab at catching interpreter stack overflow.
-                   * This does nothing for invocation in a co-expression other
-                   * than &main.
-                   */
-                  if (BlkLoc(k_current) == BlkLoc(k_main) &&
-                      ((char *)sp + args * sizeof(struct descrip) >
-                       (char *)stackend)) {
-                     ExInterp_sp;
-                     fatalerr(301, NULL);
-                     }
-#endif                                  /* MultiProgram */
-#endif                                  /* StackCheck */
 
 #ifdef Arrays
                   if(Blk(bp,List)->listtail) {
@@ -1457,16 +1468,6 @@ invokej:
 #if e_stack
             EVVal(DiffPtrs(sp, BlkD(k_current,Coexpr)->es_stack), e_stack);
 #endif
-
-#ifdef StackCheck
-            /*
-             * Make a stab at catching interpreter stack overflow.  This does
-             * not detect C stack overflow.
-             */
-            if (((char *)sp + PerilDelta) >
-                (char *)(BlkD(k_current,Coexpr)->es_stackend))
-               fatalerr(301, NULL);
-#endif                                  /* StackCheck */
 
             type = invoke(args, &carg, &nargs);
             EntInterp_sp;
@@ -1694,6 +1695,7 @@ Unmark_uw:
              * Copy the portion of the stack with endpoints firstwd and lastwd
              *  (inclusive) to the top of the stack.
              */
+            SuspStackCheck(firstwd, lastwd);
             for (wd = firstwd; wd <= lastwd; wd++)
                *++rsp = *wd;
             PushVal(oldsp[-1]);
@@ -1746,6 +1748,7 @@ Unmark_uw:
                 *  (inclusive) to the top of the stack.
                 */
                rsp -= 2;                /* overwrite result */
+               SuspStackCheck(firstwd, lastwd);
                for (wd = firstwd; wd <= lastwd; wd++)
                   *++rsp = *wd;
                PushDesc(sval);          /* push saved result */
@@ -1856,6 +1859,7 @@ Lsusp_uw:
              * Copy the portion of the stack with endpoints firstwd and lastwd
              *  (inclusive) to the top of the stack.
              */
+            SuspStackCheck(firstwd, lastwd);
             for (wd = firstwd; wd <= lastwd; wd++)
                *++rsp = *wd;
             PushVal(oldsp[-1]);
@@ -2590,11 +2594,11 @@ C_rtn_term:
             case A_Pret_uw:             /* unwind for pret */
 #ifdef MultiProgram
                if (lastev == E_Function) {
-                  InterpEVVal(&lastdesc, e_frem);
+                  InterpEVValD(&lastdesc, e_frem);
                   lastev = E_Misc;
                   }
                else if (lastev == E_Operator) {
-                  InterpEVVal(&lastdesc, e_orem);
+                  InterpEVValD(&lastdesc, e_orem);
                   lastev = E_Misc;
                   }
 #endif                                  /* MultiProgram */
